@@ -42,7 +42,7 @@ app.onError((err, c) => {
 
 serve({
   fetch: app.fetch,
-  port: parseInt(process.env.PORT!),
+  port: 5000,
 })
 
 console.log(process.env.PORT!)
