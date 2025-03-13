@@ -1,14 +1,18 @@
 import { Hono } from "hono"
 import { serve } from "@hono/node-server"
+import { cors } from "hono/cors"
 import { logger } from "hono/logger"
+
 import authRouter from "./routes/auth.js"
 import userRouter from "./routes/users.js"
-import { authMiddleware } from "../middleware/middleware.js"
 import expensesRoute from "./routes/expenses.js"
+
+import { authMiddleware } from "../middleware/middleware.js"
 
 const app = new Hono()
 
 app.use(logger())
+app.use(cors())
 app.route("/api/auth", authRouter)
 
 app.use("/api/users", authMiddleware)
