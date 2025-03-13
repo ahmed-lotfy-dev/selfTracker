@@ -17,6 +17,7 @@ app.route("/api/users", userRouter)
 
 app.use("/api/expenses", authMiddleware)
 app.route("/api/expenses", expensesRoute)
+
 app.get("/", async (c) => {
   const headers = Object.fromEntries(c.req.raw.headers.entries())
 
