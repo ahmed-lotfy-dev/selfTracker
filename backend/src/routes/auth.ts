@@ -17,24 +17,24 @@ import {
 
 const authRouter = new Hono()
 
-const aj = arcjet({
-  key: process.env.ARCJET_KEY!,
-  rules: [
-    validateEmail({
-      mode: "LIVE",
-      deny: ["DISPOSABLE", "INVALID", "NO_MX_RECORDS"],
-    }),
-  ],
-})
+// const aj = arcjet({
+//   key: process.env.ARCJET_KEY!,
+//   rules: [
+//     validateEmail({
+//       mode: "LIVE",
+//       deny: ["DISPOSABLE", "INVALID", "NO_MX_RECORDS"],
+//     }),
+//   ],
+// })
 
 authRouter.post("/register", async (c) => {
   const { name, email, password, role } = await c.req.json()
   try {
     const headers = Object.fromEntries(c.req.raw.headers.entries())
-    const decision = await aj.protect(headers, { email })
-    if (decision.isDenied()) {
-      return c.json({ message: "Disposable email not allowed!" }, 400)
-    }
+    // const decision = await aj.protect(headers, { email })
+    // if (decision.isDenied()) {
+    //   return c.json({ message: "Disposable email not allowed!" }, 400)
+    // }
 
     const isUserExist = await findUserByEmail(email)
     if (isUserExist) {
