@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm"
 import { authMiddleware } from "../../middleware/middleware.js"
 import { sign, verify, decode } from "hono/jwt"
 import { sendEmail } from "../../lib/email.js"
-import { hash, verify as verifyHash } from "argon2"
+import { hash, compare } from "bcryptjs"
 
 const userRouter = new Hono()
 
@@ -200,7 +200,7 @@ userRouter.post("/reset-password/:token", async (c) => {
     if (!payload.userId) return c.json({ message: "Invalid token" }, 400)
 
     // Hash new password
-    const hashedPassword = await hash(newPassword)
+    const hashedPassword = await hash(newPassword, 10)
 
     // Update password in database
     await db

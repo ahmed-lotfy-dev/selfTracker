@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm"
 import { emailVerifications, refreshTokens, users } from "../db/schema"
 import arcjet, { validateEmail } from "@arcjet/node"
 import { sendEmail } from "../../lib/email.js"
-import { hash, verify as verifyHash } from "argon2"
+import { hash, compare } from "bcryptjs"
 
 import {
   findUserByEmail,
@@ -41,7 +41,7 @@ authRouter.post("/register", async (c) => {
       return c.json({ message: "Email already exists!" }, 400)
     }
 
-    const hashedPassword = await hash(password)
+    const hashedPassword = await hash(password, 10)
     const [user] = await db
       .insert(users)
       .values({
@@ -103,7 +103,7 @@ authRouter.post("/login", async (c) => {
 
   const user = await findUserByEmail(email)
 
-  if (!user || !(await verifyHash(user.password, password))) {
+  if (!user || !(await compare(user.password, password))) {
     return c.json({ message: "Invalid email or password!" }, 401)
   }
   if (!user.isVerified) {
@@ -144,10 +144,7 @@ authRouter.post("/refresh-token", async (c) => {
 
     console.log({ storedToken, refreshToken })
 
-    if (
-      !storedToken ||
-      storedToken.expiresAt < new Date()
-    ) {
+    if (!storedToken || storedToken.expiresAt < new Date()) {
       return c.json({ message: "Invalid or expired refresh token!" }, 401)
     }
 

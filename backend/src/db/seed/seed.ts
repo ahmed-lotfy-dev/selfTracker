@@ -2,7 +2,7 @@ import { db } from "../index"
 import { users,  weightLogs, workoutLogs } from "../schema"
 import { workoutLogs as workoutLogsData } from "./workoutLogs"
 import { weightLogs as weightLogsData } from "./weightLogs"
-import { hash } from "argon2"
+import { hash } from "bcryptjs"
 
 // async function seed() {
 //   console.log("seeding data ...")

@@ -4,7 +4,7 @@ import { todoItems, users } from "../db/schema"
 import { eq } from "drizzle-orm"
 import { authMiddleware } from "../../middleware/middleware.js"
 import { sign, verify, decode } from "hono/jwt"
-import { hash, verify as verifyHash } from "argon2"
+import { hash } from "bcryptjs"
 
 const todosRouter = new Hono()
 

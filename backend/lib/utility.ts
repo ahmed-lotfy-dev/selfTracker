@@ -1,7 +1,6 @@
 import { db } from "../src/db/index.js"
 import { eq } from "drizzle-orm"
 import { decode, sign, verify } from "hono/jwt"
-import { hash, verify as verifyHash } from "argon2"
 import { refreshTokens, users } from "../src/db/schema"
 
 export async function generateTokens(user: any) {
