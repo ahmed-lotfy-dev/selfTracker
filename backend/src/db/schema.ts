@@ -17,6 +17,8 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   role: text("role", { enum: ["admin", "user"] }).default("user"),
   isVerified: boolean("is_verified").default(false),
+  resetToken: text("reset_token"),
+  resetTokenExpiresAt: timestamp("reset_token_expires_at"),
   weight: numeric("weight", { precision: 5, scale: 2 }),
   height: numeric("height", { precision: 5, scale: 2 }),
   unitSystem: text("unit_system", { enum: ["metric", "imperial"] }).default(
@@ -178,7 +180,7 @@ export const userGoals = pgTable("user_goals", {
   achieved: boolean("achieved").default(false), // Whether the goal is completed
   createdAt: timestamp("created_at").defaultNow(),
 })
- 
+
 // User Todo Items
 export const todoItems = pgTable("todo_items", {
   id: uuid("id").defaultRandom().primaryKey(),

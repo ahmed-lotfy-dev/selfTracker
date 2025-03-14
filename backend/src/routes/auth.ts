@@ -100,11 +100,15 @@ authRouter.get("/verify-email", async (c) => {
 
 authRouter.post("/login", async (c) => {
   const { email, password } = await c.req.json()
-
   const user = await findUserByEmail(email)
+  console.log(user)
+  if (!user ) {
+    return c.json({ message: "User Not Found!" }, 401)
+  }
 
-  if (!user || !(await compare(user.password, password))) {
-    return c.json({ message: "Invalid email or password!" }, 401)
+  const isPasswordValid = await compare(password, user.password)
+  if (!isPasswordValid) {
+    return c.json({ message: "Invalid credentials!" }, 401)
   }
   if (!user.isVerified) {
     return c.json(

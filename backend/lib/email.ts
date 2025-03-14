@@ -1,9 +1,8 @@
 import { Resend } from "resend"
 
 export const sendEmail = async (email: string, token: string, type: string) => {
+  const resend = new Resend("re_Z1wF35wP_GhDsCqmyMLGHnGgy719qGf4F")
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY)
-
     let subject = ""
     let text = ""
 

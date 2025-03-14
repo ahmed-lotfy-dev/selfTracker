@@ -14,7 +14,7 @@ app.use(logger())
 app.use(cors())
 app.route("/api/auth", authRouter)
 
-app.use("/api/users", authMiddleware)
+// app.use("/api/users", authMiddleware)
 app.route("/api/users", userRouter)
 
 app.use("/api/expenses", authMiddleware)

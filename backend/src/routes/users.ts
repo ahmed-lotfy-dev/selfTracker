@@ -1,15 +1,16 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
 import { userGoals, users } from "../db/schema"
-import { eq } from "drizzle-orm"
+import { and, eq, gt, isNotNull } from "drizzle-orm"
 import { authMiddleware } from "../../middleware/middleware.js"
 import { sign, verify, decode } from "hono/jwt"
 import { sendEmail } from "../../lib/email.js"
 import { hash, compare } from "bcryptjs"
+import { randomBytes } from "crypto"
 
 const userRouter = new Hono()
 
-userRouter.use("*", authMiddleware)
+// userRouter.use("*", authMiddleware)
 
 userRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -170,20 +171,29 @@ userRouter.delete("/:id", async (c) => {
 userRouter.post("/reset-password", async (c) => {
   const { email } = await c.req.json()
 
-  // Check if user exists
+  // Find user
   const user = await db.query.users.findFirst({ where: eq(users.email, email) })
-  if (!user)
+  if (!user) {
     return c.json({
       message: "If this email exists, a reset link has been sent.",
-    }) // Avoid leaking emails
+    })
+  }
 
-  // Generate reset token (valid for 1 hour)
-  const resetToken = await sign({ userId: user.id }, process.env.JWT_SECRET!)
+  const rawToken = randomBytes(32).toString("hex")
+  const hashedToken = await hash(rawToken, 10)
 
-  // Send email with reset link
-  const resetLink = `http://localhost:3000/api/users/reset-password/${resetToken}`
-  await sendEmail(user.email, resetToken, "reset")
+  await db
+    .update(users)
+    .set({
+      resetToken: hashedToken,
+      resetTokenExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+    })
+    .where(eq(users.id, user.id))
 
+  const resetLink = `${process.env.BASE_URL}/api/users/reset-password/${rawToken}`
+
+  // await sendEmail(user.email, resetLink, "reset")
+  console.log(rawToken)
   return c.json({
     message: "If this email exists, a reset link has been sent.",
   })
@@ -194,24 +204,38 @@ userRouter.post("/reset-password/:token", async (c) => {
   const { token } = c.req.param()
   const { newPassword } = await c.req.json()
 
-  try {
-    // Verify token
-    const payload = await verify(token, process.env.JWT_SECRET!)
-    if (!payload.userId) return c.json({ message: "Invalid token" }, 400)
+  // Find user with valid reset token
+  const user = await db.query.users.findFirst({
+    where: and(
+      isNotNull(users.resetToken),
+      isNotNull(users.resetTokenExpiresAt),
+      gt(users.resetTokenExpiresAt, new Date()) // Ensure token is not expired
+    ),
+  })
 
-    // Hash new password
-    const hashedPassword = await hash(newPassword, 10)
+  console.log("User found:", user)
 
-    // Update password in database
-    await db
-      .update(users)
-      .set({ password: hashedPassword })
-      .where(eq(users.id, payload.userId as string))
-
-    return c.json({ message: "Password reset successful" })
-  } catch (err) {
+  if (!user) {
     return c.json({ message: "Invalid or expired token" }, 400)
   }
+
+  // Hash the new password with bcryptjs
+  const hashedPassword = await hash(newPassword, 10)
+
+  // Update user password and clear reset token
+  await db
+    .update(users)
+    .set({
+      password: hashedPassword,
+      resetToken: null,
+      resetTokenExpiresAt: null,
+    })
+    .where(eq(users.id, user.id))
+
+  return c.json({
+    success: true,
+    message: "Password reset successful",
+  })
 })
 
 export default userRouter
