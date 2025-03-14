@@ -1,5 +1,4 @@
 import { Hono } from "hono"
-import { serve } from "@hono/node-server"
 import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 
@@ -40,10 +39,7 @@ app.onError((err, c) => {
   )
 })
 
-serve({
+export default {
   fetch: app.fetch,
   port: 5000,
-})
-
-console.log(process.env.PORT!)
-console.log(`Server is running on http://localhost:${process.env.PORT}`)
+}
