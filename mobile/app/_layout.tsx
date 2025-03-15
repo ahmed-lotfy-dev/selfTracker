@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import { Stack } from "expo-router"
 
@@ -10,6 +10,7 @@ import { createTamagui, TamaguiProvider, View } from "tamagui"
 import { config } from "@/tamagui.config"
 
 import { checkForUpdates, onAppStateChange } from "@/utils/lib"
+
 import {
   focusManager,
   QueryClient,
@@ -23,10 +24,6 @@ import { SafeAreaView } from "react-native-safe-area-context"
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 2 } },
-})
-
 export default function RootLayout() {
   useOnlineManager()
   useAppState(onAppStateChange)
@@ -36,11 +33,15 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
 
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: 2 } },
+  })
+
   useEffect(() => {
     async function prepareApp() {
       try {
         if (loaded) {
-          await checkForUpdates() // Check for updates when the app loads
+          // await checkForUpdates() // Check for updates when the app loads
           await SplashScreen.hideAsync() // Hide splash screen after updates check
           setAppIsReady(true)
         }
@@ -50,7 +51,8 @@ export default function RootLayout() {
     }
 
     prepareApp()
-  }, [loaded, checkForUpdates])
+    // in production add checkForUpdates in The dependency array
+  }, [loaded])
 
   if (!appIsReady) {
     return null // Keep splash screen until app is ready
@@ -61,10 +63,11 @@ export default function RootLayout() {
       <TamaguiProvider config={config}>
         <SafeAreaView style={{ flex: 1 }}>
           <Stack>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
-          <StatusBar style="auto" />
+          <StatusBar style="dark" translucent />
         </SafeAreaView>
       </TamaguiProvider>
     </QueryClientProvider>
