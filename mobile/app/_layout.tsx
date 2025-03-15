@@ -57,19 +57,16 @@ export default function RootLayout() {
   }
 
   return (
-    <>
-      <StatusBar style="auto" translucent />
-      <SafeAreaView style={{ flex: 1 }}>
-        <QueryClientProvider client={queryClient}>
-          <TamaguiProvider config={config}>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />g
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <StatusBar style="auto" />
-          </TamaguiProvider>
-        </QueryClientProvider>
-      </SafeAreaView>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <TamaguiProvider config={config}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </SafeAreaView>
+      </TamaguiProvider>
+    </QueryClientProvider>
   )
 }
