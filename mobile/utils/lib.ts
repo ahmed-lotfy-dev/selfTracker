@@ -3,6 +3,7 @@ import * as Updates from "expo-updates"
 import { AppState, AppStateStatus, Platform } from "react-native"
 import { focusManager } from "@tanstack/react-query"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import axiosInstance from "./api"
 
 // Check for updates
 export const checkForUpdates = async () => {
@@ -24,19 +25,27 @@ export function onAppStateChange(status: AppStateStatus) {
   }
 }
 
-export const setTokens = async (value: unknown) => {
+export const setToken = async (key: string, value: string) => {
   try {
-    const jsonValue = JSON.stringify(value)
-    await AsyncStorage.setItem("tokens", jsonValue)
+    await AsyncStorage.setItem(key, value)
   } catch (e: any) {
     console.log(e.message)
   }
 }
 
-export const getTokens = async () => {
+export const getToken = async (key: string) => {
   try {
-    const jsonValue = await AsyncStorage.getItem("tokens")
-    return jsonValue != null ? JSON.parse(jsonValue) : null
+    return await AsyncStorage.getItem(key)
+  } catch (e: any) {
+    console.log(e.message)
+  }
+}
+
+export const getAllUsers = async () => {
+  try {
+    const users = await axiosInstance.get("/api/users")
+    console.log(users)
+    return users
   } catch (e: any) {
     console.log(e.message)
   }

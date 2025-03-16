@@ -8,19 +8,24 @@ const JWT_SECRET = process.env.JWT_SECRET!
 
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
   const authHeader = c.req.header("Authorization")
+
   if (!authHeader) {
-    return c.json({ message: "Unauthorized!" }, 401)
+    return c.json(
+      { message: "Unauthorized: No authorization header provided" },
+      401
+    )
   }
 
   const token = authHeader.split(" ")[1]
   if (!token) {
-    return c.json({ message: "Invalid token format!" }, 401)
+    return c.json({ message: "Unauthorized: Invalid token format" }, 401)
   }
 
   try {
     const payload = await verify(token, JWT_SECRET)
+
     if (!payload || !payload.userId) {
-      return c.json({ message: "Invalid token!" }, 401)
+      return c.json({ message: "Unauthorized: Invalid token payload" }, 401)
     }
 
     const user = await db.query.users.findFirst({
@@ -28,14 +33,15 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
       columns: { id: true, email: true, role: true, isVerified: true },
     })
 
-    // if (user!.role !== "admin") {
-    //   return c.json({ message: "Access denied: insufficient permissions" }, 403)
-    // }
+    if (!user) {
+      return c.json({ message: "Unauthorized: User not found" }, 401)
+    }
 
     c.set("user", user)
 
-    await next() 
+    await next()
   } catch (err) {
-    return c.json({ message: "Invalid or expired token!" }, 401)
+    console.error("JWT Verification Error:", err)
+    return c.json({ message: "Unauthorized: Invalid or expired token" }, 401)
   }
 }

@@ -5,11 +5,11 @@ import { verify } from "hono/jwt"
 import { eq } from "drizzle-orm"
 import { expenses } from "../db/schema"
 
-const expensesRoute = new Hono()
+const expensesRouter = new Hono()
 
-expensesRoute.use("*", authMiddleware)
+expensesRouter.use("*", authMiddleware)
 
-expensesRoute.get("/", async (c) => {
+expensesRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
   const expensesList = await db.query.expenses.findMany({
@@ -18,4 +18,4 @@ expensesRoute.get("/", async (c) => {
   return c.json({ success: "true", expenses: expensesList })
 })
 
-export default expensesRoute
+export default expensesRouter

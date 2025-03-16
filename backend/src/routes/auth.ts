@@ -102,7 +102,7 @@ authRouter.post("/login", async (c) => {
   const { email, password } = await c.req.json()
   const user = await findUserByEmail(email)
   console.log(user)
-  if (!user ) {
+  if (!user) {
     return c.json({ message: "User Not Found!" }, 401)
   }
 
@@ -207,7 +207,27 @@ authRouter.post("/logout", async (c) => {
   const refreshToken = c.req.header("Authorization")?.split(" ")[1]
   if (!refreshToken) return c.json({ message: "Refresh token required!" }, 400)
 
-  await db.delete(refreshTokens).where(eq(refreshTokens.token, refreshToken))
+  // Check if the token exists in the database
+  const existingToken = await db
+    .select()
+    .from(refreshTokens)
+    .where(eq(refreshTokens.token, refreshToken))
+
+  if (existingToken.length === 0) {
+    return c.json({ message: "Token not found, already deleted?" }, 400)
+  }
+
+  // Delete the refresh token
+  const deletedToken = await db
+    .delete(refreshTokens)
+    .where(eq(refreshTokens.token, refreshToken))
+    .returning() // Ensure deletion happens
+
+  console.log("Deleted Token:", deletedToken)
+
+  if (deletedToken.length === 0) {
+    return c.json({ message: "Failed to delete token!" }, 500)
+  }
 
   return c.json({ message: "Logout successful!" })
 })
