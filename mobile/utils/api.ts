@@ -1,10 +1,10 @@
 import axios from "axios"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const BASE_URL =
+export const BASE_URL =
   process.env.NODE_ENV === "development"
-    ? "http://localhost:5000/"
-    : "https://selftracker.ahmedlotfy.dev/"
+    ? "http://localhost:5000"
+    : "https://selftracker.ahmedlotfy.dev"
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -51,14 +51,14 @@ axiosInstance.interceptors.response.use(
 
         // 🔥 Retry the original request with new token
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
-        return axiosInstance(originalRequest) 
+        return axiosInstance(originalRequest)
       } catch (refreshError) {
         console.error("Refresh Token Error:", refreshError)
         return Promise.reject(refreshError) // Logout user if refresh fails
       }
     }
 
-    return Promise.reject(error) 
+    return Promise.reject(error)
   }
 )
 

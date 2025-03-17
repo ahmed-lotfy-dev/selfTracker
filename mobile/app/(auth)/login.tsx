@@ -1,8 +1,11 @@
-import axiosInstance from "@/utils/api"
+import axiosInstance, { BASE_URL } from "@/utils/api"
 import { setToken } from "@/utils/lib"
 import React, { useState } from "react"
 import { Form, Input, Text, View, Button, Spinner } from "tamagui"
 import { useRouter } from "expo-router"
+import useAuthStore from "@/store/useAuthStore"
+import axios from "axios"
+import { UserType } from "@/types/userType"
 
 export default function Login() {
   const router = useRouter()
@@ -17,17 +20,38 @@ export default function Login() {
     setStatus("submitting")
 
     try {
-      const { data: tokens } = await axiosInstance.post("/api/auth/login", {
+      // Step 1: Login and get tokens
+      const response = await axiosInstance.post("/api/auth/login", {
         email,
         password,
       })
-      console.log(tokens)
+
+      const { accessToken, refreshToken } = response.data
+      console.log({ accessToken, refreshToken })
+
+      // Step 2: Store tokens in Zustand and AsyncStorage
+      useAuthStore.getState().setTokens(accessToken, refreshToken)
+      await setToken("accessToken", accessToken)
+      await setToken("refreshToken", refreshToken)
+
+      // Step 3: Fetch user data
+      const { data: user } = await axios.get<UserType>(
+        `${BASE_URL}/api/users/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
+
+      // Step 4: Store user data in Zustand
+      useAuthStore.getState().setUser(user)
+
+      // Step 5: Redirect to home
       setStatus("submitted")
-      setToken("accessToken", tokens.accessToken)
-      setToken("refreshToken", tokens.refreshToken)
-      const {data:user} = axiosInstance.get("/api/users/me")
       router.replace("/")
     } catch (error: any) {
+      console.error("Login failed:", error)
       setErrorMessage(error.response?.data?.message || "Login failed")
       setStatus("off")
     }
@@ -52,6 +76,7 @@ export default function Login() {
         <Form.Trigger asChild>
           <Button
             icon={status === "submitting" ? () => <Spinner /> : undefined}
+            disabled={status === "submitting"}
           >
             Login
           </Button>

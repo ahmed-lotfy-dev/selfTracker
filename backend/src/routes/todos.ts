@@ -8,7 +8,7 @@ import { hash } from "bcryptjs"
 
 const todosRouter = new Hono()
 
-todosRouter.use("*", authMiddleware)
+todosRouter.use(authMiddleware)
 
 // Get all Todos
 todosRouter.get("/", async (c) => {

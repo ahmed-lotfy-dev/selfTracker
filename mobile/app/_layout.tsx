@@ -15,11 +15,14 @@ import {
   focusManager,
   QueryClient,
   QueryClientProvider,
+  useQuery,
 } from "@tanstack/react-query"
 import { AppStateStatus, Platform } from "react-native"
 import { useOnlineManager } from "@/hooks/useOnlineManager"
 import { useAppState } from "@/hooks/useAppState"
 import { SafeAreaView } from "react-native-safe-area-context"
+import axiosInstance from "@/utils/api"
+import { AppProviders } from "@/components/AppProviders"
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -33,9 +36,6 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
 
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: 2 } },
-  })
 
   useEffect(() => {
     async function prepareApp() {
@@ -59,17 +59,12 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TamaguiProvider config={config}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <Stack>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="dark" translucent />
-        </SafeAreaView>
-      </TamaguiProvider>
-    </QueryClientProvider>
+    <AppProviders>
+      <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+    </AppProviders>
   )
 }

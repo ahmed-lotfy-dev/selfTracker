@@ -7,7 +7,7 @@ import { expenses } from "../db/schema"
 
 const expensesRouter = new Hono()
 
-expensesRouter.use("*", authMiddleware)
+expensesRouter.use(authMiddleware)
 
 expensesRouter.get("/", async (c) => {
   const user = c.get("user" as any)

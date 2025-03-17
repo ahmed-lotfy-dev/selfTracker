@@ -2,8 +2,11 @@ import { Hono } from "hono"
 import { workoutLogs } from "../db/schema"
 import { db } from "../db"
 import { eq } from "drizzle-orm"
+import { authMiddleware } from "../../middleware/middleware"
 
 const workoutRouter = new Hono()
+
+workoutRouter.use(authMiddleware)
 
 workoutRouter.get("/", async (c) => {
   const user = c.get("user" as any)

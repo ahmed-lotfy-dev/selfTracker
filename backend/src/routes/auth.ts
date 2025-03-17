@@ -101,7 +101,6 @@ authRouter.get("/verify-email", async (c) => {
 authRouter.post("/login", async (c) => {
   const { email, password } = await c.req.json()
   const user = await findUserByEmail(email)
-  console.log(user)
   if (!user) {
     return c.json({ message: "User Not Found!" }, 401)
   }
@@ -121,7 +120,7 @@ authRouter.post("/login", async (c) => {
 
   await db.insert(refreshTokens).values({
     userId: user.id,
-    token: refreshToken, // Store as plain text
+    token: refreshToken,
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiry
   })
 
@@ -204,60 +203,41 @@ authRouter.post("/resend-verification", async (c) => {
 })
 
 authRouter.post("/logout", async (c) => {
-  const refreshToken = c.req.header("Authorization")?.split(" ")[1]
-  if (!refreshToken) return c.json({ message: "Refresh token required!" }, 400)
-
-  // Check if the token exists in the database
-  const existingToken = await db
-    .select()
-    .from(refreshTokens)
-    .where(eq(refreshTokens.token, refreshToken))
-
-  if (existingToken.length === 0) {
-    return c.json({ message: "Token not found, already deleted?" }, 400)
-  }
-
-  // Delete the refresh token
-  const deletedToken = await db
-    .delete(refreshTokens)
-    .where(eq(refreshTokens.token, refreshToken))
-    .returning() // Ensure deletion happens
-
-  console.log("Deleted Token:", deletedToken)
-
-  if (deletedToken.length === 0) {
-    return c.json({ message: "Failed to delete token!" }, 500)
-  }
-
-  return c.json({ message: "Logout successful!" })
-})
-
-authRouter.get("/me", async (c) => {
   const authHeader = c.req.header("Authorization")
-  if (!authHeader) return c.json({ message: "Unauthorized!" }, 401)
 
-  const token = authHeader.split(" ")[1]
-  if (!token) return c.json({ message: "Invalid token format!" }, 401)
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return c.json({ message: "Authorization header is required!" }, 401)
+  }
+
+  const refreshToken = authHeader.split(" ")[1]
+  if (!refreshToken) {
+    return c.json({ message: "Invalid token format!" }, 401)
+  }
 
   try {
-    const decoded = await verify(token, process.env.JWT_SECRET!)
-    if (!decoded) return c.json({ message: "Invalid token!" }, 401)
+    const existingToken = await db
+      .select()
+      .from(refreshTokens)
+      .where(eq(refreshTokens.token, refreshToken))
+      .execute()
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, (decoded.payload as { userId: string }).userId),
-      columns: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isVerified: true,
-      },
-    })
-    if (!user) return c.json({ message: "User not found!" }, 404)
+    if (existingToken.length === 0) {
+      return c.json({ message: "Token not found or already deleted!" }, 404)
+    }
 
-    return c.json({ user })
-  } catch {
-    return c.json({ message: "Invalid or expired token!" }, 401)
+    const deletedToken = await db
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.token, refreshToken))
+      .returning()
+
+    if (deletedToken.length === 0) {
+      return c.json({ message: "Failed to delete token!" }, 500)
+    }
+
+    return c.json({ message: "Logout successful!" })
+  } catch (error) {
+    console.error("Error during logout:", error)
+    return c.json({ message: "Internal server error" }, 500)
   }
 })
 

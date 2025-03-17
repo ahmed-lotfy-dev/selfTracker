@@ -2,8 +2,11 @@ import { Hono } from "hono"
 import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq } from "drizzle-orm"
+import { authMiddleware } from "../../middleware/middleware"
 
 const weightsRouter = new Hono()
+
+weightsRouter.use(authMiddleware)
 
 weightsRouter.get("/", async (c) => {
   const user = c.get("user" as any)

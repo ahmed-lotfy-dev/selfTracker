@@ -10,7 +10,7 @@ import { randomBytes } from "crypto"
 
 const userRouter = new Hono()
 
-// userRouter.use("*", authMiddleware)
+userRouter.use(authMiddleware)
 
 userRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -20,6 +20,36 @@ userRouter.get("/", async (c) => {
   }
   const userList = await db.query.users.findMany()
   return c.json(userList)
+})
+
+userRouter.get("/me", async (c) => {
+  const user = c.get("user" as any)
+
+  if (!user || !user.id) {
+    return c.json(
+      { success: false, message: "Unauthorized: User not found in context" },
+      401
+    )
+  }
+
+  try {
+    // Fetch the user from the database
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.id, user.id as string),
+    })
+
+    if (!dbUser) {
+      return c.json(
+        { success: false, message: "User not found in the database" },
+        404
+      )
+    }
+
+    return c.json({ success: true, user: dbUser })
+  } catch (error) {
+    console.error("Error fetching user data:", error)
+    return c.json({ success: false, message: "Internal server error" }, 500)
+  }
 })
 
 userRouter.patch("/:id", async (c) => {
@@ -150,7 +180,6 @@ userRouter.post("/goals", async (c) => {
   }
 })
 
-// Delete user
 userRouter.delete("/:id", async (c) => {
   const token = c.req.header("Authorization")
   const decoded = decode(token!)
@@ -199,7 +228,6 @@ userRouter.post("/reset-password", async (c) => {
   })
 })
 
-// Reset password with token
 userRouter.post("/reset-password/:token", async (c) => {
   const { token } = c.req.param()
   const { newPassword } = await c.req.json()

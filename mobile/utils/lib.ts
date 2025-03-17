@@ -50,3 +50,13 @@ export const getAllUsers = async () => {
     console.log(e.message)
   }
 }
+
+export const getUserData = async () => {
+  try {
+    const userData = await axiosInstance.get("/api/users/me")
+    console.log(userData)
+    return userData
+  } catch (e: any) {
+    console.log(e.message)
+  }
+}
