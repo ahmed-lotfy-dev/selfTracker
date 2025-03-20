@@ -1,12 +1,16 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
-import { userGoals, users } from "../db/schema"
-import { and, eq, gt, isNotNull } from "drizzle-orm"
+import { emailVerifications, userGoals, users } from "../db/schema"
+import { and, eq, gt, is, isNotNull } from "drizzle-orm"
 import { authMiddleware } from "../../middleware/middleware.js"
 import { sign, verify, decode } from "hono/jwt"
 import { sendEmail } from "../../lib/email.js"
 import { hash, compare } from "bcryptjs"
 import { randomBytes } from "crypto"
+import {
+  findUserByEmail,
+  generateVerificationToken,
+} from "../../lib/utility.js"
 
 const userRouter = new Hono()
 
@@ -33,7 +37,6 @@ userRouter.get("/me", async (c) => {
   }
 
   try {
-    // Fetch the user from the database
     const dbUser = await db.query.users.findFirst({
       where: eq(users.id, user.id as string),
     })
@@ -79,17 +82,65 @@ userRouter.patch("/:id", async (c) => {
   }
 })
 
+userRouter.get("/check-verification", async (c) => {
+  try {
+    const user = c.get("user" as any)
+    console.log(user)
+    if (!user) {
+      return c.json({ message: "Unauthorized: User not found" }, 401)
+    }
+    if (!user.isVerified) {
+      return c.json(
+        { message: "User is not verified,please verify your email" },
+        401
+      )
+    }
+
+    return c.json({
+      sucess: "true",
+      message: "User is verified",
+      isVerified: user.isVerified,
+    })
+  } catch (err) {
+    console.error("JWT Verification Error:", err)
+    return c.json({ message: "Unauthorized: Invalid or expired token" }, 401)
+  }
+})
+
+userRouter.post("/resend-verification", async (c) => {
+  const { email } = await c.req.json()
+  if (!email) return c.json({ message: "Email is required!" }, 400)
+
+  const user = await findUserByEmail(email)
+  if (!user) return c.json({ message: "User not found!" }, 404)
+
+  if (user.isVerified)
+    return c.json({ message: "Email is already verified!" }, 400)
+
+  await db
+    .delete(emailVerifications)
+    .where(eq(emailVerifications.userId, user.id))
+
+  const newVerificationToken = await generateVerificationToken(user.id)
+  await db.insert(emailVerifications).values({
+    token: newVerificationToken,
+    userId: user.id,
+    expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour expiry
+  })
+
+  sendEmail(email, newVerificationToken, "activate")
+  return c.json({ message: "New verification email sent!" })
+})
+
 userRouter.patch("/onboarding", async (c) => {
   try {
     const { userId, weight, height, unitSystem, currency, income } =
       await c.req.json()
 
-    // Validate required fields
     if (!userId || !weight || !height || !unitSystem || !currency || !income) {
       return c.json({ success: false, message: "All fields are required" }, 400)
     }
 
-    // Validate unitSystem
     if (!["metric", "imperial"].includes(unitSystem)) {
       return c.json(
         {
@@ -127,12 +178,10 @@ userRouter.post("/goals", async (c) => {
     const user = c.get("user" as any)
     const { goalType, targetValue, deadline } = await c.req.json()
 
-    // Validate required fields
     if (!goalType || !targetValue || !deadline) {
       return c.json({ success: false, message: "All fields are required" }, 400)
     }
 
-    // Validate goalType
     const validGoalTypes = ["loseWeight", "gainWeight", "bodyFat", "muscleMass"]
     if (!validGoalTypes.includes(goalType)) {
       return c.json(
@@ -146,7 +195,6 @@ userRouter.post("/goals", async (c) => {
       )
     }
 
-    // Check if user exists
     const userExists = await db
       .select()
       .from(users)
@@ -155,7 +203,6 @@ userRouter.post("/goals", async (c) => {
       return c.json({ success: false, message: "User not found" }, 404)
     }
 
-    // Insert new goal into database
     const newGoal = await db
       .insert(userGoals)
       .values({
@@ -200,7 +247,6 @@ userRouter.delete("/:id", async (c) => {
 userRouter.post("/reset-password", async (c) => {
   const { email } = await c.req.json()
 
-  // Find user
   const user = await db.query.users.findFirst({ where: eq(users.email, email) })
   if (!user) {
     return c.json({
@@ -232,7 +278,6 @@ userRouter.post("/reset-password/:token", async (c) => {
   const { token } = c.req.param()
   const { newPassword } = await c.req.json()
 
-  // Find user with valid reset token
   const user = await db.query.users.findFirst({
     where: and(
       isNotNull(users.resetToken),
@@ -247,10 +292,8 @@ userRouter.post("/reset-password/:token", async (c) => {
     return c.json({ message: "Invalid or expired token" }, 400)
   }
 
-  // Hash the new password with bcryptjs
   const hashedPassword = await hash(newPassword, 10)
 
-  // Update user password and clear reset token
   await db
     .update(users)
     .set({

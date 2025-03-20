@@ -3,43 +3,58 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { UserType } from "@/types/userType"
 
+// Define the state and actions
 type AuthState = {
   user: UserType | null
   accessToken: string | null
   refreshToken: string | null
+}
+
+type AuthActions = {
   setUser: (user: UserType) => void
   setTokens: (accessToken: string, refreshToken?: string) => Promise<void>
   logout: () => Promise<void>
-  loadRefreshToken: () => Promise<void>
 }
 
-const useAuthStore = create<AuthState>()((set, get) => ({
-  user: null,
-  accessToken: null,
-  refreshToken: null,
+type AuthStore = AuthState & AuthActions
 
-  setUser: (user) => set({ user }),
+const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
 
-  setTokens: async (accessToken, refreshToken) => {
-    console.log("Setting tokens:", { accessToken, refreshToken }) // Log tokens for debugging
-    set({ accessToken })
-    if (refreshToken) {
-      await AsyncStorage.setItem("refreshToken", refreshToken)
-      set({ refreshToken })
+      setUser: (user) => set({ user }),
+
+      setTokens: async (accessToken, refreshToken) => {
+        await AsyncStorage.multiSet([
+          ["accessToken", accessToken],
+          ["refreshToken", refreshToken || ""],
+        ])
+        set({ accessToken, refreshToken })
+      },
+
+      logout: async () => {
+        await AsyncStorage.multiRemove(["accessToken", "refreshToken"])
+        set({ user: null, accessToken: null, refreshToken: null })
+      },
+    }),
+    {
+      name: "auth-storage",
+      storage: createJSONStorage(() => AsyncStorage), 
     }
-  },
+  )
+)
 
-  logout: async () => {
-    await AsyncStorage.removeItem("refreshToken")
-    set({ user: null, accessToken: null, refreshToken: null })
-  },
+export const useAccessToken = () => useAuthStore((state) => state.accessToken)
+export const useRefreshToken = () => useAuthStore((state) => state.refreshToken)
+export const useUser = () => useAuthStore((state) => state.user)
 
-  loadRefreshToken: async () => {
-    const storedRefreshToken = await AsyncStorage.getItem("refreshToken")
-    if (storedRefreshToken) {
-      set({ refreshToken: storedRefreshToken })
-    }
-  },
-}))
+export const useAuthActions = () => {
+  const setUser = useAuthStore((state) => state.setUser)
+  const setTokens = useAuthStore((state) => state.setTokens)
+  const logout = useAuthStore((state) => state.logout)
 
-export default useAuthStore
+  return { setUser, setTokens, logout }
+}

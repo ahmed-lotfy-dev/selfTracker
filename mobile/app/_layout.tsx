@@ -21,7 +21,7 @@ import { AppStateStatus, Platform } from "react-native"
 import { useOnlineManager } from "@/hooks/useOnlineManager"
 import { useAppState } from "@/hooks/useAppState"
 import { SafeAreaView } from "react-native-safe-area-context"
-import axiosInstance from "@/utils/api"
+import axiosInstance from "@/utils/api/axiosInstane"
 import { AppProviders } from "@/components/AppProviders"
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -35,7 +35,6 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
-
 
   useEffect(() => {
     async function prepareApp() {
@@ -62,7 +61,7 @@ export default function RootLayout() {
     <AppProviders>
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(home)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     </AppProviders>

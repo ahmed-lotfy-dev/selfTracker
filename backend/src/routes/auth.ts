@@ -3,7 +3,12 @@ import { decode, verify } from "hono/jwt"
 
 import { db } from "../db/index.js"
 import { eq } from "drizzle-orm"
-import { emailVerifications, refreshTokens, users } from "../db/schema"
+import {
+  emailVerifications,
+  refreshTokens,
+  users,
+  type User,
+} from "../db/schema"
 import arcjet, { validateEmail } from "@arcjet/node"
 import { sendEmail } from "../../lib/email.js"
 import { hash, compare } from "bcryptjs"
@@ -14,6 +19,7 @@ import {
   generateTokens,
   generateVerificationToken,
 } from "../../lib/utility.js"
+import { authMiddleware } from "../../middleware/middleware.js"
 
 const authRouter = new Hono()
 
@@ -30,7 +36,7 @@ const authRouter = new Hono()
 authRouter.post("/register", async (c) => {
   const { name, email, password, role } = await c.req.json()
   try {
-    const headers = Object.fromEntries(c.req.raw.headers.entries())
+    // const headers = Object.fromEntries(c.req.raw.headers.entries())
     // const decision = await aj.protect(headers, { email })
     // if (decision.isDenied()) {
     //   return c.json({ message: "Disposable email not allowed!" }, 400)
@@ -59,8 +65,13 @@ authRouter.post("/register", async (c) => {
       expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour expiry
     })
 
-    sendEmail(email, verificationToken, "activate")
+    const { accessToken, refreshToken } = await generateTokens(user)
+
+    // sendEmail(email, verificationToken, "activate")
     return c.json({
+      success: true,
+      accessToken,
+      refreshToken,
       message: "User registered successfully. Verify your email!",
     })
   } catch (err) {

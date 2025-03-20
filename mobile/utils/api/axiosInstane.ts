@@ -1,36 +1,25 @@
 import axios from "axios"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-
-export const BASE_URL =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:5000"
-    : "https://selftracker.ahmedlotfy.dev"
+import { API_BASE_URL } from "./auth"
 
 const axiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 })
 
-const getAccessToken = async () => {
-  return await AsyncStorage.getItem("accessToken")
-}
-
-// 🔥 Request Interceptor: Attach Access Token
 axiosInstance.interceptors.request.use(async (config) => {
-  const token = await getAccessToken()
+  const token = await AsyncStorage.getItem("accessToken")
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
-// 🔥 Response Interceptor: Handle 401 Errors and Refresh Token
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
 
-    // If error is 401 Unauthorized and it's NOT a retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
@@ -40,21 +29,28 @@ axiosInstance.interceptors.response.use(
           throw new Error("No refresh token found, logout required")
         }
 
-        // 🔥 Request a new access token
         const refreshResponse = await axios.post(
-          `${BASE_URL}/api/auth/refresh-token`,
-          { refreshToken }
+          `${API_BASE_URL}/api/auth/refresh-token`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${refreshToken}`,
+            },
+          }
         )
-        const newAccessToken = refreshResponse.data.accessToken
 
+        const newAccessToken = refreshResponse.data.accessToken
         await AsyncStorage.setItem("accessToken", newAccessToken)
 
-        // 🔥 Retry the original request with new token
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         return axiosInstance(originalRequest)
       } catch (refreshError) {
         console.error("Refresh Token Error:", refreshError)
-        return Promise.reject(refreshError) // Logout user if refresh fails
+        await AsyncStorage.removeItem("accessToken")
+        await AsyncStorage.removeItem("refreshToken")
+        // Redirect to login (use navigation in React Native)
+        window.location.href = "/login"
+        return Promise.reject(refreshError)
       }
     }
 

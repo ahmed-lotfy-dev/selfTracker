@@ -3,7 +3,11 @@ import * as Updates from "expo-updates"
 import { AppState, AppStateStatus, Platform } from "react-native"
 import { focusManager } from "@tanstack/react-query"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import axiosInstance from "./api"
+import axiosInstance from "./api/axiosInstane"
+import { API_BASE_URL } from "./api/auth"
+
+import axios from "axios"
+import { UserType } from "@/types/userType"
 
 // Check for updates
 export const checkForUpdates = async () => {
@@ -51,12 +55,29 @@ export const getAllUsers = async () => {
   }
 }
 
-export const getUserData = async () => {
+export const getUserData = async (): Promise<UserType> => {
   try {
-    const userData = await axiosInstance.get("/api/users/me")
-    console.log(userData)
-    return userData
-  } catch (e: any) {
-    console.log(e.message)
+    const accessToken = await AsyncStorage.getItem("accessToken")
+
+    if (!accessToken) {
+      throw new Error("No access token found")
+    }
+
+    const { data: user } = await axios.get<UserType>(
+      `${API_BASE_URL}/api/users/me`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    )
+
+    return user
+  } catch (error: any) {
+    console.error("Failed to fetch user data:", error.message)
+
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch user data"
+    )
   }
 }
