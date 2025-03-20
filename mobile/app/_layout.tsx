@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
-import { Stack } from "expo-router"
+import { Stack, useRouter } from "expo-router"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 import * as SplashScreen from "expo-splash-screen"
 import { StatusBar } from "expo-status-bar"
@@ -31,6 +32,8 @@ export default function RootLayout() {
   useOnlineManager()
   useAppState(onAppStateChange)
 
+  const router = useRouter()
+
   const [appIsReady, setAppIsReady] = useState(false)
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -52,6 +55,18 @@ export default function RootLayout() {
     prepareApp()
     // in production add checkForUpdates in The dependency array
   }, [loaded])
+
+  useEffect(() => {
+    async function checkAuth() {
+      const accessToken = await AsyncStorage.getItem("accessToken")
+      const refreshToken = await AsyncStorage.getItem("refreshToken")
+      if (!accessToken || !refreshToken) {
+        router.replace("/welcome")
+      }
+    }
+
+    checkAuth()
+  }, [])
 
   if (!appIsReady) {
     return null // Keep splash screen until app is ready

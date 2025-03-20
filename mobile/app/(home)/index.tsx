@@ -1,6 +1,6 @@
 import { View, Text } from "tamagui"
 
-export default function TabsLayout() {
+export default function HomeScreen() {
   return (
     <View>
       <Text>Home Screen</Text>
