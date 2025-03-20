@@ -7,39 +7,26 @@ import { eq } from "drizzle-orm"
 const JWT_SECRET = process.env.JWT_SECRET!
 
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
-  const authHeader = c.req.header("Authorization")
-  if (!authHeader) {
-    return c.json(
-      { message: "Unauthorized: No authorization header provided" },
-      401
-    )
-  }
-
-  const token = authHeader.split(" ")[1]
-  if (!token) {
-    return c.json({ message: "Unauthorized: Invalid token format" }, 401)
-  }
-
   try {
+    const authHeader = c.req.header("Authorization")
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return c.json({ error: "Unauthorized: Missing token" }, 401)
+    }
+
+    const token = authHeader.split(" ")[1]
+
     const payload = await verify(token, process.env.JWT_SECRET!)
 
-    if (!payload || !payload.userId) {
-      return c.json({ message: "Unauthorized: Invalid token payload" }, 401)
+    if (!payload?.id) {
+      console.log("🚨 Invalid Token Payload:", payload)
+      return c.json({ error: "Unauthorized: Invalid token data" }, 401)
     }
 
-    const user = await db.query.users.findFirst({
-      where: (u) => eq(u.id, payload.userId as string),
-      columns: { id: true, email: true, role: true, isVerified: true },
-    })
-    if (!user) {
-      return c.json({ message: "Unauthorized: User not found" }, 401)
-    }
-
-    c.set("user", user)
-
+    c.set("user", payload)
     await next()
-  } catch (err) {
-    console.error("JWT Verification Error:", err)
-    return c.json({ message: "Unauthorized: Invalid or expired token" }, 401)
+  } catch (error) {
+    console.error("🚨 Auth Middleware Error:", error)
+    return c.json({ error: "Invalid or expired token" }, 401)
   }
 }

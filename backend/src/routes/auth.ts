@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { decode, verify } from "hono/jwt"
+import { decode } from "hono/jwt"
 
 import { db } from "../db/index.js"
 import { eq } from "drizzle-orm"
@@ -152,32 +152,41 @@ authRouter.post("/refresh-token", async (c) => {
     const refreshToken = authHeader.split(" ")[1]
     if (!refreshToken) return c.json({ message: "Invalid token format!" }, 401)
 
+    // Find the stored refresh token in the database
     const storedToken = await db.query.refreshTokens.findFirst({
       where: eq(refreshTokens.token, refreshToken),
     })
 
     console.log({ storedToken, refreshToken })
 
-    if (!storedToken || storedToken.expiresAt < new Date()) {
-      return c.json({ message: "Invalid or expired refresh token!" }, 401)
+    if (!storedToken || !storedToken.userId) {
+      return c.json({ message: "Invalid refresh token!" }, 401)
     }
 
-    const user = await findUserById(storedToken.userId!)
+    // Convert expiresAt to Date and check if expired
+    if (new Date(storedToken.expiresAt) < new Date()) {
+      return c.json({ message: "Expired refresh token!" }, 401)
+    }
+
+    const user = await findUserById(storedToken.userId)
     if (!user) return c.json({ message: "User not found!" }, 404)
 
+    // Generate new tokens
     const { accessToken, refreshToken: newRefreshToken } = await generateTokens(
       user
     )
 
     await db.transaction(async (trx) => {
+      // Delete ONLY the used refresh token instead of all tokens for the user
       await trx
         .delete(refreshTokens)
-        .where(eq(refreshTokens.userId, storedToken.userId!))
+        .where(eq(refreshTokens.token, refreshToken))
 
+      // Insert new refresh token
       await trx.insert(refreshTokens).values({
         userId: storedToken.userId,
         token: newRefreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiration
       })
     })
 

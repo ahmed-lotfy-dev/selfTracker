@@ -85,7 +85,6 @@ userRouter.patch("/:id", async (c) => {
 userRouter.get("/check-verification", async (c) => {
   try {
     const user = c.get("user" as any)
-    console.log(user)
     if (!user) {
       return c.json({ message: "Unauthorized: User not found" }, 401)
     }

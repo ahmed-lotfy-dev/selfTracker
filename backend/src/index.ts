@@ -12,21 +12,25 @@ import { authMiddleware } from "../middleware/middleware.js"
 
 const app = new Hono()
 
+app.use(
+  cors({
+    origin: "*", // Set to "*" or explicitly define "http://localhost:8081"
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+)
+
 app.use(logger())
-app.use(cors())
 
 app.route("/api/auth", authRouter)
 
-app.use("/api/users", authMiddleware)
 app.route("/api/users", userRouter)
 
-app.use("/api/expenses", authMiddleware)
 app.route("/api/expenses", expensesRouter)
 
-app.use("/api/weights", authMiddleware)
 app.route("/api/weights", weightsRouter)
 
-app.use("/api/workouts", authMiddleware)
 app.route("/api/workouts", workoutRouter)
 
 app.get("/", async (c) => {

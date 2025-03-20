@@ -5,7 +5,7 @@ import axios from "axios"
 import { UserType } from "@/types/userType"
 import { login } from "@/utils/api/auth"
 import { useAuthActions } from "@/store/useAuthStore"
-import { setToken } from "@/utils/lib"
+import { setAccessToken, setRefreshToken } from "@/utils/storage"
 
 export default function Login() {
   const router = useRouter()
@@ -21,13 +21,12 @@ export default function Login() {
     setStatus("submitting")
     try {
       const response = await login(email, password)
-      console.log(response)
       const { accessToken, refreshToken } = response
 
       setTokens(accessToken, refreshToken)
 
-      await setToken("accessToken", accessToken)
-      await setToken("refreshToken", refreshToken)
+      await setAccessToken(accessToken)
+      await setRefreshToken(refreshToken)
 
       setStatus("submitted")
 

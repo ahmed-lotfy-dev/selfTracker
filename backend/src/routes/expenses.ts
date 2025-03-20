@@ -1,7 +1,6 @@
 import { Hono } from "hono"
 import { authMiddleware } from "../../middleware/middleware"
 import { db } from "../db"
-import { verify } from "hono/jwt"
 import { eq } from "drizzle-orm"
 import { expenses } from "../db/schema"
 

@@ -2,9 +2,9 @@ import React, { useState } from "react"
 import { View, Text, Form, Input, Button, Spinner } from "tamagui"
 import { useRouter } from "expo-router"
 import axiosInstance from "@/utils/api/axiosInstane"
-import { setToken } from "@/utils/lib"
 import { useAuthActions } from "@/store/useAuthStore"
 import { register } from "@/utils/api/auth"
+import { setAccessToken, setRefreshToken } from "@/utils/storage"
 
 export default function Register() {
   const router = useRouter()
@@ -32,8 +32,10 @@ export default function Register() {
       const { accessToken, refreshToken } = response
 
       setTokens(accessToken, refreshToken)
-      await setToken("accessToken", accessToken)
-      await setToken("refreshToken", refreshToken)
+
+      await setAccessToken(accessToken)
+      await setRefreshToken(refreshToken)
+
       router.replace("/verify-email")
 
       setStatus("submitted")

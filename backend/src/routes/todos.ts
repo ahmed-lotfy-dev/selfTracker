@@ -3,7 +3,7 @@ import { db } from "../db/index.js"
 import { todoItems, users } from "../db/schema"
 import { eq } from "drizzle-orm"
 import { authMiddleware } from "../../middleware/middleware.js"
-import { sign, verify, decode } from "hono/jwt"
+import { sign } from "hono/jwt"
 import { hash } from "bcryptjs"
 
 const todosRouter = new Hono()
@@ -60,7 +60,7 @@ todosRouter.patch("/:id", async (c) => {
     const todo = await db.query.todoItems.findFirst({
       where: eq(todoItems.id, id),
     })
-    if(!todo){
+    if (!todo) {
       return c.json({ success: false, message: "Todo not found" }, 404)
     }
     const updatedTodo = await db

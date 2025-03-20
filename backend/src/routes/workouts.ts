@@ -1,8 +1,9 @@
 import { Hono } from "hono"
-import { workoutLogs } from "../db/schema"
+import { workoutLogs, workouts } from "../db/schema"
 import { db } from "../db"
 import { eq } from "drizzle-orm"
 import { authMiddleware } from "../../middleware/middleware"
+import { verify } from "hono/jwt"
 
 const workoutRouter = new Hono()
 
@@ -18,10 +19,23 @@ workoutRouter.get("/", async (c) => {
     )
   }
 
-  const workoutList = await db.query.workoutLogs.findMany({
-    where: eq(workoutLogs.userId, user.id as string),
-  })
-
-  return c.json({ success: true, workouts: workoutList })
+  try {
+    const userWorkoutLogs = await db
+      .select({
+        logId: workoutLogs.id, // Alias to avoid conflicts
+        userId: workoutLogs.userId,
+        workoutId: workoutLogs.workoutId,
+        workoutName: workouts.name, // ✅ Get the workout name
+        date: workoutLogs.date,
+      })
+      .from(workoutLogs)
+      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id)) // ✅ LEFT JOIN
+      .where(eq(workoutLogs.userId, user.id as string))
+    return c.json({ success: true, workouts: userWorkoutLogs })
+  } catch (error) {
+    console.error("JWT Verification Error:", error)
+    return c.json({ message: "Invalid token!" }, 401)
+  }
 })
+
 export default workoutRouter
