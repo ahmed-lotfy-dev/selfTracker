@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { UserType } from "@/types/userType"
 
-// Define the state and actions
 type AuthState = {
   user: UserType | null
   accessToken: string | null

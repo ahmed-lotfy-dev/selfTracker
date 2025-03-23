@@ -26,3 +26,9 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+
+/android
+/ios
+/build
+/dist
+/node_modules

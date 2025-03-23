@@ -1,9 +1,17 @@
 import React, { useState } from "react"
-import { Form, Input, Text, View, Button, Spinner } from "tamagui"
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native"
 import { useRouter } from "expo-router"
 import axios from "axios"
 import { UserType } from "@/types/userType"
-import { login } from "@/utils/api/auth"
+import { login } from "@/utils/api/authApi"
 import { useAuthActions } from "@/store/useAuthStore"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 
@@ -39,43 +47,69 @@ export default function Login() {
   }
 
   return (
-    <View height={"100%"} flex={1} justify={"space-between"} items={"center"}>
-      <Text paddingBlockStart={30}>Login Form</Text>
-      <Form flex={1} paddingBlockStart={30} onSubmit={handleLogin}>
-        <Text>Email</Text>
-        <Input
-          width={"100%"}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoComplete="email"
-          textContentType="emailAddress"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoCorrect={false}
-        />
-        <Text>Password</Text>
-        <Input
-          width={"100%"}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="password"
-          textContentType="password"
-        />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, justifyContent: "center", padding: 20 }}
+    >
+      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
+        Login Form
+      </Text>
 
-        {errorMessage ? <Text color="red">{errorMessage}</Text> : null}
+      <Text>Email</Text>
+      <TextInput
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+        style={{
+          borderWidth: 1,
+          padding: 10,
+          marginVertical: 5,
+          borderRadius: 5,
+        }}
+      />
 
-        <Form.Trigger asChild>
-          <Button
-            icon={status === "submitting" ? () => <Spinner /> : undefined}
-            disabled={status === "submitting"}
-          >
-            Login
-          </Button>
-        </Form.Trigger>
-      </Form>
-    </View>
+      <Text>Password</Text>
+      <TextInput
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoComplete="password"
+        textContentType="password"
+        style={{
+          borderWidth: 1,
+          padding: 10,
+          marginVertical: 5,
+          borderRadius: 5,
+        }}
+      />
+
+      {errorMessage ? (
+        <Text style={{ color: "red", marginVertical: 5 }}>{errorMessage}</Text>
+      ) : null}
+
+      <TouchableOpacity
+        onPress={handleLogin}
+        disabled={status === "submitting"}
+        style={{
+          backgroundColor: "blue",
+          padding: 15,
+          borderRadius: 5,
+          alignItems: "center",
+          marginTop: 10,
+          opacity: status === "submitting" ? 0.5 : 1,
+        }}
+      >
+        {status === "submitting" ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text style={{ color: "white", fontWeight: "bold" }}>Login</Text>
+        )}
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
   )
 }

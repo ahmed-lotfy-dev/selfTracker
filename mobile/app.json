@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ahmedlotfy.selftracker"
     },
     "android": {
       "adaptiveIcon": {
@@ -47,10 +48,7 @@
       }
     },
     "owner": "ahmed-lotfy",
-
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/6cb0f186-29d6-46d3-baa5-af88fdccee50"
     }

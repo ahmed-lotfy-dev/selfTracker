@@ -1,9 +1,18 @@
 import React, { useState } from "react"
-import { View, Text, Form, Input, Button, Spinner } from "tamagui"
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native"
 import { useRouter } from "expo-router"
 import axiosInstance from "@/utils/api/axiosInstane"
 import { useAuthActions } from "@/store/useAuthStore"
-import { register } from "@/utils/api/auth"
+import { register } from "@/utils/api/authApi"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 
 export default function Register() {
@@ -50,62 +59,94 @@ export default function Register() {
   }
 
   return (
-    <View height={"100%"} flex={1} justify={"space-between"} items={"center"}>
-      <Text paddingBlockStart={30}>Register Form</Text>
-      <Form flex={1} paddingBlockStart={30} onSubmit={handleRegister}>
-        <Text>Name</Text>
-        <Input
-          width={"100%"}
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-          autoComplete="name"
-          textContentType="name"
-          autoCapitalize="words"
-          disabled={status === "submitting"}
-        />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, justifyContent: "center", padding: 20 }}
+    >
+      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
+        Register
+      </Text>
 
-        <Text>Email</Text>
-        <Input
-          width={"100%"}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoComplete="email"
-          textContentType="emailAddress"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          disabled={status === "submitting"}
-        />
+      <Text>Name</Text>
+      <TextInput
+        placeholder="Enter your name"
+        value={name}
+        onChangeText={setName}
+        autoCapitalize="words"
+        style={{
+          borderWidth: 1,
+          padding: 10,
+          marginVertical: 5,
+          borderRadius: 5,
+        }}
+        editable={status !== "submitting"}
+      />
 
-        <Text>Password</Text>
-        <Input
-          width={"100%"}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="password"
-          textContentType="password"
-          disabled={status === "submitting"}
-        />
+      <Text>Email</Text>
+      <TextInput
+        placeholder="Enter your email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        style={{
+          borderWidth: 1,
+          padding: 10,
+          marginVertical: 5,
+          borderRadius: 5,
+        }}
+        editable={status !== "submitting"}
+      />
 
-        {errorMessage ? <Text color="red">{errorMessage}</Text> : null}
+      <Text>Password</Text>
+      <TextInput
+        placeholder="Enter your password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        style={{
+          borderWidth: 1,
+          padding: 10,
+          marginVertical: 5,
+          borderRadius: 5,
+        }}
+        editable={status !== "submitting"}
+      />
 
-        <Form.Trigger asChild>
-          <Button
-            icon={status === "submitting" ? () => <Spinner /> : undefined}
-            disabled={status === "submitting"}
-          >
-            Register
-          </Button>
-        </Form.Trigger>
+      {errorMessage ? (
+        <Text style={{ color: "red", marginVertical: 5 }}>{errorMessage}</Text>
+      ) : null}
 
-        <Button onPress={() => router.push("/login")} marginBlockStart={20}>
-          Already have an account? Login
-        </Button>
-      </Form>
-    </View>
+      {/* Register Button */}
+      <TouchableOpacity
+        onPress={handleRegister}
+        disabled={status === "submitting"}
+        style={{
+          backgroundColor: "blue",
+          padding: 15,
+          borderRadius: 5,
+          alignItems: "center",
+          marginTop: 10,
+          opacity: status === "submitting" ? 0.5 : 1,
+        }}
+      >
+        {status === "submitting" ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text style={{ color: "white", fontWeight: "bold" }}>Register</Text>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => Alert.alert("Navigate", "Go to login screen")}
+        style={{
+          marginTop: 15,
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ color: "blue" }}>Already have an account? Login</Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
   )
 }

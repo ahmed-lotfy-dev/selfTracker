@@ -1,5 +1,4 @@
 import axios from "axios"
-import { API_BASE_URL } from "./auth"
 import {
   getAccessToken,
   getRefreshToken,
@@ -8,6 +7,8 @@ import {
   setRefreshToken,
 } from "../storage"
 
+import { API_BASE_URL } from "./config"
+
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
@@ -15,7 +16,6 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(async (config) => {
   const token = await getAccessToken()
-  console.log("Sending Authorization Header:", `Bearer ${token}`) // ✅ Check if it's correct
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -53,10 +53,6 @@ axiosInstance.interceptors.response.use(
 
         await setAccessToken(accessToken)
         await setRefreshToken(newRefreshToken)
-
-        // Check if tokens are saved correctly
-        console.log("Saved Access Token:", await getAccessToken())
-        console.log("Saved Refresh Token:", await getRefreshToken())
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`
         return axiosInstance(originalRequest)

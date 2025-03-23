@@ -29,4 +29,39 @@ weightsRouter.get("/", async (c) => {
   }
 })
 
+weightsRouter.get("/:id", async (c) => {
+  const user = c.get("user" as any)
+
+  if (!user || !user.id) {
+    return c.json(
+      { success: false, message: "Unauthorized: User not found in context" },
+      401
+    )
+  }
+
+  const id = c.req.param("id")
+  if (!id) {
+    return c.json({ success: false, message: "ID is required" }, 400)
+  }
+
+  try {
+    const singleWeightLog = await db
+      .select({
+        logId: weightLogs.id,
+        userId: weightLogs.userId,
+        weight: weightLogs.weight,
+        date: weightLogs.date,
+        notes: weightLogs.notes,
+        createdAt: weightLogs.createdAt,
+      })
+      .from(weightLogs)
+      .where(eq(weightLogs.id, id))
+
+    return c.json({ success: true, weightLog: singleWeightLog })
+  } catch (error) {
+    console.error("Error fetching single weight log:", error)
+    return c.json({ message: "Internal server error" }, 500)
+  }
+})
+
 export default weightsRouter

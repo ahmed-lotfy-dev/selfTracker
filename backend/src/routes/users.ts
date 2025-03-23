@@ -39,6 +39,17 @@ userRouter.get("/me", async (c) => {
   try {
     const dbUser = await db.query.users.findFirst({
       where: eq(users.id, user.id as string),
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        weight: true,
+        height: true,
+        unitSystem: true,
+        currency: true,
+        income: true,
+      },
     })
 
     if (!dbUser) {

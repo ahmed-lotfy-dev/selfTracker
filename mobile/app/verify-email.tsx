@@ -1,11 +1,11 @@
 import React, { useState } from "react"
-import { View, Text, Button, Spinner } from "tamagui"
+import { View, Text, ActivityIndicator, Pressable } from "react-native"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "expo-router"
 import {
   checkEmailVerification,
   resendVerificationEmail,
-} from "@/utils/api/auth"
+} from "@/utils/api/authApi"
 
 export default function VerifyEmail() {
   const router = useRouter()
@@ -37,36 +37,40 @@ export default function VerifyEmail() {
   }
 
   return (
-    <View
-      flex={1}
-      justify="center"
-      items="center"
-      paddingBlock={20}
-      paddingInline={20}
-    >
-      <Text fontSize={18} marginBlockEnd={20}>
+    <View className="flex-1 justify-center items-center p-20 px-20">
+      <Text className="text-md mb-20">
         Please check your email for a verification link.
       </Text>
 
       {resendStatus === "success" && (
-        <Text color="green">Verification email resent successfully!</Text>
+        <Text className="text-green-500">
+          Verification email resent successfully!
+        </Text>
       )}
       {resendStatus === "error" && (
-        <Text color="red">
+        <Text className="text-red-600">
           Failed to resend verification email. Please try again.
         </Text>
       )}
 
-      <Button
+      <Pressable
         onPress={handleResendVerification}
         disabled={resendStatus === "loading"}
-        marginBlockStart={20}
+        className="mt-5 bg-blue-500 px-4 py-2 rounded-lg disabled:opacity-50"
       >
-        {resendStatus === "loading" ? <Spinner /> : "Resend Verification Email"}
-      </Button>
+        {resendStatus === "loading" ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text className="text-white">Resend Verification Email</Text>
+        )}
+      </Pressable>
 
       {isLoading && <Text>Checking verification status...</Text>}
-      {error && <Text color="red">Error checking verification status.</Text>}
+      {error && (
+        <Text className="text-red-600">
+          Error checking verification status.
+        </Text>
+      )}
     </View>
   )
 }

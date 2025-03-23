@@ -1,9 +1,11 @@
-import { logout } from "@/utils/api/auth"
+import { logout } from "@/utils/api/authApi"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import axios from "axios"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
-import { Button, View, Text } from "tamagui"
+import Text from "@/components/Text"
+import View from "@/components/View"
+import { Pressable } from "react-native"
 
 export default function LogoutButton({}) {
   const router = useRouter()
@@ -30,20 +32,20 @@ export default function LogoutButton({}) {
       console.error("Logout failed:", error.message)
       setError(error.message || "Logout failed. Please try again.")
     } finally {
-      setIsLoading(false) // Stop loading
+      setIsLoading(false)
     }
   }
   return (
-    <View bg={"gray"} flex={1} justify={"center"} items={"center"}>
-      <Button onPress={handleLogout} marginBlockStart={20} disabled={isLoading}>
+    <View className="felx-1 justify-center items-center bg-gray-500">
+      <Pressable
+        onPress={handleLogout}
+        className="bg-red-500 text-white p-4 rounded-md mt-10"
+        disabled={isLoading}
+      >
         {isLoading ? "Logging out..." : "Logout"}
-      </Button>
+      </Pressable>
 
-      {error && (
-        <Text color="red" marginBlockStart={10}>
-          {error}
-        </Text>
-      )}
+      {error && <Text className="text-red-500 mt-10">{error}</Text>}
     </View>
   )
 }
