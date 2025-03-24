@@ -39,7 +39,7 @@ weightsRouter.get("/", async (c) => {
             )
           : eq(weightLogs.userId, user.id as string)
       )
-      .orderBy(desc(weightLogs.id))
+      .orderBy(desc(weightLogs.date))
       .limit(Number(limit))
 
     const nextCursor =
