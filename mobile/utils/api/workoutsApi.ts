@@ -2,8 +2,16 @@ import { WorkoutType } from "@/types/workoutType"
 import { API_BASE_URL } from "./config"
 import axiosInstance from "./axiosInstane"
 
-export const fetchAllWorkouts = async () => {
-  const response = await axiosInstance.get(`${API_BASE_URL}/api/workouts`)
+export const fetchAllWorkouts = async (
+  cursor: string | null = null,
+  limit: number = 10
+) => {
+  const response = await axiosInstance.get(`${API_BASE_URL}/api/workouts`, {
+    params: {
+      cursor, 
+      limit, 
+    },
+  })
   console.log(response.data)
   return response.data
 }

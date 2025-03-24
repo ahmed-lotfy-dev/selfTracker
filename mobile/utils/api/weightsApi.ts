@@ -2,9 +2,16 @@ import { WeightType } from "@/types/weightType"
 import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
 
-export const fetchAllWeights = async () => {
-  const response = await axiosInstance.get(`${API_BASE_URL}/api/weights`)
-  console.log(response.data)
+export const fetchAllWeights = async (
+  cursor: string | null = null,
+  limit: number = 10
+) => {
+  const response = await axiosInstance.get(`${API_BASE_URL}/api/weights`, {
+    params: {
+      cursor,
+      limit,
+    },
+  })
   return response.data
 }
 

@@ -10,7 +10,7 @@ export default function WelcomeScreen() {
   return (
     <View className="flex-1 justify-center items-center bg-white">
       {/* <Image
-        source={require("../assets/welcome.png")} // Replace with your image
+        source={require("../assets/welcome.png")}
         style={{ width: 200, height: 200 }}
       /> */}
       <Text className="text-xl font-bold mb-20">Welcome to Self Tracker!</Text>

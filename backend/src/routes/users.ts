@@ -49,6 +49,8 @@ userRouter.get("/me", async (c) => {
         unitSystem: true,
         currency: true,
         income: true,
+        password: false,
+        isVerified: true,
       },
     })
 

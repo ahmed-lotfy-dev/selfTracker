@@ -1,7 +1,7 @@
 import { WorkoutType } from "@/types/workoutType"
 import { fetchAllWorkouts } from "@/utils/api/workoutsApi"
 import { FlashList } from "@shopify/flash-list"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { useRouter } from "expo-router"
 import Text from "@/components/Text"
 import View from "@/components/View"
@@ -9,14 +9,24 @@ import { ActivityIndicator, Pressable } from "react-native"
 
 export default function WorkoutScreen() {
   const router = useRouter()
+  const limit = 10
+
   const {
-    data: workoutLogs,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading,
     isError,
-  } = useQuery({
-    queryKey: ["AllWorkoutsLogs"],
-    queryFn: fetchAllWorkouts,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ["workouts"],
+    queryFn: ({ pageParam }) => fetchAllWorkouts(pageParam, limit), 
+    getNextPageParam: (lastPage) => lastPage.nextCursor, 
+    initialPageParam: null, 
   })
+
+  const logs = data?.pages.flatMap((page) => page.workouts) || []
 
   if (isLoading) {
     return (
@@ -32,11 +42,11 @@ export default function WorkoutScreen() {
         <Text className="text-red-500">
           Failed to load workouts. Please try again.
         </Text>
+        <Text className="text-red-500">{error.message}</Text>
       </View>
     )
   }
 
-  const logs = workoutLogs?.workouts || []
   if (logs.length === 0) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -45,14 +55,17 @@ export default function WorkoutScreen() {
     )
   }
 
-  type workOutTypeWithlogId = WorkoutType & { logId: string }
+  type WorkoutTypeWithLogId = WorkoutType & { logId: string }
 
-  const renderWorkoutItem = ({ item }: { item: workOutTypeWithlogId }) => (
+  const renderWorkoutItem = ({ item }: { item: WorkoutTypeWithLogId }) => (
     <Pressable
       className="p-4 border-b border-gray-200"
       onPress={() => router.push(`/workouts/${item.logId}`)}
     >
       <Text className="text-lg font-semibold">{item.workoutName}</Text>
+      <Text className="text-sm text-gray-500">
+        {new Date(item.date).toLocaleDateString()}
+      </Text>
     </Pressable>
   )
 
@@ -64,6 +77,17 @@ export default function WorkoutScreen() {
         renderItem={renderWorkoutItem}
         keyExtractor={(item) => item.logId}
         estimatedItemSize={50}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage() 
+          }
+        }}
+        onEndReachedThreshold={0.5} 
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <ActivityIndicator size="small" className="my-4" />
+          ) : null
+        }
       />
     </View>
   )
