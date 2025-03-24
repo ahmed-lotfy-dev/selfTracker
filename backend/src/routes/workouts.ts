@@ -40,7 +40,7 @@ workoutRouter.get("/", async (c) => {
             )
           : eq(workoutLogs.userId, user.id as string) 
       )
-      .orderBy(desc(workoutLogs.id)) 
+      .orderBy(desc(workoutLogs.date)) 
       .limit(Number(limit)) 
 
     const nextCursor =
