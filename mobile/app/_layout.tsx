@@ -36,7 +36,7 @@ export default function RootLayout() {
     async function prepareApp() {
       try {
         if (loaded) {
-          // await checkForUpdates() // Check for updates when the app loads
+          await checkForUpdates() // Check for updates when the app loads
           await SplashScreen.hideAsync() // Hide splash screen after updates check
           setAppIsReady(true)
         }
