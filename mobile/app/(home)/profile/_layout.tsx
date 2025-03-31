@@ -6,15 +6,12 @@ export default function WeightsLayout() {
   const router = useRouter()
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: true,
-      }}
-    >
+    <Stack>
       <Stack.Screen
         name="index"
         options={{
           title: "Profile",
+          headerShown: false,
         }}
       />
       {/* <Stack.Screen

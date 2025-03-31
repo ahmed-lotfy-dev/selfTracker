@@ -7,15 +7,18 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createWeight } from "@/utils/api/weightsApi"
 import { useUser } from "@/store/useAuthStore"
 import { DateType } from "react-native-ui-datepicker"
 import { useRouter } from "expo-router"
 import DatePicker from "@/components/DatePicker"
+import DateDisplay from "@/components/DateDisplay"
 
 export default function AddWeight() {
   const router = useRouter()
+  const queryClient = useQueryClient()
+
   const [weight, setWeight] = useState("")
   const [notes, setNotes] = useState("")
   const [date, setDate] = useState<DateType>(new Date())
@@ -39,6 +42,7 @@ export default function AddWeight() {
       })
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["weightLogs"] })
       setWeight("")
       setNotes("")
       setDate(new Date())
@@ -69,10 +73,10 @@ export default function AddWeight() {
       />
 
       <TouchableOpacity onPress={() => setShowDate(!showDate)}>
-        <Text className="text-lg font-bold mt-4">Select Date</Text>
+        <Text className="text-lg font-bold my-2">Select Date</Text>
       </TouchableOpacity>
 
-      <View className="w-full mb-6">
+      <View className="w-full mb-3">
         {showDate && (
           <DatePicker
             date={date}
@@ -82,6 +86,12 @@ export default function AddWeight() {
           />
         )}
       </View>
+      
+      <View className="mb-4">
+      {date && <DateDisplay date={date.toLocaleString()} />}
+      {!date && <DateDisplay date={new Date().toLocaleString()} />}
+      </View>
+
 
       <TouchableOpacity
         onPress={() => mutation.mutate()}

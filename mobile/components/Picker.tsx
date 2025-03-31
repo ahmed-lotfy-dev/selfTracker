@@ -10,7 +10,7 @@ type Props = {
 
 export default function Select({ value, setValue, options }: Props) {
   return (
-    <View className="h-12 justify-center border border-green-700 rounded-md overflow-hidden mb-5">
+    <View className="h-12 justify-center border border-green-700 rounded-md overflow-hidden mb-5 p-2">
       <Picker
         selectedValue={value}
         onValueChange={(itemValue) => setValue(itemValue)}

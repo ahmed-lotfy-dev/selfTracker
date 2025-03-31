@@ -14,6 +14,7 @@ import { createWorkout } from "@/utils/api/workoutsApi"
 import { fetchAllWorkouts } from "@/utils/api/workouts"
 import { useUser } from "@/store/useAuthStore"
 import { useRouter } from "expo-router"
+import DateDisplay from "@/components/DateDisplay"
 
 export default function AddWorkout() {
   const router = useRouter()
@@ -83,6 +84,11 @@ export default function AddWorkout() {
         />
       )}
 
+      <View className="mb-4">
+      {date && <DateDisplay date={date.toLocaleString()} />}
+      {!date && <DateDisplay date={new Date().toLocaleString()} />}
+      </View>
+      
       <TouchableOpacity
         onPress={() => mutation.mutate()}
         disabled={mutation.isPending || !workout}
