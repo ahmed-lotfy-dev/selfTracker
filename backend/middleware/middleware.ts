@@ -9,13 +9,11 @@ const JWT_SECRET = process.env.JWT_SECRET!
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
   try {
     const authHeader = c.req.header("Authorization")
-
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return c.json({ error: "Unauthorized: Missing token" }, 401)
     }
 
     const token = authHeader.split(" ")[1]
-
     const payload = await verify(token, process.env.JWT_SECRET!)
 
     if (!payload?.id) {

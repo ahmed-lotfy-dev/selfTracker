@@ -83,7 +83,6 @@ export const weightLogs = pgTable("weight_logs", {
   userId: uuid("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
-  date: timestamp("date").notNull(),
   weight: numeric("weight", { precision: 5, scale: 2 }).notNull(),
   energy: text("energy", { enum: ["Low", "Okay", "Good", "Great"] }).notNull(),
   mood: text("mood", { enum: ["Low", "Medium", "High"] }).notNull(),
@@ -99,19 +98,7 @@ export const trainingSplits = pgTable("training_splits", {
   createdBy: uuid("created_by").references(() => users.id, {
     onDelete: "set null",
   }), // Original creator (optional)
-  isPublic: boolean("is_public").default(true), // Whether others can see/use this split
-  createdAt: timestamp("created_at").defaultNow(),
-})
-
-// Users' Subscribed Training Splits (Many-to-Many)
-export const userTrainingSplits = pgTable("user_training_splits", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .references(() => users.id, { onDelete: "cascade" })
-    .notNull(),
-  trainingSplitId: uuid("training_split_id")
-    .references(() => trainingSplits.id, { onDelete: "cascade" })
-    .notNull(),
+  isPublic: boolean("is_public").default(true), 
   createdAt: timestamp("created_at").defaultNow(),
 })
 
@@ -157,9 +144,8 @@ export const workoutLogs = pgTable("workout_logs", {
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   workoutId: uuid("workout_id")
-    .references(() => workouts.id, { onDelete: "cascade" })
+    .references(() => workouts.id, { onDelete: "cascade"   })
     .notNull(),
-  date: timestamp("date").defaultNow().notNull(),
   //TODO in the future
   // duration: interval("duration").notNull(),
   notes: text("notes"),

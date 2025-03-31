@@ -1,5 +1,4 @@
-import View from "@/components/View"
-import Text from "@/components/Text"
+import { View, Text } from "react-native"
 import { Pressable } from "react-native"
 import { useRouter } from "expo-router"
 import { useAuthActions } from "@/store/useAuthStore"

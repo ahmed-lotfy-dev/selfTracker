@@ -5,16 +5,15 @@ import { logger } from "hono/logger"
 import authRouter from "./routes/auth.js"
 import userRouter from "./routes/users.js"
 import expensesRouter from "./routes/expenses.js"
-import weightsRouter from "./routes/weights.js"
-import workoutRouter from "./routes/workouts.js"
-
-import { authMiddleware } from "../middleware/middleware.js"
+import weightsLogsRouter from "./routes/weightLogs.js"
+import workoutsRouter from "./routes/workouts.js"
+import workoutLogsRouter from "./routes/workoutsLogs.js"
 
 const app = new Hono()
 
 app.use(
   cors({
-    origin: "*", 
+    origin: "*",
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
@@ -29,9 +28,11 @@ app.route("/api/users", userRouter)
 
 app.route("/api/expenses", expensesRouter)
 
-app.route("/api/weights", weightsRouter)
+app.route("/api/weightLogs", weightsLogsRouter)
 
-app.route("/api/workouts", workoutRouter)
+app.route("/api/workouts", workoutsRouter)
+
+app.route("/api/workoutLogs", workoutLogsRouter)
 
 app.get("/", async (c) => {
   return c.json({ message: "Hello world" })

@@ -11,7 +11,7 @@ import {
 import { useRouter } from "expo-router"
 import axios from "axios"
 import { UserType } from "@/types/userType"
-import { login } from "@/utils/api/authApi"
+import { login, userData } from "@/utils/api/authApi"
 import { useAuthActions } from "@/store/useAuthStore"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 
@@ -23,6 +23,7 @@ export default function Login() {
   const [status, setStatus] = useState<"off" | "submitting" | "submitted">(
     "off"
   )
+  const { setUser } = useAuthActions()
   const [errorMessage, setErrorMessage] = useState("")
 
   const handleLogin = async () => {
@@ -35,6 +36,9 @@ export default function Login() {
 
       await setAccessToken(accessToken)
       await setRefreshToken(refreshToken)
+
+      const user = await userData()
+      setUser(user)
 
       setStatus("submitted")
 

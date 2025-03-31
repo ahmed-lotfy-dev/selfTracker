@@ -2,13 +2,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 
 export const getAccessToken = async () => {
   const token = await AsyncStorage.getItem("accessToken")
-  console.log("Stored Access Token:", token)
   return token
 }
 
 export const getRefreshToken = async () => {
   const token = await AsyncStorage.getItem("refreshToken")
-  console.log("Stored Refresh Token:", token)
   return token
 }
 

@@ -78,15 +78,7 @@ export default function RootLayout() {
         backgroundColor="#0A2540"
         animated={true}
       />
-      <Stack
-        screenOptions={{
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()} style={{ padding: 10 }}>
-              <Entypo name="chevron-thin-left" size={24} color="black" />
-            </Pressable>
-          ),
-        }}
-      >
+      <Stack >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(home)" options={{ headerShown: false }} />
         <Stack.Screen name="welcome" options={{ headerShown: false }} />

@@ -8,16 +8,16 @@ export default function WeightsLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
       }}
     >
       <Stack.Screen
         name="index"
         options={{
-          title: "Weights",
+          title: "Profile",
         }}
       />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="[id]"
         options={{
           title: "Weight Log",
@@ -28,8 +28,8 @@ export default function WeightsLayout() {
             </Pressable>
           ),
         }}
-      />
-      <Stack.Screen
+      /> */}
+      {/* <Stack.Screen
         name="add"
         options={{
           title: "Add Weight",
@@ -40,7 +40,7 @@ export default function WeightsLayout() {
             </Pressable>
           ),
         }}
-      />
+      /> */}
     </Stack>
   )
 }

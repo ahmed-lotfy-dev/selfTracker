@@ -1,11 +1,11 @@
+import { View, Text } from "react-native"
 import { fetchSingleWeightLog } from "@/utils/api/weightsApi"
 import { useQuery } from "@tanstack/react-query"
-import { usePathname } from "expo-router"
-import View from "@/components/View"
-import Text from "@/components/Text"
+import { Stack, useLocalSearchParams } from "expo-router"
+import DateDisplay from "@/components/DateDisplay"
 
 export default function WeightLog() {
-  const id = usePathname().split("/").pop()
+  const { id } = useLocalSearchParams() as { id: string }
   console.log(id)
 
   const {
@@ -27,15 +27,30 @@ export default function WeightLog() {
   const log = weightLog?.weightLog?.[0] ?? {}
 
   return (
-    <View className="p-5">
-      <Text className="text-xl font-semibold mb-2">Weight Log</Text>
-      <Text className="text-lg">Date: {log.date || "No date available"}</Text>
-      <Text className="text-lg">
-        Weight: {log.weight || "No weight recorded"}
-      </Text>
-      <Text className="text-lg">
-        Notes: {log.notes || "No notes available"}
-      </Text>
-    </View>
+    <>
+      <Stack.Screen
+        options={{
+          title: new Date(log.createdAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+        }}
+      />
+      <View className="p-5">
+        <Text className="text-xl font-semibold mb-2">Weight Log</Text>
+        <Text className="text-lg">
+          Date:
+          <DateDisplay date={log.createdAt} />
+
+        </Text>
+        <Text className="text-lg">
+          Weight: {log.weight || "No weight recorded"}
+        </Text>
+        <Text className="text-lg">
+          Notes: {log.notes || "No notes available"}
+        </Text>
+      </View>
+    </>
   )
 }

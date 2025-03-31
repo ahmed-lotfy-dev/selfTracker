@@ -1,70 +1,107 @@
-import { db } from "../index"
+import { db,  } from "../index"
 import { users,  weightLogs, workoutLogs } from "../schema"
 import { workoutLogs as workoutLogsData } from "./workoutLogs"
 import { weightLogs as weightLogsData } from "./weightLogs"
 import { hash } from "bcryptjs"
+import { sql,eq } from "drizzle-orm"
+// // async function seed() {
+// //   console.log("seeding data ...")
+// //   // const hashedPassword = await hash("00000000")
+// //   // const user = await db
+// //   //   .insert(users)
+// //   //   .values({
+// //   //     email: "elshenawy19@gmail.com",
+// //   //     name: "Ahmed Lotfy",
+// //   //     password: hashedPassword,
+// //   //     role: "admin",
+// //   //     isVerified: true,
+// //   //   })
+// //   //   .returning({ id: users.id })
+// //   const [user] = await db.select().from(users).limit(1)
+// //   await db.insert(weightLogs).values(
+// //     weightLogsData.map((log) => ({
+// //       userId: user.id,
+// //       date: new Date(log.date),
+// //       weight: log.weight ? log.weight.toFixed(2) : "0.00",
+// //       energy: log.energy as "Low" | "Okay" | "Good" | "Great",
+// //       mood: log.mood as "Low" | "Medium" | "High",
+// //       notes: log.notes ?? null,
+// //     }))
+// //   )
 
-// async function seed() {
-//   console.log("seeding data ...")
-//   // const hashedPassword = await hash("00000000")
-//   // const user = await db
-//   //   .insert(users)
-//   //   .values({
-//   //     email: "elshenawy19@gmail.com",
-//   //     name: "Ahmed Lotfy",
-//   //     password: hashedPassword,
-//   //     role: "admin",
-//   //     isVerified: true,
-//   //   })
-//   //   .returning({ id: users.id })
-//   const [user] = await db.select().from(users).limit(1)
-//   await db.insert(weightLogs).values(
-//     weightLogsData.map((log) => ({
-//       userId: user.id,
-//       date: new Date(log.date),
-//       weight: log.weight ? log.weight.toFixed(2) : "0.00",
-//       energy: log.energy as "Low" | "Okay" | "Good" | "Great",
-//       mood: log.mood as "Low" | "Medium" | "High",
-//       notes: log.notes ?? null,
-//     }))
-//   )
+// //   // await db.insert(userWorkouts).values(
+// //   //   workoutLogsData.map((log) => ({
+// //   //     userId: user[0].id,
+// //   //     name: log.Name,
+// //   //     date: new Date(log.Date),
+// //   //   }))
+// //   // )
 
-//   // await db.insert(userWorkouts).values(
-//   //   workoutLogsData.map((log) => ({
-//   //     userId: user[0].id,
-//   //     name: log.Name,
-//   //     date: new Date(log.Date),
-//   //   }))
-//   // )
+// // }
 
+// // seed()
+
+// // Fetch the user
+// const [user] = await db.select().from(users).limit(1)
+// if (!user) throw new Error("User not found")
+
+// // Map names to session IDs dynamically
+// const workoutSessionMap: Record<string, string> = {
+//   Push: "54baa9ed-9f46-49a6-80dc-25f94d86d76c",
+//   Pull: "fe43fd9b-7b7c-4ce5-bf79-210c3be61d2f",
+//   Legs: "24180194-f61b-4935-9c70-3981b25d5c6d",
 // }
 
-// seed()
+// // Format workout logs correctly
+// const formattedWorkoutLogs = workoutLogsData
+//   .filter((log) => log.name && log.name in workoutSessionMap) // Ensure valid names
+//   .map((log) => ({
+//     userId: user.id,
+//     workoutId: workoutSessionMap[log.name!], // Dynamically map session ID
+//     exerciseId: "3df0f82d-69ca-477f-ad21-f979f6bacfd8", // Add a valid exerciseId
+//     date: new Date(log.date),
+//     performedSets: Math.floor(Math.random() * 5) + 3, // Mock sets (3-7)
+//     performedReps: Math.floor(Math.random() * 10) + 6, // Mock reps (6-15)
+//   }))
 
-// Fetch the user
-const [user] = await db.select().from(users).limit(1)
-if (!user) throw new Error("User not found")
+// // Seed into the database
+// await db.insert(workoutLogs).values(formattedWorkoutLogs)
 
-// Map names to session IDs dynamically
-const workoutSessionMap: Record<string, string> = {
-  Push: "54baa9ed-9f46-49a6-80dc-25f94d86d76c",
-  Pull: "fe43fd9b-7b7c-4ce5-bf79-210c3be61d2f",
-  Legs: "24180194-f61b-4935-9c70-3981b25d5c6d",
+// console.log("Workout logs seeded successfully!")
+
+
+async function updateCreatedAt() {
+  console.log("Updating created_at timestamps...")
+
+  // Fetch the first user (assuming there's only one)
+  const [user] = await db.select().from(users).limit(1)
+  if (!user) {
+    throw new Error("User not found")
+  }
+
+  // Update created_at for weight logs
+  await db
+    .update(weightLogs)
+    .set({ createdAt: sql`date` })
+    .where(eq(weightLogs.userId, user.id))
+
+  console.log("Updated created_at for weight logs")
+
+  // Update created_at for workout logs
+  await db
+    .update(workoutLogs)
+    .set({ createdAt: sql`date` })
+    .where(eq(workoutLogs.userId, user.id))
+
+  console.log("Updated created_at for workout logs")
 }
 
-// Format workout logs correctly
-const formattedWorkoutLogs = workoutLogsData
-  .filter((log) => log.name && log.name in workoutSessionMap) // Ensure valid names
-  .map((log) => ({
-    userId: user.id,
-    workoutId: workoutSessionMap[log.name!], // Dynamically map session ID
-    exerciseId: "3df0f82d-69ca-477f-ad21-f979f6bacfd8", // Add a valid exerciseId
-    date: new Date(log.date),
-    performedSets: Math.floor(Math.random() * 5) + 3, // Mock sets (3-7)
-    performedReps: Math.floor(Math.random() * 10) + 6, // Mock reps (6-15)
-  }))
-
-// Seed into the database
-await db.insert(workoutLogs).values(formattedWorkoutLogs)
-
-console.log("Workout logs seeded successfully!")
+updateCreatedAt()
+  .then(() => {
+    console.log("All timestamps updated successfully")
+    process.exit(0)
+  })
+  .catch((error) => {
+    console.error("Error updating timestamps:", error)
+    process.exit(1)
+  })

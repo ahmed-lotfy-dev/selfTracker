@@ -2,21 +2,28 @@ import { Tabs, useRouter } from "expo-router"
 import { Pressable } from "react-native"
 import Feather from "@expo/vector-icons/Feather"
 import Ionicons from "@expo/vector-icons/Ionicons"
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6"
-import Entypo from "@expo/vector-icons/Entypo"
+import TabBar from "../../components/TabBar"
+import AntDesign from "@expo/vector-icons/AntDesign"
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
+
+import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 
 export default function TabsLayout() {
   const router = useRouter()
 
   return (
-    <Tabs>
+    <Tabs
+      tabBar={(props: BottomTabBarProps) => <TabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Feather name="home" size={24} color="black" />
+            <Feather name="home" size={24} color={color} />
           ),
         }}
       />
@@ -24,16 +31,11 @@ export default function TabsLayout() {
         name="weights"
         options={{
           title: "Weights",
-          headerShown: true,
+          headerShown: false,
           headerTitleAlign: "center",
 
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()} style={{ padding: 10 }}>
-              <Entypo name="chevron-thin-left" size={24} color="black" />
-            </Pressable>
-          ),
           tabBarIcon: ({ color }) => (
-            <Ionicons name="scale-outline" size={24} color="black" />
+            <Ionicons name="scale-outline" size={24} color={color} />
           ),
         }}
       />
@@ -41,16 +43,35 @@ export default function TabsLayout() {
         name="workouts"
         options={{
           title: "Workouts",
-          headerShown: true,
+          headerShown: false,
           headerTitleAlign: "center",
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()} style={{ padding: 10 }}>
-              <Entypo name="chevron-thin-left" size={24} color="black" />
-            </Pressable>
-          ),
 
           tabBarIcon: ({ color }) => (
-            <FontAwesome6 name="dumbbell" size={24} color="black" />
+            <MaterialCommunityIcons name="dumbbell" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="tasks"
+        options={{
+          title: "Tasks",
+          headerShown: false,
+          headerTitleAlign: "center",
+
+          tabBarIcon: ({ color }) => (
+            <FontAwesome5 name="tasks" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          headerShown: false,
+          headerTitleAlign: "center",
+
+          tabBarIcon: ({ color }) => (
+            <AntDesign name="user" size={24} color={color} />
           ),
         }}
       />
