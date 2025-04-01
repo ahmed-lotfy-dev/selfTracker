@@ -26,8 +26,8 @@ export default function WeightsScreen() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   })
-
   const logs = data?.pages.flatMap((page) => page.weightLogs) || []
+  console.log({ data })
 
   if (isLoading) {
     return (

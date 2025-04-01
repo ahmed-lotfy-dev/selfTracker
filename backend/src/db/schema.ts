@@ -98,7 +98,7 @@ export const trainingSplits = pgTable("training_splits", {
   createdBy: uuid("created_by").references(() => users.id, {
     onDelete: "set null",
   }), // Original creator (optional)
-  isPublic: boolean("is_public").default(true), 
+  isPublic: boolean("is_public").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 })
 
@@ -144,7 +144,7 @@ export const workoutLogs = pgTable("workout_logs", {
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   workoutId: uuid("workout_id")
-    .references(() => workouts.id, { onDelete: "cascade"   })
+    .references(() => workouts.id, { onDelete: "cascade" })
     .notNull(),
   //TODO in the future
   // duration: interval("duration").notNull(),
@@ -168,7 +168,7 @@ export const userGoals = pgTable("user_goals", {
 })
 
 // User Todo Items
-export const todoItems = pgTable("todo_items", {
+export const tasks = pgTable("tasks_items", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")
     .notNull()

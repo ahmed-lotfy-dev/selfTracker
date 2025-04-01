@@ -72,26 +72,24 @@ export default function AddWeight() {
         placeholder="Add any notes (e.g., morning weigh-in)"
       />
 
-      <TouchableOpacity onPress={() => setShowDate(!showDate)}>
-        <Text className="text-lg font-bold my-2">Select Date</Text>
-      </TouchableOpacity>
+        <Text className="text-lg font-bold mb-2">Select Date</Text>
 
-      <View className="w-full mb-3">
-        {showDate && (
-          <DatePicker
-            date={date}
-            setDate={setDate}
-            showDate={showDate}
-            setShowDate={setShowDate}
+      <View className="mb-4">
+        <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+          <DateDisplay
+            date={date ? date.toLocaleString() : new Date().toLocaleString()}
           />
-        )}
+        </TouchableOpacity>
       </View>
       
-      <View className="mb-4">
-      {date && <DateDisplay date={date.toLocaleString()} />}
-      {!date && <DateDisplay date={new Date().toLocaleString()} />}
-      </View>
-
+      {showDate && (
+        <DatePicker
+          date={date}
+          setDate={setDate}
+          showDate={showDate}
+          setShowDate={setShowDate}
+        />
+      )}
 
       <TouchableOpacity
         onPress={() => mutation.mutate()}

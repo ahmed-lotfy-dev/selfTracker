@@ -137,6 +137,74 @@ workoutLogsRouter.post("/", async (c) => {
   }
 })
 
+workoutLogsRouter.patch("/:id", async (c) => {
+  const user = c.get("user" as any)
+
+  if (!user || !user.id) {
+    return c.json(
+      { success: false, message: "Unauthorized: User not found in context" },
+      401
+    )
+  }
+
+  const id = c.req.param("id")
+  if (!id) {
+    return c.json(
+      { success: false, message: "Workout log ID is required" },
+      400
+    )
+  }
+  console.log({ id, user })
+  const { notes, workoutId } = await c.req.json()
+
+  try {
+    const existingLog = await db.query.workoutLogs.findFirst({
+      where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
+    })
+
+    if (!existingLog) {
+      return c.json(
+        {
+          success: false,
+          message:
+            "Workout log not found or you are not authorized to update it",
+        },
+        404
+      )
+    }
+
+    const updateFields: Record<string, any> = {}
+    if (notes !== undefined) updateFields.notes = notes
+    if (workoutId !== undefined) updateFields.workoutId = workoutId
+
+    if (Object.keys(updateFields).length === 0) {
+      return c.json(
+        { success: false, message: "No valid fields provided for update" },
+        400
+      )
+    }
+
+    const [updatedWorkoutLog] = await db
+      .update(workoutLogs)
+      .set(updateFields)
+      .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id))) // Ensure user owns the log
+      .returning()
+
+    return c.json({
+      success: true,
+      message: "Workout log updated successfully",
+      workoutLog: updatedWorkoutLog,
+    })
+  } catch (error) {
+    console.error("Error updating workout log:", error)
+    // Consider more specific error handling (e.g., foreign key constraint if workoutId is invalid)
+    return c.json(
+      { success: false, message: "Failed to update workout log" },
+      500
+    )
+  }
+})
+
 workoutLogsRouter.delete("/:id", async (c) => {
   const user = c.get("user" as any)
 
@@ -169,7 +237,6 @@ workoutLogsRouter.delete("/:id", async (c) => {
     return c.json({
       success: true,
       message: "Workout log deleted",
-      deletedWorkout,
     })
   } catch (error) {
     console.error("Delete Workout Error:", error)

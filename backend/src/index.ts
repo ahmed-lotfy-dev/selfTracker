@@ -5,6 +5,7 @@ import { logger } from "hono/logger"
 import authRouter from "./routes/auth.js"
 import userRouter from "./routes/users.js"
 import expensesRouter from "./routes/expenses.js"
+import tasksRouter from "./routes/tasks.js"
 import weightsLogsRouter from "./routes/weightLogs.js"
 import workoutsRouter from "./routes/workouts.js"
 import workoutLogsRouter from "./routes/workoutsLogs.js"
@@ -27,6 +28,8 @@ app.route("/api/auth", authRouter)
 app.route("/api/users", userRouter)
 
 app.route("/api/expenses", expensesRouter)
+
+app.route("/api/tasks", tasksRouter)
 
 app.route("/api/weightLogs", weightsLogsRouter)
 

@@ -41,10 +41,12 @@ weightsLogsRouter.get("/", async (c) => {
       .orderBy(desc(weightLogs.createdAt))
       .limit(Number(limit))
 
-const nextCursor =
-  userWeightLogs.length > 0
-    ? new Date(userWeightLogs[userWeightLogs.length - 1].createdAt ?? new Date()).toISOString()
-    : null;
+    const nextCursor =
+      userWeightLogs.length > 0
+        ? new Date(
+            userWeightLogs[userWeightLogs.length - 1].createdAt ?? new Date()
+          ).toISOString()
+        : null
 
     return c.json({
       success: true,
@@ -126,6 +128,72 @@ weightsLogsRouter.post("/", async (c) => {
   }
 })
 
+weightsLogsRouter.patch("/:id", async (c) => {
+  const user = c.get("user" as any)
+
+  if (!user || !user.id) {
+    return c.json(
+      { success: false, message: "Unauthorized: User not found in context" },
+      401
+    )
+  }
+
+  const id = c.req.param("id")
+  if (!id) {
+    return c.json({ success: false, message: "Weight log ID is required" }, 400)
+  }
+
+  const { weight, mood, energy, notes } = await c.req.json()
+
+  try {
+    const existingLog = await db.query.weightLogs.findFirst({
+      where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),
+    })
+
+    if (!existingLog) {
+      return c.json(
+        {
+          success: false,
+          message:
+            "Weight log not found or you are not authorized to update it",
+        },
+        404
+      )
+    }
+
+    const updateFields: Record<string, any> = {}
+    if (weight !== undefined) updateFields.weight = weight
+    if (mood !== undefined) updateFields.mood = mood
+    if (energy !== undefined) updateFields.energy = energy
+    if (notes !== undefined) updateFields.notes = notes
+
+    if (Object.keys(updateFields).length === 0) {
+      return c.json(
+        { success: false, message: "No valid fields provided for update" },
+        400
+      )
+    }
+
+    const [updatedWeightLog] = await db
+      .update(weightLogs)
+      .set(updateFields)
+      .where(and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)))
+      .returning()
+
+    return c.json({
+      success: true,
+      message: "Weight log updated successfully",
+      weightLog: updatedWeightLog,
+    })
+  } catch (error) {
+    console.error("Error updating weight log:", error)
+    return c.json(
+      { success: false, message: "Failed to update weight log" },
+      500
+    )
+  }
+})
+
 weightsLogsRouter.delete("/:id", async (c) => {
   const user = c.get("user" as any)
 
@@ -142,7 +210,6 @@ weightsLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
-    // Ensure the weight log belongs to the authenticated user
     const deletedWeight = await db
       .delete(weightLogs)
       .where(eq(weightLogs.id, id))
@@ -155,7 +222,6 @@ weightsLogsRouter.delete("/:id", async (c) => {
     return c.json({
       success: true,
       message: "Weight log deleted",
-      deletedWeight,
     })
   } catch (error) {
     console.error("Delete Weight Error:", error)

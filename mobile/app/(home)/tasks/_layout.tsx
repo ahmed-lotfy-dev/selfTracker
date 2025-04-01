@@ -20,7 +20,7 @@ export default function WeightsLayout() {
           title: "Weight Log",
           headerShown: true,
           headerLeft: () => (
-            <Pressable onPress={() => router.push("/weights")}>
+            <Pressable onPress={() => router.push("/tasks")}>
               <Entypo name="chevron-left" size={24} />
             </Pressable>
           ),
@@ -32,7 +32,7 @@ export default function WeightsLayout() {
           title: "Add Weight",
           headerShown: true,
           headerLeft: () => (
-            <Pressable onPress={() => router.push("/weights")}>
+            <Pressable onPress={() => router.push("/tasks")}>
               <Entypo name="chevron-left" size={24} />
             </Pressable>
           ),

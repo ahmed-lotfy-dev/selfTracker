@@ -65,16 +65,21 @@ export default function AddWorkout() {
       <Text className="text-lg font-bold mb-2">Notes (Optional)</Text>
       <TextInput
         className="border border-green-700 rounded-md p-2 mb-3"
-
         value={notes}
         onChangeText={setNotes}
         placeholder="Add any notes (e.g., morning weigh-in)"
       />
 
-      <TouchableOpacity onPress={() => setShowDate(!showDate)}>
         <Text className="text-lg font-bold mb-2">Select Date</Text>
-      </TouchableOpacity>
 
+      <View className="mb-4">
+        <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+          <DateDisplay
+            date={date ? date.toLocaleString() : new Date().toLocaleString()}
+          />
+        </TouchableOpacity>
+      </View>
+      
       {showDate && (
         <DatePicker
           date={date}
@@ -84,11 +89,6 @@ export default function AddWorkout() {
         />
       )}
 
-      <View className="mb-4">
-      {date && <DateDisplay date={date.toLocaleString()} />}
-      {!date && <DateDisplay date={new Date().toLocaleString()} />}
-      </View>
-      
       <TouchableOpacity
         onPress={() => mutation.mutate()}
         disabled={mutation.isPending || !workout}
