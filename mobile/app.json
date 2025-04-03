@@ -2,7 +2,7 @@
   "expo": {
     "name": "selfTracker",
     "slug": "selftracker",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/ic_launcher.png",
     "scheme": "myapp",
