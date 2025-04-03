@@ -25,7 +25,7 @@ const TabBar: React.FC<BottomTabBarProps> = ({
           >
             {IconComponent &&
               IconComponent({
-                color: isFocused ? "#d97706" : "#9ca3af",
+                color: isFocused ? "#22c55e" : "#9ca3af",
                 size: 22,
                 focused: isFocused,
               })}

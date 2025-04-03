@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import { workoutLogs, workouts } from "../db/schema"
 import { db } from "../db"
-import { eq, desc, lt, and, not } from "drizzle-orm"
+import { eq, desc, lt, and, not, gte, lte } from "drizzle-orm"
 import { authMiddleware } from "../../middleware/middleware"
 import { verify } from "hono/jwt"
 
@@ -65,6 +65,117 @@ workoutLogsRouter.get("/", async (c) => {
   }
 })
 
+workoutLogsRouter.get("/calendar/:date", async (c) => {
+  const user = c.get("user" as any)
+  if (!user || !user.id) {
+    return c.json({ success: false, message: "Unauthorized" }, 401)
+  }
+
+  const date = c.req.param("date")
+  if (!date) {
+    return c.json({ success: false, message: "Date is required" }, 400)
+  }
+
+  try {
+    const startDate = new Date(date + "T00:00:00.000Z")
+    const endDate = new Date(date + "T23:59:59.999Z")
+
+    const dateLog = await db
+      .select({
+        logId: workoutLogs.id,
+        userId: workoutLogs.userId,
+        workoutId: workoutLogs.workoutId,
+        workoutName: workouts.name,
+        notes: workoutLogs.notes,
+        createdAt: workoutLogs.createdAt,
+      })
+      .from(workoutLogs)
+      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
+      .where(
+        and(
+          gte(workoutLogs.createdAt, startDate),
+          lte(workoutLogs.createdAt, endDate)
+        )
+      )
+    return c.json({ success: true, logs: dateLog })
+  } catch (error) {
+    console.error("Error fetching calendar logs:", error)
+    return c.json(
+      { success: false, message: "Failed to fetch calendar logs" },
+      500
+    )
+  }
+})
+
+workoutLogsRouter.get("/calendar", async (c) => {
+  const user = c.get("user" as any)
+  if (!user || !user.id) {
+    return c.json({ success: false, message: "Unauthorized" }, 401)
+  }
+
+  const year = Number(c.req.query("year"))
+  const month = Number(c.req.query("month"))
+  console.log({ year, month })
+  if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+    return c.json({ success: false, message: "Invalid year or month" }, 400)
+  }
+
+  if (!year || !month) {
+    return c.json(
+      { success: false, message: "Year and month are required" },
+      400
+    )
+  }
+
+  try {
+    const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999)
+
+    console.log("Start Date:", startDate.toISOString()) // Debugging
+    console.log("End Date:", endDate.toISOString()) // Debugging
+
+    const logs = await db
+      .select({
+        logId: workoutLogs.id,
+        userId: workoutLogs.userId,
+        workoutId: workoutLogs.workoutId,
+        workoutName: workouts.name,
+        notes: workoutLogs.notes,
+        createdAt: workoutLogs.createdAt,
+      })
+      .from(workoutLogs)
+      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
+      .where(
+        and(
+          eq(workoutLogs.userId, user.id),
+          and(
+            gte(workoutLogs.createdAt, startDate),
+            lte(workoutLogs.createdAt, endDate)
+          )
+        )
+      )
+      .orderBy(desc(workoutLogs.createdAt))
+
+    // Group logs by date
+    const groupedLogs: Record<string, any[]> = {}
+    logs.forEach((log) => {
+      const date = (log.createdAt as Date).toISOString().split("T")[0] // Format: YYYY-MM-DD
+      if (!groupedLogs[date]) {
+        groupedLogs[date] = []
+      }
+      groupedLogs[date].push(log)
+    })
+
+    return c.json({ success: true, logs: groupedLogs })
+  } catch (error) {
+    console.error("Error fetching calendar logs:", error)
+    return c.json(
+      { success: false, message: "Failed to fetch calendar logs" },
+      500
+    )
+  }
+})
+
 workoutLogsRouter.get("/:id", async (c) => {
   const user = c.get("user" as any)
 
@@ -92,7 +203,7 @@ workoutLogsRouter.get("/:id", async (c) => {
       .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
       .where(eq(workoutLogs.id, id))
 
-    return c.json({ success: true, singleWorkout })
+    return c.json({ success: true, logs: singleWorkout })
   } catch (error) {
     console.error("JWT Verification Error:", error)
     return c.json({ message: "Invalid token!" }, 401)
@@ -113,7 +224,7 @@ workoutLogsRouter.post("/", async (c) => {
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
 
   if (!workoutId) {
-    return c.json({ success: false, message: "Workout ID is required" }, 400)
+    return c.json({ success: false, message: "Workout ID is racequired" }, 400)
   }
 
   try {

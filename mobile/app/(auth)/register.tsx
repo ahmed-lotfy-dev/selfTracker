@@ -14,6 +14,7 @@ import axiosInstance from "@/utils/api/axiosInstane"
 import { useAuthActions } from "@/store/useAuthStore"
 import { register } from "@/utils/api/authApi"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
+import { showAlert } from "@/utils/lib"
 
 export default function Register() {
   const router = useRouter()
@@ -139,7 +140,7 @@ export default function Register() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => Alert.alert("Navigate", "Go to login screen")}
+        onPress={() => showAlert("Navigate", "Go to login screen")}
         style={{
           marginTop: 15,
           alignItems: "center",

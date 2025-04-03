@@ -1,5 +1,5 @@
 import * as Updates from "expo-updates"
-import { AppState, AppStateStatus, Platform } from "react-native"
+import { Alert, AppState, AppStateStatus, Platform } from "react-native"
 import { focusManager } from "@tanstack/react-query"
 
 // Check for updates
@@ -19,5 +19,21 @@ export function onAppStateChange(status: AppStateStatus) {
   // React Query already supports in web browser refetch on window focus by default
   if (Platform.OS !== "web") {
     focusManager.setFocused(status === "active")
+  }
+}
+
+export const showAlert = (
+  title: string,
+  message: string,
+  buttons?: {
+    text: string
+    onPress?: () => void
+    style?: "cancel" | "destructive"
+  }[]
+) => {
+  if (Platform.OS === "web") {
+    alert(`${title}\n${message}`)
+  } else {
+    Alert.alert(title, message, buttons, { cancelable: true })
   }
 }

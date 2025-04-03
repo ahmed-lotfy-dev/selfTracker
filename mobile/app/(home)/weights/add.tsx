@@ -14,6 +14,7 @@ import { DateType } from "react-native-ui-datepicker"
 import { useRouter } from "expo-router"
 import DatePicker from "@/components/DatePicker"
 import DateDisplay from "@/components/DateDisplay"
+import { showAlert } from "@/utils/lib"
 
 export default function AddWeight() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function AddWeight() {
     mutationFn: () => {
       const weightValue = parseFloat(weight)
       if (isNaN(weightValue)) {
-        Alert.alert("Invalid Input", "Please enter a valid weight.")
+        showAlert("Invalid Input", "Please enter a valid weight.")
         return Promise.reject("Invalid weight")
       }
 
@@ -54,7 +55,7 @@ export default function AddWeight() {
   })
 
   return (
-    <View className="p-4">
+    <View className="px-4">
       <Text className="text-lg font-bold mb-4">Enter Your Weight</Text>
       <TextInput
         value={weight}
@@ -72,7 +73,7 @@ export default function AddWeight() {
         placeholder="Add any notes (e.g., morning weigh-in)"
       />
 
-        <Text className="text-lg font-bold mb-2">Select Date</Text>
+      <Text className="text-lg font-bold mb-2">Select Date</Text>
 
       <View className="mb-4">
         <TouchableOpacity onPress={() => setShowDate(!showDate)}>
@@ -81,7 +82,7 @@ export default function AddWeight() {
           />
         </TouchableOpacity>
       </View>
-      
+
       {showDate && (
         <DatePicker
           date={date}

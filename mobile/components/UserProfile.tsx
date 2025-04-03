@@ -1,4 +1,4 @@
-import { View, Text, ActivityIndicator } from "react-native"
+import { View, Text, ActivityIndicator, Image } from "react-native"
 import { useQuery } from "@tanstack/react-query"
 import { userData } from "@/utils/api/authApi"
 
@@ -30,12 +30,20 @@ export default function UserProfile() {
 
   return (
     <View className="items-center p-4">
-      <Text className="text-2xl font-bold">
-        User: {user.user.name ? user.user.name : "No Name"}
-      </Text>
-      <Text className="text-lg text-gray-500">
-        Email: {user.user.email ? user.user.email : "No Email"}
-      </Text>
+      <View className="flex-row justify-center items-center gap-3">
+        <Image
+          source={{
+            uri: "https://placehold.co/100x100",
+            width: 50,
+            height: 50,
+            scale: 1.5,
+          }}
+          style={{ width: 55, height: 55, borderRadius: 50 }}
+        />
+        <Text className="text-lg font-bold">
+          {user.user.name ? user.user.name : "No Name"}
+        </Text>
+      </View>
     </View>
   )
 }

@@ -33,6 +33,8 @@ export default function WeightsLayout() {
         name="add"
         options={{
           title: "Add Weight",
+          presentation: "modal", 
+          animation: "slide_from_bottom",
           headerShown: true,
           headerLeft: () => (
             <Pressable onPress={() => router.push("/weights")}>

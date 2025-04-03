@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from "hono"
-import { verify } from "hono/jwt"
+import { verify } from "jsonwebtoken"
 import { db } from "../src/db/index.js"
 import { users } from "../src/db/schema"
 import { eq } from "drizzle-orm"
@@ -14,9 +14,9 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     }
 
     const token = authHeader.split(" ")[1]
-    const payload = await verify(token, process.env.JWT_SECRET!)
+    const payload = verify(token, JWT_SECRET)
 
-    if (!payload?.id) {
+    if (!payload.id) {
       console.log("🚨 Invalid Token Payload:", payload)
       return c.json({ error: "Unauthorized: Invalid token data" }, 401)
     }

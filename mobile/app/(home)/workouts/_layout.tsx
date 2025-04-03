@@ -33,7 +33,8 @@ export default function WeightsLayout() {
         name="add"
         options={{
           title: "Add Workout",
-          headerShown: true,
+          presentation: "modal",
+          animation: "slide_from_bottom",
           headerLeft: () => (
             <Pressable onPress={() => router.push("/workouts")}>
               <Entypo name="chevron-left" size={24} />

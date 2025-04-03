@@ -1,10 +1,12 @@
+import React, { useState } from "react"
+import { View, Text, Pressable, ActivityIndicator } from "react-native"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchAllWorkoutLogs } from "@/utils/api/workoutsApi"
 import LogList from "@/components/LogList"
 import WorkoutLogItem from "@/components/WorkoutLogItem"
 import Header from "@/components/Header"
-import ScreenContainer from "@/components/ScreenContainer"
-import { ActivityIndicator, Text } from "react-native"
+import Table from "@/components/Table"
+import CalendarView from "@/components/CalendarView"
 
 export default function WorkoutScreen() {
   const limit = 10
@@ -27,42 +29,67 @@ export default function WorkoutScreen() {
     refetchOnReconnect: false,
   })
 
-  const logs = data?.pages.flatMap((page) => page.workoutLogs) || []
+  const [view, setView] = useState<"list" | "calendar">("calendar")
 
   if (isLoading) {
     return (
-      <ScreenContainer>
-        <ActivityIndicator
-          size="large"
-          className="flex-1 justify-center items-center"
-        />
-      </ScreenContainer>
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" />
+      </View>
     )
   }
 
   if (isError) {
     return (
-      <ScreenContainer>
+      <View>
         <Text className="text-red-500">
           Failed to load workouts. Please try again.
         </Text>
         <Text className="text-red-500">{error.message}</Text>
-      </ScreenContainer>
+      </View>
     )
   }
 
+  const logs = data?.pages.flatMap((page) => page.workoutLogs) || []
+
   return (
-    <ScreenContainer>
+    <View className="flex-1 p-4">
       <Header title="Workout Logs" addPath="/workouts/add" />
-      <LogList
-        logs={logs}
-        renderItem={({ item }) => (
-          <WorkoutLogItem item={item} path="/workouts" />
-        )}
-        fetchNextPage={fetchNextPage}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-      />
-    </ScreenContainer>
+
+      {/* Toggle Switch */}
+      <View className="flex-row justify-center my-4 bg-gray-300 rounded-full p-1">
+        <Pressable
+          onPress={() => setView("list")}
+          className={`flex-1 items-center py-2 rounded-full ${
+            view === "list" ? "bg-white shadow-md" : ""
+          }`}
+        >
+          <Text className="text-gray-700">List</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setView("calendar")}
+          className={`flex-1 items-center py-2 rounded-full ${
+            view === "calendar" ? "bg-white shadow-md" : ""
+          }`}
+        >
+          <Text className="text-gray-700">Calendar</Text>
+        </Pressable>
+      </View>
+
+      {/* Conditional View */}
+      {view === "list" ? (
+        <LogList
+          logs={logs}
+          renderItem={({ item }) => (
+            <WorkoutLogItem item={item} path="/workouts" />
+          )}
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+        />
+      ) : (
+        <CalendarView />
+      )}
+    </View>
   )
 }

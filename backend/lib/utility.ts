@@ -1,16 +1,25 @@
 import { db } from "../src/db/index.js"
 import { eq } from "drizzle-orm"
-import { decode, sign, verify } from "hono/jwt"
+import { sign } from "jsonwebtoken"
 import { refreshTokens, users } from "../src/db/schema"
 
+interface TokenPayload {
+  id: string
+  userName: string
+  email: string
+  userId: string
+  role: string
+  exp: number
+}
+
 export async function generateTokens(user: any) {
-  const payload = {
+  const payload: TokenPayload = {
     id: user.id,
     userName: user.name,
     email: user.email,
     userId: user.id,
     role: user.role,
-    exp: Math.floor(Date.now() / 1000) + 60 * 5, // 5 mins
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 1 day
   }
   const accessToken = await sign(payload, process.env.JWT_SECRET!)
 

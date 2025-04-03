@@ -54,6 +54,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
     }
   }
 
+  console.log({ item })
   return (
     <View
       className="flex-row justify-between items-center p-4 border-b border-gray-200"

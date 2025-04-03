@@ -42,7 +42,6 @@ export default function WeightLog() {
         <Text className="text-lg">
           Date:
           <DateDisplay date={log.createdAt} />
-
         </Text>
         <Text className="text-lg">
           Weight: {log.weight || "No weight recorded"}

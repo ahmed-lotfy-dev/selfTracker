@@ -15,11 +15,18 @@ export const fetchAllWorkoutLogs = async (
   return response.data
 }
 
+export async function fetchWorkoutLogsByMonth(year: number, month: number) {
+  const response = await axiosInstance.get(
+    `${API_BASE_URL}/api/workoutLogs/calendar?year=${year}&month=${month}`
+  )
+  return response.data.logs
+}
+
 export const fetchSingleWorkout = async (workoutId: string) => {
   const response = await axiosInstance.get(
     `${API_BASE_URL}/api/workoutLogs/${workoutId}`
   )
-  return response.data
+  return response.data.logs
 }
 
 export const createWorkout = async (workout: any) => {
@@ -28,6 +35,14 @@ export const createWorkout = async (workout: any) => {
     workout
   )
   return response.data
+}
+
+export const fetchSingleWorkoutByDate = async (date: string) => {
+  const response = await axiosInstance.get(
+    `${API_BASE_URL}/api/workoutLogs/calendar/${date}`
+  )
+  console.log({ response: response.data })
+  return response.data.logs
 }
 
 export const updateWorkout = async (workout: any) => {

@@ -11,6 +11,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import DateDisplay from "./DateDisplay"
 import { deleteWorkout } from "@/utils/api/workoutsApi"
 import FontAwesome from "@expo/vector-icons/FontAwesome"
+import Table from "./Table"
+import { showAlert } from "@/utils/lib"
 
 type WorkoutLogProps = {
   item: {
@@ -29,7 +31,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
     mutationFn: () => deleteWorkout(String(item.logId)),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["workoutLogs"] }),
-    onError: () => Alert.alert("Error", "Failed to delete workout log."),
+    onError: () => showAlert("Error", "Failed to delete workout log."),
   })
 
   const DeleteAlert = () => {
@@ -41,14 +43,13 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
         deleteMutation.mutate()
       }
     } else {
-      Alert.alert(
+      showAlert(
         "Delete workout log",
-        "Are you sure you want to delete this workout log?",
+        "Are you sure you want to delete this workout log.",
         [
           { text: "Cancel", style: "cancel" },
           { text: "Delete", onPress: () => deleteMutation.mutate() },
-        ],
-        { cancelable: true }
+        ]
       )
     }
   }

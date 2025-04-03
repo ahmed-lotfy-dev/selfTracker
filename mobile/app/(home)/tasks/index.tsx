@@ -4,6 +4,7 @@ import { fetchAllTasks } from "@/utils/api/tasksApi"
 import { useQuery } from "@tanstack/react-query"
 import { TaskType } from "@/types/taskType"
 import { ActivityIndicator, Text, View } from "react-native"
+import TaskForm from "@/components/TaskForm"
 
 export default function index() {
   const {
@@ -24,6 +25,9 @@ export default function index() {
 
   return (
     <View className="flex-1 justify-center items-center">
+      <TaskForm onSubmit={function (taskData: { title: string; description?: string }): void {
+        throw new Error("Function not implemented.")
+      } } />
       <ListItems
         items={tasks ?? []}
         renderItem={({ item }: { item: TaskType }) => (

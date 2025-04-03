@@ -1,10 +1,9 @@
+import { ActivityIndicator, Text,View } from "react-native"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchAllWeightLogs } from "@/utils/api/weightsApi"
 import LogList from "@/components/LogList"
 import WeightLogItem from "@/components/WeightLogItem"
 import Header from "@/components/Header"
-import ScreenContainer from "@/components/ScreenContainer"
-import { ActivityIndicator, Text } from "react-native"
 
 export default function WeightsScreen() {
   const limit = 10
@@ -27,32 +26,31 @@ export default function WeightsScreen() {
     refetchOnReconnect: false,
   })
   const logs = data?.pages.flatMap((page) => page.weightLogs) || []
-  console.log({ data })
 
   if (isLoading) {
     return (
-      <ScreenContainer>
+      <View>
         <ActivityIndicator
           size="large"
           className="flex-1 justify-center items-center"
         />
-      </ScreenContainer>
+      </View>
     )
   }
 
   if (isError) {
     return (
-      <ScreenContainer>
+      <View>
         <Text className="text-red-500">
           Failed to load weights. Please try again.
         </Text>
         <Text className="text-red-500">{error.message}</Text>
-      </ScreenContainer>
+      </View>
     )
   }
 
   return (
-    <ScreenContainer>
+    <View className="flex-1 p-4">
       <Header title="Weight Logs" addPath="/weights/add" />
       <LogList
         logs={logs}
@@ -61,6 +59,6 @@ export default function WeightsScreen() {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
       />
-    </ScreenContainer>
+    </View>
   )
 }
