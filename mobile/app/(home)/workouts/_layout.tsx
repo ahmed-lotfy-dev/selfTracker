@@ -31,6 +31,7 @@ export default function WeightsLayout() {
           headerShown: true,
           headerTitleAlign: "center",
           presentation: "modal",
+          headerTransparent: true,
           animation: "slide_from_bottom",
           headerLeft: () => <BackButton backTo="/workouts" />,
         }}

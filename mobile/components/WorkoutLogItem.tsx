@@ -54,7 +54,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
       >
         <Text className="text-xl font-bold mb-3">{item.workoutName}</Text>
         <Text className="text-sm text-gray-500">
-          <DateDisplay date={localDate} />
+          <DateDisplay date={item.createdAt} />
         </Text>
       </TouchableOpacity>
       <View>

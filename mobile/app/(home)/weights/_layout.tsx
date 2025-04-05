@@ -32,8 +32,8 @@ export default function WeightsLayout() {
         options={{
           title: "Add Weight",
           headerTitleAlign: "center",
-
           presentation: "modal",
+          headerTransparent: true,
           animation: "slide_from_bottom",
           headerShown: true,
           headerLeft: () => <BackButton backTo="/weights" />,

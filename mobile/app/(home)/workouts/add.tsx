@@ -17,6 +17,7 @@ import { useRouter } from "expo-router"
 import DateDisplay from "@/components/DateDisplay"
 import { format } from "date-fns/format"
 import { convertLocalDateToUtc } from "@/utils/lib"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function AddWorkout() {
   const router = useRouter()
@@ -59,56 +60,57 @@ export default function AddWorkout() {
     },
   })
 
-useEffect(() => {
-  if (workouts.length > 0 && !workout) {
-    setWorkout(workouts[0].id)
-  }
-}, [workouts, workout])
-
+  useEffect(() => {
+    if (workouts.length > 0 && !workout) {
+      setWorkout(workouts[0].id)
+    }
+  }, [workouts, workout])
 
   return (
-    <View className="p-4">
-      <Text className="text-lg font-bold mb-4">Select Workout</Text>
-      <Select value={workout} setValue={setWorkout} options={workouts} />
+    <SafeAreaView>
+      <View className="p-4">
+        <Text className="text-lg font-bold mt-10 mb-4">Select Workout</Text>
+        <Select value={workout} setValue={setWorkout} options={workouts} />
 
-      <Text className="text-lg font-bold mb-2">Notes (Optional)</Text>
-      <TextInput
-        className="border border-green-700 rounded-md p-2 mb-3"
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Add any notes (e.g., morning weigh-in)"
-      />
+        <Text className="text-lg font-bold mb-2">Notes (Optional)</Text>
+        <TextInput
+          className="border border-green-700 rounded-md p-2 mb-3"
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Add any notes (e.g., morning weigh-in)"
+        />
 
-      <Text className="text-lg font-bold mb-2">Select Date</Text>
+        <Text className="text-lg font-bold mb-2">Select Date</Text>
 
-      <View className="mb-4">
-        <TouchableOpacity onPress={() => setShowDate(!showDate)}>
-          <DateDisplay
-            date={date ? date.toLocaleString() : new Date().toLocaleString()}
+        <View className="mb-4">
+          <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+            <DateDisplay
+              date={date ? date.toLocaleString() : new Date().toLocaleString()}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {showDate && (
+          <DatePicker
+            date={date}
+            setDate={setDate}
+            showDate={showDate}
+            setShowDate={setShowDate}
           />
+        )}
+
+        <TouchableOpacity
+          onPress={() => mutation.mutate()}
+          disabled={mutation.isPending || !workout}
+          className="bg-green-800 p-3 rounded-md mt-4"
+        >
+          {mutation.isPending ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text className="text-white text-center">Add Workout</Text>
+          )}
         </TouchableOpacity>
       </View>
-
-      {showDate && (
-        <DatePicker
-          date={date}
-          setDate={setDate}
-          showDate={showDate}
-          setShowDate={setShowDate}
-        />
-      )}
-
-      <TouchableOpacity
-        onPress={() => mutation.mutate()}
-        disabled={mutation.isPending || !workout}
-        className="bg-green-800 p-3 rounded-md mt-4"
-      >
-        {mutation.isPending ? (
-          <ActivityIndicator size="small" color="white" />
-        ) : (
-          <Text className="text-white text-center">Add Workout</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   )
 }

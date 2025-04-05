@@ -7,48 +7,46 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  View,
 } from "react-native"
 import { useRouter } from "expo-router"
-import axios from "axios"
-import { UserType } from "@/types/userType"
 import { login, userData } from "@/utils/api/authApi"
 import { useAuthActions } from "@/store/useAuthStore"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
+import { useForm } from "@tanstack/react-form"
 
 export default function Login() {
   const router = useRouter()
-  const { setTokens } = useAuthActions()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const { setTokens, setUser } = useAuthActions()
   const [status, setStatus] = useState<"off" | "submitting" | "submitted">(
     "off"
   )
-  const { setUser } = useAuthActions()
   const [errorMessage, setErrorMessage] = useState("")
 
-  const handleLogin = async () => {
-    setStatus("submitting")
-    try {
-      const response = await login(email, password)
-      const { accessToken, refreshToken } = response
+  const form = useForm({
+    defaultValues: { email: "", password: "" },
+    onSubmit: async ({ value }) => {
+      setStatus("submitting")
+      try {
+        const response = await login(value.email, value.password)
+        const { accessToken, refreshToken } = response
 
-      setTokens(accessToken, refreshToken)
+        setTokens(accessToken, refreshToken)
+        await setAccessToken(accessToken)
+        await setRefreshToken(refreshToken)
 
-      await setAccessToken(accessToken)
-      await setRefreshToken(refreshToken)
+        const user = await userData()
+        setUser(user)
 
-      const user = await userData()
-      setUser(user)
-
-      setStatus("submitted")
-
-      router.replace("/")
-    } catch (error: any) {
-      console.error("Login failed:", error)
-      setErrorMessage(error.response?.data?.message || "Login failed")
-      setStatus("off")
-    }
-  }
+        setStatus("submitted")
+        router.replace("/")
+      } catch (error: any) {
+        console.error("Login failed:", error)
+        setErrorMessage(error.response?.data?.message || "Login failed")
+        setStatus("off")
+      }
+    },
+  })
 
   return (
     <KeyboardAvoidingView
@@ -59,61 +57,76 @@ export default function Login() {
         Login Form
       </Text>
 
-      <Text>Email</Text>
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        autoComplete="email"
-        textContentType="emailAddress"
-        style={{
-          borderWidth: 1,
-          padding: 10,
-          marginVertical: 5,
-          borderRadius: 5,
-        }}
+      <form.Field
+        name="email"
+        children={(field) => (
+          <TextInput
+            value={field.state.value}
+            onBlur={field.handleBlur}
+            onChangeText={field.handleChange}
+            placeholder="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+            style={{
+              borderWidth: 1,
+              borderColor: "#ccc",
+              borderRadius: 5,
+              padding: 10,
+              marginBottom: 10,
+            }}
+          />
+        )}
       />
 
-      <Text>Password</Text>
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoComplete="password"
-        textContentType="password"
-        style={{
-          borderWidth: 1,
-          padding: 10,
-          marginVertical: 5,
-          borderRadius: 5,
-        }}
+      <form.Field
+        name="password"
+        children={(field) => (
+          <TextInput
+            value={field.state.value}
+            onBlur={field.handleBlur}
+            onChangeText={field.handleChange}
+            placeholder="Password"
+            secureTextEntry
+            autoComplete="password"
+            textContentType="password"
+            style={{
+              borderWidth: 1,
+              borderColor: "#ccc",
+              borderRadius: 5,
+              padding: 10,
+              marginBottom: 10,
+            }}
+          />
+        )}
       />
 
       {errorMessage ? (
-        <Text style={{ color: "red", marginVertical: 5 }}>{errorMessage}</Text>
+        <Text style={{ color: "red", marginBottom: 10 }}>{errorMessage}</Text>
       ) : null}
 
-      <TouchableOpacity
-        onPress={handleLogin}
-        disabled={status === "submitting"}
-        style={{
-          backgroundColor: "blue",
-          padding: 15,
-          borderRadius: 5,
-          alignItems: "center",
-          marginTop: 10,
-          opacity: status === "submitting" ? 0.5 : 1,
-        }}
-      >
-        {status === "submitting" ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text style={{ color: "white", fontWeight: "bold" }}>Login</Text>
+      <form.Subscribe
+        selector={(state) => [state.canSubmit, state.isSubmitting]}
+        children={([canSubmit, isSubmitting]) => (
+          <TouchableOpacity
+            onPress={() => form.handleSubmit()}
+            disabled={!canSubmit || isSubmitting}
+            style={{
+              backgroundColor: "#007bff",
+              padding: 15,
+              borderRadius: 5,
+              alignItems: "center",
+            }}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={{ color: "white" }}>Login</Text>
+            )}
+          </TouchableOpacity>
         )}
-      </TouchableOpacity>
+      />
     </KeyboardAvoidingView>
   )
 }

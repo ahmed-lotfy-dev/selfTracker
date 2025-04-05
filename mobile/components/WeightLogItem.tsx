@@ -48,7 +48,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
       >
         <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
         <Text className="text-sm text-gray-500">
-          <DateDisplay date={localDate} />
+          <DateDisplay date={item.createdAt} />
         </Text>
       </TouchableOpacity>
       <View>

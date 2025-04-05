@@ -15,6 +15,7 @@ import { useRouter } from "expo-router"
 import DatePicker from "@/components/DatePicker"
 import DateDisplay from "@/components/DateDisplay"
 import { convertLocalDateToUtc, showAlert } from "@/utils/lib"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function AddWeight() {
   const router = useRouter()
@@ -36,7 +37,7 @@ export default function AddWeight() {
       }
 
       const localDate = convertLocalDateToUtc(new Date(date as string))
-      
+
       return createWeight({
         userId: user.id,
         weight: weightValue,
@@ -57,55 +58,57 @@ export default function AddWeight() {
   })
 
   return (
-    <View className="px-4">
-      <Text className="text-lg font-bold mb-4">Enter Your Weight</Text>
-      <TextInput
-        value={weight}
-        onChangeText={setWeight}
-        keyboardType="numeric"
-        placeholder="Enter weight (kg)"
-        className="border border-green-700 rounded-md p-2 mb-3"
-      />
+    <SafeAreaView>
+      <View className="px-4 mt-14">
+        <Text className="text-lg font-bold mb-4">Enter Your Weight</Text>
+        <TextInput
+          value={weight}
+          onChangeText={setWeight}
+          keyboardType="numeric"
+          placeholder="Enter weight (kg)"
+          className="border border-green-700 rounded-md p-2 mb-3"
+        />
 
-      <Text className="text-lg font-bold mb-2">Notes (Optional)</Text>
-      <TextInput
-        className="border border-green-700 rounded-md p-2 mb-3"
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Add any notes (e.g., morning weigh-in)"
-      />
+        <Text className="text-lg font-bold mb-2">Notes (Optional)</Text>
+        <TextInput
+          className="border border-green-700 rounded-md p-2 mb-3"
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Add any notes (e.g., morning weigh-in)"
+        />
 
-      <Text className="text-lg font-bold mb-2">Select Date</Text>
+        <Text className="text-lg font-bold mb-2">Select Date</Text>
 
-      <View className="mb-4">
-        <TouchableOpacity onPress={() => setShowDate(!showDate)}>
-          <DateDisplay
-            date={date ? date.toLocaleString() : new Date().toLocaleString()}
+        <View className="mb-4">
+          <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+            <DateDisplay
+              date={date ? date.toLocaleString() : new Date().toLocaleString()}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {showDate && (
+          <DatePicker
+            date={date}
+            setDate={setDate}
+            showDate={showDate}
+            setShowDate={setShowDate}
           />
+        )}
+
+        <TouchableOpacity
+          onPress={() => mutation.mutate()}
+          disabled={mutation.isPending || !weight}
+          className="bg-green-800 p-3 rounded-md"
+        >
+          {mutation.isPending ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text className="text-white text-center">Add Weight</Text>
+          )}
         </TouchableOpacity>
       </View>
-
-      {showDate && (
-        <DatePicker
-          date={date}
-          setDate={setDate}
-          showDate={showDate}
-          setShowDate={setShowDate}
-        />
-      )}
-
-      <TouchableOpacity
-        onPress={() => mutation.mutate()}
-        disabled={mutation.isPending || !weight}
-        className="bg-green-800 p-3 rounded-md"
-      >
-        {mutation.isPending ? (
-          <ActivityIndicator size="small" color="white" />
-        ) : (
-          <Text className="text-white text-center">Add Weight</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   )
 }
 function zonedTimeToUtc(date: DateType, userTimezone: any) {
