@@ -1,8 +1,10 @@
 import { View, Text } from "react-native"
-import { fetchSingleWeightLog } from "@/utils/api/weightsApi"
+import { deleteWeight, fetchSingleWeightLog } from "@/utils/api/weightsApi"
 import { useQuery } from "@tanstack/react-query"
 import { Stack, useLocalSearchParams } from "expo-router"
 import DateDisplay from "@/components/DateDisplay"
+import { useDelete } from "@/hooks/useDelete"
+import DeleteButton from "@/components/DeleteButton"
 
 export default function WeightLog() {
   const { id } = useLocalSearchParams() as { id: string }
@@ -19,13 +21,17 @@ export default function WeightLog() {
     enabled: !!id,
   })
 
-  console.log("Weight Log Response:", weightLog)
+  const { deleteMutation, triggerDelete } = useDelete({
+    mutationFn: () => deleteWeight(String(weightLog?.id)),
+    confirmTitle: "Delete Workout",
+    confirmMessage: "Are you sure you want to delete this weight log?",
+    onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
+  })
 
   if (isLoading) return <Text>Loading...</Text>
   if (isError) return <Text>Error loading weight log</Text>
 
   const log = weightLog?.weightLog?.[0] ?? {}
-
   return (
     <>
       <Stack.Screen
@@ -49,6 +55,12 @@ export default function WeightLog() {
         <Text className="text-lg">
           Notes: {log.notes || "No notes available"}
         </Text>
+        <DeleteButton onDelete={triggerDelete} className="w-10 mt-5" />
+        {deleteMutation.isError && (
+          <Text className="text-red-500 mt-2">
+            {deleteMutation.error?.message || "Could not delete workout."}
+          </Text>
+        )}
       </View>
     </>
   )

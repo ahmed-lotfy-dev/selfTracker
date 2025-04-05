@@ -13,6 +13,7 @@ import { deleteWeight } from "@/utils/api/weightsApi"
 import FontAwesome from "@expo/vector-icons/FontAwesome"
 import { formatLocalDate } from "@/utils/lib"
 import DeleteButton from "./DeleteButton"
+import { useDelete } from "@/hooks/useDelete"
 
 type WeightLogProps = {
   item: {
@@ -29,40 +30,16 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
 
   const localDate = formatLocalDate(item.createdAt)
 
-  const deleteMutation = useMutation({
-    mutationFn: () => deleteWeight(String(item.id)),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["weightLogs"] })
-      queryClient.invalidateQueries({ queryKey: ["weightLogsCalendar"] })
-    },
-    onError: () =>
-      setTimeout(() => Alert.alert("Error", "Failed to delete weight log."), 0),
+  const { deleteMutation, triggerDelete } = useDelete({
+    mutationFn: () => deleteWeight(String(item?.id)),
+    confirmTitle: "Delete Weight",
+    confirmMessage: "Are you sure you want to delete this weight log?",
+    onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
   })
-
-  const DeleteAlert = () => {
-    if (Platform.OS === "web") {
-      const confirmed = window.confirm(
-        "Are you sure you want to delete this weight log?"
-      )
-      if (confirmed) {
-        deleteMutation.mutate()
-      }
-    } else {
-      Alert.alert(
-        "Delete weight log",
-        "Are you sure you want to delete this weight log?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Delete", onPress: () => deleteMutation.mutate() },
-        ],
-        { cancelable: true }
-      )
-    }
-  }
 
   return (
     <View
-      className="flex-row justify-between items-center p-4 border-b border-gray-200"
+      className="flex-row justify-center items-center p-4 border-b border-gray-200"
       key={item.id}
     >
       <TouchableOpacity
@@ -74,7 +51,17 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
           <DateDisplay date={localDate} />
         </Text>
       </TouchableOpacity>
-      <DeleteButton deleteMutation={deleteMutation} DeleteAlert={DeleteAlert} />
+      <View>
+        <DeleteButton
+          onDelete={triggerDelete}
+          isLoading={deleteMutation.isPending}
+        />
+        {deleteMutation.isError && (
+          <Text className="text-red-500 mt-2">
+            {deleteMutation.error?.message || "Could not delete workout."}
+          </Text>
+        )}
+      </View>
     </View>
   )
 }

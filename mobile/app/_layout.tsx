@@ -14,6 +14,8 @@ import { AppStateStatus, Platform } from "react-native"
 import { useOnlineManager } from "@/hooks/useOnlineManager"
 import { useAppState } from "@/hooks/useAppState"
 import { AppProviders } from "@/components/AppProviders"
+import "react-native-reanimated"
+import "react-native-gesture-handler"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -32,9 +34,9 @@ export default function RootLayout() {
     async function prepareApp() {
       try {
         if (loaded) {
-          await checkForUpdates() 
-          await SplashScreen.hideAsync() 
-          setAppIsReady(true) 
+          await checkForUpdates()
+          await SplashScreen.hideAsync()
+          setAppIsReady(true)
         }
       } catch (error) {
         console.warn(error)
@@ -52,9 +54,9 @@ export default function RootLayout() {
       const refreshToken = await AsyncStorage.getItem("refreshToken")
 
       if (accessToken && refreshToken) {
-        router.replace("/(home)") 
+        router.replace("/(home)")
       } else {
-        router.replace("/welcome") 
+        router.replace("/welcome")
       }
     }
 

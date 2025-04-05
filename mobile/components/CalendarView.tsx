@@ -38,7 +38,6 @@ const CalendarView = () => {
     const acc: MarkedDates = {}
     for (const date in dateToLogId) {
       acc[date] = {
-        marked: true,
         selected: true,
         selectedColor: "darkgreen",
       }
@@ -88,6 +87,29 @@ const CalendarView = () => {
         minDate={"1900-01-01"}
         maxDate={"2100-12-31"}
         current={`${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`}
+        dayComponent={({ date, state }: any) => {
+          const isSelected = !!markedDates[date.dateString]?.selected
+          const bgColor =
+            markedDates[date.dateString]?.selectedColor || "transparent"
+          const textColor =
+            state === "disabled" ? "#d1d5db" : isSelected ? "white" : "#111827"
+
+          return (
+            <View
+              style={{
+                backgroundColor: bgColor,
+                borderRadius: 999,
+                height: 36,
+                width: 36,
+                justifyContent: "center",
+                alignItems: "center",
+                margin: 2,
+              }}
+            >
+              <Text style={{ color: textColor }}>{date.day}</Text>
+            </View>
+          )
+        }}
       />
     </View>
   )

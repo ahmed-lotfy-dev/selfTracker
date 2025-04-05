@@ -57,10 +57,17 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
           <DateDisplay date={localDate} />
         </Text>
       </TouchableOpacity>
-      <DeleteButton
-        onDelete={triggerDelete} // Consistently passing the delete function
-        isLoading={deleteMutation.isPending}
-      />
+      <View>
+        <DeleteButton
+          onDelete={triggerDelete}
+          isLoading={deleteMutation.isPending}
+        />
+        {deleteMutation.isError && (
+          <Text className="text-red-500 mt-2">
+            {deleteMutation.error?.message || "Could not delete workout."}
+          </Text>
+        )}
+      </View>
     </View>
   )
 }

@@ -12,8 +12,6 @@ import { useDelete } from "@/hooks/useDelete"
 
 export default function WorkoutLog() {
   const { id } = useLocalSearchParams()
-  console.log(id)
-
   const isDate = !isNaN(Date.parse(String(id)))
 
   const {
@@ -29,13 +27,12 @@ export default function WorkoutLog() {
     enabled: !!id,
   })
 
+  // This must be declared BEFORE any return statement
   const currentMonth = new Date().getMonth() + 1
   const currentYear = new Date().getFullYear()
-  if (isLoading) return <Text>Loading...</Text>
-  if (isError) return <Text>Error loading workout</Text>
 
   const { deleteMutation, triggerDelete } = useDelete({
-    mutationFn: () => deleteWorkout(String(workoutLog?.logId)), // Optional chaining
+    mutationFn: () => deleteWorkout(String(workoutLog?.logId)),
     confirmTitle: "Delete Workout",
     confirmMessage: "Are you sure you want to delete this workout?",
     onSuccessInvalidate: [
@@ -43,8 +40,12 @@ export default function WorkoutLog() {
       { queryKey: ["workoutsCalendar", currentMonth, currentYear] },
     ],
   })
+
+  if (isLoading) return <Text>Loading...</Text>
+  if (isError) return <Text>Error loading workout</Text>
+
   const log = workoutLog[0] ?? {}
-console.log(log)
+
   return (
     <>
       <Stack.Screen
@@ -61,7 +62,7 @@ console.log(log)
         <Text className="text-lg">
           Notes: {log.notes || "No notes available"}
         </Text>
-        <DeleteButton onDelete={triggerDelete} />
+        <DeleteButton onDelete={triggerDelete} className="w-10 mt-5" />
         {deleteMutation.isError && (
           <Text className="text-red-500 mt-2">
             {deleteMutation.error?.message || "Could not delete workout."}
