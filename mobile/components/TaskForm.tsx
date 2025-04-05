@@ -42,32 +42,27 @@ export default function TaskForm({
   }
 
   return (
-    <View className="p-2 bg-zinc-300 m-2">
+    <View className="p-3 bg-zinc-300 m-2">
       {error ? <Text className="text-red-500 mb-2">{error}</Text> : null}
 
       <View className="mb-1">
-        <Text className="text-lg font-medium text-gray-800 mb-1">Title</Text>
+        <Text className="text-lg font-medium text-gray-800">Title</Text>
         <TextInput
           className="border border-gray-300 rounded-md p-3 text-base bg-gray-50"
           value={title}
           onChangeText={setTitle}
-          placeholder="Task title"
           autoCapitalize="sentences"
         />
       </View>
 
       <View className="mb-1">
-        <Text className="text-lg font-medium text-gray-800 mb-1">
+        <Text className="text-lg font-medium text-gray-800">
           Description (Optional)
         </Text>
         <TextInput
           className="border border-gray-300 rounded-md p-3 text-base bg-gray-50 h-20"
           value={description}
           onChangeText={setDescription}
-          placeholder="Task description"
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
         />
       </View>
 
