@@ -27,7 +27,7 @@ export default function LogoutButton({ className }: logoutProps) {
 
       await AsyncStorage.multiRemove(["accessToken", "refreshToken"])
 
-      router.replace("/")
+      router.replace("/welcome") 
     } catch (error: any) {
       console.error("Logout failed:", error.message)
       setError(error.message || "Logout failed. Please try again.")

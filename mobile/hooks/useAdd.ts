@@ -2,23 +2,19 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Alert, Platform } from "react-native"
 import { showAlert } from "@/utils/lib"
 
-type UseDeleteOptions = {
+type UseAddOptions = {
   mutationFn: () => Promise<any>
-  confirmTitle?: string
-  confirmMessage?: string
   onSuccessInvalidate?: { queryKey: any }[]
   onSuccessCallback?: () => void
   onErrorMessage?: string
 }
 
-export function useDelete({
+export function useAdd({
   mutationFn,
-  confirmTitle = "Delete",
-  confirmMessage = "Are you sure you want to delete this item?",
   onSuccessInvalidate = [],
   onSuccessCallback,
-  onErrorMessage = "Failed to delete.",
-}: UseDeleteOptions) {
+  onErrorMessage = "Failed to Add.",
+}: UseAddOptions) {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
@@ -34,20 +30,7 @@ export function useDelete({
     },
   })
 
-  const triggerDelete = () => {
-    if (Platform.OS === "web") {
-      const confirmed = window.confirm(confirmMessage)
-      if (confirmed) mutation.mutate()
-    } else {
-      showAlert(confirmTitle, confirmMessage, [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", onPress: () => mutation.mutate() },
-      ])
-    }
-  }
-
   return {
-    deleteMutation: mutation,
-    triggerDelete,
+    addMutation: mutation,
   }
 }

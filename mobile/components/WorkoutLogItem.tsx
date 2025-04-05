@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native"
-import { Route, useRouter } from "expo-router"
+import { Route, useRouter, Link } from "expo-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import DateDisplay from "./DateDisplay"
 import { deleteWorkout } from "@/utils/api/workoutsApi"
@@ -15,6 +15,7 @@ import Table from "./Table"
 import { formatLocalDate, showAlert } from "@/utils/lib"
 import { useDelete } from "@/hooks/useDelete"
 import DeleteButton from "./DeleteButton"
+import {  } from "expo-router"
 
 type WorkoutLogProps = {
   item: {
@@ -33,7 +34,6 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
   const year = new Date(item.createdAt).getFullYear()
   const month = new Date(item.createdAt).getMonth() + 1
 
-  // Initialize useDelete hook consistently
   const { deleteMutation, triggerDelete } = useDelete({
     mutationFn: () => deleteWorkout(String(item.logId)),
     confirmTitle: "Delete Workout",
@@ -43,20 +43,21 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
       { queryKey: ["workoutLogsCalendar", year, month] },
     ],
   })
+  
   return (
     <View
       className="flex-row justify-between items-center p-4 border-b border-gray-200"
       key={item.logId}
     >
-      <TouchableOpacity
-        className="flex-1"
-        onPress={() => router.push(`${path}/${String(item.logId)}` as Route)}
-      >
-        <Text className="text-xl font-bold mb-3">{item.workoutName}</Text>
-        <Text className="text-sm text-gray-500">
-          <DateDisplay date={item.createdAt} />
-        </Text>
-      </TouchableOpacity>
+      <Link href={`/workouts/${item.logId}`} asChild>
+        <TouchableOpacity className="flex-1">
+          <Text className="text-xl font-bold mb-3">{item.workoutName}</Text>
+          <Text className="text-sm text-gray-500">
+            <DateDisplay date={item.createdAt} />
+          </Text>
+        </TouchableOpacity>
+      </Link>
+
       <View>
         <DeleteButton
           onDelete={triggerDelete}

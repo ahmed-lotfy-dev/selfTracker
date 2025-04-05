@@ -1,3 +1,4 @@
+// TODO SWITCH FROM DYNAMIC TO USEADD MUTATION
 import {
   View,
   Text,
@@ -18,6 +19,7 @@ import DateDisplay from "@/components/DateDisplay"
 import { format } from "date-fns/format"
 import { convertLocalDateToUtc } from "@/utils/lib"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useAdd } from "@/hooks/useAdd"
 
 export default function AddWorkout() {
   const router = useRouter()
@@ -36,7 +38,7 @@ export default function AddWorkout() {
     initialData: [],
   })
 
-  const mutation = useMutation({
+  const { addMutation } = useAdd({
     mutationFn: () => {
       const localDate = convertLocalDateToUtc(new Date(date as string))
 
@@ -47,16 +49,16 @@ export default function AddWorkout() {
         createdAt: localDate,
       })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workoutLogs"] })
-      queryClient.invalidateQueries({ queryKey: ["workoutLogsCalendar"] })
+    onSuccessInvalidate: [
+      { queryKey: ["workoutLogs"] },
+      { queryKey: ["workoutLogsCalendar"] },
+    ],
+    onErrorMessage: "Failed to Add Workout Log.",
+    onSuccessCallback: () => {
       setWorkout("")
       setDate(new Date())
       setNotes("")
       router.push("/workouts")
-    },
-    onError: (error) => {
-      alert(error.message)
     },
   })
 
@@ -100,11 +102,11 @@ export default function AddWorkout() {
         )}
 
         <TouchableOpacity
-          onPress={() => mutation.mutate()}
-          disabled={mutation.isPending || !workout}
+          onPress={() => addMutation.mutate()}
+          disabled={addMutation.isPending || !workout}
           className="bg-green-800 p-3 rounded-md mt-4"
         >
-          {mutation.isPending ? (
+          {addMutation.isPending ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
             <Text className="text-white text-center">Add Workout</Text>

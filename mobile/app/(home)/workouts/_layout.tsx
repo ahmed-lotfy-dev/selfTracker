@@ -1,6 +1,7 @@
 import BackButton from "@/components/BackButton"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Stack, useRouter } from "expo-router"
+import WorkoutLogItem from "@/components/WorkoutLogItem"
 
 export default function WeightsLayout() {
   return (

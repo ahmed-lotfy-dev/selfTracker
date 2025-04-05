@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native"
-import { Route, useRouter } from "expo-router"
+import { Link, Route, useRouter } from "expo-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import DateDisplay from "./DateDisplay"
 import { deleteWeight } from "@/utils/api/weightsApi"
@@ -42,15 +42,15 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
       className="flex-row justify-center items-center p-4 border-b border-gray-200"
       key={item.id}
     >
-      <TouchableOpacity
-        className="flex-1"
-        onPress={() => router.push(`${path}/${String(item.id)}` as Route)}
-      >
-        <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
-        <Text className="text-sm text-gray-500">
-          <DateDisplay date={item.createdAt} />
-        </Text>
-      </TouchableOpacity>
+      <Link href={`/weights/${item.id}`} asChild>
+        <TouchableOpacity className="flex-1">
+          <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
+          <Text className="text-sm text-gray-500">
+            <DateDisplay date={item.createdAt} />
+          </Text>
+        </TouchableOpacity>
+      </Link>
+
       <View>
         <DeleteButton
           onDelete={triggerDelete}

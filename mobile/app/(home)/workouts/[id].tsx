@@ -5,12 +5,18 @@ import {
   fetchSingleWorkoutByDate,
 } from "@/utils/api/workoutsApi"
 import { useQuery } from "@tanstack/react-query"
-import { Stack, useLocalSearchParams, usePathname } from "expo-router"
+import {
+  Stack,
+  useLocalSearchParams,
+  usePathname,
+  useRouter,
+} from "expo-router"
 import DateDisplay from "@/components/DateDisplay"
 import DeleteButton from "@/components/DeleteButton"
 import { useDelete } from "@/hooks/useDelete"
 
 export default function WorkoutLog() {
+  const router = useRouter()
   const { id } = useLocalSearchParams()
   const isDate = !isNaN(Date.parse(String(id)))
 
@@ -27,18 +33,20 @@ export default function WorkoutLog() {
     enabled: !!id,
   })
 
-  // This must be declared BEFORE any return statement
   const currentMonth = new Date().getMonth() + 1
   const currentYear = new Date().getFullYear()
 
   const { deleteMutation, triggerDelete } = useDelete({
-    mutationFn: () => deleteWorkout(String(workoutLog?.logId)),
+    mutationFn: () => deleteWorkout(String(id)),
     confirmTitle: "Delete Workout",
     confirmMessage: "Are you sure you want to delete this workout?",
     onSuccessInvalidate: [
       { queryKey: ["workouts"] },
-      { queryKey: ["workoutsCalendar", currentMonth, currentYear] },
+      { queryKey: ["workoutLogsCalendar"] },
     ],
+    onSuccessCallback: () => {
+      router.push("/workouts")
+    },
   })
 
   if (isLoading) return <Text>Loading...</Text>

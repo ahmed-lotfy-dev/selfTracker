@@ -1,12 +1,13 @@
 import { View, Text } from "react-native"
 import { deleteWeight, fetchSingleWeightLog } from "@/utils/api/weightsApi"
 import { useQuery } from "@tanstack/react-query"
-import { Stack, useLocalSearchParams } from "expo-router"
+import { Stack, useLocalSearchParams, useRouter } from "expo-router"
 import DateDisplay from "@/components/DateDisplay"
 import { useDelete } from "@/hooks/useDelete"
 import DeleteButton from "@/components/DeleteButton"
 
 export default function WeightLog() {
+  const router = useRouter()
   const { id } = useLocalSearchParams() as { id: string }
   console.log(id)
 
@@ -26,6 +27,9 @@ export default function WeightLog() {
     confirmTitle: "Delete Workout",
     confirmMessage: "Are you sure you want to delete this weight log?",
     onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
+    onSuccessCallback: () => {
+      router.push("/weights")
+    },
   })
 
   if (isLoading) return <Text>Loading...</Text>
