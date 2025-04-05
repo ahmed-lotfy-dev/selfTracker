@@ -1,9 +1,10 @@
-import { ActivityIndicator, Text,View } from "react-native"
+import { ActivityIndicator, Text, View } from "react-native"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchAllWeightLogs } from "@/utils/api/weightsApi"
 import LogList from "@/components/LogList"
 import WeightLogItem from "@/components/WeightLogItem"
 import Header from "@/components/Header"
+import AddButton from "@/components/AddButton"
 
 export default function WeightsScreen() {
   const limit = 10
@@ -29,7 +30,7 @@ export default function WeightsScreen() {
 
   if (isLoading) {
     return (
-      <View>
+      <View className="flex-1 justify-center items-center">
         <ActivityIndicator
           size="large"
           className="flex-1 justify-center items-center"
@@ -50,8 +51,8 @@ export default function WeightsScreen() {
   }
 
   return (
-    <View className="flex-1 p-4">
-      <Header title="Weight Logs" addPath="/weights/add" />
+    <View className="flex-1 p-4 justify-center relative">
+      <Header title="Weight Logs" />
       <LogList
         logs={logs}
         renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}
@@ -59,6 +60,7 @@ export default function WeightsScreen() {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
       />
+      <AddButton className="bottom-10 right-5"/>
     </View>
   )
 }

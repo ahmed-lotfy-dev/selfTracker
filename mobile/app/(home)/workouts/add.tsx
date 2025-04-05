@@ -15,13 +15,15 @@ import { fetchAllWorkouts } from "@/utils/api/workouts"
 import { useUser } from "@/store/useAuthStore"
 import { useRouter } from "expo-router"
 import DateDisplay from "@/components/DateDisplay"
+import { format } from "date-fns/format"
+import { convertLocalDateToUtc } from "@/utils/lib"
 
 export default function AddWorkout() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
   const [workout, setWorkout] = useState<any>()
-  const [date, setDate] = useState<DateType>(new Date())
+  const [date, setDate] = useState<DateType | Date>(new Date())
   const [showDate, setShowDate] = useState(false)
   const [notes, setNotes] = useState("")
   const user = useUser()
@@ -34,15 +36,19 @@ export default function AddWorkout() {
   })
 
   const mutation = useMutation({
-    mutationFn: () =>
-      createWorkout({
+    mutationFn: () => {
+      const localDate = convertLocalDateToUtc(new Date(date as string))
+
+      return createWorkout({
         userId: user!.id,
         workoutId: workout,
-        createdAt: date,
-        notes,
-      }),
+        notes: notes.trim() || null,
+        createdAt: localDate,
+      })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workoutLogs"] })
+      queryClient.invalidateQueries({ queryKey: ["workoutLogsCalendar"] })
       setWorkout("")
       setDate(new Date())
       setNotes("")
@@ -53,9 +59,12 @@ export default function AddWorkout() {
     },
   })
 
-  useEffect(() => {
-    setWorkout(workouts[0]?.id)
-  }, [])
+useEffect(() => {
+  if (workouts.length > 0 && !workout) {
+    setWorkout(workouts[0].id)
+  }
+}, [workouts, workout])
+
 
   return (
     <View className="p-4">
@@ -70,7 +79,7 @@ export default function AddWorkout() {
         placeholder="Add any notes (e.g., morning weigh-in)"
       />
 
-        <Text className="text-lg font-bold mb-2">Select Date</Text>
+      <Text className="text-lg font-bold mb-2">Select Date</Text>
 
       <View className="mb-4">
         <TouchableOpacity onPress={() => setShowDate(!showDate)}>
@@ -79,7 +88,7 @@ export default function AddWorkout() {
           />
         </TouchableOpacity>
       </View>
-      
+
       {showDate && (
         <DatePicker
           date={date}

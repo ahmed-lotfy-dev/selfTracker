@@ -11,6 +11,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import DateDisplay from "./DateDisplay"
 import { deleteWeight } from "@/utils/api/weightsApi"
 import FontAwesome from "@expo/vector-icons/FontAwesome"
+import { formatLocalDate } from "@/utils/lib"
+import DeleteButton from "./DeleteButton"
 
 type WeightLogProps = {
   item: {
@@ -25,10 +27,14 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
 
+  const localDate = formatLocalDate(item.createdAt)
+
   const deleteMutation = useMutation({
     mutationFn: () => deleteWeight(String(item.id)),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["weightLogs"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["weightLogs"] })
+      queryClient.invalidateQueries({ queryKey: ["weightLogsCalendar"] })
+    },
     onError: () =>
       setTimeout(() => Alert.alert("Error", "Failed to delete weight log."), 0),
   })
@@ -54,7 +60,6 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
     }
   }
 
-  console.log({ item })
   return (
     <View
       className="flex-row justify-between items-center p-4 border-b border-gray-200"
@@ -66,20 +71,10 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
       >
         <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
         <Text className="text-sm text-gray-500">
-          <DateDisplay date={item.createdAt} />
+          <DateDisplay date={localDate} />
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        onPress={DeleteAlert}
-        disabled={deleteMutation.isPending}
-        className="ml-4 p-2 bg-red-500 rounded-md"
-      >
-        {deleteMutation.isPending ? (
-          <ActivityIndicator size="small" color="white" />
-        ) : (
-          <FontAwesome name="trash-o" size={18} color="white" />
-        )}
-      </TouchableOpacity>
+      <DeleteButton deleteMutation={deleteMutation} DeleteAlert={DeleteAlert} />
     </View>
   )
 }

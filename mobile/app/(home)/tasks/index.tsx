@@ -16,7 +16,6 @@ export default function index() {
     queryFn: () => fetchAllTasks(),
   })
 
-  console.log({ tasks })
 
   if (isLoading) return <ActivityIndicator />
 

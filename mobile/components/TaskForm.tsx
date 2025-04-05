@@ -42,10 +42,10 @@ export default function TaskForm({
   }
 
   return (
-    <View className="p-4 bg-white m-5">
+    <View className="p-2 bg-zinc-300 m-2">
       {error ? <Text className="text-red-500 mb-2">{error}</Text> : null}
 
-      <View className="mb-4">
+      <View className="mb-1">
         <Text className="text-lg font-medium text-gray-800 mb-1">Title</Text>
         <TextInput
           className="border border-gray-300 rounded-md p-3 text-base bg-gray-50"
@@ -56,7 +56,7 @@ export default function TaskForm({
         />
       </View>
 
-      <View className="mb-4">
+      <View className="mb-1">
         <Text className="text-lg font-medium text-gray-800 mb-1">
           Description (Optional)
         </Text>

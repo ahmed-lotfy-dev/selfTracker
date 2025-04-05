@@ -14,7 +14,7 @@ import { DateType } from "react-native-ui-datepicker"
 import { useRouter } from "expo-router"
 import DatePicker from "@/components/DatePicker"
 import DateDisplay from "@/components/DateDisplay"
-import { showAlert } from "@/utils/lib"
+import { convertLocalDateToUtc, showAlert } from "@/utils/lib"
 
 export default function AddWeight() {
   const router = useRouter()
@@ -22,7 +22,7 @@ export default function AddWeight() {
 
   const [weight, setWeight] = useState("")
   const [notes, setNotes] = useState("")
-  const [date, setDate] = useState<DateType>(new Date())
+  const [date, setDate] = useState<DateType>(new Date().toISOString())
   const [showDate, setShowDate] = useState(false)
   const user = useUser()
   if (!user) return <Text>Loading...</Text>
@@ -35,11 +35,13 @@ export default function AddWeight() {
         return Promise.reject("Invalid weight")
       }
 
+      const localDate = convertLocalDateToUtc(new Date(date as string))
+      
       return createWeight({
         userId: user.id,
         weight: weightValue,
         notes: notes.trim() || null,
-        createdAt: date,
+        createdAt: localDate,
       })
     },
     onSuccess: () => {
@@ -105,4 +107,7 @@ export default function AddWeight() {
       </TouchableOpacity>
     </View>
   )
+}
+function zonedTimeToUtc(date: DateType, userTimezone: any) {
+  throw new Error("Function not implemented.")
 }

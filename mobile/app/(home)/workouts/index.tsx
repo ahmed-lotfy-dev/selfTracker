@@ -7,6 +7,7 @@ import WorkoutLogItem from "@/components/WorkoutLogItem"
 import Header from "@/components/Header"
 import Table from "@/components/Table"
 import CalendarView from "@/components/CalendarView"
+import AddButton from "@/components/AddButton"
 
 export default function WorkoutScreen() {
   const limit = 10
@@ -53,11 +54,10 @@ export default function WorkoutScreen() {
   const logs = data?.pages.flatMap((page) => page.workoutLogs) || []
 
   return (
-    <View className="flex-1 p-4">
-      <Header title="Workout Logs" addPath="/workouts/add" />
+    <View className="flex-1 p-4 justify-center">
+      <Header title="Workout Logs" />
 
-      {/* Toggle Switch */}
-      <View className="flex-row justify-center my-4 bg-gray-300 rounded-full p-1">
+      <View className="flex-row my-4 bg-gray-300 rounded-full p-1">
         <Pressable
           onPress={() => setView("list")}
           className={`flex-1 items-center py-2 rounded-full ${
@@ -76,7 +76,6 @@ export default function WorkoutScreen() {
         </Pressable>
       </View>
 
-      {/* Conditional View */}
       {view === "list" ? (
         <LogList
           logs={logs}
@@ -90,6 +89,7 @@ export default function WorkoutScreen() {
       ) : (
         <CalendarView />
       )}
+      <AddButton className="bottom-10 right-5" />
     </View>
   )
 }

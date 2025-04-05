@@ -1,6 +1,7 @@
 import { View, Text, ActivityIndicator, Image } from "react-native"
 import { useQuery } from "@tanstack/react-query"
 import { userData } from "@/utils/api/authApi"
+import LogoutButton from "./logoutButton"
 
 export default function UserProfile() {
   const {
@@ -32,18 +33,19 @@ export default function UserProfile() {
     <View className="items-center p-4">
       <View className="flex-row justify-center items-center gap-3">
         <Image
+          className="w-10 h-10 rounded-full border border-green-500"
           source={{
-            uri: "https://placehold.co/100x100",
+            uri: "https://placehold.co/200x200/gray/eee",
             width: 50,
             height: 50,
             scale: 1.5,
           }}
-          style={{ width: 55, height: 55, borderRadius: 50 }}
         />
         <Text className="text-lg font-bold">
           {user.user.name ? user.user.name : "No Name"}
         </Text>
       </View>
+      <LogoutButton className="mt-4" />
     </View>
   )
 }

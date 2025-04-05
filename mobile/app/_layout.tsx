@@ -10,15 +10,11 @@ import "react-native-reanimated"
 
 import { checkForUpdates, onAppStateChange } from "@/utils/lib"
 
-import { AppStateStatus, Platform, Pressable } from "react-native"
+import { AppStateStatus, Platform } from "react-native"
 import { useOnlineManager } from "@/hooks/useOnlineManager"
 import { useAppState } from "@/hooks/useAppState"
-import axiosInstance from "@/utils/api/axiosInstane"
 import { AppProviders } from "@/components/AppProviders"
 
-import Entypo from "@expo/vector-icons/Entypo"
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
@@ -36,9 +32,9 @@ export default function RootLayout() {
     async function prepareApp() {
       try {
         if (loaded) {
-          await checkForUpdates() // Check for updates when the app loads
-          await SplashScreen.hideAsync() // Hide splash screen after updates check
-          setAppIsReady(true)
+          await checkForUpdates() 
+          await SplashScreen.hideAsync() 
+          setAppIsReady(true) 
         }
       } catch (error) {
         console.warn(error)
@@ -46,28 +42,26 @@ export default function RootLayout() {
     }
 
     prepareApp()
-    // in production add checkForUpdates in The dependency array
   }, [loaded])
 
   useEffect(() => {
     async function checkAuth() {
-      if (!appIsReady) return // Ensure app is ready before navigation
+      if (!appIsReady) return
 
       const accessToken = await AsyncStorage.getItem("accessToken")
       const refreshToken = await AsyncStorage.getItem("refreshToken")
 
       if (accessToken && refreshToken) {
-        router.replace("/(home)") // Redirect to home if already logged in
+        router.replace("/(home)") 
       } else {
-        router.replace("/welcome") // Redirect to welcome if not logged in
+        router.replace("/welcome") 
       }
     }
 
     checkAuth()
-  }, [appIsReady])
+  }, [appIsReady, router])
 
   if (!appIsReady) {
-    return null // Keep splash screen until app is ready
   }
 
   return (
@@ -78,7 +72,7 @@ export default function RootLayout() {
         backgroundColor="#0A2540"
         animated={true}
       />
-      <Stack >
+      <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(home)" options={{ headerShown: false }} />
         <Stack.Screen name="welcome" options={{ headerShown: false }} />

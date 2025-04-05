@@ -26,6 +26,8 @@ weightsLogsRouter.get("/", async (c) => {
         id: weightLogs.id,
         userId: weightLogs.userId,
         weight: weightLogs.weight,
+        energy: weightLogs.energy,
+        mood: weightLogs.mood,
         notes: weightLogs.notes,
         createdAt: weightLogs.createdAt,
       })
@@ -83,6 +85,8 @@ weightsLogsRouter.get("/:id", async (c) => {
         logId: weightLogs.id,
         userId: weightLogs.userId,
         weight: weightLogs.weight,
+        energy: weightLogs.energy,
+        mood: weightLogs.mood,
         notes: weightLogs.notes,
         createdAt: weightLogs.createdAt,
       })

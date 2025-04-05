@@ -115,7 +115,7 @@ workoutLogsRouter.get("/calendar", async (c) => {
 
   const year = Number(c.req.query("year"))
   const month = Number(c.req.query("month"))
-  console.log({ year, month })
+
   if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
     return c.json({ success: false, message: "Invalid year or month" }, 400)
   }
@@ -265,7 +265,6 @@ workoutLogsRouter.patch("/:id", async (c) => {
       400
     )
   }
-  console.log({ id, user })
   const { notes, workoutId } = await c.req.json()
 
   try {

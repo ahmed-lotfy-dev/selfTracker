@@ -19,11 +19,8 @@ export default function WeightsLayout() {
         options={{
           title: "Weight Log",
           headerShown: true,
-          headerLeft: () => (
-            <Pressable onPress={() => router.push("/tasks")}>
-              <Entypo name="chevron-left" size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <BackButton backTo="/tasks" />,
+
         }}
       /> */}
       {/* <Stack.Screen
@@ -31,11 +28,8 @@ export default function WeightsLayout() {
         options={{
           title: "Add Weight",
           headerShown: true,
-          headerLeft: () => (
-            <Pressable onPress={() => router.push("/tasks")}>
-              <Entypo name="chevron-left" size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <BackButton backTo="/tasks" />,
+
         }}
       /> */}
     </Stack>

@@ -1,13 +1,14 @@
-import { logout } from "@/utils/api/authApi"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import axios from "axios"
-import { useRouter } from "expo-router"
+import { Pressable, View, Text } from "react-native"
 import React, { useState } from "react"
-import Text from "@/components/Text"
-import View from "@/components/View"
-import { Pressable } from "react-native"
+import { useRouter } from "expo-router"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { logout } from "@/utils/api/authApi"
+import axios from "axios"
 
-export default function LogoutButton({}) {
+type logoutProps = {
+  className?: string
+}
+export default function LogoutButton({ className }: logoutProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -18,7 +19,6 @@ export default function LogoutButton({}) {
 
     try {
       const refreshToken = await AsyncStorage.getItem("refreshToken")
-      console.log({ refreshToken })
 
       if (!refreshToken) {
         throw new Error("No refresh token found!")
@@ -36,13 +36,12 @@ export default function LogoutButton({}) {
     }
   }
   return (
-    <View className="felx-1 justify-center items-center bg-gray-500">
+    <View className={`felx-1 justify-center items-center ${className}`}>
       <Pressable
         onPress={handleLogout}
-        className="bg-red-500 text-white p-4 rounded-md mt-10"
-        disabled={isLoading}
+        className="bg-red-500 w-36 rounded-lg p-2 justify-center items-center mt-4"
       >
-        {isLoading ? "Logging out..." : "Logout"}
+        <Text className="text-white font-bold">Logout</Text>
       </Pressable>
 
       {error && <Text className="text-red-500 mt-10">{error}</Text>}

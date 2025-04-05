@@ -19,7 +19,7 @@ export async function generateTokens(user: any) {
     email: user.email,
     userId: user.id,
     role: user.role,
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 1 day
+    exp: Math.floor(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
   }
   const accessToken = await sign(payload, process.env.JWT_SECRET!)
 

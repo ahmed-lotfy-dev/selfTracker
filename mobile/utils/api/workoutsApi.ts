@@ -41,7 +41,6 @@ export const fetchSingleWorkoutByDate = async (date: string) => {
   const response = await axiosInstance.get(
     `${API_BASE_URL}/api/workoutLogs/calendar/${date}`
   )
-  console.log({ response: response.data })
   return response.data.logs
 }
 

@@ -2,10 +2,10 @@ import { fetchWorkoutLogsByMonth } from "@/utils/api/workoutsApi"
 import { showAlert } from "@/utils/lib"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "expo-router"
-import React, { useState } from "react"
-import { View, Text, ActivityIndicator, Alert } from "react-native"
-import { Calendar, DateData } from "react-native-calendars" // Import DateData
-import { MarkedDates } from "react-native-calendars/src/types" // Import MarkedDates type
+import React, { useState, useMemo } from "react"
+import { View, Text, ActivityIndicator } from "react-native"
+import { Calendar, DateData } from "react-native-calendars"
+import { MarkedDates } from "react-native-calendars/src/types"
 
 const CalendarView = () => {
   const router = useRouter()
@@ -13,10 +13,49 @@ const CalendarView = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["workoutLogsCalendar", selectedYear, selectedMonth],
+    queryKey: ["workoutLogsCalendar", selectedYear, selectedMonth,],
     queryFn: () => fetchWorkoutLogsByMonth(selectedYear, selectedMonth),
     staleTime: 1000 * 60 * 10,
   })
+
+  const dateToLogId: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {}
+
+    if (data) {
+      for (const logs of Object.values(data)) {
+        for (const log of logs as any) {
+          const localDate = new Date(log.createdAt)
+          const formattedDate = localDate.toISOString().slice(0, 10) // Ensure date is in "YYYY-MM-DD" format
+          map[formattedDate] = log.logId 
+        }
+      }
+    }
+
+    return map
+  }, [data])
+
+  const markedDates: MarkedDates = useMemo(() => {
+    const acc: MarkedDates = {}
+    for (const date in dateToLogId) {
+      acc[date] = {
+        marked: true,
+        selected: true,
+        selectedColor: "darkgreen",
+      }
+    }
+    return acc
+  }, [dateToLogId])
+
+  const handleDayPress = (day: DateData) => {
+    const selectedDate = day.dateString
+    const logId = dateToLogId[selectedDate]
+
+    if (logId) {
+      router.push(`/workouts/${logId}`)
+    } else {
+      showAlert("No Workouts", "No workouts logged for this day.")
+    }
+  }
 
   if (isLoading) {
     return (
@@ -31,38 +70,9 @@ const CalendarView = () => {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <Text>Error loading data</Text>
-        <Text>{error.message}</Text>
+        <Text>{(error as Error).message}</Text>
       </View>
     )
-  }
-
-  const markedDates: MarkedDates = (data ? Object.keys(data) : []).reduce(
-    (acc: MarkedDates, date: string) => {
-      // Only mark dates that have workout logs
-      if (data && data[date] && data[date].length > 0) {
-        acc[date] = {
-          marked: true,
-          dotColor: "darkblue",
-          selected: true,
-          selectedColor: "darkgreen",
-        }
-      }
-      return acc
-    },
-    {}
-  )
-
-  const handleDayPress = (day: DateData) => {
-    const selectedDate = day.dateString
-    const logsForDay = data?.[selectedDate] || []
-
-    if (logsForDay.length > 0) {
-      router.push(`/workouts/${selectedDate}`)
-      // Or navigate to a detailed log screen
-      router
-    } else {
-      showAlert("No Workouts", "No workouts logged for this day.")
-    }
   }
 
   return (

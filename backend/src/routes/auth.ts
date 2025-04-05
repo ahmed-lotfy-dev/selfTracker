@@ -157,7 +157,6 @@ authRouter.post("/refresh-token", async (c) => {
       where: eq(refreshTokens.token, refreshToken),
     })
 
-    console.log({ storedToken, refreshToken })
 
     if (!storedToken || !storedToken.userId) {
       return c.json({ message: "Invalid refresh token!" }, 401)

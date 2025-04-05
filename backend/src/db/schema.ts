@@ -16,9 +16,11 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   role: text("role", { enum: ["admin", "user"] }).default("user"),
+  profileImage: text("profile_image"),
   isVerified: boolean("is_verified").default(false),
   resetToken: text("reset_token"),
   resetTokenExpiresAt: timestamp("reset_token_expires_at"),
+  gender: text("gender", { enum: ["male", "female"] }),
   weight: numeric("weight", { precision: 5, scale: 2 }),
   height: numeric("height", { precision: 5, scale: 2 }),
   unitSystem: text("unit_system", { enum: ["metric", "imperial"] }).default(

@@ -1,10 +1,8 @@
+import BackButton from "@/components/BackButton"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Stack, useRouter } from "expo-router"
-import { Pressable } from "react-native"
 
 export default function WeightsLayout() {
-  const router = useRouter()
-
   return (
     <Stack
       screenOptions={{
@@ -20,26 +18,21 @@ export default function WeightsLayout() {
       <Stack.Screen
         name="[id]"
         options={{
-          headerShown: true,
           title: "Workout Log",
-          headerLeft: () => (
-            <Pressable onPress={() => router.push("/workouts")}>
-              <Entypo name="chevron-left" size={24} />
-            </Pressable>
-          ),
+          headerTitleAlign: "center",
+          headerShown: true,
+          headerLeft: () => <BackButton backTo="/workouts" />,
         }}
       />
       <Stack.Screen
         name="add"
         options={{
           title: "Add Workout",
+          headerShown: true,
+          headerTitleAlign: "center",
           presentation: "modal",
           animation: "slide_from_bottom",
-          headerLeft: () => (
-            <Pressable onPress={() => router.push("/workouts")}>
-              <Entypo name="chevron-left" size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <BackButton backTo="/workouts" />,
         }}
       />
     </Stack>

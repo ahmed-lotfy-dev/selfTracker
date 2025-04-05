@@ -1,3 +1,4 @@
+import BackButton from "@/components/BackButton"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Stack, useRouter } from "expo-router"
 import { Pressable } from "react-native"
@@ -21,26 +22,21 @@ export default function WeightsLayout() {
         name="[id]"
         options={{
           title: "Weight Log",
+          headerTitleAlign: "center",
           headerShown: true,
-          headerLeft: () => (
-            <Pressable onPress={() => router.push("/weights")}>
-              <Entypo name="chevron-left" size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <BackButton backTo="/weights" />,
         }}
       />
       <Stack.Screen
         name="add"
         options={{
           title: "Add Weight",
-          presentation: "modal", 
+          headerTitleAlign: "center",
+
+          presentation: "modal",
           animation: "slide_from_bottom",
           headerShown: true,
-          headerLeft: () => (
-            <Pressable onPress={() => router.push("/weights")}>
-              <Entypo name="chevron-left" size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <BackButton backTo="/weights" />,
         }}
       />
     </Stack>

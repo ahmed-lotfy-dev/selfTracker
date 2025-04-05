@@ -10,7 +10,7 @@ export const login = async (email: string, password: string) => {
   })
   return response.data
 }
-console.log(process.env.BACKEND_URL)
+
 export const register = async (
   name: string,
   email: string,
