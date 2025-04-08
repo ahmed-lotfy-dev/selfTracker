@@ -15,6 +15,7 @@ import { login, userData } from "@/utils/api/authApi"
 import { useAuthActions } from "@/store/useAuthStore"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 import { useForm } from "@tanstack/react-form"
+import { COLORS } from "@/constants/Colors"
 
 export default function Login() {
   const router = useRouter()
@@ -37,7 +38,7 @@ export default function Login() {
         await setRefreshToken(refreshToken)
 
         const user = await userData()
-        setUser(user)
+        setUser(user.user)
 
         setStatus("submitted")
         router.replace("/")
@@ -121,7 +122,7 @@ export default function Login() {
             }}
           >
             {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={COLORS.primary} />
             ) : (
               <Text style={{ color: "white" }}>Login</Text>
             )}

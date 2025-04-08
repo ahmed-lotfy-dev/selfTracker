@@ -33,7 +33,7 @@ export default function UserProfile() {
     <View className="items-center p-4">
       <View className="flex-row justify-center items-center gap-3">
         <Image
-          className="w-10 h-10 rounded-full border border-green-500"
+          className="w-10 h-10 rounded-full border border-primary"
           source={{
             uri: "https://placehold.co/200x200/gray/eee",
             width: 50,

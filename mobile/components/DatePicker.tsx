@@ -1,13 +1,13 @@
 import { View, StyleSheet } from "react-native"
 import DateTimePicker, {
-  DateType,
   useDefaultClassNames,
 } from "react-native-ui-datepicker"
 import { COLORS, SPACING } from "@/constants/Colors"
+import dayjs from "dayjs"
 
 type DatePickerProps = {
-  date: DateType
-  setDate: React.Dispatch<React.SetStateAction<DateType>>
+  date: string
+  setDate: React.Dispatch<React.SetStateAction<string>>
   showDate: boolean
   setShowDate: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -21,20 +21,26 @@ export default function DatePicker({
   const defaultClassNames = useDefaultClassNames()
 
   return (
-    <View className="border-1 border-green-700 rounded-lg mb-4">
+    <View className="border-1 border-primary/70 rounded-lg mb-4">
       <DateTimePicker
         mode="single"
         date={date}
-        onChange={({ date }) => {
-          setDate(date || new Date())
-          setShowDate(false)
+        onChange={({ date }: any) => {
+          if (date) {
+            // Use dayjs to handle the date consistently
+            const formattedDate = dayjs(date).format("YYYY-MM-DD")
+            setDate(formattedDate)
+            setShowDate(false)
+          }
         }}
         classNames={{
           ...defaultClassNames,
-          today: "border-green-500",
-          selected: "bg-green-800 border-green-500",
+          button_prev: "bg-blue-900/80 rounded-full p-2",
+          button_next: "bg-blue-900/80 rounded-full p-2",
+          today: "border-blue-950",
+          selected: "bg-primary",
           selected_label: "text-white",
-          day: `${defaultClassNames.day} hover:bg-green-500`,
+          day: `${defaultClassNames.day} hover:bg-primary/70 hover:text-white hover:font-secondary`,
           disabled: "opacity-50",
         }}
       />

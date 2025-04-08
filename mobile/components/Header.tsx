@@ -1,5 +1,4 @@
 import { View, Text, Pressable } from "react-native"
-import AddButton from "./AddButton"
 import { Route } from "expo-router"
 
 interface HeaderProps {

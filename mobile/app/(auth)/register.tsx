@@ -10,14 +10,15 @@ import {
   Alert,
 } from "react-native"
 import { useRouter } from "expo-router"
-import axiosInstance from "@/utils/api/axiosInstane"
 import { useAuthActions } from "@/store/useAuthStore"
-import { register } from "@/utils/api/authApi"
+import { register, userData } from "@/utils/api/authApi"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 import { showAlert } from "@/utils/lib"
 
 export default function Register() {
   const router = useRouter()
+  const { setTokens, setUser } = useAuthActions()
+
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -25,7 +26,6 @@ export default function Register() {
     "off"
   )
   const [errorMessage, setErrorMessage] = useState("")
-  const { setTokens } = useAuthActions()
 
   const handleRegister = async () => {
     setStatus("submitting")
@@ -45,6 +45,9 @@ export default function Register() {
 
       await setAccessToken(accessToken)
       await setRefreshToken(refreshToken)
+
+      const user = await userData()
+      setUser(user.user)
 
       router.replace("/verify-email")
 

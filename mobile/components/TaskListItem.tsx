@@ -9,7 +9,7 @@ interface TaskListItemProps {
 export default function TaskListItem({ task }: TaskListItemProps) {
   return (
     <View className="my-2">
-      <View className=" items-center justify-between p-4 gap-3 mx-5 border-green-500 border-[1px]">
+      <View className=" items-center justify-between p-4 gap-3 mx-5 border-primary border-[1px]">
         <Text className="text-lg font-bold">{task.title}</Text>
         <Text className="text-sm">{task.description}</Text>
         <Text className="text-sm">

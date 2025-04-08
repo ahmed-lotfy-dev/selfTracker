@@ -1,7 +1,6 @@
 import * as Updates from "expo-updates"
 import { Alert, AppStateStatus, Platform } from "react-native"
 import { focusManager } from "@tanstack/react-query"
-import { toZonedTime } from "date-fns-tz"
 
 export const checkForUpdates = async () => {
   try {
@@ -44,13 +43,6 @@ export const showAlert = (
   } else {
     Alert.alert(title, message, buttons, { cancelable: true })
   }
-}
-
-export function convertLocalDateToUtc(localDate: Date) {
-  const utcDate = new Date(
-    localDate.getTime() - localDate.getTimezoneOffset() * 60000
-  )
-  return utcDate.toISOString()
 }
 
 export function formatLocalDate(date: string): string {

@@ -3,11 +3,12 @@ import { View, Text, Pressable, ActivityIndicator } from "react-native"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchAllWorkoutLogs } from "@/utils/api/workoutsApi"
 import LogList from "@/components/LogList"
-import WorkoutLogItem from "@/components/WorkoutLogItem"
+import WorkoutLogItem from "@/components/Workout/WorkoutLogItem"
 import Header from "@/components/Header"
 import Table from "@/components/Table"
 import CalendarView from "@/components/CalendarView"
 import AddButton from "@/components/AddButton"
+import { COLORS } from "@/constants/Colors"
 
 export default function WorkoutScreen() {
   const limit = 10
@@ -30,12 +31,12 @@ export default function WorkoutScreen() {
     refetchOnReconnect: false,
   })
 
-  const [view, setView] = useState<"list" | "calendar">("calendar")
+  const [view, setView] = useState<"list" | "calendar">("list")
 
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     )
   }
@@ -89,7 +90,7 @@ export default function WorkoutScreen() {
       ) : (
         <CalendarView />
       )}
-      <AddButton className="bottom-10 right-5" />
+      <AddButton />
     </View>
   )
 }

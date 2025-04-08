@@ -1,15 +1,17 @@
 import { View, Text } from "react-native"
 import { deleteWeight, fetchSingleWeightLog } from "@/utils/api/weightsApi"
 import { useQuery } from "@tanstack/react-query"
-import { Stack, useLocalSearchParams, useRouter } from "expo-router"
+import { Route, Stack, useLocalSearchParams, useRouter } from "expo-router"
 import DateDisplay from "@/components/DateDisplay"
 import { useDelete } from "@/hooks/useDelete"
 import DeleteButton from "@/components/DeleteButton"
+import EditButton from "@/components/EditButton"
+import { useWorkoutActions } from "@/store/useWokoutStore"
 
 export default function WeightLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams() as { id: string }
-  console.log(id)
+  const { setSelectedWorkout } = useWorkoutActions()
 
   const {
     data: weightLog,
@@ -21,21 +23,20 @@ export default function WeightLog() {
       id ? fetchSingleWeightLog(id) : Promise.reject("Invalid ID"),
     enabled: !!id,
   })
+  console.log(weightLog)
+  console.log({ weightLog })
 
   const { deleteMutation, triggerDelete } = useDelete({
     mutationFn: () => deleteWeight(String(weightLog?.id)),
-    confirmTitle: "Delete Workout",
+    confirmTitle: "Delete Weight",
     confirmMessage: "Are you sure you want to delete this weight log?",
     onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
-    onSuccessCallback: () => {
-      router.push("/weights")
-    },
   })
 
   if (isLoading) return <Text>Loading...</Text>
   if (isError) return <Text>Error loading weight log</Text>
 
-  const log = weightLog?.weightLog?.[0] ?? {}
+  const log = weightLog ?? {}
   return (
     <>
       <Stack.Screen
@@ -59,12 +60,20 @@ export default function WeightLog() {
         <Text className="text-lg">
           Notes: {log.notes || "No notes available"}
         </Text>
-        <DeleteButton onDelete={triggerDelete} className="w-10 mt-5" />
-        {deleteMutation.isError && (
-          <Text className="text-red-500 mt-2">
-            {deleteMutation.error?.message || "Could not delete workout."}
-          </Text>
-        )}
+        <View className="flex-row justify-start gap-3 w-32 mt-3">
+          <EditButton
+            onPress={() => {
+              setSelectedWorkout(weightLog)
+              router.navigate(`/workouts/edit` as Route)
+            }}
+          />
+          <DeleteButton onPress={triggerDelete} />
+          {deleteMutation.isError && (
+            <Text className="text-red-500 mt-2">
+              {deleteMutation.error?.message || "Could not delete workout."}
+            </Text>
+          )}
+        </View>
       </View>
     </>
   )

@@ -6,6 +6,7 @@ import {
   checkEmailVerification,
   resendVerificationEmail,
 } from "@/utils/api/authApi"
+import { COLORS } from "@/constants/Colors"
 
 export default function VerifyEmail() {
   const router = useRouter()
@@ -43,7 +44,7 @@ export default function VerifyEmail() {
       </Text>
 
       {resendStatus === "success" && (
-        <Text className="text-green-500">
+        <Text className="text-primary/50">
           Verification email resent successfully!
         </Text>
       )}
@@ -59,7 +60,7 @@ export default function VerifyEmail() {
         className="mt-5 bg-blue-500 px-4 py-2 rounded-lg disabled:opacity-50"
       >
         {resendStatus === "loading" ? (
-          <ActivityIndicator color="white" />
+          <ActivityIndicator color={COLORS.primary} />
         ) : (
           <Text className="text-white">Resend Verification Email</Text>
         )}

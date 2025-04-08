@@ -7,18 +7,22 @@ import {
   Platform,
 } from "react-native"
 import { Link, Route, useRouter } from "expo-router"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import DateDisplay from "./DateDisplay"
+import { useQueryClient } from "@tanstack/react-query"
+import DateDisplay from "../DateDisplay"
 import { deleteWeight } from "@/utils/api/weightsApi"
-import FontAwesome from "@expo/vector-icons/FontAwesome"
-import { formatLocalDate } from "@/utils/lib"
-import DeleteButton from "./DeleteButton"
+import DeleteButton from "../DeleteButton"
 import { useDelete } from "@/hooks/useDelete"
+import EditButton from "../EditButton"
+import { useWeightLogStore } from "@/store/useWeightStore"
 
 type WeightLogProps = {
   item: {
-    id: string | number
+    id: string
+    userId: string
     weight: number
+    mood: string
+    energy: string
+    notes: string
     createdAt: string
   }
   path: string
@@ -27,9 +31,7 @@ type WeightLogProps = {
 export default function WeightLogItem({ item, path }: WeightLogProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
-
-  const localDate = formatLocalDate(item.createdAt)
-
+  const { setSelectedWeight } = useWeightLogStore()
   const { deleteMutation, triggerDelete } = useDelete({
     mutationFn: () => deleteWeight(String(item?.id)),
     confirmTitle: "Delete Weight",
@@ -51,9 +53,15 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
         </TouchableOpacity>
       </Link>
 
-      <View>
+      <View className="flex-row items-center gap-3">
+        <EditButton
+          onPress={() => {
+            setSelectedWeight(item)
+            router.navigate(`${path}/edit` as Route)
+          }}
+        />
         <DeleteButton
-          onDelete={triggerDelete}
+          onPress={triggerDelete}
           isLoading={deleteMutation.isPending}
         />
         {deleteMutation.isError && (

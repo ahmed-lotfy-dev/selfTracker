@@ -10,7 +10,7 @@ export default function AddWeight() {
 
   return (
     <SafeAreaView>
-      <WeightForm />
+      <WeightForm isEditing={true} />
     </SafeAreaView>
   )
 }

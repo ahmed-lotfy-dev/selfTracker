@@ -67,7 +67,7 @@ export default function TaskForm({
       </View>
 
       <TouchableOpacity
-        className="bg-green-800 py-3 rounded-md items-center"
+        className="bg-primary/80 py-3 rounded-md items-center"
         onPress={handleSubmit}
       >
         <Text className="text-white text-lg font-medium">Add Task </Text>

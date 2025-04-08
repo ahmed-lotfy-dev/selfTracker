@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { TaskType } from "@/types/taskType"
 import { ActivityIndicator, Text, View } from "react-native"
 import TaskForm from "@/components/TaskForm"
+import { COLORS } from "@/constants/Colors"
 
 export default function index() {
   const {
@@ -16,17 +17,21 @@ export default function index() {
     queryFn: () => fetchAllTasks(),
   })
 
-
-  if (isLoading) return <ActivityIndicator />
+  if (isLoading) return <ActivityIndicator color={COLORS.primary} />
 
   if (isError) return <Text>Error loading tasks</Text>
   if (tasks.length === 0) return <Text>No tasks found</Text>
 
   return (
     <View className="flex-1 justify-center items-center">
-      <TaskForm onSubmit={function (taskData: { title: string; description?: string }): void {
-        throw new Error("Function not implemented.")
-      } } />
+      <TaskForm
+        onSubmit={function (taskData: {
+          title: string
+          description?: string
+        }): void {
+          throw new Error("Function not implemented.")
+        }}
+      />
       <ListItems
         items={tasks ?? []}
         renderItem={({ item }: { item: TaskType }) => (

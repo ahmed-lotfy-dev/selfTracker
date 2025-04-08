@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import "@/global.css"
 import { useFonts } from "expo-font"
 import { Stack, useRouter } from "expo-router"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -7,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import * as SplashScreen from "expo-splash-screen"
 import { StatusBar } from "expo-status-bar"
 import "react-native-reanimated"
-
+import "../global.css"
 import { checkForUpdates, onAppStateChange } from "@/utils/lib"
 
 import { AppStateStatus, Platform } from "react-native"

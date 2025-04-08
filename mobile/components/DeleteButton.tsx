@@ -1,26 +1,27 @@
 import { TouchableOpacity, ActivityIndicator } from "react-native"
 import FontAwesome from "@expo/vector-icons/FontAwesome"
+import { COLORS } from "@/constants/Colors"
 
 type DeleteButtonProps = {
-  onDelete: () => void
+  onPress?: () => void
   isLoading?: boolean
   className?: string
 }
 
 export default function DeleteButton({
-  onDelete,
+  onPress,
   isLoading,
   className,
 }: DeleteButtonProps) {
   return (
     <TouchableOpacity
-      onPress={onDelete}
+      onPress={onPress}
       disabled={isLoading}
       className={`flex-1 justify-center items-center
-       p-3 bg-red-500 rounded-md ${className}`}
+       p-2 bg-red-500 rounded-md ${className}`}
     >
       {isLoading ? (
-        <ActivityIndicator size="small" color="white" />
+        <ActivityIndicator size="small" color={COLORS.primary} />
       ) : (
         <FontAwesome name="trash-o" size={18} color="white" />
       )}

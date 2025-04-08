@@ -29,7 +29,7 @@ export const fetchSingleWorkout = async (workoutId: string) => {
   return response.data.logs
 }
 
-export const createWorkout = async (workout: any) => {
+export const createWorkout = async (workout: WorkoutType) => {
   const response = await axiosInstance.post(
     `${API_BASE_URL}/api/workoutLogs`,
     workout
@@ -45,7 +45,7 @@ export const fetchSingleWorkoutByDate = async (date: string) => {
 }
 
 export const updateWorkout = async (workout: any) => {
-  const response = await axiosInstance.put(
+  const response = await axiosInstance.patch(
     `${API_BASE_URL}/api/workoutLogs/${workout.id}`,
     workout
   )

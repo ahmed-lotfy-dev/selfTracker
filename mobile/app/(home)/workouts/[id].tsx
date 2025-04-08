@@ -6,6 +6,7 @@ import {
 } from "@/utils/api/workoutsApi"
 import { useQuery } from "@tanstack/react-query"
 import {
+  Route,
   Stack,
   useLocalSearchParams,
   usePathname,
@@ -14,10 +15,13 @@ import {
 import DateDisplay from "@/components/DateDisplay"
 import DeleteButton from "@/components/DeleteButton"
 import { useDelete } from "@/hooks/useDelete"
+import EditButton from "@/components/EditButton"
+import { useWorkoutActions } from "@/store/useWokoutStore"
 
 export default function WorkoutLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
+  const { setSelectedWorkout } = useWorkoutActions()
   const isDate = !isNaN(Date.parse(String(id)))
 
   const {
@@ -41,7 +45,7 @@ export default function WorkoutLog() {
     confirmTitle: "Delete Workout",
     confirmMessage: "Are you sure you want to delete this workout?",
     onSuccessInvalidate: [
-      { queryKey: ["workouts"] },
+      { queryKey: ["workoutLogs"] },
       { queryKey: ["workoutLogsCalendar"] },
     ],
     onSuccessCallback: () => {
@@ -70,12 +74,20 @@ export default function WorkoutLog() {
         <Text className="text-lg">
           Notes: {log.notes || "No notes available"}
         </Text>
-        <DeleteButton onDelete={triggerDelete} className="w-10 mt-5" />
-        {deleteMutation.isError && (
-          <Text className="text-red-500 mt-2">
-            {deleteMutation.error?.message || "Could not delete workout."}
-          </Text>
-        )}
+        <View className="flex-row justify-start gap-3 w-32 mt-3">
+          <EditButton
+            onPress={() => {
+              setSelectedWorkout(workoutLog)
+              router.navigate(`/workouts/edit` as Route)
+            }}
+          />
+          <DeleteButton onPress={triggerDelete} />
+          {deleteMutation.isError && (
+            <Text className="text-red-500 mt-2">
+              {deleteMutation.error?.message || "Could not delete workout."}
+            </Text>
+          )}
+        </View>
       </View>
     </>
   )

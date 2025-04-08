@@ -14,9 +14,12 @@ export default function Table({ data }: TableProps) {
   return (
     <View style={{ borderWidth: 1, borderColor: "grey" }}>
       {/* Header Row */}
-      <View className="flex-row  p-2 w-full gap-3   m-auto bg-green-900/90 color-white">
+      <View className="flex-row  p-2 w-full gap-3   m-auto bg-primary/90 color-white">
         {headers.map((header) => (
-          <Text className="flex-1 p-2 text-white text-center capitalize" key={header}>
+          <Text
+            className="flex-1 p-2 text-white text-center capitalize"
+            key={header}
+          >
             {header}
           </Text>
         ))}
@@ -46,7 +49,6 @@ export default function Table({ data }: TableProps) {
             keyExtractor={(item) => `${rowIndex}-${item}`}
             horizontal={true}
           />
-
         </View>
       ))}
     </View>

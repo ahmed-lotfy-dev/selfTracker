@@ -2,19 +2,19 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Alert, Platform } from "react-native"
 import { showAlert } from "@/utils/lib"
 
-type UseAddOptions = {
+type UseUpdateOptions = {
   mutationFn: (values: any) => Promise<any>
   onSuccessInvalidate?: { queryKey: any }[]
   onSuccessCallback?: () => void
   onErrorMessage?: string
 }
 
-export function useAdd({
+export function useUpdate({
   mutationFn,
   onSuccessInvalidate = [],
   onSuccessCallback,
-  onErrorMessage = "Failed to Add.",
-}: UseAddOptions) {
+  onErrorMessage = "Failed to Update.", // Changed default error message
+}: UseUpdateOptions) {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
@@ -31,6 +31,6 @@ export function useAdd({
   })
 
   return {
-    addMutation: mutation,
+    updateMutation: mutation, 
   }
 }

@@ -1,6 +1,6 @@
 // src/constants.ts
 export const COLORS = {
-  primary: "#22c55e", // Green theme
+  primary: "#15803d", // dark theme
   secondary: "#16a34a", // Darker green
   background: "#1e293b", // Dark gray-blue
   text: "#f1f5f9", // Light text

@@ -1,3 +1,4 @@
+import { COLORS } from "@/constants/Colors"
 import { fetchWorkoutLogsByMonth } from "@/utils/api/workoutsApi"
 import { showAlert } from "@/utils/lib"
 import { useQuery } from "@tanstack/react-query"
@@ -18,14 +19,14 @@ const CalendarView = () => {
     staleTime: 1000 * 60 * 10,
   })
 
-  const dateToLogId: Record<string, string> = useMemo(() => {
+  const dateToId: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {}
     if (data) {
       for (const logs of Object.values(data)) {
         for (const log of logs as any) {
           const localDate = new Date(log.createdAt)
           const formattedDate = localDate.toISOString().slice(0, 10)
-          map[formattedDate] = log.logId
+          map[formattedDate] = log.id
         }
       }
     }
@@ -35,20 +36,20 @@ const CalendarView = () => {
 
   const markedDates: MarkedDates = useMemo(() => {
     const acc: MarkedDates = {}
-    for (const date in dateToLogId) {
+    for (const date in dateToId) {
       acc[date] = {
         selected: true,
-        selectedColor: "darkgreen",
+        selectedColor: "#1A434E",
       }
     }
     return acc
-  }, [dateToLogId])
+  }, [dateToId])
 
   const handleDayPress = (day: DateData) => {
     const selectedDate = day.dateString
-    const logId = dateToLogId[selectedDate]
-    if (logId) {
-      router.push(`/workouts/${logId}`)
+    const id = dateToId[selectedDate]
+    if (id) {
+      router.push(`/workouts/${id}`)
     } else {
       showAlert("No Workouts", "No workouts logged for this day.")
     }
@@ -57,7 +58,7 @@ const CalendarView = () => {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="blue" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
         <Text>Loading workout logs...</Text>
       </View>
     )

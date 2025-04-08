@@ -24,7 +24,7 @@ workoutLogsRouter.get("/", async (c) => {
   try {
     const userWorkoutLogs = await db
       .select({
-        logId: workoutLogs.id,
+        id: workoutLogs.id,
         userId: workoutLogs.userId,
         workoutId: workoutLogs.workoutId,
         workoutName: workouts.name,
@@ -82,7 +82,7 @@ workoutLogsRouter.get("/calendar/:date", async (c) => {
 
     const dateLog = await db
       .select({
-        logId: workoutLogs.id,
+        id: workoutLogs.id,
         userId: workoutLogs.userId,
         workoutId: workoutLogs.workoutId,
         workoutName: workouts.name,
@@ -136,7 +136,7 @@ workoutLogsRouter.get("/calendar", async (c) => {
 
     const logs = await db
       .select({
-        logId: workoutLogs.id,
+        id: workoutLogs.id,
         userId: workoutLogs.userId,
         workoutId: workoutLogs.workoutId,
         workoutName: workouts.name,
@@ -192,7 +192,7 @@ workoutLogsRouter.get("/:id", async (c) => {
   try {
     const singleWorkout = await db
       .select({
-        logId: workoutLogs.id,
+        id: workoutLogs.id,
         userId: workoutLogs.userId,
         workoutId: workoutLogs.workoutId,
         workoutName: workouts.name,
@@ -250,6 +250,7 @@ workoutLogsRouter.post("/", async (c) => {
 
 workoutLogsRouter.patch("/:id", async (c) => {
   const user = c.get("user" as any)
+  const id = c.req.param("id")
 
   if (!user || !user.id) {
     return c.json(
@@ -257,15 +258,9 @@ workoutLogsRouter.patch("/:id", async (c) => {
       401
     )
   }
-
-  const id = c.req.param("id")
   if (!id) {
-    return c.json(
-      { success: false, message: "Workout log ID is required" },
-      400
-    )
+    return c.json({ success: false, message: "Weight log ID is required" }, 400)
   }
-  const { notes, workoutId } = await c.req.json()
 
   try {
     const existingLog = await db.query.workoutLogs.findFirst({
@@ -276,27 +271,26 @@ workoutLogsRouter.patch("/:id", async (c) => {
       return c.json(
         {
           success: false,
-          message:
-            "Workout log not found or you are not authorized to update it",
+          message: "Workout log not found",
         },
         404
       )
     }
 
-    const updateFields: Record<string, any> = {}
-    if (notes !== undefined) updateFields.notes = notes
-    if (workoutId !== undefined) updateFields.workoutId = workoutId
+    const body = await c.req.json()
+    const updatedFields: Record<string, any> = {}
 
-    if (Object.keys(updateFields).length === 0) {
-      return c.json(
-        { success: false, message: "No valid fields provided for update" },
-        400
-      )
+    if ("notes" in body) updatedFields.notes = body.notes
+    if ("workoutId" in body) updatedFields.workoutId = body.workoutId
+    if ("createdAt" in body) updatedFields.createdAt = new Date(body.createdAt)
+
+    if (Object.keys(updatedFields).length === 0) {
+      return c.json({ success: false, message: "No fields to update" }, 400)
     }
 
     const [updatedWorkoutLog] = await db
       .update(workoutLogs)
-      .set(updateFields)
+      .set(updatedFields)
       .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id))) // Ensure user owns the log
       .returning()
 
@@ -307,7 +301,6 @@ workoutLogsRouter.patch("/:id", async (c) => {
     })
   } catch (error) {
     console.error("Error updating workout log:", error)
-    // Consider more specific error handling (e.g., foreign key constraint if workoutId is invalid)
     return c.json(
       { success: false, message: "Failed to update workout log" },
       500

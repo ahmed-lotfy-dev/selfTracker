@@ -80,9 +80,9 @@ weightsLogsRouter.get("/:id", async (c) => {
   }
 
   try {
-    const singleWeightLog = await db
+    const [singleWeightLog] = await db
       .select({
-        logId: weightLogs.id,
+        id: weightLogs.id,
         userId: weightLogs.userId,
         weight: weightLogs.weight,
         energy: weightLogs.energy,
@@ -134,6 +134,7 @@ weightsLogsRouter.post("/", async (c) => {
 
 weightsLogsRouter.patch("/:id", async (c) => {
   const user = c.get("user" as any)
+  const id = c.req.param("id")
 
   if (!user || !user.id) {
     return c.json(
@@ -142,12 +143,9 @@ weightsLogsRouter.patch("/:id", async (c) => {
     )
   }
 
-  const id = c.req.param("id")
   if (!id) {
     return c.json({ success: false, message: "Weight log ID is required" }, 400)
   }
-
-  const { weight, mood, energy, notes } = await c.req.json()
 
   try {
     const existingLog = await db.query.weightLogs.findFirst({
@@ -155,27 +153,21 @@ weightsLogsRouter.patch("/:id", async (c) => {
     })
 
     if (!existingLog) {
-      return c.json(
-        {
-          success: false,
-          message:
-            "Weight log not found or you are not authorized to update it",
-        },
-        404
-      )
+      return c.json({ success: false, message: "Weight log not found" }, 404)
     }
 
+    const body = await c.req.json()
     const updateFields: Record<string, any> = {}
-    if (weight !== undefined) updateFields.weight = weight
-    if (mood !== undefined) updateFields.mood = mood
-    if (energy !== undefined) updateFields.energy = energy
-    if (notes !== undefined) updateFields.notes = notes
+
+    if ("weight" in body) updateFields.weight = body.weight
+    if ("mood" in body) updateFields.mood = body.mood
+    if ("energy" in body) updateFields.energy = body.energy
+    if ("notes" in body) updateFields.notes = body.notes
+    if ("createdAt" in body) updateFields.createdAt = new Date(body.createdAt)
+
 
     if (Object.keys(updateFields).length === 0) {
-      return c.json(
-        { success: false, message: "No valid fields provided for update" },
-        400
-      )
+      return c.json({ success: false, message: "No fields to update" }, 400)
     }
 
     const [updatedWeightLog] = await db
