@@ -1,7 +1,16 @@
 import { useState } from "react"
 import { WorkoutType } from "@/types/workoutType"
 import { useForm } from "@tanstack/react-form"
-import { View, Text, TextInput, TouchableOpacity } from "react-native"
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+} from "react-native"
 import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/components/DatePicker"
 import DateDisplay from "@/components/DateDisplay"
@@ -91,128 +100,136 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   }
 
   return (
-    <View className="flex-1 p-6 ">
-      <form.Field
-        name="userId"
-        children={(field) => (
-          <TextInput
-            className="hidden"
-            value={field.state.value}
-            onChangeText={field.handleChange}
-          />
-        )}
-      />
-
-      {isEditing && (
-        <form.Field
-          name="id"
-          children={(field) => (
-            <TextInput
-              className="hidden"
-              value={field.state.value}
-              onChangeText={field.handleChange}
-            />
-          )}
-        />
-      )}
-
-      <form.Field
-        name="workoutId"
-        children={(field) => (
-          <View className="mt-10 mb-4">
-            <Text className="mb-2">Workout Type:</Text>
-            <View className="border-2 border-primary text-600 rounded-md mb-4">
-              <Picker
-                className="w-full h-full px-4 py-2"
-                selectedValue={field.state.value}
-                onValueChange={field.handleChange}
-              >
-                <Picker.Item label="Select a workout type" value="" />
-                {workouts.map((option: any, idx: any) => (
-                  <Picker.Item
-                    key={option.workoutId}
-                    label={`${option.name}`}
-                    value={option.id}
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
-        )}
-      />
-
-      <form.Field
-        name="createdAt"
-        children={(field) => (
-          <View className="mb-2">
-            <Text className="mb-2">Workout Date:</Text>
-            <TouchableOpacity onPress={() => setShowDate(!showDate)}>
-              <DateDisplay date={field.state.value} />
-            </TouchableOpacity>
-
-            {showDate && (
-              <DatePicker
-                date={field.state.value}
-                setDate={(date: any) => {
-                  field.handleChange(date)
-                }}
-                showDate={showDate}
-                setShowDate={setShowDate}
+    <SafeAreaView className="flex-1 mt-14">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          className="flex-1 px-5 justify-center"
+          keyboardShouldPersistTaps="handled"
+        >
+          <form.Field
+            name="userId"
+            children={(field) => (
+              <TextInput
+                className="hidden"
+                value={field.state.value}
+                onChangeText={field.handleChange}
               />
             )}
-            {field.state.meta.errors && (
-              <Text className="text-red-500 mt-2">
-                {field.state.meta.errors}
-              </Text>
-            )}
-          </View>
-        )}
-      />
+          />
 
-      <form.Field
-        name="notes"
-        children={(field) => (
-          <View>
-            <Text className="mb-2">Notes:</Text>
-            <TextInput
-              value={field.state.value || ""}
-              onBlur={field.handleBlur}
-              onChangeText={field.handleChange}
-              placeholder="Enter workout notes"
-              multiline
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8,
-                minHeight: 100,
-              }}
+          {isEditing && (
+            <form.Field
+              name="id"
+              children={(field) => (
+                <TextInput
+                  className="hidden"
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                />
+              )}
             />
-            {field.state.meta.errors && (
-              <Text className="text-red-500 mt-2">
-                {field.state.meta.errors}
-              </Text>
-            )}
-          </View>
-        )}
-      />
+          )}
 
-      <form.Subscribe
-        selector={(state) => [state.canSubmit, state.isSubmitting]}
-        children={([canSubmit, isSubmitting]) => (
-          <TouchableOpacity
-            className={`${
-              canSubmit ? "bg-slate-700" : "bg-gray-300"
-            } rounded-md mt-4 items-center p-3`}
-            onPress={() => form.handleSubmit()}
-            disabled={!canSubmit}
-          >
-            <Text className="font-bold text-white">
-              {isSubmitting ? "Submitting..." : "Save Workout"}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
-    </View>
+          <form.Field
+            name="workoutId"
+            children={(field) => (
+              <View className="mb-4">
+                <Text className="mb-3">Workout Type:</Text>
+                <View className="border-2 border-primary h-12 justify-center text-600 rounded-md">
+                  <Picker
+                    selectedValue={field.state.value}
+                    onValueChange={field.handleChange}
+                  >
+                    <Picker.Item label="Select a workout type" value="" />
+                    {workouts.map((option: any, idx: any) => (
+                      <Picker.Item
+                        key={option.id}
+                        label={`${option.name}`}
+                        value={option.id}
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            )}
+          />
+          <form.Field
+            name="createdAt"
+            children={(field) => (
+              <View className="">
+                <Text className="mb-2">Workout Date:</Text>
+                <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+                  <DateDisplay date={field.state.value} />
+                </TouchableOpacity>
+
+                {showDate && (
+                  <DatePicker
+                    date={field.state.value}
+                    setDate={(date: any) => {
+                      field.handleChange(date)
+                    }}
+                    showDate={showDate}
+                    setShowDate={setShowDate}
+                  />
+                )}
+                {field.state.meta.errors && (
+                  <Text className="text-red-500 mt-2">
+                    {field.state.meta.errors}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
+
+          <form.Field
+            name="notes"
+            children={(field) => (
+              <View>
+                <Text className="mb-2">Notes:</Text>
+                <TextInput
+                  className=""
+                  value={field.state.value || ""}
+                  onBlur={field.handleBlur}
+                  onChangeText={field.handleChange}
+                  placeholder="Enter workout notes"
+                  multiline
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 20,
+                    minHeight: 100,
+                  }}
+                />
+                {field.state.meta.errors && (
+                  <Text className="text-red-500 mt-2">
+                    {field.state.meta.errors}
+                  </Text>
+                )}
+              </View>
+            )}
+          />
+
+          <form.Subscribe
+            selector={(state) => [state.canSubmit, state.isSubmitting]}
+            children={([canSubmit, isSubmitting]) => (
+              <TouchableOpacity
+                className={`${
+                  canSubmit ? "bg-slate-700" : "bg-gray-300"
+                } rounded-md mt-4 items-center p-3 mb-16`}
+                onPress={() => form.handleSubmit()}
+                disabled={!canSubmit}
+              >
+                <Text className="font-bold text-white">
+                  {isSubmitting ? "Submitting..." : "Save Workout"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }

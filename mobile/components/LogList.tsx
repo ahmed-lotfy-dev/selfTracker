@@ -20,6 +20,7 @@ export default function LogList({
     <FlatList
       data={logs}
       renderItem={renderItem}
+      showsVerticalScrollIndicator={false}
       keyExtractor={(item) => item.id}
       onEndReached={() => {
         if (hasNextPage && !isFetchingNextPage) {

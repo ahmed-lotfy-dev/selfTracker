@@ -40,7 +40,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
 
   return (
     <View
-      className="flex-row justify-center items-center p-4 border-b border-gray-200"
+      className="flex-row justify-center items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3"
       key={item.id}
     >
       <Link href={`/workouts/${item.id}`} asChild>
@@ -52,7 +52,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
         </TouchableOpacity>
       </Link>
 
-      <View className="flex-row items-center gap-3">
+      <View className="flex-row gap-3">
         <EditButton
           onPress={() => {
             setSelectedWorkout(item)

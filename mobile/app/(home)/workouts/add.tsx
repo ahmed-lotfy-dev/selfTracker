@@ -1,4 +1,4 @@
-import { View } from "react-native"
+import { ScrollView, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import WorkoutForm from "@/components/Workout/WorkoutForm"
 import { useRouter } from "expo-router"
@@ -9,8 +9,10 @@ export default function AddWorkout() {
   const queryClient = useQueryClient()
 
   return (
-    <SafeAreaView>
-      <WorkoutForm />
+    <SafeAreaView className="flex-1">
+      <ScrollView>
+        <WorkoutForm />
+      </ScrollView>
     </SafeAreaView>
   )
 }

@@ -22,7 +22,7 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           headerShown: false,
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Feather name="home" size={24} color={color} />
           ),
         }}
@@ -34,7 +34,7 @@ export default function TabsLayout() {
           headerShown: false,
           headerTitleAlign: "center",
 
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name="scale-outline" size={24} color={color} />
           ),
         }}
@@ -46,7 +46,7 @@ export default function TabsLayout() {
           headerShown: false,
           headerTitleAlign: "center",
 
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <MaterialCommunityIcons name="dumbbell" size={24} color={color} />
           ),
         }}
@@ -58,7 +58,7 @@ export default function TabsLayout() {
           headerShown: false,
           headerTitleAlign: "center",
 
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <FontAwesome5 name="tasks" size={24} color={color} />
           ),
         }}
@@ -70,7 +70,7 @@ export default function TabsLayout() {
           headerShown: false,
           headerTitleAlign: "center",
 
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <AntDesign name="user" size={24} color={color} />
           ),
         }}
