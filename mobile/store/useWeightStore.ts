@@ -13,7 +13,6 @@ type WeightLogActions = {
 
 type WeightLogStore = WeightLogState & WeightLogActions
 
-// Zustand store for managing selected weight
 export const useWeightLogStore = create<WeightLogStore>()(
   persist(
     (set) => ({
@@ -28,12 +27,10 @@ export const useWeightLogStore = create<WeightLogStore>()(
   )
 )
 
-// Custom hook to get selected weight
 export const useSelectedWeight = () => {
   return useWeightLogStore((state) => state.selectedWeight)
 }
 
-// Custom hook to get actions related to selected weight
 export const useWeightActions = () => {
   const setSelectedWeight = useWeightLogStore(
     (state) => state.setSelectedWeight

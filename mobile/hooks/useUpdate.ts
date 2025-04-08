@@ -13,7 +13,7 @@ export function useUpdate({
   mutationFn,
   onSuccessInvalidate = [],
   onSuccessCallback,
-  onErrorMessage = "Failed to Update.", // Changed default error message
+  onErrorMessage = "Failed to Update.",
 }: UseUpdateOptions) {
   const queryClient = useQueryClient()
 
@@ -31,6 +31,6 @@ export function useUpdate({
   })
 
   return {
-    updateMutation: mutation, 
+    updateMutation: mutation,
   }
 }

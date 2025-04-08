@@ -27,7 +27,6 @@ export default function DatePicker({
         date={date}
         onChange={({ date }: any) => {
           if (date) {
-            // Use dayjs to handle the date consistently
             const formattedDate = dayjs(date).format("YYYY-MM-DD")
             setDate(formattedDate)
             setShowDate(false)

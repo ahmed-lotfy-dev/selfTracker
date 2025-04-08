@@ -131,8 +131,8 @@ workoutLogsRouter.get("/calendar", async (c) => {
     const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
     const endDate = new Date(year, month, 0, 23, 59, 59, 999)
 
-    console.log("Start Date:", startDate.toISOString()) // Debugging
-    console.log("End Date:", endDate.toISOString()) // Debugging
+    console.log("Start Date:", startDate.toISOString())
+    console.log("End Date:", endDate.toISOString())
 
     const logs = await db
       .select({
@@ -156,10 +156,9 @@ workoutLogsRouter.get("/calendar", async (c) => {
       )
       .orderBy(desc(workoutLogs.createdAt))
 
-    // Group logs by date
     const groupedLogs: Record<string, any[]> = {}
     logs.forEach((log) => {
-      const date = (log.createdAt as Date).toISOString().split("T")[0] // Format: YYYY-MM-DD
+      const date = (log.createdAt as Date).toISOString().split("T")[0]
       if (!groupedLogs[date]) {
         groupedLogs[date] = []
       }
@@ -327,7 +326,6 @@ workoutLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
-    // Ensure the workout log belongs to the authenticated user
     const deletedWorkout = await db
       .delete(workoutLogs)
       .where(eq(workoutLogs.id, id))
