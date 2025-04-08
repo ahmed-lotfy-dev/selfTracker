@@ -30,7 +30,7 @@ export default function WorkoutScreen() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   })
-
+  console.log({ data })
   const [view, setView] = useState<"list" | "calendar">("list")
 
   if (isLoading) {
