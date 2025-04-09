@@ -5,13 +5,17 @@ import { fetchAllWorkoutLogs } from "@/utils/api/workoutsApi"
 import LogList from "@/components/LogList"
 import WorkoutLogItem from "@/components/Workout/WorkoutLogItem"
 import Header from "@/components/Header"
-import Table from "@/components/Table"
 import CalendarView from "@/components/CalendarView"
 import AddButton from "@/components/AddButton"
 import { COLORS } from "@/constants/Colors"
 
+const VIEW_TYPES = {
+  LIST: "list",
+  CALENDAR: "calendar",
+}
+
 export default function WorkoutScreen() {
-  const [view, setView] = useState("list")
+  const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST)
   const limit = 10
 
   const {
@@ -31,7 +35,6 @@ export default function WorkoutScreen() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   })
-  console.log({ data })
 
   if (isLoading) {
     return (
@@ -43,7 +46,7 @@ export default function WorkoutScreen() {
 
   if (isError) {
     return (
-      <View>
+      <View className="p-4">
         <Text className="text-red-500">
           Failed to load workouts. Please try again.
         </Text>
@@ -62,30 +65,33 @@ export default function WorkoutScreen() {
     )
   }
 
-  return (
-    <View className="flex-1 p-4 justify-center">
-      <Header title="Workout Logs" />
+  const ViewSelector = () => (
+    <View className="flex-row my-4 bg-gray-200 rounded-full p-1">
+      <Pressable
+        onPress={() => setCurrentView(VIEW_TYPES.LIST)}
+        className={`flex-1 items-center py-2 rounded-full ${
+          currentView === VIEW_TYPES.LIST ? "bg-white shadow-md" : ""
+        }`}
+      >
+        <Text className="text-gray-700">List</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => setCurrentView(VIEW_TYPES.CALENDAR)}
+        className={`flex-1 items-center py-2 rounded-full ${
+          currentView === VIEW_TYPES.CALENDAR ? "bg-white shadow-md" : ""
+        }`}
+      >
+        <Text className="text-gray-700">Calendar</Text>
+      </Pressable>
+    </View>
+  )
 
-      <View className="flex-row my-4 bg-gray-300 rounded-full p-1">
-        <Pressable
-          onPress={() => setView("list")}
-          className={`flex-1 items-center py-2 rounded-full ${
-            view === "list" ? "bg-white shadow-md" : ""
-          }`}
-        >
-          <Text className="text-gray-700">List</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setView("calendar")}
-          className={`flex-1 items-center py-2 rounded-full ${
-            view === "calendar" ? "bg-white shadow-md" : ""
-          }`}
-        >
-          <Text className="text-gray-700">Calendar</Text>
-        </Pressable>
-      </View>
-      {view === "calendar" && <CalendarView />}
-      {view === "list" && (
+  const renderContent = () => {
+    if (currentView === VIEW_TYPES.CALENDAR) {
+      return <CalendarView />
+    }
+    if (currentView === VIEW_TYPES.LIST) {
+      return (
         <LogList
           logs={logs}
           renderItem={({ item }) => (
@@ -95,8 +101,15 @@ export default function WorkoutScreen() {
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
         />
-      )}
+      )
+    }
+  }
 
+  return (
+    <View className="flex-1 p-4">
+      <Header title="Workout Logs" />
+      <ViewSelector />
+      {renderContent()}
       <AddButton path="/workouts" />
     </View>
   )
