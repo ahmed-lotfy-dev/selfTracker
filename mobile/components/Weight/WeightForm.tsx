@@ -89,7 +89,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          className="flex-1 px-5 justify-center"
+          className="flex-1 px-5"
           keyboardShouldPersistTaps="handled"
         >
           <form.Field
