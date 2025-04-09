@@ -6,7 +6,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
@@ -47,7 +46,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
       { queryKey: ["workoutLogsCalendar"] },
     ],
     onSuccessCallback: () => {
-      router.navigate("/workouts")
+      router.push("/workouts")
     },
     onErrorMessage: "Failed to Add Workout Log.",
   })
@@ -59,7 +58,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
       { queryKey: ["workoutLogsCalendar"] },
     ],
     onSuccessCallback: () => {
-      router.navigate("/workouts")
+      router.push("/workouts")
     },
     onErrorMessage: "Failed to Update Workout Log.",
   })
@@ -100,7 +99,6 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   }
 
   return (
-    <SafeAreaView className="flex-1 mt-14">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
@@ -230,6 +228,5 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
   )
 }

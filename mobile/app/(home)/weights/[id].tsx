@@ -64,7 +64,7 @@ export default function WeightLog() {
           <EditButton
             onPress={() => {
               setSelectedWorkout(weightLog)
-              router.navigate(`/workouts/edit` as Route)
+              router.push(`/workouts/edit` as Route)
             }}
           />
           <DeleteButton onPress={triggerDelete} />

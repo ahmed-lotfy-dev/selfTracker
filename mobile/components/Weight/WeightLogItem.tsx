@@ -44,6 +44,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
       className="flex-row justify-center items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 mt-5"
       key={item.id}
     >
+      <View className="flex-1 flex-row">
       <Link href={`/weights/${item.id}`} asChild>
         <TouchableOpacity className="flex-1">
           <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
@@ -52,12 +53,13 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
           </Text>
         </TouchableOpacity>
       </Link>
+      </View>
 
-      <View className="flex-row  gap-3">
+      <View className="flex-1 flex-row gap-3">
         <EditButton
           onPress={() => {
             setSelectedWeight(item)
-            router.navigate(`${path}/edit` as Route)
+            router.push(`${path}/edit` as Route)
           }}
         />
         <DeleteButton

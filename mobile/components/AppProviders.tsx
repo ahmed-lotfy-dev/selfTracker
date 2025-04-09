@@ -1,7 +1,6 @@
 import { ReactNode, useMemo, useState } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { TamaguiProvider, View } from "@tamagui/core"
 
 interface AppProvidersProps {
   children: ReactNode
@@ -14,7 +13,7 @@ export function AppProviders({ children }: AppProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SafeAreaView style={{ flex: 1 }}>{children}</SafeAreaView>
+        <SafeAreaView style={{ flex: 1 }}>{children}</SafeAreaView>
     </QueryClientProvider>
   )
 }

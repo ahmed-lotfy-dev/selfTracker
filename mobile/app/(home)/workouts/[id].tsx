@@ -22,21 +22,18 @@ export default function WorkoutLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
   const { setSelectedWorkout } = useWorkoutActions()
-  const isDate = !isNaN(Date.parse(String(id)))
-
+  console.log({ id })
   const {
     data: workoutLog,
     isLoading,
     isError,
   } = useQuery({
     queryKey: ["WorkoutsLog", id],
-    queryFn: () =>
-      isDate
-        ? fetchSingleWorkoutByDate(String(id))
-        : fetchSingleWorkout(String(id)),
+    queryFn: () => fetchSingleWorkout(String(id)),
     enabled: !!id,
   })
 
+  console.log({ workoutLog })
   const currentMonth = new Date().getMonth() + 1
   const currentYear = new Date().getFullYear()
 
@@ -56,13 +53,12 @@ export default function WorkoutLog() {
   if (isLoading) return <Text>Loading...</Text>
   if (isError) return <Text>Error loading workout</Text>
 
-  const log = workoutLog[0] ?? {}
-
+  const log = workoutLog ?? {}
   return (
     <>
       <Stack.Screen
         options={{
-          title: `${log.workoutName}`,
+          title: `${log.workoutName} - Workout Log`,
         }}
       />
       <View className="p-5">
@@ -78,7 +74,7 @@ export default function WorkoutLog() {
           <EditButton
             onPress={() => {
               setSelectedWorkout(workoutLog)
-              router.navigate(`/workouts/edit` as Route)
+              router.push(`/workouts/edit`)
             }}
           />
           <DeleteButton onPress={triggerDelete} />

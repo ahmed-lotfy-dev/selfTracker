@@ -5,15 +5,15 @@ import { TouchableOpacityProps } from "react-native-gesture-handler"
 
 interface AddButtonProps extends TouchableOpacityProps {
   className?: string
+  path: string
 }
 
-export default function AddButton({ className }: AddButtonProps) {
+export default function AddButton({ className , path}: AddButtonProps) {
   const router = useRouter()
-  const path = usePathname()
 
   return (
     <TouchableOpacity
-      onPress={() => router.navigate(`${path}/add` as Route)}
+      onPress={() => router.push(`${path}/add` as Route)}
       className={`border border-gray-700 bg-gray-800 hover:bg-gray-700  transition-all ease-in-out rounded-full p-4 absolute bottom-10 right-10 z-10 ${className}`}
     >
       <Entypo name="plus" size={24} color="white" />

@@ -62,7 +62,7 @@ export default function WeightsScreen() {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
       />
-      <AddButton/>
+      <AddButton path="/weights" />
     </View>
   )
 }

@@ -73,6 +73,7 @@ export default function RootLayout() {
         backgroundColor="#0A2540"
         animated={true}
       />
+
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(home)" options={{ headerShown: false }} />

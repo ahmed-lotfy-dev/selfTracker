@@ -1,5 +1,4 @@
 import { View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 import WorkoutForm from "@/components/Workout/WorkoutForm"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useQueryClient } from "@tanstack/react-query"
@@ -11,10 +10,8 @@ export default function AddWorkout() {
   const queryClient = useQueryClient()
   
   return (
-    <SafeAreaView className="flex-1">
-      <ScrollView>
+      <ScrollView className="flex-1">
         <WorkoutForm isEditing={true} />
       </ScrollView>
-    </SafeAreaView>
   )
 }

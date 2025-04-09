@@ -11,6 +11,7 @@ import AddButton from "@/components/AddButton"
 import { COLORS } from "@/constants/Colors"
 
 export default function WorkoutScreen() {
+  const [view, setView] = useState("list")
   const limit = 10
 
   const {
@@ -31,7 +32,6 @@ export default function WorkoutScreen() {
     refetchOnReconnect: false,
   })
   console.log({ data })
-  const [view, setView] = useState<"list" | "calendar">("list")
 
   if (isLoading) {
     return (
@@ -53,6 +53,14 @@ export default function WorkoutScreen() {
   }
 
   const logs = data?.pages.flatMap((page) => page.workoutLogs) || []
+
+  if (logs.length === 0 && !isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-gray-500">No workout logs available.</Text>
+      </View>
+    )
+  }
 
   return (
     <View className="flex-1 p-4 justify-center">
@@ -76,8 +84,8 @@ export default function WorkoutScreen() {
           <Text className="text-gray-700">Calendar</Text>
         </Pressable>
       </View>
-
-      {view === "list" ? (
+      {view === "calendar" && <CalendarView />}
+      {view === "list" && (
         <LogList
           logs={logs}
           renderItem={({ item }) => (
@@ -87,10 +95,9 @@ export default function WorkoutScreen() {
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
         />
-      ) : (
-        <CalendarView />
       )}
-      <AddButton />
+
+      <AddButton path="/workouts" />
     </View>
   )
 }

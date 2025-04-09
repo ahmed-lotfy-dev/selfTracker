@@ -80,7 +80,7 @@ workoutLogsRouter.get("/calendar/:date", async (c) => {
     const startDate = new Date(date + "T00:00:00.000Z")
     const endDate = new Date(date + "T23:59:59.999Z")
 
-    const dateLog = await db
+    const [dateLog] = await db
       .select({
         id: workoutLogs.id,
         userId: workoutLogs.userId,
@@ -97,7 +97,7 @@ workoutLogsRouter.get("/calendar/:date", async (c) => {
           lte(workoutLogs.createdAt, endDate)
         )
       )
-    return c.json({ success: true, logs: dateLog })
+    return c.json({ success: true, logs: dateLog})
   } catch (error) {
     console.error("Error fetching calendar logs:", error)
     return c.json(
@@ -189,7 +189,7 @@ workoutLogsRouter.get("/:id", async (c) => {
     return c.json({ success: false, message: "ID is required" }, 400)
   }
   try {
-    const singleWorkout = await db
+    const [singleWorkout] = await db
       .select({
         id: workoutLogs.id,
         userId: workoutLogs.userId,

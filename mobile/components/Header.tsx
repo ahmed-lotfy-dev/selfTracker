@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export default function Header({ title }: HeaderProps) {
   return (
-    <View className="flex-row justify-between items-center relative">
+    <View className="flex-row justify-center items-center relative">
       <Text className="text-2xl font-bold">{title}</Text>
     </View>
   )

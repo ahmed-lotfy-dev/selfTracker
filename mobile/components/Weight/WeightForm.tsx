@@ -6,7 +6,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
@@ -35,7 +34,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
     mutationFn: (weight) => createWeight(weight),
     onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
     onSuccessCallback: () => {
-      router.navigate("/weights")
+      router.push("/weights")
     },
     onErrorMessage: "Failed to Save Weight Log.",
   })
@@ -44,7 +43,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
     mutationFn: (weight) => updateWeight(weight),
     onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
     onSuccessCallback: () => {
-      router.navigate("/weights")
+      router.push("/weights")
     },
     onErrorMessage: "Failed to Update Weight Log.",
   })
@@ -86,7 +85,6 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   }
 
   return (
-    <SafeAreaView className="flex-1 mt-14">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
@@ -257,6 +255,5 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
   )
 }

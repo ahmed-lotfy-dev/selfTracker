@@ -2,19 +2,19 @@ import BackButton from "@/components/BackButton"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Stack, useRouter } from "expo-router"
 
-export default function WeightsLayout() {
+export default function WorkoutsLayout() {
   return (
     <Stack
       screenOptions={{
         headerShown: false,
       }}
     >
-      <Stack.Screen
-        name="index"
-        options={{
-          title: "Workouts",
-        }}
-      />
+        <Stack.Screen
+          name="index"
+          options={{
+            title: "Workouts",
+          }}
+        />
       <Stack.Screen
         name="[id]"
         options={{
