@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { Suspense, useState } from "react"
 import { View, Text, Pressable, ActivityIndicator } from "react-native"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchAllWorkoutLogs } from "@/utils/api/workoutsApi"
@@ -88,19 +88,29 @@ export default function WorkoutScreen() {
 
   const renderContent = () => {
     if (currentView === VIEW_TYPES.CALENDAR) {
-      return <CalendarView />
+      return (
+        <Suspense
+          fallback={<ActivityIndicator size="large" color={COLORS.primary} />}
+        >
+          <CalendarView />
+        </Suspense>
+      )
     }
     if (currentView === VIEW_TYPES.LIST) {
       return (
-        <LogList
-          logs={logs}
-          renderItem={({ item }) => (
-            <WorkoutLogItem item={item} path="/workouts" />
-          )}
-          fetchNextPage={fetchNextPage}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-        />
+        <Suspense
+          fallback={<ActivityIndicator size="large" color={COLORS.primary} />}
+        >
+          <LogList
+            logs={logs}
+            renderItem={({ item }) => (
+              <WorkoutLogItem item={item} path="/workouts" />
+            )}
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+          />
+        </Suspense>
       )
     }
   }

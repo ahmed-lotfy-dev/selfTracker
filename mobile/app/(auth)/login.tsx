@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native"
 import { useRouter } from "expo-router"
-import { login, userData } from "@/utils/api/authApi"
+import { login,  } from "@/utils/api/authApi"
 import { useAuthActions } from "@/store/useAuthStore"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 import { useForm } from "@tanstack/react-form"
@@ -19,7 +19,7 @@ import { COLORS } from "@/constants/Colors"
 
 export default function Login() {
   const router = useRouter()
-  const { setTokens, setUser } = useAuthActions()
+  const { setTokens } = useAuthActions()
   const [status, setStatus] = useState<"off" | "submitting" | "submitted">(
     "off"
   )
@@ -37,11 +37,8 @@ export default function Login() {
         await setAccessToken(accessToken)
         await setRefreshToken(refreshToken)
 
-        const user = await userData()
-        setUser(user.user)
-
         setStatus("submitted")
-        router.replace("/")
+        router.replace("/(home)")
       } catch (error: any) {
         console.error("Login failed:", error)
         setErrorMessage(error.response?.data?.message || "Login failed")
@@ -71,13 +68,7 @@ export default function Login() {
             keyboardType="email-address"
             autoComplete="email"
             textContentType="emailAddress"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 5,
-              padding: 10,
-              marginBottom: 10,
-            }}
+            className="border border-gray-300 rounded-md px-4 py-2 mb-3"
           />
         )}
       />
@@ -93,13 +84,7 @@ export default function Login() {
             secureTextEntry
             autoComplete="password"
             textContentType="password"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 5,
-              padding: 10,
-              marginBottom: 10,
-            }}
+            className="border border-gray-300 rounded-md px-4 py-2 mb-3"
           />
         )}
       />
@@ -114,12 +99,7 @@ export default function Login() {
           <TouchableOpacity
             onPress={() => form.handleSubmit()}
             disabled={!canSubmit || isSubmitting}
-            style={{
-              backgroundColor: "#007bff",
-              padding: 15,
-              borderRadius: 5,
-              alignItems: "center",
-            }}
+            className="bg-[#007bff] p-4 rounded-md items-center"
           >
             {isSubmitting ? (
               <ActivityIndicator color={COLORS.primary} />

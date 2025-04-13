@@ -37,9 +37,9 @@ export const logout = async (refreshToken: string) => {
   return response.data
 }
 
-export const userData = async () => {
+export const fetchUserData = async () => {
   const response = await axiosInstance.get(`${API_BASE_URL}/api/users/me`)
-  return response.data
+  return response.data.user
 }
 
 export const checkEmailVerification = async () => {

@@ -52,6 +52,14 @@ export default function WeightsScreen() {
     )
   }
 
+  if (logs.length === 0 && !isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-gray-500">No weight logs available.</Text>
+      </View>
+    )
+  }
+  
   return (
     <View className="flex-1 p-4 justify-center relative">
       <Header title="Weight Logs" />

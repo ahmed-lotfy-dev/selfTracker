@@ -19,19 +19,29 @@ export default function index() {
 
   if (isLoading) return <ActivityIndicator color={COLORS.primary} />
 
-  if (isError) return <Text>Error loading tasks</Text>
+  if (isError) {
+    return (
+      <View className="p-4">
+        <Text className="text-red-500">
+          Error loading tasks. Please try again later.
+        </Text>
+      </View>
+    )
+  }
+
   if (tasks.length === 0) return <Text>No tasks found</Text>
+
+  const handleTaskSubmit = (taskData: {
+    title: string
+    description?: string
+  }) => {
+    console.log("Submitting task:", taskData)
+    // Call API or update state here
+  }
 
   return (
     <View className="flex-1 justify-center items-center">
-      <TaskForm
-        onSubmit={function (taskData: {
-          title: string
-          description?: string
-        }): void {
-          throw new Error("Function not implemented.")
-        }}
-      />
+      <TaskForm onSubmit={handleTaskSubmit} />
       <ListItems
         items={tasks ?? []}
         renderItem={({ item }: { item: TaskType }) => (

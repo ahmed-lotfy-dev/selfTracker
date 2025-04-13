@@ -9,6 +9,7 @@ import tasksRouter from "./routes/tasks.js"
 import weightsLogsRouter from "./routes/weightLogs.js"
 import workoutsRouter from "./routes/workouts.js"
 import workoutLogsRouter from "./routes/workoutsLogs.js"
+import uploadRouter from "./routes/image.js"
 
 const app = new Hono()
 
@@ -36,6 +37,8 @@ app.route("/api/weightLogs", weightsLogsRouter)
 app.route("/api/workouts", workoutsRouter)
 
 app.route("/api/workoutLogs", workoutLogsRouter)
+
+app.route("/api/image", uploadRouter)
 
 app.get("/", async (c) => {
   return c.json({ message: "Hello world" })

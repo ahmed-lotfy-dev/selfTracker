@@ -1,48 +1,39 @@
 import { View, Text, ActivityIndicator, Image } from "react-native"
-import { useQuery } from "@tanstack/react-query"
-import { userData } from "@/utils/api/authApi"
 import LogoutButton from "./logoutButton"
+import Fontisto from "@expo/vector-icons/Fontisto"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function UserProfile() {
-  const {
-    data: user,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["user"],
-    queryFn: userData,
-  })
+  const { user ,isLoading} = useAuth()
+  console.log(user, "from inside user profile")
 
-  if (isLoading) {
-    return (
-      <View className="justify-center items-center">
-        <ActivityIndicator size="large" />
-      </View>
-    )
-  }
+    if (isLoading) {
+      return <Text>Loading...</Text>
+    }
 
-  if (isError || !user) {
-    return (
-      <View className="justify-center items-center">
-        <Text className="text-red-500">Failed to load user data</Text>
-      </View>
-    )
-  }
+    if (!user) {
+      return <Text>No user data available</Text>
+    }
 
   return (
-    <View className="items-center p-4">
+    <View className="flex-1 flex-col items-center p-4">
       <View className="flex-row justify-center items-center gap-3">
+        {!user?.profileImage && (
+          <Fontisto
+            name="male"
+            size={36}
+            color="black"
+            className="w-20 h-20 rounded-full border"
+          />
+        )}
+
         <Image
-          className="w-10 h-10 rounded-full border border-primary"
-          source={{
-            uri: "https://placehold.co/200x200/gray/eee",
-            width: 50,
-            height: 50,
-            scale: 1.5,
-          }}
+          source={{ uri: user?.profileImage }}
+          className="w-20 h-20 rounded-full border "
         />
+
         <Text className="text-lg font-bold">
-          {user.user.name ? user.user.name : "No Name"}
+          {user?.name ? user.name : "No Name"}
         </Text>
       </View>
       <LogoutButton className="mt-4" />

@@ -71,25 +71,57 @@ userRouter.get("/me", async (c) => {
 })
 
 userRouter.patch("/:id", async (c) => {
-  const { id, name, email, role } = await c.req.json()
+  const user = c.get("user" as any)
+  const id = c.req.param("id")
+
+  if (!user || !user.id) {
+    return c.json(
+      {
+        success: false,
+        message: "Unauthorized: User not found in context",
+      },
+      401
+    )
+  }
+  if (!id) {
+    return c.json({ success: false, message: "User id is required" }, 400)
+  }
   try {
-    if (!id) {
-      throw new Error("User ID is required")
+    const body = await c.req.json()
+    console.log({ body })
+    const updatedFields: Record<string, any> = {}
+
+    if ("name" in body) updatedFields.name = body.name
+    if ("email" in body) updatedFields.email = body.email
+    if ("role" in body) updatedFields.role = body.role
+    if ("profileImage" in body) updatedFields.profileImage = body.profileImage
+    if ("weight" in body) updatedFields.weight = body.weight
+    if ("height" in body) updatedFields.height = body.height
+    if ("unitSystem" in body) updatedFields.unitSystem = body.unitSystem
+    if ("currency" in body) updatedFields.currency = body.currency
+    if ("profileImage" in body) updatedFields.profileImage = body.profileImage
+    if ("gender" in body) updatedFields.gender = body.gender
+    if ("income" in body) updatedFields.income = body.income
+    if ("currency" in body) updatedFields.currency = body.currency
+
+    if ("notes" in body) updatedFields.notes = body.notes
+    if ("workoutId" in body) updatedFields.workoutId = body.workoutId
+    if ("createdAt" in body) updatedFields.createdAt = new Date(body.createdAt)
+
+    if (Object.keys(updatedFields).length === 0) {
+      return c.json({ success: false, message: "No fields to update" }, 400)
     }
 
-    const updatedUser = await db
+    const [updatedUser] = await db
       .update(users)
-      .set({ name, email, role })
+      .set(updatedFields)
       .where(eq(users.id, id))
       .returning()
 
-    if (!updatedUser.length) {
-      return c.json({ message: "User not found" }, 404)
-    }
     return c.json({
       success: "true",
       message: "User updated successfully",
-      user: updatedUser[0],
+      user: updatedUser,
     })
   } catch (error) {
     console.error("Error updating user:", error)

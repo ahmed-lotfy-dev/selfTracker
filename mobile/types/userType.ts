@@ -7,6 +7,8 @@ export interface UserType {
   role: string
   resetToken: null
   resetTokenExpiresAt: null
+  profileImage: string
+  gender: string
   weight: string
   height: string
   unitSystem: string

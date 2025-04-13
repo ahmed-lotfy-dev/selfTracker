@@ -119,7 +119,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           <form.Field
             name="weight"
             children={(field) => (
-              <View>
+              <View className="mt-14">
                 <Text className="mb-2">Weight:</Text>
                 <TextInput
                   className="border-2 text-lg h-10 justify-center pl-3 border-primary text-600 rounded-md mb-4"

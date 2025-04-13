@@ -1,4 +1,4 @@
-import { Tabs, useRouter } from "expo-router"
+import { Stack, Tabs, useRouter } from "expo-router"
 import { Pressable } from "react-native"
 import Feather from "@expo/vector-icons/Feather"
 import Ionicons from "@expo/vector-icons/Ionicons"

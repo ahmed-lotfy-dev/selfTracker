@@ -4,6 +4,8 @@ import { useRouter } from "expo-router"
 import { useAuthActions } from "@/store/useAuthStore"
 import UserProfile from "@/components/UserProfile"
 import LogoutButton from "@/components/logoutButton"
+import { GestureHandlerRootView } from "react-native-gesture-handler"
+import Drawer from "expo-router/drawer"
 
 export default function HomeScreen() {
   const router = useRouter()
@@ -16,7 +18,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 justify-center items-center">
-      <UserProfile />
+      <Text className="font-bold text-xl">HomePage</Text>
     </View>
   )
 }

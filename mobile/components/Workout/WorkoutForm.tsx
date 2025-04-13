@@ -130,7 +130,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
         <form.Field
           name="workoutId"
           children={(field) => (
-            <View className="mb-4">
+            <View className="mt-14">
               <Text className="mb-3">Workout Type:</Text>
               <View className="border-2 border-primary h-12 justify-center text-600 rounded-md">
                 <Picker

@@ -7,13 +7,19 @@ interface AppProvidersProps {
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
-  const [queryClient] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { retry: 2 } } })
-  )
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 2,
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5,
+      },
+    },
+  })
 
   return (
     <QueryClientProvider client={queryClient}>
-        <SafeAreaView style={{ flex: 1 }}>{children}</SafeAreaView>
+      <SafeAreaView style={{ flex: 1 }}>{children}</SafeAreaView>
     </QueryClientProvider>
   )
 }

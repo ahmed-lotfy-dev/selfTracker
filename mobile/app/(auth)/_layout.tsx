@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/useAuth"
 import { Slot } from "expo-router"
 import React from "react"
 import { Platform } from "react-native"

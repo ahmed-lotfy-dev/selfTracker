@@ -11,7 +11,7 @@ import {
 } from "react-native"
 import { useRouter } from "expo-router"
 import { useAuthActions } from "@/store/useAuthStore"
-import { register, userData } from "@/utils/api/authApi"
+import { register, fetchUserData } from "@/utils/api/authApi"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 import { showAlert } from "@/utils/lib"
 
@@ -46,10 +46,7 @@ export default function Register() {
       await setAccessToken(accessToken)
       await setRefreshToken(refreshToken)
 
-      const user = await userData()
-      setUser(user.user)
-
-      router.replace("/verify-email")
+      router.replace("/(auth)/verify-email")
 
       setStatus("submitted")
     } catch (error: any) {
