@@ -122,7 +122,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
             <View className="mt-[5.3rem]">
               <Text className="my-3 font-bold">Weight:</Text>
               <TextInput
-                className="border-[1px] text-lg h-14 justify-center pl-3 border-primary text-600 rounded-md mb-4 "
+                className="border-[1px] text-lg h-12 justify-center pl-3 border-primary text-600 rounded-md mb-4 "
                 keyboardType="numeric"
                 value={String(field.state.value ?? "")}
                 onBlur={field.handleBlur}
@@ -143,7 +143,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           children={(field) => (
             <View>
               <Text className="my-3 font-bold">Energy</Text>
-              <View className="border-[1px] border-black rounded-md mb-4 h-14 p-2 justify-center">
+              <View className="border-[1px] border-black rounded-md mb-4 h-12 p-2 justify-center">
                 <Picker
                   className="w-full px-4 py-2"
                   selectedValue={field.state.value}
@@ -165,7 +165,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           children={(field) => (
             <View>
               <Text className="my-3 font-bold">Mood</Text>
-              <View className="border-[1px] border-black rounded-md mb-4 h-14 p-2 justify-center">
+              <View className="border-[1px] border-black rounded-md mb-4 h-12 p-2 justify-center">
                 <Picker
                   className="w-full px-4 py-2"
                   selectedValue={field.state.value}

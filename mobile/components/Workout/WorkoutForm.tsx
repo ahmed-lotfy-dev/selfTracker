@@ -132,7 +132,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           children={(field) => (
             <View className="mt-32">
               <Text className="my-3 font-bold">Workout Type:</Text>
-              <View className="border-2 border-primary h-12 justify-center text-600 rounded-md p-4">
+              <View className="border-[1px] border-primary h-12 justify-center text-600 rounded-md p-4">
                 <Picker
                   selectedValue={field.state.value}
                   onValueChange={field.handleChange}
