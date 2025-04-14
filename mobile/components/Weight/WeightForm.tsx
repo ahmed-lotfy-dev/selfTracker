@@ -143,13 +143,9 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           children={(field) => (
             <View>
               <Text className="my-3 font-bold">Energy</Text>
-              <View className="border-[1px] border-primary rounded-md mb-4 h-14 justify-center">
+              <View className="border-[1px] border-black rounded-md mb-4 h-14 p-2 justify-center">
                 <Picker
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "black",
-                    borderRadius: 5,
-                  }}
+                  className="w-full px-4 py-2"
                   selectedValue={field.state.value}
                   onValueChange={field.handleChange}
                 >
@@ -169,7 +165,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           children={(field) => (
             <View>
               <Text className="my-3 font-bold">Mood</Text>
-              <View className="border-[1px] border-primary rounded-md mb-4 h-14 justify-center">
+              <View className="border-[1px] border-black rounded-md mb-4 h-14 p-2 justify-center">
                 <Picker
                   className="w-full px-4 py-2"
                   selectedValue={field.state.value}
