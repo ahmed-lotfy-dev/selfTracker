@@ -36,9 +36,9 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const { data: workouts } = useQuery({
     queryKey: ["workouts"],
     queryFn: fetchAllWorkouts,
-    initialData: [],
   })
 
+  console.log(workouts)
   const { addMutation } = useAdd({
     mutationFn: (workout: WorkoutType) => createWorkout(workout),
     onSuccessInvalidate: [
@@ -130,21 +130,26 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
         <form.Field
           name="workoutId"
           children={(field) => (
-            <View className="mt-14">
-              <Text className="mb-3">Workout Type:</Text>
-              <View className="border-2 border-primary h-12 justify-center text-600 rounded-md">
+            <View className="mt-32">
+              <Text className="my-3 font-bold">Workout Type:</Text>
+              <View className="border-2 border-primary h-12 justify-center text-600 rounded-md p-4">
                 <Picker
                   selectedValue={field.state.value}
                   onValueChange={field.handleChange}
                 >
-                  <Picker.Item label="Select a workout type" value="" />
-                  {workouts.map((option: any, idx: any) => (
-                    <Picker.Item
-                      key={option.id}
-                      label={`${option.name}`}
-                      value={option.id}
-                    />
-                  ))}
+                  <Picker.Item
+                    label="Select a workout type"
+                    value=""
+                    style={{ paddingLeft: 3 }}
+                  />
+                  {workouts &&
+                    workouts.map((option: any, idx: any) => (
+                      <Picker.Item
+                        key={option.id}
+                        label={`${option.name}`}
+                        value={option.id}
+                      />
+                    ))}
                 </Picker>
               </View>
             </View>
@@ -154,7 +159,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           name="createdAt"
           children={(field) => (
             <View className="">
-              <Text className="mb-2">Workout Date:</Text>
+              <Text className="my-3 font-bold">Workout Date:</Text>
               <TouchableOpacity onPress={() => setShowDate(!showDate)}>
                 <DateDisplay date={field.state.value} />
               </TouchableOpacity>
@@ -169,7 +174,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
                   setShowDate={setShowDate}
                 />
               )}
-              {field.state.meta.errors && (
+              {field.state.meta.errors.length > 0 && (
                 <Text className="text-red-500 mt-2">
                   {field.state.meta.errors}
                 </Text>
@@ -182,23 +187,17 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           name="notes"
           children={(field) => (
             <View>
-              <Text className="mb-2">Notes:</Text>
+              <Text className="my-3 font-bold">Notes:</Text>
               <TextInput
-                className=""
                 value={field.state.value || ""}
                 onBlur={field.handleBlur}
                 onChangeText={field.handleChange}
-                placeholder="Enter workout notes"
+                placeholder="Enter Weight In notes"
                 multiline
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  borderRadius: 4,
-                  padding: 20,
-                  minHeight: 100,
-                }}
+                className="border-[1px] text-lg h-[100px] justify-center pl-3 border-primary text-600 rounded-md mb-4 text-start"
+                style={{ textAlignVertical: "top" }}
               />
-              {field.state.meta.errors && (
+              {field.state.meta.errors.length > 0 && (
                 <Text className="text-red-500 mt-2">
                   {field.state.meta.errors}
                 </Text>

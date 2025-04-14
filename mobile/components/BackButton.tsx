@@ -9,7 +9,7 @@ export default function BackButton({ backTo }:{backTo: Route}) {
   return (
     <View>
       <Pressable onPress={() => router.push(backTo)}>
-        <Entypo name="chevron-left" className="ml-5" size={24} />
+        <Entypo name="chevron-left" className="ml-3" size={24} />
       </Pressable>
     </View>
   )
