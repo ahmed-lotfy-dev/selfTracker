@@ -13,7 +13,8 @@ import { useAuth } from "@/hooks/useAuth"
 export default function ProfileImage() {
   const { user, refetch } = useAuth()
 
-  const [imageFile, setImageFile] = useState<string | null>(null)
+  const [imageFile, setImageFile] =
+    useState<ImagePicker.ImagePickerAsset | null>(null)
 
   const { updateMutation } = useUpdate({
     mutationFn: updateUser,
@@ -26,32 +27,30 @@ export default function ProfileImage() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: true,
-        aspect: [4, 3],
+        aspect: [1, 1],
         quality: 1,
-        base64: true,
+        base64: true, // Ensure base64 data is included in the result
       })
 
       if (!result.canceled && result.assets?.length > 0) {
-        const asset = result.assets[0]
-
-        setImageFile(asset.uri)
-        console.log({ imageFile })
+        setImageFile(result.assets[0]) // Store the image with base64 data
       }
     } catch (error) {
       console.error("Error picking image:", error)
     }
   }
-
   const handleUpload = async () => {
-    if (!imageFile || !user?.profileImage) return
+    if (!imageFile) return
 
     await deleteImage(user.profileImage)
+
     const { imageUrl } = await uploadImage(imageFile)
-    console.log(imageUrl)
+
     updateMutation.mutate({
       id: user?.id,
       profileImage: imageUrl,
     })
+
     refetch()
   }
 
@@ -59,7 +58,10 @@ export default function ProfileImage() {
     <View className="flex-1 justify-center items-center">
       <Button title="Pick an image from camera roll" onPress={pickImage} />
       {imageFile && (
-        <Image source={{ uri: imageFile }} className="w-32 h-32 rounded-full" />
+        <Image
+          source={{ uri: imageFile.uri }}
+          className="w-32 h-32 rounded-full"
+        />
       )}
       <TouchableOpacity onPress={handleUpload}>
         <Text className="p-4 bg-green-800 text-black font-bold rounded-lg mt-4">
