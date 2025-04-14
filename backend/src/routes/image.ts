@@ -19,7 +19,7 @@ imageRouter.use(authMiddleware)
 imageRouter.post("/upload", async (c) => {
   const body = await c.req.json()
   const image = body["image"]
-  console.log({image})
+  console.log({ image })
   if (!image) {
     return c.json({ message: "No image provided" }, 400)
   }

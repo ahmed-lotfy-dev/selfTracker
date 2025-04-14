@@ -3,8 +3,13 @@ import axios from "axios"
 import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
 import { ImagePickerAsset } from "expo-image-picker"
+import { ImageManipulatorContext, ImageResult } from "expo-image-manipulator"
 
-export const uploadImage = async (image: ImagePickerAsset) => {
+export const uploadImage = async (
+  image: ImageResult,
+  fileName: string,
+  imageType: string
+) => {
   try {
     const formData = new FormData()
 
@@ -14,11 +19,10 @@ export const uploadImage = async (image: ImagePickerAsset) => {
       throw new Error("No Base64 data available for this image.")
     }
 
-    const imageName =
-      image.fileName ?? image.uri.split("/").pop() ?? "image.jpg"
+    const imageName = fileName ?? image.uri.split("/").pop() ?? "image.jpg"
 
     // Cloudinary expects base64 data in the format 'data:image/jpeg;base64,<base64Data>'
-    const imageData = `data:${image.mimeType};base64,${base64Image}`
+    const imageData = `data:${imageType};base64,${base64Image}`
 
     formData.append("image", imageData)
 

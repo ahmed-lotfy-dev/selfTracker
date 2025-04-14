@@ -20,7 +20,6 @@ export const useAuth = () => {
         throw err
       }
     },
-    refetchOnWindowFocus: false,
   })
 
   const clearAuth = async () => {
