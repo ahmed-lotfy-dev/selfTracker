@@ -194,7 +194,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
                 onChangeText={field.handleChange}
                 placeholder="Enter Weight In notes"
                 multiline
-                className="border-[1px] text-lg h-[100px] justify-center pl-3 border-primary text-600 rounded-md mb-4 text-start"
+                className="border-[1px] text-lg h-[100px] justify-center pl-3 border-primary text-600 rounded-md mb-4 text-start pt-3"
                 style={{ textAlignVertical: "top" }}
               />
               {field.state.meta.errors.length > 0 && (
