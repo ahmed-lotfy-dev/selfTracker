@@ -21,7 +21,7 @@ const app = new Hono<{
 app.use(logger())
 
 app.use(
-  "/api/auth/*",
+  "*",
   cors({
     origin: "http://localhost:8081",
     allowHeaders: ["Content-Type", "Authorization"],

@@ -11,13 +11,15 @@ import {
   View,
 } from "react-native"
 import { useRouter } from "expo-router"
-import { login } from "@/utils/api/authApi"
+import { signIn } from "@/utils/api/authApi"
 import { useAuthActions } from "@/store/useAuthStore"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 import { useForm } from "@tanstack/react-form"
 import { COLORS } from "@/constants/Colors"
+import { showAlert } from "@/utils/lib"
+import { set } from "zod"
 
-export default function Login() {
+export default function SignIn() {
   const router = useRouter()
   const [status, setStatus] = useState<"off" | "submitting" | "submitted">(
     "off"
@@ -28,15 +30,14 @@ export default function Login() {
     defaultValues: { email: "", password: "" },
     onSubmit: async ({ value }) => {
       setStatus("submitting")
-      try {
-        const response = await login(value.email, value.password)
-
+      const response = await signIn(value.email, value.password)
+      console.log({ response })
+      if (response.error) {
+        setErrorMessage(response.error.message || "")
+      }
+      if (response.data) {
         setStatus("submitted")
         router.replace("/(home)")
-      } catch (error: any) {
-        console.error("Login failed:", error)
-        setErrorMessage(error.response?.data?.message || "Login failed")
-        setStatus("off")
       }
     },
   })
@@ -46,9 +47,7 @@ export default function Login() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, justifyContent: "center", padding: 20 }}
     >
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
-        Login Form
-      </Text>
+      <Text className="font-bold text-xl mb-4">Sign In</Text>
 
       <form.Field
         name="email"
@@ -93,7 +92,7 @@ export default function Login() {
           <TouchableOpacity
             onPress={() => form.handleSubmit()}
             disabled={!canSubmit || isSubmitting}
-            className="bg-[#007bff] p-4 rounded-md items-center"
+            className="bg-[#007bff] p-4 rounded-md items-center font-bold text-xl"
           >
             {isSubmitting ? (
               <ActivityIndicator color={COLORS.primary} />
@@ -103,6 +102,16 @@ export default function Login() {
           </TouchableOpacity>
         )}
       />
+
+      <TouchableOpacity
+        onPress={() => router.push("/sign-up")}
+        style={{
+          marginTop: 15,
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ color: "blue" }}>Don't have an account? Sign Up</Text>
+      </TouchableOpacity>
     </KeyboardAvoidingView>
   )
 }

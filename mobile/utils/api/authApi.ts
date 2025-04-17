@@ -4,52 +4,37 @@ import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
 import { authClient } from "../auth-client"
 
-export const login = async (email: string, password: string) => {
+export const signIn = async (email: string, password: string) => {
   const response = await authClient.signIn.email({ email, password })
-  return response.data
+  return response
 }
 
-export const register = async (
-  name: string,
-  email: string,
-  password: string
-) => {
-  const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
+export const signUp = async (name: string, email: string, password: string) => {
+  const response = await authClient.signUp.email({
     name,
     email,
     password,
   })
-  return response.data
+
+  return response
 }
 
-export const logout = async (refreshToken: string) => {
+export const signOut = async (refreshToken: string) => {
+  const response = await authClient.signOut()
+  return response
+}
+
+export const checkEmailVerification = async (userId: string) => {
   const response = await axios.post(
-    `${API_BASE_URL}/api/auth/logout`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${refreshToken}`,
-      },
-    }
+    `${API_BASE_URL}/api/users/check-verification`,
+    { id: userId }
   )
-  return response.data
-}
-
-export const fetchUserData = async () => {
-  const response = await axiosInstance.get(`${API_BASE_URL}/api/users/me`)
-  return response.data.user
-}
-
-export const checkEmailVerification = async () => {
-  const response = await axiosInstance.get(
-    `${API_BASE_URL}/api/users/check-verification`
-  )
-  return response.data
+  return response
 }
 
 export const resendVerificationEmail = async () => {
   const response = await axiosInstance.post(
     `${API_BASE_URL}/api/users/resend-verification`
   )
-  return response.data
+  return response
 }
