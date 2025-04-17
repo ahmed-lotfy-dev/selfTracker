@@ -1,6 +1,7 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { logger } from "hono/logger"
+import { serve } from "@hono/node-server"
 
 import authRouter from "./routes/auth.js"
 import userRouter from "./routes/users.js"
@@ -11,20 +12,44 @@ import workoutsRouter from "./routes/workouts.js"
 import workoutLogsRouter from "./routes/workoutsLogs.js"
 import uploadRouter from "./routes/image.js"
 
-const app = new Hono()
+const app = new Hono<{
+  Variables: {
+    user: typeof auth.$Infer.Session.user | null
+    session: typeof auth.$Infer.Session.session | null
+  }
+}>()
+
+app.use(logger())
 
 app.use(
+  "/api/auth/*",
   cors({
-    origin: "*",
-    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    origin: "http://localhost:8081",
     allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["POST", "GET", "UPDATE", "DELETE", "PATCH", "OPTIONS"],
+    exposeHeaders: ["Content-Length"],
+    maxAge: 600,
     credentials: true,
   })
 )
 
-app.use(logger())
+app.use("*", async (c, next) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers })
 
-app.route("/api/auth", authRouter)
+  if (!session) {
+    c.set("user", null)
+    c.set("session", null)
+    return next()
+  }
+
+  c.set("user", session.user)
+  c.set("session", session.session)
+  return next()
+})
+
+app.on(["POST", "GET"], "/api/auth/*", (c) => {
+  return auth.handler(c.req.raw)
+})
 
 app.route("/api/users", userRouter)
 
@@ -59,7 +84,7 @@ app.onError((err, c) => {
   )
 })
 
-export default {
+serve({
   fetch: app.fetch,
   port: 5000,
-}
+})

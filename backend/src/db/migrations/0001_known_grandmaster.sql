@@ -1,1 +1,0 @@
-ALTER TABLE "users" ADD COLUMN "currency" text DEFAULT 'USD' NOT NULL;
