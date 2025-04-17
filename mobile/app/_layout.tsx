@@ -37,6 +37,11 @@ export default function RootLayout() {
         if (loaded) {
           await checkForUpdates()
           await SplashScreen.hideAsync()
+          if (!isAuthenticated) {
+            router.replace("/(auth)/welcome")
+          } else {
+            router.replace("/(home)")
+          }
         }
       } catch (error) {
         console.warn(error)
@@ -46,26 +51,10 @@ export default function RootLayout() {
     prepareApp()
   }, [loaded])
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (error) {
-        console.error("Authentication error:", error)
-        // Optionally, show an error screen or toast notification
-      }
-
-      if (!isAuthenticated) {
-        // Redirect unauthenticated users to the auth screen
-        router.replace("/(auth)/welcome")
-      } else {
-        // Redirect authenticated users to the home screen
-        router.replace("/(home)")
-      }
-    }
-  }, [isLoading, isAuthenticated, error, router])
-
-  if (isLoading || !loaded) {
+  if (!loaded) {
     return <ActivityIndicator size="large" color="#0A2540" />
   }
+
   return (
     <AppProviders>
       <StatusBar

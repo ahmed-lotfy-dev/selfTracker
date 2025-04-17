@@ -2,12 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import axios from "axios"
 import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
+import { authClient } from "../auth-client"
 
 export const login = async (email: string, password: string) => {
-  const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-    email,
-    password,
-  })
+  const response = await authClient.signIn.email({ email, password })
   return response.data
 }
 

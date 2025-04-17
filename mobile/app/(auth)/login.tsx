@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native"
 import { useRouter } from "expo-router"
-import { login,  } from "@/utils/api/authApi"
+import { login } from "@/utils/api/authApi"
 import { useAuthActions } from "@/store/useAuthStore"
 import { setAccessToken, setRefreshToken } from "@/utils/storage"
 import { useForm } from "@tanstack/react-form"
@@ -19,7 +19,6 @@ import { COLORS } from "@/constants/Colors"
 
 export default function Login() {
   const router = useRouter()
-  const { setTokens } = useAuthActions()
   const [status, setStatus] = useState<"off" | "submitting" | "submitted">(
     "off"
   )
@@ -31,11 +30,6 @@ export default function Login() {
       setStatus("submitting")
       try {
         const response = await login(value.email, value.password)
-        const { accessToken, refreshToken } = response
-
-        setTokens(accessToken, refreshToken)
-        await setAccessToken(accessToken)
-        await setRefreshToken(refreshToken)
 
         setStatus("submitted")
         router.replace("/(home)")
