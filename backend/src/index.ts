@@ -3,7 +3,6 @@ import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 import { serve } from "@hono/node-server"
 
-import authRouter from "./routes/auth.js"
 import userRouter from "./routes/users.js"
 import expensesRouter from "./routes/expenses.js"
 import tasksRouter from "./routes/tasks.js"
@@ -11,6 +10,7 @@ import weightsLogsRouter from "./routes/weightLogs.js"
 import workoutsRouter from "./routes/workouts.js"
 import workoutLogsRouter from "./routes/workoutsLogs.js"
 import uploadRouter from "./routes/image.js"
+import { auth } from "../lib/auth.js"
 
 const app = new Hono<{
   Variables: {
