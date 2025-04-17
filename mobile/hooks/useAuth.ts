@@ -1,37 +1,21 @@
-import { useQuery } from "@tanstack/react-query"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import { fetchUserData } from "@/utils/api/authApi"
+import { useCallback } from "react"
+import { authClient } from "@/utils/auth-client"
 
 export const useAuth = () => {
-  const {
-    data: user,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["userData"],
-    queryFn: async () => {
-      try {
-        const response = await fetchUserData()
-        console.log("Fetched user data:", response)
-        return response
-      } catch (err) {
-        console.error("Failed to fetch user data:", err)
-        throw err
-      }
-    },
-  })
+  const { data, error, isPending, refetch } = authClient.useSession()
 
-  const clearAuth = async () => {
-    await AsyncStorage.removeItem("accessToken")
-    await AsyncStorage.removeItem("refreshToken")
-  }
+  const logout = useCallback(async () => {
+    await authClient.signOut()
+    refetch()
+  }, [refetch])
 
   return {
-    user,
-    isLoading,
+    user: data?.user || null,
+    session: data?.session || null,
+    isAuthenticated: !!data?.user,
+    isLoading: isPending,
     error,
     refetch,
-    clearAuth,
+    logout,
   }
 }

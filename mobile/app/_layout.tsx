@@ -3,7 +3,7 @@ import { useFonts } from "expo-font"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { checkForUpdates, onAppStateChange } from "@/utils/lib"
-import { AppStateStatus, Platform } from "react-native"
+import { ActivityIndicator, AppStateStatus, Platform } from "react-native"
 import { useOnlineManager } from "@/hooks/useOnlineManager"
 import { useAppState } from "@/hooks/useAppState"
 import { useAuth } from "@/hooks/useAuth"
@@ -25,8 +25,8 @@ export default function RootLayout() {
   useAppState(onAppStateChange)
 
   const router = useRouter()
+  const { user, isAuthenticated, isLoading, error } = useAuth()
 
-  const [appIsReady, setAppIsReady] = useState(false)
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
@@ -37,7 +37,6 @@ export default function RootLayout() {
         if (loaded) {
           await checkForUpdates()
           await SplashScreen.hideAsync()
-          setAppIsReady(true)
         }
       } catch (error) {
         console.warn(error)
@@ -48,26 +47,25 @@ export default function RootLayout() {
   }, [loaded])
 
   useEffect(() => {
-    async function checkAuth() {
-      if (!appIsReady) return
+    if (!isLoading) {
+      if (error) {
+        console.error("Authentication error:", error)
+        // Optionally, show an error screen or toast notification
+      }
 
-      const accessToken = await AsyncStorage.getItem("accessToken")
-      const refreshToken = await AsyncStorage.getItem("refreshToken")
-
-      if (accessToken && refreshToken) {
-        router.replace("/profile")
+      if (!isAuthenticated) {
+        // Redirect unauthenticated users to the auth screen
+        router.replace("/(auth)/welcome")
       } else {
-        router.replace("/welcome")
+        // Redirect authenticated users to the home screen
+        router.replace("/(home)")
       }
     }
+  }, [isLoading, isAuthenticated, error, router])
 
-    checkAuth()
-  }, [appIsReady, router])
-
-  if (!appIsReady) {
-    return null
+  if (isLoading || !loaded) {
+    return <ActivityIndicator size="large" color="#0A2540" />
   }
-
   return (
     <AppProviders>
       <StatusBar
