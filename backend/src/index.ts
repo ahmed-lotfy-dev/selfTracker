@@ -1,7 +1,6 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { logger } from "hono/logger"
-import { serve } from "@hono/node-server"
 
 import userRouter from "./routes/users.js"
 import expensesRouter from "./routes/expenses.js"
@@ -84,7 +83,7 @@ app.onError((err, c) => {
   )
 })
 
-serve({
+export default {
+  port: process.env.APP_PORT || 5000,
   fetch: app.fetch,
-  port: 5000,
-})
+}

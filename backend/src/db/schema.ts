@@ -6,6 +6,7 @@ import {
   timestamp,
   numeric,
   integer,
+  uuid,
 } from "drizzle-orm/pg-core"
 
 // Users Table
@@ -86,7 +87,7 @@ export const jwks = pgTable("jwks", {
 
 // Expenses Table
 export const expense = pgTable("expense", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
@@ -99,7 +100,7 @@ export const expense = pgTable("expense", {
 
 // Weight Logs Table
 export const weightLog = pgTable("weight_log", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
@@ -113,7 +114,7 @@ export const weightLog = pgTable("weight_log", {
 
 // Training Splits (Public Splits like PPL, Upper-Lower, etc.)
 export const trainingSplit = pgTable("training_split", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(), // e.g., "Push-Pull-Legs"
   description: text("description"),
   createdBy: text("created_by").references(() => user.id, {
@@ -126,9 +127,9 @@ export const trainingSplit = pgTable("training_split", {
 
 // Workouts (Push Day, Pull Day, etc. - Shared Across Users)
 export const workout = pgTable("workout", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(), // e.g., "Push Day"
-  trainingSplitId: text("training_split_id")
+  trainingSplitId: uuid("training_split_id")
     .references(() => trainingSplit.id, { onDelete: "cascade" })
     .notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
@@ -137,7 +138,7 @@ export const workout = pgTable("workout", {
 
 // Exercises (Bench Press, Squats, etc.)
 export const exercise = pgTable("exercise", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   createdBy: text("created_by").references(() => user.id, {
     onDelete: "set null",
@@ -148,11 +149,11 @@ export const exercise = pgTable("exercise", {
 
 // Workout Exercises (Defines sets, reps, weight per exercise)
 export const workoutExercise = pgTable("workout_exercise", {
-  id: text("id").primaryKey(),
-  workoutId: text("workout_id")
+  id: uuid("id").primaryKey().defaultRandom(),
+  workoutId: uuid("workout_id")
     .references(() => workout.id, { onDelete: "cascade" })
     .notNull(),
-  exerciseId: text("exercise_id")
+  exerciseId: uuid("exercise_id")
     .references(() => exercise.id, { onDelete: "cascade" })
     .notNull(),
   sets: integer("sets").notNull(),
@@ -164,11 +165,11 @@ export const workoutExercise = pgTable("workout_exercise", {
 
 // Workout Logs (Tracks performed sets, reps, weight)
 export const workoutLog = pgTable("workout_log", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
-  workoutId: text("workout_id")
+  workoutId: uuid("workout_id")
     .references(() => workout.id, { onDelete: "cascade" })
     .notNull(),
   workoutName: text("workout_name").notNull(),
@@ -181,7 +182,7 @@ export const workoutLog = pgTable("workout_log", {
 
 // User Goals
 export const userGoal = pgTable("user_goal", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
@@ -190,14 +191,14 @@ export const userGoal = pgTable("user_goal", {
   }).notNull(), // Type of goal
   targetValue: numeric("target_value", { precision: 5, scale: 2 }).notNull(), // Target weight/height/body fat
   deadline: timestamp("deadline"), // Optional deadline for goal
-  achieved: boolean("achieved").default(false), // Whether the goal is completed
+  achieved: boolean("achieved").default(false),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 })
 
 // User Todo Items
 export const task = pgTable("task_item", {
-  id: text("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
     .notNull()
     .references(() => user.id),

@@ -1,12 +1,9 @@
 import { Hono } from "hono"
-import { weightLogs } from "../db/schema"
+import { weightLog } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
-import { authMiddleware } from "../../middleware/middleware"
 
 const weightsLogsRouter = new Hono()
-
-weightsLogsRouter.use(authMiddleware)
 
 weightsLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -23,24 +20,24 @@ weightsLogsRouter.get("/", async (c) => {
   try {
     const userWeightLogs = await db
       .select({
-        id: weightLogs.id,
-        userId: weightLogs.userId,
-        weight: weightLogs.weight,
-        energy: weightLogs.energy,
-        mood: weightLogs.mood,
-        notes: weightLogs.notes,
-        createdAt: weightLogs.createdAt,
+        id: weightLog.id,
+        userId: weightLog.userId,
+        weight: weightLog.weight,
+        energy: weightLog.energy,
+        mood: weightLog.mood,
+        notes: weightLog.notes,
+        createdAt: weightLog.createdAt,
       })
-      .from(weightLogs)
+      .from(weightLog)
       .where(
         cursor
           ? and(
-              eq(weightLogs.userId, user.id as string),
-              lt(weightLogs.createdAt, new Date(cursor))
+              eq(weightLog.userId, user.id as string),
+              lt(weightLog.createdAt, new Date(cursor))
             )
-          : eq(weightLogs.userId, user.id as string)
+          : eq(weightLog.userId, user.id as string)
       )
-      .orderBy(desc(weightLogs.createdAt))
+      .orderBy(desc(weightLog.createdAt))
       .limit(Number(limit))
 
     const nextCursor =
@@ -82,16 +79,16 @@ weightsLogsRouter.get("/:id", async (c) => {
   try {
     const [singleWeightLog] = await db
       .select({
-        id: weightLogs.id,
-        userId: weightLogs.userId,
-        weight: weightLogs.weight,
-        energy: weightLogs.energy,
-        mood: weightLogs.mood,
-        notes: weightLogs.notes,
-        createdAt: weightLogs.createdAt,
+        id: weightLog.id,
+        userId: weightLog.userId,
+        weight: weightLog.weight,
+        energy: weightLog.energy,
+        mood: weightLog.mood,
+        notes: weightLog.notes,
+        createdAt: weightLog.createdAt,
       })
-      .from(weightLogs)
-      .where(eq(weightLogs.id, id))
+      .from(weightLog)
+      .where(eq(weightLog.id, id))
 
     return c.json({ success: true, weightLog: singleWeightLog })
   } catch (error) {
@@ -114,7 +111,7 @@ weightsLogsRouter.post("/", async (c) => {
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
   try {
     const [newWeightLog] = await db
-      .insert(weightLogs)
+      .insert(weightLog)
       .values({
         userId: user.id,
         weight,
@@ -148,8 +145,8 @@ weightsLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
-    const existingLog = await db.query.weightLogs.findFirst({
-      where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),
+    const existingLog = await db.query.weightLog.findFirst({
+      where: and(eq(weightLog.id, id), eq(weightLog.userId, user.id)),
     })
 
     if (!existingLog) {
@@ -165,15 +162,14 @@ weightsLogsRouter.patch("/:id", async (c) => {
     if ("notes" in body) updateFields.notes = body.notes
     if ("createdAt" in body) updateFields.createdAt = new Date(body.createdAt)
 
-
     if (Object.keys(updateFields).length === 0) {
       return c.json({ success: false, message: "No fields to update" }, 400)
     }
 
     const [updatedWeightLog] = await db
-      .update(weightLogs)
+      .update(weightLog)
       .set(updateFields)
-      .where(and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)))
+      .where(and(eq(weightLog.id, id), eq(weightLog.userId, user.id)))
       .returning()
 
     return c.json({
@@ -207,9 +203,9 @@ weightsLogsRouter.delete("/:id", async (c) => {
 
   try {
     const deletedWeight = await db
-      .delete(weightLogs)
-      .where(eq(weightLogs.id, id))
-      .returning({ deletedId: weightLogs.id })
+      .delete(weightLog)
+      .where(eq(weightLog.id, id))
+      .returning({ deletedId: weightLog.id })
 
     if (deletedWeight.length === 0) {
       return c.json({ success: false, message: "Weight log not found" }, 404)

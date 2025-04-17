@@ -1,14 +1,11 @@
 import { Hono } from "hono"
 import { db } from "../db"
-import { workouts } from "../db/schema"
-import { authMiddleware } from "../../middleware/middleware"
+import { workout } from "../db/schema"
 
 const workoutsRouter = new Hono()
 
-workoutsRouter.use(authMiddleware)
-
 workoutsRouter.get("/", async (c) => {
-  const userWorkouts = await db.select().from(workouts)
+  const userWorkouts = await db.select().from(workout)
   return c.json(userWorkouts)
 })
 

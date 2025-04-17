@@ -1,5 +1,4 @@
 import { Hono } from "hono"
-import { authMiddleware } from "../../middleware/middleware"
 import { encodeBase64 } from "hono/utils/encode"
 import { v2 as cloudinary } from "cloudinary"
 
@@ -13,8 +12,6 @@ imageRouter.use(async (_c, next) => {
   })
   await next()
 })
-
-imageRouter.use(authMiddleware)
 
 imageRouter.post("/upload", async (c) => {
   const body = await c.req.json()

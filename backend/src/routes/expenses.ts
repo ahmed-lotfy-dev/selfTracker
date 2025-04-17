@@ -1,21 +1,18 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
-import { expenses, users } from "../db/schema.js"
+import { expense, user } from "../db/schema.js"
 import { eq } from "drizzle-orm"
-import { authMiddleware } from "../../middleware/middleware.js"
 import { sign } from "hono/jwt"
 import { hash } from "bcryptjs"
 
 const expensesRouter = new Hono()
 
-expensesRouter.use(authMiddleware)
-
 // Get all Expenses
 expensesRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
-  const userExpenses = await db.query.expenses.findMany({
-    where: eq(expenses.userId, user.userId as string),
+  const userExpenses = await db.query.expense.findMany({
+    where: eq(expense.userId, user.userId as string),
   })
   return c.json({ success: "true", expenses: userExpenses })
 })
@@ -26,7 +23,7 @@ expensesRouter.post("/", async (c) => {
   const { title, description, amount, category } = await c.req.json()
   try {
     const [createdExpense] = await db
-      .insert(expenses)
+      .insert(expense)
       .values({
         userId: user.id,
         description,
@@ -60,11 +57,11 @@ expensesRouter.patch("/:id", async (c) => {
     }
 
     // Check if expense exists and belongs to the user
-    const expense = await db.query.expenses.findFirst({
-      where: eq(expenses.id, id),
+    const expenseExist = await db.query.expense.findFirst({
+      where: eq(expense.id, id),
     })
 
-    if (!expense || expense.userId !== user.userId) {
+    if (!expenseExist || expenseExist.userId !== user.userId) {
       return c.json(
         { success: false, message: "Expense not found or unauthorized" },
         404
@@ -78,9 +75,9 @@ expensesRouter.patch("/:id", async (c) => {
 
     // Update Expense
     const [updatedExpense] = await db
-      .update(expenses)
+      .update(expense)
       .set(updateFields)
-      .where(eq(expenses.id, id))
+      .where(eq(expense.id, id))
       .returning()
 
     return c.json({
@@ -101,8 +98,8 @@ expensesRouter.delete("/:id", async (c) => {
   const id = c.req.param("id")
 
   const deletedExpense = await db
-    .delete(expenses)
-    .where(eq(expenses.id, id))
+    .delete(expense)
+    .where(eq(expense.id, id))
     .returning()
   console.log(deletedExpense)
   if (!deletedExpense.length) {

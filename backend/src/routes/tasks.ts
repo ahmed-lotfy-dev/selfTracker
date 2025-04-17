@@ -1,21 +1,18 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
-import { tasks, users } from "../db/schema.js"
+import { task, user } from "../db/schema.js"
 import { eq } from "drizzle-orm"
-import { authMiddleware } from "../../middleware/middleware.js"
 import { sign } from "hono/jwt"
 import { hash } from "bcryptjs"
 
 const tasksRouter = new Hono()
 
-tasksRouter.use(authMiddleware)
-
 // Get all Tasks
 tasksRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
-  const userTasks = await db.query.tasks.findMany({
-    where: eq(tasks.userId, user.userId as string),
+  const userTasks = await db.query.task.findMany({
+    where: eq(task.userId, user.userId as string),
   })
   return c.json({ success: "true", tasks: userTasks })
 })
@@ -27,7 +24,7 @@ tasksRouter.post("/", async (c) => {
     await c.req.json()
   try {
     const [createdTask] = await db
-      .insert(tasks)
+      .insert(task)
       .values({
         userId: user.id,
         title,
@@ -64,11 +61,11 @@ tasksRouter.patch("/:id", async (c) => {
     }
 
     // Check if task exists and belongs to the user
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, id),
+    const taskExisted = await db.query.task.findFirst({
+      where: eq(task.id, id),
     })
 
-    if (!task || task.userId !== user.userId) {
+    if (!taskExisted || taskExisted.userId !== user.userId) {
       return c.json(
         { success: false, message: "Task not found or unauthorized" },
         404
@@ -84,9 +81,9 @@ tasksRouter.patch("/:id", async (c) => {
 
     // Update Task
     const [updatedTask] = await db
-      .update(tasks)
+      .update(task)
       .set(updateFields)
-      .where(eq(tasks.id, id))
+      .where(eq(task.id, id))
       .returning()
 
     return c.json({
@@ -106,9 +103,9 @@ tasksRouter.delete("/:id", async (c) => {
 
   const id = c.req.param("id")
 
-  const deletedUser = await db.delete(tasks).where(eq(tasks.id, id)).returning()
+  const [deletedTask] = await db.delete(task).where(eq(task.id, id)).returning()
 
-  if (!deletedUser.length) {
+  if (!deletedTask) {
     return c.json({ message: "Task not found" }, 404)
   }
 
