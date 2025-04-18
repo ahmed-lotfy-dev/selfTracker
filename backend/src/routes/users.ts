@@ -26,7 +26,7 @@ userRouter.get("/", async (c) => {
 userRouter.patch("/:id", async (c) => {
   const id = c.req.param("id")
   const body = await c.req.json()
-  console.log({ id, body })
+
   try {
     const existedUser = await db.query.users.findFirst({
       where: eq(users.id, id),
@@ -35,8 +35,6 @@ userRouter.patch("/:id", async (c) => {
     if (!existedUser) {
       return c.json({ success: false, message: "User log not found" }, 404)
     }
-
-    console.log({ body })
 
     const updatedFields: Record<string, any> = {}
 

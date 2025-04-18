@@ -21,7 +21,7 @@ export default function UserImage() {
         )}
 
         <Image
-          source={{ uri: user?.profileImage }}
+          source={{ uri: user?.image || "" }}
           className="w-20 h-20 rounded-full border"
         />
 
