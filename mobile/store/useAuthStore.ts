@@ -1,17 +1,13 @@
 import { create } from "zustand"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { persist, createJSONStorage } from "zustand/middleware"
-import { UserType } from "@/types/userType"
 
 type AuthState = {
-  user: UserType | null
-  accessToken: string | null
-  refreshToken: string | null
+  user: any | null
 }
 
 type AuthActions = {
-  setUser: (user: UserType) => void
-  setTokens: (accessToken: string, refreshToken?: string) => Promise<void>
+  setUser: (user: any) => void
   logout: () => Promise<void>
 }
 
@@ -26,34 +22,23 @@ const useAuthStore = create<AuthStore>()(
 
       setUser: (user) => set({ user }),
 
-      setTokens: async (accessToken, refreshToken) => {
-        await AsyncStorage.multiSet([
-          ["accessToken", accessToken],
-          ["refreshToken", refreshToken || ""],
-        ])
-        set({ accessToken, refreshToken })
-      },
-
       logout: async () => {
         await AsyncStorage.multiRemove(["accessToken", "refreshToken"])
-        set({ user: null, accessToken: null, refreshToken: null })
+        set({ user: null })
       },
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => AsyncStorage), 
+      storage: createJSONStorage(() => AsyncStorage),
     }
   )
 )
 
-export const useAccessToken = () => useAuthStore((state) => state.accessToken)
-export const useRefreshToken = () => useAuthStore((state) => state.refreshToken)
 export const useUser = () => useAuthStore((state) => state.user)
 
 export const useAuthActions = () => {
   const setUser = useAuthStore((state) => state.setUser)
-  const setTokens = useAuthStore((state) => state.setTokens)
   const logout = useAuthStore((state) => state.logout)
 
-  return { setUser, setTokens, logout }
+  return { setUser, logout }
 }

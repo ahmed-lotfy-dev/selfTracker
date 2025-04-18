@@ -19,7 +19,7 @@ export const signUp = async (name: string, email: string, password: string) => {
   return response
 }
 
-export const signOut = async (refreshToken: string) => {
+export const signOut = async () => {
   const response = await authClient.signOut()
   return response
 }

@@ -1,18 +1,21 @@
 import { WeightType } from "@/types/weightType"
-import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
+import axios from "axios"
 
-export const updateUser = async (user: any) => {
-  const response = await axiosInstance.patch(
-    `${API_BASE_URL}/api/users/${user.id}`,
-    { ...user }
-  )
+export const updateUser = async ({
+  id,
+  image,
+}: {
+  id: string
+  image: string
+}) => {
+  const response = await axios.patch(`${API_BASE_URL}/api/users/${id}`, {
+    image,
+  })
   return response.data
 }
 
 export const deleteUser = async (weightId: string) => {
-  const response = await axiosInstance.delete(
-    `${API_BASE_URL}/api/users/${weightId}`
-  )
+  const response = await axios.delete(`${API_BASE_URL}/api/users/${weightId}`)
   return response.data
 }

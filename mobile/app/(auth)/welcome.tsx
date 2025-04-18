@@ -14,14 +14,14 @@ export default function WelcomeScreen() {
       <Text className="text-xl font-bold mb-20">Welcome to Self Tracker!</Text>
       <View className="flex-row gap-10 justify-center items-center">
         <Pressable
-          onPress={() => router.push("/(auth)/signIn")}
+          onPress={() => router.push("/sign-in")}
           className="flex-1 justify-center items-center border border-black rounded-lg p-2 ml-5"
         >
           <Text className="text-black font-bold">Login</Text>
         </Pressable>
         <Pressable
           className="flex-1 justify-center items-center border border-black rounded-lg p-2 mr-5"
-          onPress={() => router.push("/(auth)/signup")}
+          onPress={() => router.push("/sign-up")}
         >
           <Text className="text-black font-bold">Register</Text>
         </Pressable>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useFonts } from "expo-font"
-import { Slot, useRouter } from "expo-router"
+import { Slot } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { checkForUpdates, onAppStateChange } from "@/utils/lib"
 import { ActivityIndicator } from "react-native"
@@ -20,9 +20,6 @@ SplashScreen.preventAutoHideAsync()
 export default function RootLayout() {
   useOnlineManager()
   useAppState(onAppStateChange)
-  const router = useRouter()
-
-  const { isAuthenticated, isLoading } = useAuth()
 
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -39,22 +36,10 @@ export default function RootLayout() {
     }
 
     prepareApp()
-  }, [loaded])
-
-  useEffect(() => {
-    if (!loaded || isLoading || hasRedirected.current) return
-
-    hasRedirected.current = true
-
-    if (!isAuthenticated) {
-      router.replace("/(auth)/welcome")
-    } else {
-      router.replace("/(home)")
-    }
-  }, [isAuthenticated, isLoading, loaded])
+  }, [loaded, hasRedirected])
 
   // Prevent flashing UI before fonts and auth are ready
-  if (!loaded || isLoading) {
+  if (!loaded) {
     return null
   }
 

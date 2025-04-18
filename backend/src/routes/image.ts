@@ -1,6 +1,10 @@
 import { Hono } from "hono"
 import { encodeBase64 } from "hono/utils/encode"
 import { v2 as cloudinary } from "cloudinary"
+import { db } from "../db"
+import { eq } from "drizzle-orm"
+import { users } from "../db/schema"
+import { updateUser } from "better-auth/api"
 
 const imageRouter = new Hono()
 
@@ -16,19 +20,27 @@ imageRouter.use(async (_c, next) => {
 imageRouter.post("/upload", async (c) => {
   const body = await c.req.json()
   const image = body["image"]
-  console.log({ image })
   if (!image) {
     return c.json({ message: "No image provided" }, 400)
   }
 
   try {
-    // Upload the image to Cloudinary
     const result = await cloudinary.uploader.upload(image, {
       resource_type: "auto",
       upload_preset: "fitnes-app-pictures",
     })
 
-    return c.json({ success: true, imageUrl: result.secure_url })
+    const updatedUserImage = await db
+      .update(users)
+      .set({
+        image: result.secure_url,
+      })
+      .where(eq(users.id, users.id))
+      .returning({
+        image: users.image,
+      })
+
+    return c.json({ success: true, imageUrl: updatedUserImage[0].image })
   } catch (error) {
     console.error("Upload failed:", error)
     return c.json(

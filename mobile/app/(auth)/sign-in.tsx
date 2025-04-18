@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   View,
 } from "react-native"
 import { useRouter } from "expo-router"
@@ -25,18 +24,19 @@ export default function SignIn() {
     "off"
   )
   const [errorMessage, setErrorMessage] = useState("")
+  const { setUser } = useAuthActions()
 
   const form = useForm({
     defaultValues: { email: "", password: "" },
     onSubmit: async ({ value }) => {
       setStatus("submitting")
       const response = await signIn(value.email, value.password)
-      console.log({ response })
       if (response.error) {
         setErrorMessage(response.error.message || "")
       }
       if (response.data) {
         setStatus("submitted")
+        setUser(response.data.user)
         router.replace("/(home)")
       }
     },

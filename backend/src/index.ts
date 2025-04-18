@@ -32,6 +32,10 @@ app.use(
   })
 )
 
+app.on(["POST", "GET"], "/api/auth/*", (c) => {
+  return auth.handler(c.req.raw)
+})
+
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
 
@@ -44,10 +48,6 @@ app.use("*", async (c, next) => {
   c.set("user", session.user)
   c.set("session", session.session)
   return next()
-})
-
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
-  return auth.handler(c.req.raw)
 })
 
 app.route("/api/users", userRouter)

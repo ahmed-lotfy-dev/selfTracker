@@ -2,7 +2,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Alert,
   ActivityIndicator,
   Platform,
 } from "react-native"

@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { Redirect, router, Stack, Tabs, useRouter } from "expo-router"
+import { Stack, Tabs, useRouter } from "expo-router"
 import { ActivityIndicator, View } from "react-native"
 
 import Feather from "@expo/vector-icons/Feather"
@@ -8,22 +8,11 @@ import AntDesign from "@expo/vector-icons/AntDesign"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 
-import TabBar from "../../components/TabBar"
+import TabBar from "../../../components/TabBar"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
-import { useUser } from "@/store/useAuthStore"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function TabsLayout() {
-  const router = useRouter()
-  const user = useUser()
-
-  console.log({ user })
-
-  useEffect(() => {
-    if (!user) {
-      router.replace("/(auth)/welcome")
-    }
-  }, [user])
-
   return (
     <Tabs
       tabBar={(props: BottomTabBarProps) => <TabBar {...props} />}

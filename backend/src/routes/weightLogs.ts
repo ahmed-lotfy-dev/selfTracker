@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { weightLog } from "../db/schema"
+import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
 
@@ -20,24 +20,24 @@ weightsLogsRouter.get("/", async (c) => {
   try {
     const userWeightLogs = await db
       .select({
-        id: weightLog.id,
-        userId: weightLog.userId,
-        weight: weightLog.weight,
-        energy: weightLog.energy,
-        mood: weightLog.mood,
-        notes: weightLog.notes,
-        createdAt: weightLog.createdAt,
+        id: weightLogs.id,
+        userId: weightLogs.userId,
+        weight: weightLogs.weight,
+        energy: weightLogs.energy,
+        mood: weightLogs.mood,
+        notes: weightLogs.notes,
+        createdAt: weightLogs.createdAt,
       })
-      .from(weightLog)
+      .from(weightLogs)
       .where(
         cursor
           ? and(
-              eq(weightLog.userId, user.id as string),
-              lt(weightLog.createdAt, new Date(cursor))
+              eq(weightLogs.userId, user.id as string),
+              lt(weightLogs.createdAt, new Date(cursor))
             )
-          : eq(weightLog.userId, user.id as string)
+          : eq(weightLogs.userId, user.id as string)
       )
-      .orderBy(desc(weightLog.createdAt))
+      .orderBy(desc(weightLogs.createdAt))
       .limit(Number(limit))
 
     const nextCursor =
@@ -79,16 +79,16 @@ weightsLogsRouter.get("/:id", async (c) => {
   try {
     const [singleWeightLog] = await db
       .select({
-        id: weightLog.id,
-        userId: weightLog.userId,
-        weight: weightLog.weight,
-        energy: weightLog.energy,
-        mood: weightLog.mood,
-        notes: weightLog.notes,
-        createdAt: weightLog.createdAt,
+        id: weightLogs.id,
+        userId: weightLogs.userId,
+        weight: weightLogs.weight,
+        energy: weightLogs.energy,
+        mood: weightLogs.mood,
+        notes: weightLogs.notes,
+        createdAt: weightLogs.createdAt,
       })
-      .from(weightLog)
-      .where(eq(weightLog.id, id))
+      .from(weightLogs)
+      .where(eq(weightLogs.id, id))
 
     return c.json({ success: true, weightLog: singleWeightLog })
   } catch (error) {
@@ -111,7 +111,7 @@ weightsLogsRouter.post("/", async (c) => {
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
   try {
     const [newWeightLog] = await db
-      .insert(weightLog)
+      .insert(weightLogs)
       .values({
         userId: user.id,
         weight,
@@ -145,8 +145,8 @@ weightsLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
-    const existingLog = await db.query.weightLog.findFirst({
-      where: and(eq(weightLog.id, id), eq(weightLog.userId, user.id)),
+    const existingLog = await db.query.weightLogs.findFirst({
+      where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),
     })
 
     if (!existingLog) {
@@ -167,9 +167,9 @@ weightsLogsRouter.patch("/:id", async (c) => {
     }
 
     const [updatedWeightLog] = await db
-      .update(weightLog)
+      .update(weightLogs)
       .set(updateFields)
-      .where(and(eq(weightLog.id, id), eq(weightLog.userId, user.id)))
+      .where(and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)))
       .returning()
 
     return c.json({
@@ -203,9 +203,9 @@ weightsLogsRouter.delete("/:id", async (c) => {
 
   try {
     const deletedWeight = await db
-      .delete(weightLog)
-      .where(eq(weightLog.id, id))
-      .returning({ deletedId: weightLog.id })
+      .delete(weightLogs)
+      .where(eq(weightLogs.id, id))
+      .returning({ deletedId: weightLogs.id })
 
     if (deletedWeight.length === 0) {
       return c.json({ success: false, message: "Weight log not found" }, 404)

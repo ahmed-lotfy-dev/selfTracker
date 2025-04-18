@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Alert, Platform } from "react-native"
+import {  Platform } from "react-native"
 import { showAlert } from "@/utils/lib"
 
 type UseUpdateOptions = {

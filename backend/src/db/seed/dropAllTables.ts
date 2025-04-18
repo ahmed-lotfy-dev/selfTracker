@@ -1,26 +1,23 @@
 import { db } from "../index"
 import {
   users,
-  weightLogs,
-  workoutLogs,
+  weightLog,
+  workoutLog,
   jwks,
-  exercises,
+  exercise,
   sessions,
-  tasks,
-  trainingSplits,
-  workouts,
+  task,
+  trainingSplit,
+  workout,
 } from "../schema"
 import { workoutLogs as workoutLogsData } from "./workoutLogs"
 import { weightLogs as weightLogsData } from "./weightLogs"
 import { sql, eq } from "drizzle-orm"
 
-async function seed() {
-  console.log("seeding data ...")
-  const [userData] = await db.select().from(users).limit(1)
-  if (!userData) throw new Error("User not found")
-
+async function dropAllTables() {
+  console.log("droping all tables ...")
   await db.execute(sql`DROP SCHEMA public CASCADE`)
   await db.execute(sql`CREATE SCHEMA public`)
 }
 
-seed()
+dropAllTables()

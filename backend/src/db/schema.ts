@@ -10,71 +10,71 @@ import {
 } from "drizzle-orm/pg-core"
 
 // Users Table
-export const user = pgTable("user", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").unique().notNull(),
   password: text("password"),
   name: text("name").notNull(),
-  role: text("role", { enum: ["admin", "user"] }).default("user"),
+  role: text("role"),
   image: text("image"),
-  emailVerified: boolean("emailVerified").notNull(),
+  emailVerified: boolean("email_verified").notNull(),
   resetToken: text("reset_token"),
   resetTokenExpiresAt: timestamp("reset_token_expires_at"),
-  gender: text("gender", { enum: ["male", "female"] }),
-  weight: numeric("weight", { precision: 5, scale: 2 }),
-  height: numeric("height", { precision: 5, scale: 2 }),
+  gender: text("gender"),
+  weight: integer("weight"),
+  height: integer("height"),
   unitSystem: text("unitSystem", { enum: ["metric", "imperial"] }).default(
     "metric"
   ),
   income: numeric("income", { precision: 10, scale: 2 }),
   currency: text("currency").default("EGP"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
 })
 
-export type User = typeof user.$inferSelect
+export type User = typeof users.$inferSelect
 
-// Session Table
-export const session = pgTable("session", {
+// Sessions Table
+export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
-  expiresAt: timestamp("expiresAt").notNull(),
-  token: text("token").unique().notNull(),
-  createdAt: timestamp("createdAt").notNull(),
-  updatedAt: timestamp("updatedAt").notNull(),
-  ipAddress: text("ipAddress"),
-  userAgent: text("userAgent"),
-  userId: text("userId")
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
     .notNull()
-    .references(() => user.id),
+    .references(() => users.id, { onDelete: "cascade" }),
 })
 
-// Account Table
-export const account = pgTable("account", {
+// Accounts Table
+export const accounts = pgTable("accounts", {
   id: text("id").primaryKey(),
-  accountId: text("accountId").notNull(),
-  providerId: text("providerId").notNull(),
-  userId: text("userId")
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
     .notNull()
-    .references(() => user.id),
-  accessToken: text("accessToken"),
-  refreshToken: text("refreshToken"),
-  idToken: text("idToken"),
-  accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
-  refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
+    .references(() => users.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
   scope: text("scope"),
   password: text("password"),
-  createdAt: timestamp("createdAt").notNull(),
-  updatedAt: timestamp("updatedAt").notNull(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
 })
 
-// Verification Table
-export const verification = pgTable("verification", {
+// Verifications Table
+export const verifications = pgTable("verifications", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
-  expiresAt: timestamp("expiresAt").notNull(),
-  createdAt: timestamp("createdAt"),
-  updatedAt: timestamp("updatedAt"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
 })
 
 // JWKS Table
@@ -82,109 +82,109 @@ export const jwks = pgTable("jwks", {
   id: text("id").primaryKey(),
   publicKey: text("publicKey").notNull(),
   privateKey: text("privateKey").notNull(),
-  createdAt: timestamp("createdAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 })
 
 // Expenses Table
-export const expense = pgTable("expense", {
+export const expenses = pgTable("expenses", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
-    .references(() => user.id, { onDelete: "cascade" })
+    .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   category: text("category").notNull(),
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   description: text("description"),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // Weight Logs Table
-export const weightLog = pgTable("weight_log", {
+export const weightLogs = pgTable("weight_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
-    .references(() => user.id, { onDelete: "cascade" })
+    .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   weight: numeric("weight", { precision: 5, scale: 2 }).notNull(),
   energy: text("energy", { enum: ["Low", "Okay", "Good", "Great"] }).notNull(),
   mood: text("mood", { enum: ["Low", "Medium", "High"] }).notNull(),
   notes: text("notes"),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // Training Splits (Public Splits like PPL, Upper-Lower, etc.)
-export const trainingSplit = pgTable("training_split", {
+export const trainingSplits = pgTable("training_splits", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(), // e.g., "Push-Pull-Legs"
   description: text("description"),
-  createdBy: text("created_by").references(() => user.id, {
+  createdBy: text("created_by").references(() => users.id, {
     onDelete: "set null",
   }),
   isPublic: boolean("is_public").default(true),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // Workouts (Push Day, Pull Day, etc. - Shared Across Users)
-export const workout = pgTable("workout", {
+export const workouts = pgTable("workouts", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(), // e.g., "Push Day"
   trainingSplitId: uuid("training_split_id")
-    .references(() => trainingSplit.id, { onDelete: "cascade" })
+    .references(() => trainingSplits.id, { onDelete: "cascade" })
     .notNull(),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // Exercises (Bench Press, Squats, etc.)
-export const exercise = pgTable("exercise", {
+export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  createdBy: text("created_by").references(() => user.id, {
+  createdBy: text("created_by").references(() => users.id, {
     onDelete: "set null",
   }), // Optional creator
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // Workout Exercises (Defines sets, reps, weight per exercise)
-export const workoutExercise = pgTable("workout_exercise", {
+export const workoutExercises = pgTable("workout_exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   workoutId: uuid("workout_id")
-    .references(() => workout.id, { onDelete: "cascade" })
+    .references(() => workouts.id, { onDelete: "cascade" })
     .notNull(),
   exerciseId: uuid("exercise_id")
-    .references(() => exercise.id, { onDelete: "cascade" })
+    .references(() => exercises.id, { onDelete: "cascade" })
     .notNull(),
   sets: integer("sets").notNull(),
   reps: integer("reps").notNull(),
   weight: numeric("weight", { precision: 5, scale: 2 }).notNull(),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // Workout Logs (Tracks performed sets, reps, weight)
-export const workoutLog = pgTable("workout_log", {
+export const workoutLogs = pgTable("workout_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
-    .references(() => user.id, { onDelete: "cascade" })
+    .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   workoutId: uuid("workout_id")
-    .references(() => workout.id, { onDelete: "cascade" })
+    .references(() => workouts.id, { onDelete: "cascade" })
     .notNull(),
   workoutName: text("workout_name").notNull(),
   //TODO in the future
   // duration: interval("duration").notNull(),
   notes: text("notes"),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // User Goals
-export const userGoal = pgTable("user_goal", {
+export const userGoals = pgTable("user_goals", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
-    .references(() => user.id, { onDelete: "cascade" })
+    .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   goalType: text("goal_type", {
     enum: ["loseWeight", "gainWeight", "bodyFat", "muscleMass"],
@@ -192,21 +192,21 @@ export const userGoal = pgTable("user_goal", {
   targetValue: numeric("target_value", { precision: 5, scale: 2 }).notNull(), // Target weight/height/body fat
   deadline: timestamp("deadline"), // Optional deadline for goal
   achieved: boolean("achieved").default(false),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
 // User Todo Items
-export const task = pgTable("task_item", {
+export const tasks = pgTable("task_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
     .notNull()
-    .references(() => user.id),
+    .references(() => users.id),
   title: text("title").notNull(),
   description: text("description"),
   completed: boolean("completed").default(false),
   dueDate: timestamp("due_date", { withTimezone: true }),
   category: text("category").default("general"), // "workout", "finance", etc.
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })

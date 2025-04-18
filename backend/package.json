@@ -6,7 +6,9 @@
     "start": "bun run src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:drop": "bun run ./src/db/seed/dropAllTables.ts",
+    "db:seed": "bun run ./src/db/seed/seed.ts"
   },
   "dependencies": {
     "@arcjet/bun": "^1.0.0-beta.2",

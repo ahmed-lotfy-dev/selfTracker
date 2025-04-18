@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
-import { userGoal, user } from "../db/schema"
+import { userGoals, users } from "../db/schema"
 import { and, eq, gt, is, isNotNull } from "drizzle-orm"
 import { sign, verify, decode } from "hono/jwt"
 import { sendEmail } from "../../lib/email.js"
@@ -19,66 +19,61 @@ userRouter.get("/", async (c) => {
   if (user.role !== "admin") {
     return c.json({ message: "Unauthorized" }, 401)
   }
-  const userList = await db.query.user.findMany()
+  const userList = await db.query.users.findMany()
   return c.json(userList)
 })
 
 userRouter.patch("/:id", async (c) => {
-  const user = c.get("user" as any)
   const id = c.req.param("id")
-
-  if (!user || !user.id) {
-    return c.json(
-      {
-        success: false,
-        message: "Unauthorized: User not found in context",
-      },
-      401
-    )
-  }
-  if (!id) {
-    return c.json({ success: false, message: "User id is required" }, 400)
-  }
+  const body = await c.req.json()
+  console.log({ id, body })
   try {
-    const body = await c.req.json()
+    const existedUser = await db.query.users.findFirst({
+      where: eq(users.id, id),
+    })
+
+    if (!existedUser) {
+      return c.json({ success: false, message: "User log not found" }, 404)
+    }
+
     console.log({ body })
+
     const updatedFields: Record<string, any> = {}
 
-    if ("name" in body) updatedFields.name = body.name
     if ("email" in body) updatedFields.email = body.email
+    if ("name" in body) updatedFields.name = body.name
     if ("role" in body) updatedFields.role = body.role
-    if ("profileImage" in body) updatedFields.profileImage = body.profileImage
+    if ("image" in body) updatedFields.image = body.image
+    if ("emailVerified" in body)
+      updatedFields.emailVerified = body.emailVerified
+    if ("gender" in body) updatedFields.gender = body.gender
     if ("weight" in body) updatedFields.weight = body.weight
     if ("height" in body) updatedFields.height = body.height
     if ("unitSystem" in body) updatedFields.unitSystem = body.unitSystem
-    if ("currency" in body) updatedFields.currency = body.currency
-    if ("profileImage" in body) updatedFields.profileImage = body.profileImage
-    if ("gender" in body) updatedFields.gender = body.gender
     if ("income" in body) updatedFields.income = body.income
     if ("currency" in body) updatedFields.currency = body.currency
-
-    if ("notes" in body) updatedFields.notes = body.notes
-    if ("workoutId" in body) updatedFields.workoutId = body.workoutId
     if ("createdAt" in body) updatedFields.createdAt = new Date(body.createdAt)
+    if ("updatedAt" in body) updatedFields.updatedAt = new Date(body.updatedAt)
+
+    console.log({ updatedFields })
 
     if (Object.keys(updatedFields).length === 0) {
       return c.json({ success: false, message: "No fields to update" }, 400)
     }
 
-    const [updatedUser] = await db
-      .update(user)
+    const updatedUser = await db
+      .update(users)
       .set(updatedFields)
-      .where(eq(user.id, id))
-      .returning()
+      .where(eq(users.id, id))
 
     return c.json({
-      success: "true",
+      success: true,
       message: "User updated successfully",
       user: updatedUser,
     })
   } catch (error) {
     console.error("Error updating user:", error)
-    return c.json({ success: "false", message: "Error updating user" }, 500)
+    return c.json({ success: false, message: "Error updating user" }, 500)
   }
 })
 
@@ -86,8 +81,8 @@ userRouter.post("/check-verification", async (c) => {
   try {
     const { id } = await c.req.json()
 
-    const existedUser = await db.query.user.findFirst({
-      where: eq(user.id, id), // ← This might be an issue too
+    const existedUser = await db.query.users.findFirst({
+      where: eq(users.id, id), // ← This might be an issue too
     })
 
     if (!existedUser) {
@@ -103,7 +98,7 @@ userRouter.post("/check-verification", async (c) => {
 
     return c.json({
       message: "User is verified",
-      isVerified: existedUser.emailVerified, // ✅ FIXED
+      isVerified: existedUser.emailVerified,
     })
   } catch (err) {
     console.error("Email Verification Error:", err)
@@ -155,15 +150,15 @@ userRouter.patch("/onboarding", async (c) => {
       )
     }
 
-    const userExists = await db.select().from(user).where(eq(user.id, userId))
+    const userExists = await db.select().from(users).where(eq(users.id, userId))
     if (!userExists.length) {
       return c.json({ success: false, message: "User not found" }, 404)
     }
 
     const updatedUser = await db
-      .update(user)
+      .update(users)
       .set({ weight, height, unitSystem, currency, income })
-      .where(eq(user.id, userId))
+      .where(eq(users.id, userId))
       .returning()
 
     return c.json({
@@ -208,7 +203,7 @@ userRouter.post("/goals", async (c) => {
     }
 
     const newGoal = await db
-      .insert(userGoal)
+      .insert(userGoals)
       .values({
         userId: user.userId,
         goalType,
@@ -239,7 +234,7 @@ userRouter.delete("/:id", async (c) => {
   }
   const id = c.req.param("id")
 
-  const deletedUser = await db.delete(user).where(eq(user.id, id)).returning()
+  const deletedUser = await db.delete(users).where(eq(users.id, id)).returning()
 
   if (!deletedUser.length) {
     return c.json({ success: "false", message: "User not found" }, 404)

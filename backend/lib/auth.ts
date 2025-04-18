@@ -38,6 +38,7 @@ export const auth = betterAuth({
     },
   },
   user: {
+    modelName: "users",
     additionalFields: {
       role: {
         type: "string",
@@ -67,6 +68,15 @@ export const auth = betterAuth({
       },
     },
   },
+  account: {
+    modelName: "accounts",
+  },
+  session: {
+    modelName: "sessions",
+  },
+  verification: {
+    modelName: "verifications",
+  },
   plugins: [expo(), jwt()],
-  trustedOrigins: ["selftracker://", "http://localhost:5000"],
+  trustedOrigins: ["selftracker://", "http://localhost:8081"],
 })

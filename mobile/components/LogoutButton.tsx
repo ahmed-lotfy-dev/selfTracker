@@ -2,7 +2,7 @@ import { Pressable, View, Text } from "react-native"
 import React, { useState } from "react"
 import { useRouter } from "expo-router"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { logout } from "@/utils/api/authApi"
+import { signOut } from "@/utils/api/authApi"
 import axios from "axios"
 
 type logoutProps = {
@@ -18,19 +18,10 @@ export default function LogoutButton({ className }: logoutProps) {
     setError(null)
 
     try {
-      const refreshToken = await AsyncStorage.getItem("refreshToken")
-
-      if (!refreshToken) {
-        throw new Error("No refresh token found!")
-      }
-      const response = logout(refreshToken)
-
-      await AsyncStorage.multiRemove(["accessToken", "refreshToken"])
-
-      router.replace("/welcome") 
-    } catch (error: any) {
-      console.error("Logout failed:", error.message)
-      setError(error.message || "Logout failed. Please try again.")
+      await signOut()
+      router.replace("/welcome")
+    } catch (e: any) {
+      setError(e.message)
     } finally {
       setIsLoading(false)
     }

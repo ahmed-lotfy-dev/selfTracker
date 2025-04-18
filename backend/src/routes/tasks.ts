@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
-import { task, user } from "../db/schema.js"
+import { tasks, users } from "../db/schema.js"
 import { eq } from "drizzle-orm"
 import { sign } from "hono/jwt"
 import { hash } from "bcryptjs"
@@ -11,8 +11,8 @@ const tasksRouter = new Hono()
 tasksRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
-  const userTasks = await db.query.task.findMany({
-    where: eq(task.userId, user.userId as string),
+  const userTasks = await db.query.tasks.findMany({
+    where: eq(tasks.userId, user.userId as string),
   })
   return c.json({ success: "true", tasks: userTasks })
 })
@@ -24,7 +24,7 @@ tasksRouter.post("/", async (c) => {
     await c.req.json()
   try {
     const [createdTask] = await db
-      .insert(task)
+      .insert(tasks)
       .values({
         userId: user.id,
         title,
@@ -61,8 +61,8 @@ tasksRouter.patch("/:id", async (c) => {
     }
 
     // Check if task exists and belongs to the user
-    const taskExisted = await db.query.task.findFirst({
-      where: eq(task.id, id),
+    const taskExisted = await db.query.tasks.findFirst({
+      where: eq(tasks.id, id),
     })
 
     if (!taskExisted || taskExisted.userId !== user.userId) {
@@ -81,9 +81,9 @@ tasksRouter.patch("/:id", async (c) => {
 
     // Update Task
     const [updatedTask] = await db
-      .update(task)
+      .update(tasks)
       .set(updateFields)
-      .where(eq(task.id, id))
+      .where(eq(tasks.id, id))
       .returning()
 
     return c.json({
@@ -103,7 +103,7 @@ tasksRouter.delete("/:id", async (c) => {
 
   const id = c.req.param("id")
 
-  const [deletedTask] = await db.delete(task).where(eq(task.id, id)).returning()
+  const [deletedTask] = await db.delete(tasks).where(eq(tasks.id, id)).returning()
 
   if (!deletedTask) {
     return c.json({ message: "Task not found" }, 404)

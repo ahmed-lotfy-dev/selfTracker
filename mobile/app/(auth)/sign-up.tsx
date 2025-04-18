@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { showAlert } from "@/utils/lib"

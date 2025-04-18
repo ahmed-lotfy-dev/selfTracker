@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { workoutLog, workout } from "../db/schema"
+import {  workoutLogs, workouts } from "../db/schema"
 import { db } from "../db"
 import { eq, desc, lt, and, not, gte, lte } from "drizzle-orm"
 import { verify } from "hono/jwt"
@@ -21,24 +21,24 @@ workoutLogsRouter.get("/", async (c) => {
   try {
     const userWorkoutLogs = await db
       .select({
-        id: workoutLog.id,
-        userId: workoutLog.userId,
-        workoutId: workoutLog.workoutId,
-        workoutName: workout.name,
-        notes: workoutLog.notes,
-        createdAt: workoutLog.createdAt,
+        id: workoutLogs.id,
+        userId: workoutLogs.userId,
+        workoutId: workoutLogs.workoutId,
+        workoutName: workouts.name,
+        notes: workoutLogs.notes,
+        createdAt: workoutLogs.createdAt,
       })
-      .from(workoutLog)
-      .leftJoin(workout, eq(workoutLog.workoutId, workout.id))
+      .from(workoutLogs)
+      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
       .where(
         cursor
           ? and(
-              eq(workoutLog.userId, user.id as string),
-              lt(workoutLog.createdAt, new Date(cursor))
+              eq(workoutLogs.userId, user.id as string),
+              lt(workoutLogs.createdAt, new Date(cursor))
             )
-          : eq(workoutLog.userId, user.id as string)
+          : eq(workoutLogs.userId, user.id as string)
       )
-      .orderBy(desc(workoutLog.createdAt))
+      .orderBy(desc(workoutLogs.createdAt))
       .limit(Number(limit))
 
     const nextCursor =
@@ -79,19 +79,19 @@ workoutLogsRouter.get("/calendar/:date", async (c) => {
 
     const [dateLog] = await db
       .select({
-        id: workoutLog.id,
-        userId: workoutLog.userId,
-        workoutId: workoutLog.workoutId,
-        workoutName: workout.name,
-        notes: workoutLog.notes,
-        createdAt: workoutLog.createdAt,
+        id: workoutLogs.id,
+        userId: workoutLogs.userId,
+        workoutId: workoutLogs.workoutId,
+        workoutName: workouts.name,
+        notes: workoutLogs.notes,
+        createdAt: workoutLogs.createdAt,
       })
-      .from(workoutLog)
-      .leftJoin(workout, eq(workoutLog.workoutId, workout.id))
+      .from(workoutLogs)
+      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
       .where(
         and(
-          gte(workoutLog.createdAt, startDate),
-          lte(workoutLog.createdAt, endDate)
+          gte(workoutLogs.createdAt, startDate),
+          lte(workoutLogs.createdAt, endDate)
         )
       )
     return c.json({ success: true, logs: dateLog })
@@ -133,25 +133,25 @@ workoutLogsRouter.get("/calendar", async (c) => {
 
     const logs = await db
       .select({
-        id: workoutLog.id,
-        userId: workoutLog.userId,
-        workoutId: workoutLog.workoutId,
-        workoutName: workout.name,
-        notes: workoutLog.notes,
-        createdAt: workoutLog.createdAt,
+        id: workoutLogs.id,
+        userId: workoutLogs.userId,
+        workoutId: workoutLogs.workoutId,
+        workoutName: workouts.name,
+        notes: workoutLogs.notes,
+        createdAt: workoutLogs.createdAt,
       })
-      .from(workoutLog)
-      .leftJoin(workout, eq(workoutLog.workoutId, workout.id))
+      .from(workoutLogs)
+      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
       .where(
         and(
-          eq(workoutLog.userId, user.id),
+          eq(workoutLogs.userId, user.id),
           and(
-            gte(workoutLog.createdAt, startDate),
-            lte(workoutLog.createdAt, endDate)
+            gte(workoutLogs.createdAt, startDate),
+            lte(workoutLogs.createdAt, endDate)
           )
         )
       )
-      .orderBy(desc(workoutLog.createdAt))
+      .orderBy(desc(workoutLogs.createdAt))
 
     const groupedLogs: Record<string, any[]> = {}
     logs.forEach((log) => {
@@ -188,16 +188,16 @@ workoutLogsRouter.get("/:id", async (c) => {
   try {
     const [singleWorkout] = await db
       .select({
-        id: workoutLog.id,
-        userId: workoutLog.userId,
-        workoutId: workoutLog.workoutId,
-        workoutName: workout.name,
-        notes: workoutLog.notes,
-        createdAt: workoutLog.createdAt,
+        id: workoutLogs.id,
+        userId: workoutLogs.userId,
+        workoutId: workoutLogs.workoutId,
+        workoutName: workouts.name,
+        notes: workoutLogs.notes,
+        createdAt: workoutLogs.createdAt,
       })
-      .from(workoutLog)
-      .leftJoin(workout, eq(workoutLog.workoutId, workout.id))
-      .where(eq(workoutLog.id, id))
+      .from(workoutLogs)
+      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
+      .where(eq(workoutLogs.id, id))
 
     return c.json({ success: true, logs: singleWorkout })
   } catch (error) {
@@ -225,7 +225,7 @@ workoutLogsRouter.post("/", async (c) => {
 
   try {
     const [newWorkoutLog] = await db
-      .insert(workoutLog)
+      .insert(workoutLogs)
       .values({
         userId: user.id,
         workoutId,
@@ -260,8 +260,8 @@ workoutLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
-    const existingLog = await db.query.workoutLog.findFirst({
-      where: and(eq(workoutLog.id, id), eq(workoutLog.userId, user.id)),
+    const existingLog = await db.query.workoutLogs.findFirst({
+      where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
     })
 
     if (!existingLog) {
@@ -286,9 +286,9 @@ workoutLogsRouter.patch("/:id", async (c) => {
     }
 
     const [updatedWorkoutLog] = await db
-      .update(workoutLog)
+      .update(workoutLogs)
       .set(updatedFields)
-      .where(and(eq(workoutLog.id, id), eq(workoutLog.userId, user.id)))
+      .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)))
       .returning()
 
     return c.json({
@@ -325,9 +325,9 @@ workoutLogsRouter.delete("/:id", async (c) => {
 
   try {
     const deletedWorkout = await db
-      .delete(workoutLog)
-      .where(eq(workoutLog.id, id))
-      .returning({ deletedId: workoutLog.id })
+      .delete(workoutLogs)
+      .where(eq(workoutLogs.id, id))
+      .returning({ deletedId: workoutLogs.id })
 
     if (deletedWorkout.length === 0) {
       return c.json({ success: false, message: "Workout log not found" }, 404)
