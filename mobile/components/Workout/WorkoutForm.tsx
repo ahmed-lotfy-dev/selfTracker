@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { WorkoutType } from "@/types/workoutType"
 import { useForm } from "@tanstack/react-form"
 import {
@@ -73,6 +73,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
       id: selectedWorkout?.id,
       userId: isEditing ? user?.id : user?.id,
       workoutId: isEditing ? selectedWorkout?.workoutId : "",
+      workoutName: isEditing ? selectedWorkout?.workoutName : "",
       notes: isEditing ? selectedWorkout?.notes : "",
       createdAt: isEditing
         ? dayjs(selectedWorkout?.createdAt).format("YYYY-MM-DD")
@@ -83,18 +84,26 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const dirtyFields = useDirtyFields(form)
 
   const onFormSubmit = async ({ value }: { value: WorkoutType }) => {
+    const selectedWorkoutItem = workouts?.find((w) => w.id === value.workoutId)
+
+    const fullWorkoutData = {
+      ...value,
+      workoutName: selectedWorkoutItem?.name || "",
+    }
+
     if (isEditing && selectedWorkout) {
       const payload = dirtyFields.reduce(
         (acc: { [key: string]: any }, name) => {
-          acc[name as keyof WorkoutType] = value[name as keyof WorkoutType]
+          acc[name as keyof WorkoutType] =
+            fullWorkoutData[name as keyof WorkoutType]
           return acc
         },
-        { id: selectedWorkout.id }
+        { id: selectedWorkout.id, workoutName: selectedWorkoutItem?.name || "" }
       )
 
       updateMutation.mutate(payload)
     } else {
-      addMutation.mutate(value)
+      addMutation.mutate(fullWorkoutData)
     }
   }
 
@@ -113,6 +122,30 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
             />
           )}
         />
+
+        <form.Field
+          name="workoutName"
+          children={(field) => (
+            <TextInput
+              className="hidden"
+              value={field.state.value}
+              onChangeText={field.handleChange}
+            />
+          )}
+        />
+
+        {isEditing && (
+          <form.Field
+            name="workoutName"
+            children={(field) => (
+              <TextInput
+                className="hidden"
+                value={field.state.value}
+                onChangeText={field.handleChange}
+              />
+            )}
+          />
+        )}
 
         {isEditing && (
           <form.Field

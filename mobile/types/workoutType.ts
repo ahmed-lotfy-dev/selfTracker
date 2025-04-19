@@ -1,8 +1,8 @@
 export interface WorkoutType {
   id:string
-  workoutName:string
   userId: string
   workoutId: string
+  workoutName:string
   notes: string | null
   createdAt: string
 }
