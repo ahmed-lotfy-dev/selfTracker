@@ -17,6 +17,7 @@ import { COLORS } from "@/constants/Colors"
 import { authClient } from "@/utils/auth-client"
 import { signIn } from "@/utils/api/authApi"
 import { setAccessToken } from "@/utils/storage"
+// import GoogleSignInBtn from "@/components/GoogleSignInBtn"
 
 export default function SignIn() {
   const router = useRouter()
@@ -104,9 +105,7 @@ export default function SignIn() {
       />
       <Link href="/sign-up" asChild>
         <Pressable className="justify-center items-center  rounded-lg p-2 mr-5 mt-4">
-          <Text className="text-blue-500 font-bold">
-            Don't have an account? Sign Up
-          </Text>
+          <Text className="text-blue-500 ">Don't have an account? Sign Up</Text>
         </Pressable>
       </Link>
     </KeyboardAvoidingView>

@@ -10,7 +10,6 @@ import {
   Pressable,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
-import { showAlert } from "@/utils/lib"
 import { useForm } from "@tanstack/react-form"
 import { COLORS } from "@/constants/Colors"
 import { setAccessToken } from "@/utils/storage"
@@ -112,7 +111,7 @@ export default function SignUp() {
       />
       <Link href="/sign-in" asChild>
         <Pressable className="justify-center items-center  rounded-lg p-2 mr-5 mt-4">
-          <Text className="text-blue-500 font-bold">
+          <Text className="text-blue-500">
             Already have an account? Sign In
           </Text>
         </Pressable>

@@ -29,7 +29,6 @@ export function useAdd({
       showAlert("Error", onErrorMessage)
     },
   })
-
   return {
     addMutation: mutation,
   }

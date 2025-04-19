@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import {  Platform } from "react-native"
+import { Platform } from "react-native"
 import { showAlert } from "@/utils/lib"
 
 type UseDeleteOptions = {
@@ -41,7 +41,11 @@ export function useDelete({
     } else {
       showAlert(confirmTitle, confirmMessage, [
         { text: "Cancel", style: "cancel" },
-        { text: "Delete", onPress: () => mutation.mutate() },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => mutation.mutate(),
+        },
       ])
     }
   }

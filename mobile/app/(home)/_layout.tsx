@@ -12,9 +12,18 @@ import TabBar from "../../components/TabBar"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 import { useUser } from "@/store/useAuthStore"
 import { useAuth } from "@/hooks/useAuth"
+import { COLORS } from "@/constants/Colors"
 
 export default function TabsLayout() {
   const router = useRouter()
+  const user = useUser()
+
+  useEffect(() => {
+    if (!user) {
+      router.replace("/welcome")
+    } 
+  }, [user])
+
   return (
     <Tabs
       tabBar={(props: BottomTabBarProps) => <TabBar {...props} />}

@@ -77,7 +77,10 @@ export const auth = betterAuth({
   verification: {
     modelName: "verifications",
   },
-  plugins: [expo(), jwt()],
+  plugins: [
+    expo(),
+    jwt(),
+  ],
   trustedOrigins: [
     "selftracker://",
     "http://192.168.1.16:8081",
