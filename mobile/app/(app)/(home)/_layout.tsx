@@ -10,7 +10,6 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 
 import TabBar from "../../../components/TabBar"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
-import { useAuth } from "@/hooks/useAuth"
 
 export default function TabsLayout() {
   return (

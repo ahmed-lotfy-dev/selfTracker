@@ -6,6 +6,7 @@ import { authClient } from "../auth-client"
 
 export const signIn = async (email: string, password: string) => {
   const response = await authClient.signIn.email({ email, password })
+
   return response
 }
 

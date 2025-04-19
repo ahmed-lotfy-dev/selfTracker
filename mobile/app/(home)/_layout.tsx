@@ -11,19 +11,10 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import TabBar from "../../components/TabBar"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 import { useUser } from "@/store/useAuthStore"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function TabsLayout() {
   const router = useRouter()
-  const user = useUser()
-
-  console.log({ user })
-
-  useEffect(() => {
-    if (!user) {
-      router.replace("/(auth)/welcome")
-    }
-  }, [user])
-
   return (
     <Tabs
       tabBar={(props: BottomTabBarProps) => <TabBar {...props} />}

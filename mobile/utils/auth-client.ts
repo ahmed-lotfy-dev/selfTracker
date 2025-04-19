@@ -3,14 +3,12 @@ import { expoClient } from "@better-auth/expo/client"
 import * as SecureStore from "expo-secure-store"
 
 export const authClient = createAuthClient({
-  /** The base URL of the server (optional if you're using the same domain) */
-  baseURL: "http://localhost:5000",
+baseURL: "http://192.168.1.16:5000",
   plugins: [
     expoClient({
-      scheme: "myapp",
-      storagePrefix: "myapp",
+      scheme: "selftracker",
+      storagePrefix: "selftracker",
       storage: SecureStore,
     }),
   ],
-  trustedOrigins: ["selftracker://", "http://localhost:5000"],
 })

@@ -23,7 +23,11 @@ app.use(logger())
 app.use(
   "*",
   cors({
-    origin: "http://localhost:8081",
+    origin: [
+      "http://localhost:8081",
+      "http://192.168.1.16:8081",
+      "exp://192.168.1.16:8081",
+    ],
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "UPDATE", "DELETE", "PATCH", "OPTIONS"],
     exposeHeaders: ["Content-Length"],

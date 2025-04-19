@@ -7,34 +7,34 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from "react-native"
-import { useRouter } from "expo-router"
+import { Link, useRouter } from "expo-router"
 import { showAlert } from "@/utils/lib"
-import { signUp } from "@/utils/api/authApi"
 import { useForm } from "@tanstack/react-form"
 import { COLORS } from "@/constants/Colors"
+import { setAccessToken } from "@/utils/storage"
+import { useAuthActions } from "@/store/useAuthStore"
+import { authClient } from "@/utils/auth-client"
+import { signUp } from "@/utils/api/authApi"
 
 export default function SignUp() {
   const router = useRouter()
-  const [status, setStatus] = useState<"off" | "submitting" | "submitted">(
-    "off"
-  )
+  const { setUser } = useAuthActions()
+
   const [errorMessage, setErrorMessage] = useState("")
 
   const form = useForm({
     defaultValues: { name: "", email: "", password: "" },
     onSubmit: async ({ value }) => {
-      setStatus("submitting")
-      try {
-        const response = await signUp(value.name, value.email, value.password)
-
+      const response = await signUp(value.name, value.email, value.password)
+      console.log({ response })
+      if (response.error) {
+        setErrorMessage(response.error.message || "")
+      }
+      if (response.data) {
+        setUser(response.data.token)
         router.replace("/(auth)/verify-email")
-
-        setStatus("submitted")
-      } catch (error: any) {
-        console.error("Login failed:", error)
-        setErrorMessage(error.response?.data?.message || "Login failed")
-        setStatus("off")
       }
     },
   })
@@ -99,7 +99,7 @@ export default function SignUp() {
         children={([canSubmit, isSubmitting]) => (
           <TouchableOpacity
             onPress={() => form.handleSubmit()}
-            disabled={!canSubmit || isSubmitting}
+            // disabled={!canSubmit || isSubmitting}
             className="bg-[#007bff] p-4 rounded-md items-center font-bold text-xl"
           >
             {isSubmitting ? (
@@ -110,16 +110,13 @@ export default function SignUp() {
           </TouchableOpacity>
         )}
       />
-
-      <TouchableOpacity
-        onPress={() => router.push("/sign-in")}
-        style={{
-          marginTop: 15,
-          alignItems: "center",
-        }}
-      >
-        <Text style={{ color: "blue" }}>Already have an account? Sign In</Text>
-      </TouchableOpacity>
+      <Link href="/sign-in" asChild>
+        <Pressable className="justify-center items-center  rounded-lg p-2 mr-5 mt-4">
+          <Text className="text-blue-500 font-bold">
+            Already have an account? Sign In
+          </Text>
+        </Pressable>
+      </Link>
     </KeyboardAvoidingView>
   )
 }

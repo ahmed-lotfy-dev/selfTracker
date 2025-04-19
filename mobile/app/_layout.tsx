@@ -3,10 +3,8 @@ import { useFonts } from "expo-font"
 import { Slot } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { checkForUpdates, onAppStateChange } from "@/utils/lib"
-import { ActivityIndicator } from "react-native"
 import { useOnlineManager } from "@/hooks/useOnlineManager"
 import { useAppState } from "@/hooks/useAppState"
-import { useAuth } from "@/hooks/useAuth"
 import * as SplashScreen from "expo-splash-screen"
 
 import "react-native-reanimated"
@@ -26,10 +24,9 @@ export default function RootLayout() {
   })
 
   const hasRedirected = useRef(false)
-
   useEffect(() => {
     const prepareApp = async () => {
-      if (loaded) {
+      if (loaded ) {
         await checkForUpdates()
         await SplashScreen.hideAsync()
       }

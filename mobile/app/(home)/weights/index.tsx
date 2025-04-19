@@ -27,6 +27,7 @@ export default function WeightsScreen() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   })
+  console.log({ data })
   const logs = data?.pages.flatMap((page) => page.weightLogs) || []
 
   if (isLoading) {
@@ -59,7 +60,7 @@ export default function WeightsScreen() {
       </View>
     )
   }
-  
+
   return (
     <View className="flex-1 p-4 justify-center relative">
       <Header title="Weight Logs" />

@@ -1,17 +1,25 @@
 import { WeightType } from "@/types/weightType"
 import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
+import axios from "axios"
+import { getAccessToken } from "../storage"
 
 export const fetchAllWeightLogs = async (
   cursor: string | null = null,
   limit: number = 10
 ) => {
+  const token = await getAccessToken()
+  console.log(token)
   const response = await axiosInstance.get(`${API_BASE_URL}/api/weightLogs`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     params: {
       cursor,
       limit,
     },
   })
+  console.log(response)
   return response.data
 }
 
