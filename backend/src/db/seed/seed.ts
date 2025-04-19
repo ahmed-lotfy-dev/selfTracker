@@ -101,7 +101,7 @@ async function seed() {
   // await seedTasks(user?.id as string)
   // await seedTraininSplits()
   // await seedWeightLogs(user?.id as string)
-  await seedWorkoutLogs(user?.id as string)
+  // await seedWorkoutLogs(user?.id as string)
   // await seedWorkouts()
 }
 
