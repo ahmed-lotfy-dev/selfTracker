@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useFonts } from "expo-font"
-import { Slot } from "expo-router"
+import { Slot, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { checkForUpdates, onAppStateChange } from "@/utils/lib"
 import { useOnlineManager } from "@/hooks/useOnlineManager"
@@ -12,10 +12,15 @@ import "react-native-gesture-handler"
 import "../global.css"
 
 import { AppProviders } from "@/components/AppProviders"
+import { useUser } from "@/store/useAuthStore"
+import { useAuth } from "@/hooks/useAuth"
 
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
+  const router = useRouter()
+  const { user, isLoading } = useAuth()
+
   useOnlineManager()
   useAppState(onAppStateChange)
 
@@ -23,22 +28,26 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
 
-  const hasRedirected = useRef(false)
   useEffect(() => {
     const prepareApp = async () => {
-      if (loaded ) {
+      if (loaded) {
         await checkForUpdates()
         await SplashScreen.hideAsync()
       }
     }
 
     prepareApp()
-  }, [loaded, hasRedirected])
+  }, [loaded])
 
   // Prevent flashing UI before fonts and auth are ready
-  if (!loaded) {
-    return null
-  }
+
+  useEffect(() => {
+    if (loaded && !isLoading && !user  ) {
+      router.replace("/welcome")
+    }
+  }, [loaded, isLoading, user])
+
+  if (!loaded || isLoading) return null
 
   return (
     <AppProviders>

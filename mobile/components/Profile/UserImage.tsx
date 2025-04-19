@@ -3,10 +3,11 @@ import React, { useEffect } from "react"
 import Fontisto from "@expo/vector-icons/Fontisto"
 import UploadImageBtn from "./UploadImageBtn"
 import LogoutButton from "../LogoutButton"
+import { useUser } from "@/store/useAuthStore"
 import { useAuth } from "@/hooks/useAuth"
 
 export default function UserImage() {
-  const { user, refetch } = useAuth()
+  const { user, refetch, isLoading } = useAuth()
 
   return (
     <View className="flex-1 justify-center items-center">

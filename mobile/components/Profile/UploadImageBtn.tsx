@@ -9,7 +9,7 @@ import { useUpdate } from "@/hooks/useUpdate"
 import { useAuthActions } from "@/store/useAuthStore"
 
 export default function UploadImageBtn() {
-  const { user } = useAuth()
+  const { user, refetch } = useAuth()
   const { setUser } = useAuthActions()
   const [imageFile, setImageFile] =
     useState<ImagePicker.ImagePickerAsset | null>(null)
@@ -58,8 +58,15 @@ export default function UploadImageBtn() {
         imageFile?.mimeType ?? ""
       )
 
-      updateMutation.mutate({ id: user?.id, image: imageUrl })
-      setUser({ ...user, image: imageUrl })
+      updateMutation.mutate(
+        { id: user?.id, image: imageUrl },
+        {
+          onSuccess: () => {
+            refetch()
+            setUser({ ...user, image: imageUrl })
+          },
+        }
+      )
       console.log("Image uploaded successfully.")
     } catch (error) {
       console.error("Error during image selection or upload:", error)
