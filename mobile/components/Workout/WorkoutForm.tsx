@@ -84,7 +84,9 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const dirtyFields = useDirtyFields(form)
 
   const onFormSubmit = async ({ value }: { value: WorkoutType }) => {
-    const selectedWorkoutItem = workouts?.find((w) => w.id === value.workoutId)
+    const selectedWorkoutItem = workouts?.find(
+      (w: WorkoutType) => w.id === value.workoutId
+    )
 
     const fullWorkoutData = {
       ...value,
