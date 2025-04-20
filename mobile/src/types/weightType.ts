@@ -1,9 +1,13 @@
-export interface WeightType {
-  id?: string
-  userId: string
-  weight: number
-  mood: string
-  energy: string
-  notes: string | null
-  createdAt: string
-}
+import { z } from "zod"
+
+export const WeightSchema = z.object({
+  id: z.string().optional(),
+  userId: z.string(),
+  weight: z.number(),
+  mood: z.string(),
+  energy: z.string(),
+  notes: z.string().nullable(),
+  createdAt: z.string(),
+})
+
+export type WeightType = z.infer<typeof WeightSchema>;
