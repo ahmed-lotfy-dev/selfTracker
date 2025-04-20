@@ -4,6 +4,7 @@ import { db } from "../src/db"
 import { jwt } from "better-auth/plugins/jwt"
 import { expo } from "@better-auth/expo"
 import { sendEmail } from "./email"
+import { bearer } from "better-auth/plugins/bearer"
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -77,7 +78,7 @@ export const auth = betterAuth({
   verification: {
     modelName: "verifications",
   },
-  plugins: [expo(), jwt()],
+  plugins: [expo(), jwt(), bearer()],
   trustedOrigins: [
     "selftracker://",
     "http://192.168.1.16:8081",

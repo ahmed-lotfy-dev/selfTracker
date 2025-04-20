@@ -13,9 +13,8 @@ import {
 import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/src/components/DatePicker"
 import DateDisplay from "@/src/components/DateDisplay"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { fetchAllWorkouts } from "@/src/utils/api/workouts"
-import { useUser } from "@/src/store/useAuthStore"
 import { useAdd } from "@/src/hooks/useAdd"
 import { createWorkout, updateWorkout } from "@/src/utils/api/workoutsApi"
 import { useRouter } from "expo-router"
@@ -23,14 +22,18 @@ import dayjs from "dayjs"
 import { useSelectedWorkout } from "@/src/store/useWokoutStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { useDirtyFields } from "@/src/hooks/useDirtyFields"
+import { z } from "zod"
+import { WorkoutSchema } from "@/src/types/workoutType"
+import { useAuth } from "@/src/hooks/useAuth"
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
   const [showDate, setShowDate] = useState(false)
-  const user = useUser()
-  const queryClient = useQueryClient()
+  const { user } = useAuth()
+
   const year = new Date().getFullYear()
   const month = new Date().getMonth() + 1
+
   const selectedWorkout = useSelectedWorkout()
 
   const { data: workouts } = useQuery({
@@ -127,6 +130,15 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
 
         <form.Field
           name="workoutName"
+          validators={{
+            onChangeAsyncDebounceMs: 300,
+            onChangeAsync: (value) => {
+              const result = WorkoutSchema.shape.workoutName.safeParse(
+                value.fieldApi.state.value
+              )
+              return result.success ? undefined : result.error.issues[0].message
+            },
+          }}
           children={(field) => (
             <TextInput
               className="hidden"
@@ -139,6 +151,17 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
         {isEditing && (
           <form.Field
             name="workoutName"
+            validators={{
+              onChangeAsyncDebounceMs: 300,
+              onChangeAsync: (value) => {
+                const result = WorkoutSchema.shape.workoutName.safeParse(
+                  value.fieldApi.state.value
+                )
+                return result.success
+                  ? undefined
+                  : result.error.issues[0].message
+              },
+            }}
             children={(field) => (
               <TextInput
                 className="hidden"
@@ -164,6 +187,15 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
 
         <form.Field
           name="workoutId"
+          validators={{
+            onChangeAsyncDebounceMs: 300,
+            onChangeAsync: (value) => {
+              const result = WorkoutSchema.shape.workoutId.safeParse(
+                value.fieldApi.state.value
+              )
+              return result.success ? undefined : result.error.issues[0].message
+            },
+          }}
           children={(field) => (
             <View className="mt-32">
               <Text className="my-3 font-bold">Workout Type:</Text>
@@ -190,8 +222,18 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
             </View>
           )}
         />
+
         <form.Field
           name="createdAt"
+          validators={{
+            onChangeAsyncDebounceMs: 300,
+            onChangeAsync: (value) => {
+              const result = WorkoutSchema.shape.createdAt.safeParse(
+                value.fieldApi.state.value
+              )
+              return result.success ? undefined : result.error.issues[0].message
+            },
+          }}
           children={(field) => (
             <View className="">
               <Text className="my-3 font-bold">Workout Date:</Text>

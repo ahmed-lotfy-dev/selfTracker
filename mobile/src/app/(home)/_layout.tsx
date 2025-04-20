@@ -10,11 +10,28 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 
 import TabBar from "../../components/TabBar"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
-import { useUser } from "@/src/store/useAuthStore"
 import { useAuth } from "@/src/hooks/useAuth"
 import { COLORS } from "@/src/constants/Colors"
+import { useHasHydrated } from "@/src/store/useAuthStore"
 
 export default function TabsLayout() {
+  const user = useAuth()
+  const hasHydrated = useHasHydrated()
+
+  useEffect(() => {
+    if (hasHydrated && !user) {
+      router.replace("/welcome")
+    }
+  }, [user, hasHydrated])
+
+  if (!hasHydrated) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    )
+  }
+
   return (
     <Tabs
       tabBar={(props: BottomTabBarProps) => <TabBar {...props} />}

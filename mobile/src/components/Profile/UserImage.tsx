@@ -3,7 +3,6 @@ import React, { useEffect } from "react"
 import Fontisto from "@expo/vector-icons/Fontisto"
 import UploadImageBtn from "./UploadImageBtn"
 import LogoutButton from "../LogoutButton"
-import { useUser } from "@/src/store/useAuthStore"
 import { useAuth } from "@/src/hooks/useAuth"
 
 export default function UserImage() {
@@ -20,7 +19,6 @@ export default function UserImage() {
             className="w-20 h-20 rounded-full border"
           />
         )}
-
         {user?.image && (
           <Image
             source={{ uri: user.image }}

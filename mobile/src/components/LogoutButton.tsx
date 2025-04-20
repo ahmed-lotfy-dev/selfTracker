@@ -6,15 +6,16 @@ import axios from "axios"
 import { clearTokens } from "@/src/utils/storage"
 import { useAuthActions } from "@/src/store/useAuthStore"
 import { authClient } from "@/src/utils/auth-client"
+import { useAuth } from "../hooks/useAuth"
 
 type logoutProps = {
   className?: string
 }
 export default function LogoutButton({ className }: logoutProps) {
+  const { logout } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { setUser } = useAuthActions()
 
   const handleLogout = async () => {
     setIsLoading(true)
@@ -23,7 +24,7 @@ export default function LogoutButton({ className }: logoutProps) {
     try {
       await clearTokens()
       await authClient.signOut()
-      setUser(null)
+      await logout()
       router.replace("/welcome")
     } catch (e: any) {
       setError(e.message)

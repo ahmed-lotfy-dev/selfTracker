@@ -189,7 +189,7 @@ export const userGoals = pgTable("user_goals", {
   goalType: text("goal_type", {
     enum: ["loseWeight", "gainWeight", "bodyFat", "muscleMass"],
   }).notNull(), // Type of goal
-  targetValue: numeric("target_value", { precision: 5, scale: 2 }).notNull(), // Target weight/height/body fat
+  targetValue: numeric("target_value", { precision: 5, scale: 2 }).notNull(),
   deadline: timestamp("deadline"), // Optional deadline for goal
   achieved: boolean("achieved").default(false),
   createdAt: timestamp("created_at").defaultNow(),

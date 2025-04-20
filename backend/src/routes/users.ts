@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
-import { userGoals, users } from "../db/schema"
-import { and, eq, gt, is, isNotNull } from "drizzle-orm"
+import { tasks, userGoals, users, weightLogs, workoutLogs } from "../db/schema"
+import { and, eq, gte, lte, sql,  desc } from "drizzle-orm"
 import { sign, verify, decode } from "hono/jwt"
 import { sendEmail } from "../../lib/email.js"
 import { hash, compare } from "bcryptjs"
@@ -10,6 +10,8 @@ import {
   findUserByEmail,
   generateVerificationToken,
 } from "../../lib/utility.js"
+import { count } from "console"
+import { addDays, endOfWeek, startOfWeek, subDays } from "date-fns"
 
 const userRouter = new Hono()
 
@@ -21,6 +23,70 @@ userRouter.get("/", async (c) => {
   }
   const userList = await db.query.users.findMany()
   return c.json(userList)
+})
+
+userRouter.get("/me/home", async (c) => {
+  const user = c.get("user" as any)
+
+  // Week starts on Saturday (index 6 in date-fns)
+  const start = startOfWeek(new Date(), { weekStartsOn: 6 })
+  const end = endOfWeek(new Date(), { weekStartsOn: 6 })
+
+  console.log("Start of the week:", start.toISOString())
+  console.log("End of the week:", end.toISOString())
+
+  const weeklyWorkoutCount = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(workoutLogs)
+    .where(
+      and(
+        eq(workoutLogs.userId, user.id),
+        gte(workoutLogs.createdAt, new Date(start)),
+        lte(workoutLogs.createdAt, new Date(end))
+      )
+    )
+
+  console.log("Workouts count this week:", weeklyWorkoutCount[0]?.count)
+
+  const weeklyTaskCount = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.userId, user.id),
+        gte(tasks.createdAt, new Date(start)),
+        lte(tasks.createdAt, new Date(end))
+      )
+    )
+
+  const [userGoalWeight] = await db
+    .select()
+    .from(userGoals)
+    .where(eq(userGoals.userId, user.id))
+
+  const [userLatestWeight] = await db
+    .select()
+    .from(weightLogs)
+    .where(eq(weightLogs.userId, user.id))
+    .orderBy(desc(weightLogs.createdAt))
+    .limit(1)
+
+  const weightDelta = userGoalWeight
+    ? userLatestWeight && userGoalWeight
+      ? Number(userLatestWeight.weight) - Number(userGoalWeight.targetValue)
+      : null
+    : null
+
+  return c.json({
+    success: true,
+    responseObject: {
+      workoutCount: weeklyWorkoutCount[0]?.count || 0,
+      taskCount: weeklyTaskCount[0]?.count || 0,
+      goalWeight: userGoalWeight.targetValue || "goal not set yet",
+      userLatestWeight: userLatestWeight.weight || "no weight log yet",
+      weightDelta,
+    },
+  })
 })
 
 userRouter.patch("/:id", async (c) => {
@@ -175,7 +241,7 @@ userRouter.post("/goals", async (c) => {
     const user = c.get("user" as any)
     const { goalType, targetValue, deadline } = await c.req.json()
 
-    if (!goalType || !targetValue || !deadline) {
+    if (!goalType || !targetValue) {
       return c.json({ success: false, message: "All fields are required" }, 400)
     }
 
@@ -194,16 +260,17 @@ userRouter.post("/goals", async (c) => {
 
     const userExists = await db
       .select()
-      .from(user)
-      .where(eq(user.id, user.userId))
+      .from(users)
+      .where(eq(users.id, user.id))
+
     if (!userExists.length) {
       return c.json({ success: false, message: "User not found" }, 404)
     }
 
-    const newGoal = await db
+    const [newGoal] = await db
       .insert(userGoals)
       .values({
-        userId: user.userId,
+        userId: user.id,
         goalType,
         targetValue,
         deadline: deadline ? new Date(deadline) : null,
@@ -214,7 +281,7 @@ userRouter.post("/goals", async (c) => {
       {
         success: true,
         message: "Goal created successfully",
-        goal: newGoal[0],
+        goal: newGoal,
       },
       201
     )

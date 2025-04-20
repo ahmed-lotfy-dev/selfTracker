@@ -14,7 +14,6 @@ import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/src/components/DatePicker"
 import DateDisplay from "@/src/components/DateDisplay"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useUser } from "@/src/store/useAuthStore"
 import { useAdd } from "@/src/hooks/useAdd"
 import { useRouter } from "expo-router"
 import dayjs from "dayjs"
@@ -22,11 +21,14 @@ import { createWeight, updateWeight } from "@/src/utils/api/weightsApi"
 import { useSelectedWeight } from "@/src/store/useWeightStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { useDirtyFields } from "@/src/hooks/useDirtyFields"
+import { z } from "zod"
+import { WeightSchema } from "@/src/types/weightType"
+import { useAuth } from "@/src/hooks/useAuth"
 
 export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
   const [showDate, setShowDate] = useState(false)
-  const user = useUser()
+  const user = useAuth()
   const queryClient = useQueryClient()
   const selectedWeight = useSelectedWeight()
 

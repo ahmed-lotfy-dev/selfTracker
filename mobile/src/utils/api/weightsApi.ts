@@ -11,15 +11,11 @@ export const fetchAllWeightLogs = async (
   const token = await getAccessToken()
   console.log(token)
   const response = await axiosInstance.get(`${API_BASE_URL}/api/weightLogs`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     params: {
       cursor,
       limit,
     },
   })
-  console.log(response)
   return response.data
 }
 

@@ -12,14 +12,12 @@ import "react-native-gesture-handler"
 import "@/global.css"
 
 import { AppProviders } from "@/src/components/AppProviders"
-import { useUser } from "@/src/store/useAuthStore"
 import { useAuth } from "@/src/hooks/useAuth"
 
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
   const router = useRouter()
-  const { user, isLoading } = useAuth()
 
   useOnlineManager()
   useAppState(onAppStateChange)
@@ -41,13 +39,7 @@ export default function RootLayout() {
 
   // Prevent flashing UI before fonts and auth are ready
 
-  useEffect(() => {
-    if (loaded && !isLoading && !user) {
-      router.replace("/welcome")
-    }
-  }, [loaded, isLoading, user])
-
-  if (!loaded || isLoading) return null
+  if (!loaded) return null
 
   return (
     <AppProviders>

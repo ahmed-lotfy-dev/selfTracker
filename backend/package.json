@@ -20,6 +20,7 @@
     "bcryptjs": "^3.0.2",
     "better-auth": "^1.2.7",
     "cloudinary": "^2.6.0",
+    "date-fns": "^4.1.0",
     "drizzle-orm": "^0.40.0",
     "hono": "^4.7.2",
     "jsonwebtoken": "^9.0.2",

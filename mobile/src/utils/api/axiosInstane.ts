@@ -9,21 +9,34 @@ import {
 
 import { API_BASE_URL } from "./config"
 import { authClient } from "../auth-client"
+import { Platform } from "react-native"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 })
 
-axiosInstance.interceptors.request.use(async (config) => {
-  // Get the session cookies from Better Auth
-  const cookies = authClient.getCookie()
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    const cookie = authClient.getCookie()
+    const token = await getAccessToken()
 
-  if (cookies) {
-    config.headers.Cookie = cookies
+    if (cookie) {
+      config.headers.Cookie = cookie
+    }
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
   }
-  return config
-})
+)
 
 // axiosInstance.interceptors.response.use(
 //   (response) => response,
