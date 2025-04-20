@@ -9,7 +9,7 @@ import * as SplashScreen from "expo-splash-screen"
 
 import "react-native-reanimated"
 import "react-native-gesture-handler"
-import "../global.css"
+import "@/global.css"
 
 import { AppProviders } from "@/src/components/AppProviders"
 import { useUser } from "@/src/store/useAuthStore"

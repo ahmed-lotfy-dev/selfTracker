@@ -16,6 +16,8 @@ import { setAccessToken } from "@/src/utils/storage"
 import { useAuthActions } from "@/src/store/useAuthStore"
 import { authClient } from "@/src/utils/auth-client"
 import { signUp } from "@/src/utils/api/authApi"
+import { z } from "zod"
+import { signUpSchema } from "@/src/types/userType"
 
 export default function SignUp() {
   const router = useRouter()
@@ -47,47 +49,97 @@ export default function SignUp() {
 
       <form.Field
         name="name"
+        validators={{
+          onChangeAsyncDebounceMs: 300,
+          onChangeAsync: (value) => {
+            const result = signUpSchema.shape.name.safeParse(
+              value.fieldApi.state.value
+            )
+            console.log(result)
+            return result.success ? undefined : result.error.issues[0].message
+          },
+        }}
         children={(field) => (
-          <TextInput
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChangeText={field.handleChange}
-            placeholder="Name"
-            autoCapitalize="none"
-            autoComplete="name"
-            className="border border-gray-300 rounded-md px-4 py-2 mb-3"
-          />
+          <View>
+            <TextInput
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChangeText={field.handleChange}
+              placeholder="Name"
+              autoCapitalize="none"
+              autoComplete="name"
+              className="border border-gray-300 rounded-md px-4 py-2 mb-3"
+            />
+            {field.state.meta.errors ? (
+              <Text className="text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </Text>
+            ) : null}
+          </View>
         )}
       />
+
       <form.Field
         name="email"
+        validators={{
+          onChangeAsyncDebounceMs: 300,
+          onChangeAsync: (value) => {
+            const result = signUpSchema.shape.email.safeParse(
+              value.fieldApi.state.value
+            )
+            return result.success ? undefined : result.error.issues[0].message
+          },
+        }}
         children={(field) => (
-          <TextInput
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChangeText={field.handleChange}
-            placeholder="Email"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-            textContentType="emailAddress"
-            className="border border-gray-300 rounded-md px-4 py-2 mb-3"
-          />
+          <View>
+            <TextInput
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChangeText={field.handleChange}
+              placeholder="Email"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+              className="border border-gray-300 rounded-md px-4 py-2 mb-3"
+            />
+            {field.state.meta.errors ? (
+              <Text className="text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </Text>
+            ) : null}
+          </View>
         )}
       />
       <form.Field
         name="password"
+        validators={{
+          onChangeAsyncDebounceMs: 300,
+          onChangeAsync: (value) => {
+            const result = signUpSchema.shape.password.safeParse(
+              value.fieldApi.state.value
+            )
+            return result.success ? undefined : result.error.issues[0].message
+          },
+        }}
         children={(field) => (
-          <TextInput
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChangeText={field.handleChange}
-            placeholder="Password"
-            secureTextEntry
-            autoComplete="password"
-            textContentType="password"
-            className="border border-gray-300 rounded-md px-4 py-2 mb-3"
-          />
+          <View>
+            <TextInput
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChangeText={field.handleChange}
+              placeholder="Password"
+              secureTextEntry
+              autoComplete="password"
+              textContentType="password"
+              className="border border-gray-300 rounded-md px-4 py-2 mb-3"
+            />
+            {field.state.meta.errors ? (
+              <Text className="text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </Text>
+            ) : null}
+          </View>
         )}
       />
       {errorMessage ? (
@@ -98,7 +150,7 @@ export default function SignUp() {
         children={([canSubmit, isSubmitting]) => (
           <TouchableOpacity
             onPress={() => form.handleSubmit()}
-            // disabled={!canSubmit || isSubmitting}
+            disabled={!canSubmit || isSubmitting}
             className="bg-[#007bff] p-4 rounded-md items-center font-bold text-xl"
           >
             {isSubmitting ? (

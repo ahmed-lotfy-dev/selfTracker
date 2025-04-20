@@ -17,7 +17,7 @@ import { COLORS } from "@/src/constants/Colors"
 import { authClient } from "@/src/utils/auth-client"
 import { signIn } from "@/src/utils/api/authApi"
 import { setAccessToken } from "@/src/utils/storage"
-// import GoogleSignInBtn from "@/components/GoogleSignInBtn"
+import { signInSchema } from "@/src/types/userType"
 
 export default function SignIn() {
   const router = useRouter()
@@ -52,34 +52,67 @@ export default function SignIn() {
 
       <form.Field
         name="email"
+        validators={{
+          onChangeAsyncDebounceMs: 500,
+          onChangeAsync: (value) => {
+            const result = signInSchema.shape.email.safeParse(
+              value.fieldApi.state.value
+            )
+            return result.success ? undefined : result.error.issues[0].message
+          },
+        }}
         children={(field) => (
-          <TextInput
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChangeText={field.handleChange}
-            placeholder="Email"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-            textContentType="emailAddress"
-            className="border border-gray-300 rounded-md px-4 py-2 mb-3"
-          />
+          <View>
+            <TextInput
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChangeText={field.handleChange}
+              placeholder="Email"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+              className="border border-gray-300 rounded-md px-4 py-2 mb-3"
+            />
+
+            {field.state.meta.errors ? (
+              <Text className="text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </Text>
+            ) : null}
+          </View>
         )}
       />
 
       <form.Field
         name="password"
+        validators={{
+          onChangeAsyncDebounceMs: 500,
+          onChangeAsync: (value) => {
+            const result = signInSchema.shape.password.safeParse(
+              value.fieldApi.state.value
+            )
+            return result.success ? undefined : result.error.issues[0].message
+          },
+        }}
         children={(field) => (
-          <TextInput
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChangeText={field.handleChange}
-            placeholder="Password"
-            secureTextEntry
-            autoComplete="password"
-            textContentType="password"
-            className="border border-gray-300 rounded-md px-4 py-2 mb-3"
-          />
+          <View>
+            <TextInput
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChangeText={field.handleChange}
+              placeholder="Password"
+              secureTextEntry
+              autoComplete="password"
+              textContentType="password"
+              className="border border-gray-300 rounded-md px-4 py-2 mb-3"
+            />
+            {field.state.meta.errors ? (
+              <Text className="text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </Text>
+            ) : null}
+          </View>
         )}
       />
 
@@ -92,7 +125,7 @@ export default function SignIn() {
         children={([canSubmit, isSubmitting]) => (
           <TouchableOpacity
             onPress={() => form.handleSubmit()}
-            // disabled={!canSubmit || isSubmitting}
+            disabled={!canSubmit || isSubmitting}
             className="bg-[#007bff] p-4 rounded-md items-center font-bold text-xl"
           >
             {isSubmitting ? (

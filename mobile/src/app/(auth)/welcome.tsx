@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
             <Text className="text-black font-bold">Sign In</Text>
           </Pressable>
         </Link>
-        <Link href="/sign-in" asChild>
+        <Link href="/sign-up" asChild>
           <Pressable className="justify-center items-center border border-black rounded-lg p-2 mr-5">
             <Text className="text-black font-bold">Sign Up</Text>
           </Pressable>
