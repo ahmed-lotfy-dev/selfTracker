@@ -22,7 +22,6 @@ type WorkoutLogProps = {
 
 export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const { setSelectedWorkout } = useWorkoutActions()
   const year = new Date(item.createdAt).getFullYear()
   const month = new Date(item.createdAt).getMonth() + 1

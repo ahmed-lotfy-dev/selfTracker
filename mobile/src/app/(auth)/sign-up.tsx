@@ -29,7 +29,6 @@ export default function SignUp() {
     defaultValues: { name: "", email: "", password: "" },
     onSubmit: async ({ value }) => {
       const response = await signUp(value.name, value.email, value.password)
-      console.log({ response })
       if (response.error) {
         setErrorMessage(response.error.message || "")
       }
@@ -55,7 +54,6 @@ export default function SignUp() {
             const result = signUpSchema.shape.name.safeParse(
               value.fieldApi.state.value
             )
-            console.log(result)
             return result.success ? undefined : result.error.issues[0].message
           },
         }}

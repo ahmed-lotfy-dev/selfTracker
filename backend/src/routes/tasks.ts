@@ -17,7 +17,7 @@ tasksRouter.get("/", async (c) => {
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
   try {
-    const cacheKey = `user:${user.id}:tasks`
+    const cacheKey = `tasks:${user.id}`
 
     const cached = await redisClient.get(cacheKey)
     if (cached) {
@@ -25,7 +25,7 @@ tasksRouter.get("/", async (c) => {
     }
 
     const userTasks = await db.query.tasks.findMany({
-      where: eq(tasks.userId, user.userId as string),
+      where: eq(tasks.userId, user.id as string),
     })
     if (!userTasks) {
       return c.json({ message: "No tasks found" }, 404)
@@ -50,7 +50,7 @@ tasksRouter.post("/", async (c) => {
     await c.req.json()
 
   try {
-    const cacheKey = `user:${user.id}:tasks`
+    const cacheKey = `tasks:${user.id}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       await redisClient.del(cacheKey)
@@ -93,7 +93,7 @@ tasksRouter.patch("/:id", async (c) => {
     await c.req.json()
 
   try {
-    const cacheKey = `user:${user.id}:tasks`
+    const cacheKey = `tasks:${user.id}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       await redisClient.del(cacheKey)
@@ -104,7 +104,7 @@ tasksRouter.patch("/:id", async (c) => {
       where: eq(tasks.id, id),
     })
 
-    if (!taskExisted || taskExisted.userId !== user.userId) {
+    if (!taskExisted || taskExisted.userId !== user.id) {
       return c.json(
         { success: false, message: "Task not found or unauthorized" },
         404
@@ -147,7 +147,7 @@ tasksRouter.delete("/:id", async (c) => {
   if (!id) return c.json({ message: "Task ID is required" }, 400)
 
   try {
-    const cacheKey = `user:${user.id}:tasks`
+    const cacheKey = `tasks:${user.id}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       await redisClient.del(cacheKey)

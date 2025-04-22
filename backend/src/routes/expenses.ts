@@ -17,7 +17,7 @@ expensesRouter.get("/", async (c) => {
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
   try {
-    const cacheKey = `user:${user.id}:expenses`
+    const cacheKey = `expenses:${user.id}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       return c.json({ success: "true", expenses: JSON.parse(cached) })
@@ -53,7 +53,7 @@ expensesRouter.post("/", async (c) => {
   }
 
   try {
-    const cacheKey = `user:${user.id}:expenses`
+    const cacheKey = `expenses:${user.id}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       await redisClient.del(cacheKey)
@@ -101,7 +101,7 @@ expensesRouter.patch("/:id", async (c) => {
   }
 
   try {
-    const cacheKey = `user:${user.id}:expenses`
+    const cacheKey = `expenses:${user.id}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       await redisClient.del(cacheKey)
@@ -155,7 +155,7 @@ expensesRouter.delete("/:id", async (c) => {
   }
 
   try {
-    const cacheKey = `user:${user.id}:expenses`
+    const cacheKey = `expenses:${user.id}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       await redisClient.del(cacheKey)

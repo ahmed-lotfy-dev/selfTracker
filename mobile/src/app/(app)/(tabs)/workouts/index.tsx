@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from "react"
+import React, { useState } from "react"
 import { View, Text, Pressable, ActivityIndicator } from "react-native"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchAllWorkoutLogs } from "@/src/utils/api/workoutsApi"
@@ -24,6 +24,8 @@ export default function WorkoutScreen() {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    refetch,
+    isRefetching,
     isError,
     error,
   } = useInfiniteQuery({
@@ -36,13 +38,15 @@ export default function WorkoutScreen() {
     refetchOnReconnect: false,
   })
 
-  // if (isLoading) {
-  //   return (
-  //     <View className="flex-1 justify-center items-center">
-  //       <ActivityIndicator size="large" color={COLORS.primary} />
-  //     </View>
-  //   )
-  // }
+  const logs = data?.pages?.flatMap((page) => page) || []
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    )
+  }
 
   if (isError) {
     return (
@@ -51,16 +55,6 @@ export default function WorkoutScreen() {
           Failed to load workouts. Please try again.
         </Text>
         <Text className="text-red-500">{error.message}</Text>
-      </View>
-    )
-  }
-
-  const logs = data?.pages.flatMap((page) => page.workoutLogs) || []
-
-  if (logs.length === 0 && !isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-gray-500">No workout logs available.</Text>
       </View>
     )
   }
@@ -88,29 +82,21 @@ export default function WorkoutScreen() {
 
   const renderContent = () => {
     if (currentView === VIEW_TYPES.CALENDAR) {
-      return (
-        <Suspense
-          fallback={<ActivityIndicator size="large" color={COLORS.primary} />}
-        >
-          <CalendarView />
-        </Suspense>
-      )
+      return <CalendarView />
     }
     if (currentView === VIEW_TYPES.LIST) {
       return (
-        <Suspense
-          fallback={<ActivityIndicator size="large" color={COLORS.primary} />}
-        >
-          <LogList
-            logs={logs}
-            renderItem={({ item }) => (
-              <WorkoutLogItem item={item} path="/workouts" />
-            )}
-            fetchNextPage={fetchNextPage}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-          />
-        </Suspense>
+        <LogList
+          logs={logs}
+          renderItem={({ item }) => (
+            <WorkoutLogItem item={item} path="/workouts" />
+          )}
+          refetch={refetch}
+          isRefetching={isRefetching}
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+        />
       )
     }
   }

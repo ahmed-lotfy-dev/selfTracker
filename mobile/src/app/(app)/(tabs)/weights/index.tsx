@@ -16,6 +16,8 @@ export default function WeightsScreen() {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    refetch,
+    isRefetching,
     isError,
     error,
   } = useInfiniteQuery({
@@ -27,8 +29,8 @@ export default function WeightsScreen() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   })
-  console.log({ data })
-  const logs = data?.pages.flatMap((page) => page.weightLogs) || []
+
+  const logs = data?.pages?.flatMap((page) => page) || []
 
   if (isLoading) {
     return (
@@ -68,6 +70,8 @@ export default function WeightsScreen() {
       <LogList
         logs={logs}
         renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}
+        refetch={refetch}
+        isRefetching={isRefetching}
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}

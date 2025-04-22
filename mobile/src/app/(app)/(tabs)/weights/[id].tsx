@@ -23,8 +23,6 @@ export default function WeightLog() {
       id ? fetchSingleWeightLog(id) : Promise.reject("Invalid ID"),
     enabled: !!id,
   })
-  console.log(weightLog)
-  console.log({ weightLog })
 
   const { deleteMutation, triggerDelete } = useDelete({
     mutationFn: () => deleteWeight(String(weightLog?.id)),

@@ -41,7 +41,6 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     queryFn: fetchAllWorkouts,
   })
 
-  console.log(workouts)
   const { addMutation } = useAdd({
     mutationFn: (workout: WorkoutType) => createWorkout(workout),
     onSuccessInvalidate: [
@@ -68,7 +67,6 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
 
   const form = useForm({
     onSubmit: async ({ value }) => {
-      console.log({ Value: value })
       onFormSubmit({ value })
     },
 

@@ -13,8 +13,6 @@ export const useAuth = () => {
     }
   }, [data?.user, setUser])
 
-  console.log({ "from inside useAuth": user })
-
   const logout = async () => {
     await authClient.signOut()
     refetch()

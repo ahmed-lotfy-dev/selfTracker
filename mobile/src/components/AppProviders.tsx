@@ -2,6 +2,9 @@ import { ReactNode, useMemo, useState } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { persistQueryClient,PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
 interface AppProvidersProps {
   children: ReactNode
 }

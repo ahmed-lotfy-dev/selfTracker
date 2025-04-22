@@ -20,7 +20,9 @@ weightsLogsRouter.get("/", async (c) => {
 
   const { cursor, limit = 10 } = c.req.query()
 
-  const cacheKey = `weightLogs:${user.id}`
+  const cacheKey = `weightLogs:${user.id}:cursor:${
+    cursor || "start"
+  }:limit:${limit}`
   const cached = await redisClient.get(cacheKey)
   if (cached) {
     return c.json({

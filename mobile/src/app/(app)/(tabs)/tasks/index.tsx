@@ -3,7 +3,13 @@ import TaskListItem from "@/src/components/TaskListItem"
 import { fetchAllTasks } from "@/src/utils/api/tasksApi"
 import { useQuery } from "@tanstack/react-query"
 import { TaskType } from "@/src/types/taskType"
-import { ActivityIndicator, Text, View } from "react-native"
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  Text,
+  View,
+} from "react-native"
 import TaskForm from "@/src/components/TaskForm"
 import { COLORS } from "@/src/constants/Colors"
 import AddButton from "@/src/components/AddButton"
@@ -12,6 +18,8 @@ import Header from "@/src/components/Header"
 export default function index() {
   const {
     data: tasks,
+    refetch,
+    isRefetching,
     isLoading,
     isError,
   } = useQuery({
@@ -59,8 +67,11 @@ export default function index() {
       <Header title="Tasks" />
 
       <TaskForm onSubmit={handleTaskSubmit} />
-      <ListItems
-        items={tasks ?? []}
+      <FlatList
+        data={tasks}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+        }
         renderItem={({ item }: { item: TaskType }) => (
           <TaskListItem task={item} onPress={() => console.log("Pressed")} />
         )}

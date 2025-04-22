@@ -34,6 +34,5 @@ export const deleteImage = async (imageLink: string) => {
   const response = await axios.post(`${API_BASE_URL}/api/image/delete`, {
     imageLink,
   })
-  console.log({ response })
   return response.data
 }

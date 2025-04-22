@@ -30,7 +30,6 @@ export default function SignIn() {
     onSubmit: async ({ value }) => {
       const response = await signIn(value.email, value.password)
 
-      console.log({ response })
       if (response.error) {
         setErrorMessage(response.error.message || "")
       }

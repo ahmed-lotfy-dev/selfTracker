@@ -46,7 +46,6 @@ export default function UploadImageBtn() {
           base64: true,
         }
       )
-      console.log("Image selected, starting upload...")
 
       if (user?.image) {
         await deleteImage(user.image)
@@ -67,7 +66,7 @@ export default function UploadImageBtn() {
           },
         }
       )
-      console.log("Image uploaded successfully.")
+
     } catch (error) {
       console.error("Error during image selection or upload:", error)
     }

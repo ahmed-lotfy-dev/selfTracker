@@ -98,7 +98,7 @@ workoutLogsRouter.get("/calendar", async (c) => {
   }
 
   try {
-    const cacheKey = `workoutLogs:calendar:${user.id}`
+    const cacheKey = `workoutLogs:calendar:${year}-${month}:${user.id}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       return c.json({
@@ -112,12 +112,11 @@ workoutLogsRouter.get("/calendar", async (c) => {
 
     const allLogCacheKey = `workoutLogs:${user.id}`
     const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
-    const cachedAllLogs = await redisClient.get(allLogCacheKey)
-    const cachedCalendarLogs = await redisClient.get(allLogCalendarCacheKey)
-    if (allLogCacheKey && cachedAllLogs) {
-      await redisClient.del(allLogCacheKey)
-      await redisClient.del(allLogCacheKey)
-    }
+
+    await Promise.all([
+      redisClient.del(allLogCacheKey),
+      redisClient.del(allLogCalendarCacheKey),
+    ])
 
     const logs = await db
       .select({
@@ -231,12 +230,11 @@ workoutLogsRouter.post("/", async (c) => {
   try {
     const allLogCacheKey = `workoutLogs:${user.id}`
     const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
-    const cachedAllLogs = await redisClient.get(allLogCacheKey)
-    const cachedCalendarLogs = await redisClient.get(allLogCalendarCacheKey)
-    if (allLogCacheKey && cachedAllLogs) {
-      await redisClient.del(allLogCacheKey)
-      await redisClient.del(allLogCacheKey)
-    }
+
+    await Promise.all([
+      redisClient.del(allLogCacheKey),
+      redisClient.del(allLogCalendarCacheKey),
+    ])
 
     const [newWorkoutLog] = await db
       .insert(workoutLogs)
@@ -276,12 +274,11 @@ workoutLogsRouter.patch("/:id", async (c) => {
   try {
     const allLogCacheKey = `workoutLogs:${user.id}`
     const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
-    const cachedAllLogs = await redisClient.get(allLogCacheKey)
-    const cachedCalendarLogs = await redisClient.get(allLogCalendarCacheKey)
-    if (allLogCacheKey && cachedAllLogs) {
-      await redisClient.del(allLogCacheKey)
-      await redisClient.del(allLogCacheKey)
-    }
+
+    await Promise.all([
+      redisClient.del(allLogCacheKey),
+      redisClient.del(allLogCalendarCacheKey),
+    ])
 
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
@@ -347,11 +344,13 @@ workoutLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
-    const cacheKey = `workoutLogs:${user.id}`
-    const cached = await redisClient.get(cacheKey)
-    if (cached) {
-      await redisClient.del(cacheKey)
-    }
+    const allLogCacheKey = `workoutLogs:${user.id}`
+    const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
+
+    await Promise.all([
+      redisClient.del(allLogCacheKey),
+      redisClient.del(allLogCalendarCacheKey),
+    ])
 
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),

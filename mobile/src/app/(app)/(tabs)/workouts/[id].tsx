@@ -22,7 +22,7 @@ export default function WorkoutLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
   const { setSelectedWorkout } = useWorkoutActions()
-  console.log({ id })
+
   const {
     data: workoutLog,
     isLoading,
@@ -33,7 +33,6 @@ export default function WorkoutLog() {
     enabled: !!id,
   })
 
-  console.log({ workoutLog })
   const currentMonth = new Date().getMonth() + 1
   const currentYear = new Date().getFullYear()
 
