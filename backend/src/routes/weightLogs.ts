@@ -2,8 +2,11 @@ import { Hono } from "hono"
 import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
+import { getRedisClient } from "../../lib/redis"
 
 const weightsLogsRouter = new Hono()
+
+const redisClient = await getRedisClient()
 
 weightsLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -16,6 +19,16 @@ weightsLogsRouter.get("/", async (c) => {
   }
 
   const { cursor, limit = 10 } = c.req.query()
+
+  const cacheKey = `weightLogs:${user.id}`
+  const cached = await redisClient.get(cacheKey)
+  if (cached) {
+    return c.json({
+      success: true,
+      weightLogs: JSON.parse(cached),
+      nextCursor: cursor,
+    })
+  }
 
   try {
     const userWeightLogs = await db
@@ -47,6 +60,8 @@ weightsLogsRouter.get("/", async (c) => {
           ).toISOString()
         : null
 
+    await redisClient.setEx(cacheKey, 36000, JSON.stringify(userWeightLogs))
+
     return c.json({
       success: true,
       weightLogs: userWeightLogs,
@@ -63,6 +78,7 @@ weightsLogsRouter.get("/", async (c) => {
 
 weightsLogsRouter.get("/:id", async (c) => {
   const user = c.get("user" as any)
+  const id = c.req.param("id")
 
   if (!user || !user.id) {
     return c.json(
@@ -71,9 +87,18 @@ weightsLogsRouter.get("/:id", async (c) => {
     )
   }
 
-  const id = c.req.param("id")
   if (!id) {
     return c.json({ success: false, message: "ID is required" }, 400)
+  }
+
+  const cacheKey = `weightLogs:${user.id}:${id}`
+  const cached = await redisClient.get(cacheKey)
+
+  if (cached) {
+    return c.json({
+      success: true,
+      weightLog: JSON.parse(cached),
+    })
   }
 
   try {
@@ -89,6 +114,12 @@ weightsLogsRouter.get("/:id", async (c) => {
       })
       .from(weightLogs)
       .where(eq(weightLogs.id, id))
+
+    if (!singleWeightLog) {
+      return c.json({ success: false, message: "Weight log not found" }, 404)
+    }
+
+    await redisClient.setEx(cacheKey, 36000, JSON.stringify(singleWeightLog))
 
     return c.json({ success: true, weightLog: singleWeightLog })
   } catch (error) {
@@ -109,7 +140,14 @@ weightsLogsRouter.post("/", async (c) => {
 
   const { weight, mood, energy, notes, createdAt } = await c.req.json()
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
+
   try {
+    const cacheKey = `weightLogs:${user.id}`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      await redisClient.del(cacheKey)
+    }
+
     const [newWeightLog] = await db
       .insert(weightLogs)
       .values({
@@ -145,8 +183,14 @@ weightsLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
+    const cacheKey = `weightLogs:${user.id}`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      await redisClient.del(cacheKey)
+    }
+
     const existingLog = await db.query.weightLogs.findFirst({
-      where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),
+      where: eq(weightLogs.id, id),
     })
 
     if (!existingLog) {
@@ -202,6 +246,20 @@ weightsLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
+    const cacheKey = `weightLogs:${user.id}`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      await redisClient.del(cacheKey)
+    }
+
+    const existingLog = await db.query.weightLogs.findFirst({
+      where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),
+    })
+
+    if (!existingLog) {
+      return c.json({ success: false, message: "Weight log not found" }, 404)
+    }
+
     const deletedWeight = await db
       .delete(weightLogs)
       .where(eq(weightLogs.id, id))

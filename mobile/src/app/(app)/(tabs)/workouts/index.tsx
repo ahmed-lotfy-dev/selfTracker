@@ -36,13 +36,13 @@ export default function WorkoutScreen() {
     refetchOnReconnect: false,
   })
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    )
-  }
+  // if (isLoading) {
+  //   return (
+  //     <View className="flex-1 justify-center items-center">
+  //       <ActivityIndicator size="large" color={COLORS.primary} />
+  //     </View>
+  //   )
+  // }
 
   if (isError) {
     return (

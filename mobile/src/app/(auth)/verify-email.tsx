@@ -18,7 +18,7 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     if (user?.emailVerified) {
-      router.replace("/(home)")
+      router.replace("/")
     }
   }, [user])
 

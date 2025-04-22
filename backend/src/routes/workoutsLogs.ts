@@ -1,10 +1,13 @@
 import { Hono } from "hono"
-import {  workoutLogs, workouts } from "../db/schema"
+import { workoutLogs, workouts } from "../db/schema"
 import { db } from "../db"
 import { eq, desc, lt, and, not, gte, lte } from "drizzle-orm"
 import { verify } from "hono/jwt"
+import { getRedisClient } from "../../lib/redis"
 
 const workoutLogsRouter = new Hono()
+
+const redisClient = await getRedisClient()
 
 workoutLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -17,6 +20,16 @@ workoutLogsRouter.get("/", async (c) => {
   }
 
   const { cursor, limit = 10 } = c.req.query()
+
+  const cacheKey = `workoutLogs:${user.id}`
+  const cachedData = await redisClient.get(cacheKey)
+  if (cachedData) {
+    return c.json({
+      success: true,
+      weightLogs: JSON.parse(cachedData),
+      nextCursor: cursor,
+    })
+  }
 
   try {
     const userWorkoutLogs = await db
@@ -48,6 +61,8 @@ workoutLogsRouter.get("/", async (c) => {
           ).toISOString()
         : null
 
+    await redisClient.setEx(cacheKey, 36000, JSON.stringify(userWorkoutLogs))
+
     return c.json({
       success: true,
       workoutLogs: userWorkoutLogs,
@@ -57,48 +72,6 @@ workoutLogsRouter.get("/", async (c) => {
     console.error("Error fetching workout logs:", error)
     return c.json(
       { success: false, message: "Failed to fetch workout logs" },
-      500
-    )
-  }
-})
-
-workoutLogsRouter.get("/calendar/:date", async (c) => {
-  const user = c.get("user" as any)
-  if (!user || !user.id) {
-    return c.json({ success: false, message: "Unauthorized" }, 401)
-  }
-
-  const date = c.req.param("date")
-  if (!date) {
-    return c.json({ success: false, message: "Date is required" }, 400)
-  }
-
-  try {
-    const startDate = new Date(date + "T00:00:00.000Z")
-    const endDate = new Date(date + "T23:59:59.999Z")
-
-    const [dateLog] = await db
-      .select({
-        id: workoutLogs.id,
-        userId: workoutLogs.userId,
-        workoutId: workoutLogs.workoutId,
-        workoutName: workouts.name,
-        notes: workoutLogs.notes,
-        createdAt: workoutLogs.createdAt,
-      })
-      .from(workoutLogs)
-      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
-      .where(
-        and(
-          gte(workoutLogs.createdAt, startDate),
-          lte(workoutLogs.createdAt, endDate)
-        )
-      )
-    return c.json({ success: true, logs: dateLog })
-  } catch (error) {
-    console.error("Error fetching calendar logs:", error)
-    return c.json(
-      { success: false, message: "Failed to fetch calendar logs" },
       500
     )
   }
@@ -125,11 +98,26 @@ workoutLogsRouter.get("/calendar", async (c) => {
   }
 
   try {
+    const cacheKey = `workoutLogs:calendar:${user.id}`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      return c.json({
+        success: true,
+        logs: JSON.parse(cached),
+      })
+    }
+
     const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
     const endDate = new Date(year, month, 0, 23, 59, 59, 999)
 
-    console.log("Start Date:", startDate.toISOString())
-    console.log("End Date:", endDate.toISOString())
+    const allLogCacheKey = `workoutLogs:${user.id}`
+    const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
+    const cachedAllLogs = await redisClient.get(allLogCacheKey)
+    const cachedCalendarLogs = await redisClient.get(allLogCalendarCacheKey)
+    if (allLogCacheKey && cachedAllLogs) {
+      await redisClient.del(allLogCacheKey)
+      await redisClient.del(allLogCacheKey)
+    }
 
     const logs = await db
       .select({
@@ -162,6 +150,8 @@ workoutLogsRouter.get("/calendar", async (c) => {
       groupedLogs[date].push(log)
     })
 
+    await redisClient.setEx(cacheKey, 36000, JSON.stringify(groupedLogs))
+
     return c.json({ success: true, logs: groupedLogs })
   } catch (error) {
     console.error("Error fetching calendar logs:", error)
@@ -174,6 +164,7 @@ workoutLogsRouter.get("/calendar", async (c) => {
 
 workoutLogsRouter.get("/:id", async (c) => {
   const user = c.get("user" as any)
+  const id = c.req.param("id")
 
   if (!user || !user.id) {
     return c.json(
@@ -181,10 +172,19 @@ workoutLogsRouter.get("/:id", async (c) => {
       401
     )
   }
-  const id = c.req.param("id")
   if (!id) {
     return c.json({ success: false, message: "ID is required" }, 400)
   }
+
+  const cacheKey = `workoutLogs:${user.id}:${id}`
+  const cached = await redisClient.get(cacheKey)
+  if (cached) {
+    return c.json({
+      success: true,
+      logs: JSON.parse(cached),
+    })
+  }
+
   try {
     const [singleWorkout] = await db
       .select({
@@ -199,6 +199,11 @@ workoutLogsRouter.get("/:id", async (c) => {
       .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
       .where(eq(workoutLogs.id, id))
 
+    if (!singleWorkout) {
+      return c.json({ success: false, message: "Workout log not found" }, 404)
+    }
+
+    await redisClient.setEx(cacheKey, 36000, JSON.stringify(singleWorkout))
     return c.json({ success: true, logs: singleWorkout })
   } catch (error) {
     console.error("JWT Verification Error:", error)
@@ -224,6 +229,15 @@ workoutLogsRouter.post("/", async (c) => {
   }
 
   try {
+    const allLogCacheKey = `workoutLogs:${user.id}`
+    const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
+    const cachedAllLogs = await redisClient.get(allLogCacheKey)
+    const cachedCalendarLogs = await redisClient.get(allLogCalendarCacheKey)
+    if (allLogCacheKey && cachedAllLogs) {
+      await redisClient.del(allLogCacheKey)
+      await redisClient.del(allLogCacheKey)
+    }
+
     const [newWorkoutLog] = await db
       .insert(workoutLogs)
       .values({
@@ -260,6 +274,15 @@ workoutLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
+    const allLogCacheKey = `workoutLogs:${user.id}`
+    const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
+    const cachedAllLogs = await redisClient.get(allLogCacheKey)
+    const cachedCalendarLogs = await redisClient.get(allLogCalendarCacheKey)
+    if (allLogCacheKey && cachedAllLogs) {
+      await redisClient.del(allLogCacheKey)
+      await redisClient.del(allLogCacheKey)
+    }
+
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
     })
@@ -324,10 +347,24 @@ workoutLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
+    const cacheKey = `workoutLogs:${user.id}`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      await redisClient.del(cacheKey)
+    }
+
+    const existingLog = await db.query.workoutLogs.findFirst({
+      where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
+    })
+
+    if (!existingLog) {
+      return c.json({ success: false, message: "Workout log not found" }, 404)
+    }
+
     const deletedWorkout = await db
       .delete(workoutLogs)
-      .where(eq(workoutLogs.id, id))
-      .returning({ deletedId: workoutLogs.id })
+      .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)))
+      .returning()
 
     if (deletedWorkout.length === 0) {
       return c.json({ success: false, message: "Workout log not found" }, 404)

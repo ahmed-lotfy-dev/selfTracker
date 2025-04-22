@@ -37,7 +37,7 @@ export default function SignIn() {
       if (response.data) {
         await setAccessToken(response.data.token)
         setUser(response.data.user)
-        router.replace("/(home)")
+        router.replace("/")
       }
     },
   })

@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
 import { tasks, userGoals, users, weightLogs, workoutLogs } from "../db/schema"
-import { and, eq, gte, lte, sql,  desc } from "drizzle-orm"
+import { and, eq, gte, lte, sql, desc } from "drizzle-orm"
 import { sign, verify, decode } from "hono/jwt"
 import { sendEmail } from "../../lib/email.js"
 import { hash, compare } from "bcryptjs"
@@ -12,8 +12,11 @@ import {
 } from "../../lib/utility.js"
 import { count } from "console"
 import { addDays, endOfWeek, startOfWeek, subDays } from "date-fns"
+import { getRedisClient } from "../../lib/redis"
 
 const userRouter = new Hono()
+
+const redisClient = await getRedisClient()
 
 userRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -27,26 +30,37 @@ userRouter.get("/", async (c) => {
 
 userRouter.get("/me/home", async (c) => {
   const user = c.get("user" as any)
+  if (!user) return c.json({ message: "Unauthorized" }, 401)
 
-  // Week starts on Saturday (index 6 in date-fns)
   const start = startOfWeek(new Date(), { weekStartsOn: 6 })
   const end = endOfWeek(new Date(), { weekStartsOn: 6 })
+  const cacheKey = `user:${
+    user.id
+  }:homedata:${start.toISOString()}:${end.toISOString()}`
 
-  console.log("Start of the week:", start.toISOString())
-  console.log("End of the week:", end.toISOString())
+  try {
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      return c.json({
+        success: true,
+        collectedUserHomeData: JSON.parse(cached),
+      })
+    }
+  } catch (err) {
+    console.error("Redis GET error:", err)
+  }
 
+  // Fallback to DB if no cache or error
   const weeklyWorkoutCount = await db
     .select({ count: sql<number>`count(*)` })
     .from(workoutLogs)
     .where(
       and(
         eq(workoutLogs.userId, user.id),
-        gte(workoutLogs.createdAt, new Date(start)),
-        lte(workoutLogs.createdAt, new Date(end))
+        gte(workoutLogs.createdAt, start),
+        lte(workoutLogs.createdAt, end)
       )
     )
-
-  console.log("Workouts count this week:", weeklyWorkoutCount[0]?.count)
 
   const weeklyTaskCount = await db
     .select({ count: sql<number>`count(*)` })
@@ -54,39 +68,47 @@ userRouter.get("/me/home", async (c) => {
     .where(
       and(
         eq(tasks.userId, user.id),
-        gte(tasks.createdAt, new Date(start)),
-        lte(tasks.createdAt, new Date(end))
+        gte(tasks.createdAt, start),
+        lte(tasks.createdAt, end)
       )
     )
 
-  const [userGoalWeight] = await db
+  const [goal] = await db
     .select()
     .from(userGoals)
     .where(eq(userGoals.userId, user.id))
-
-  const [userLatestWeight] = await db
+  const [latestWeight] = await db
     .select()
     .from(weightLogs)
     .where(eq(weightLogs.userId, user.id))
     .orderBy(desc(weightLogs.createdAt))
     .limit(1)
 
-  const weightDelta = userGoalWeight
-    ? userLatestWeight && userGoalWeight
-      ? Number(userLatestWeight.weight) - Number(userGoalWeight.targetValue)
+  const weightDelta =
+    goal?.targetValue && latestWeight?.weight
+      ? Number(latestWeight.weight) - Number(goal.targetValue)
       : null
-    : null
 
-  return c.json({
-    success: true,
-    responseObject: {
-      workoutCount: weeklyWorkoutCount[0]?.count || 0,
-      taskCount: weeklyTaskCount[0]?.count || 0,
-      goalWeight: userGoalWeight.targetValue || "goal not set yet",
-      userLatestWeight: userLatestWeight.weight || "no weight log yet",
-      weightDelta,
-    },
-  })
+  const collectedUserHomeData = {
+    workoutCount: Number(weeklyWorkoutCount[0]?.count || 0),
+    taskCount: Number(weeklyTaskCount[0]?.count || 0),
+    goalWeight: goal?.targetValue?.toString() ?? "goal not set yet",
+    userLatestWeight: latestWeight?.weight?.toString() ?? "no weight log yet",
+    weightDelta,
+  }
+
+  try {
+    await redisClient.setEx(
+      cacheKey,
+      3600,
+      JSON.stringify(collectedUserHomeData)
+    )
+    console.log("Cached user home data")
+  } catch (err) {
+    console.error("Redis SET error:", err)
+  }
+
+  return c.json({ success: true, collectedUserHomeData })
 })
 
 userRouter.patch("/:id", async (c) => {

@@ -11,6 +11,7 @@ export default function ListItems({ items, renderItem }: LogListProps) {
       data={items}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
+      showsVerticalScrollIndicator={false}
     />
   )
 }

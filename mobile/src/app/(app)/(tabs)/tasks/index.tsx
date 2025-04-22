@@ -6,6 +6,8 @@ import { TaskType } from "@/src/types/taskType"
 import { ActivityIndicator, Text, View } from "react-native"
 import TaskForm from "@/src/components/TaskForm"
 import { COLORS } from "@/src/constants/Colors"
+import AddButton from "@/src/components/AddButton"
+import Header from "@/src/components/Header"
 
 export default function index() {
   const {
@@ -17,11 +19,18 @@ export default function index() {
     queryFn: () => fetchAllTasks(),
   })
 
-  if (isLoading) return <ActivityIndicator color={COLORS.primary} />
+  if (isLoading)
+    return (
+      <ActivityIndicator
+        className="flex-1"
+        size={"large"}
+        color={COLORS.primary}
+      />
+    )
 
   if (isError) {
     return (
-      <View className="p-4">
+      <View className="flex-1 justify-center items-center p-4">
         <Text className="text-red-500">
           Error loading tasks. Please try again later.
         </Text>
@@ -29,7 +38,13 @@ export default function index() {
     )
   }
 
-  if (tasks.length === 0) return <Text>No tasks found</Text>
+  if (tasks.length === 0)
+    return (
+      <View className="flex-1 justify-start items-center">
+        <Header title="Tasks" />
+        <Text className="text-lg font-bold">No tasks available</Text>
+      </View>
+    )
 
   const handleTaskSubmit = (taskData: {
     title: string
@@ -40,7 +55,9 @@ export default function index() {
   }
 
   return (
-    <View className="flex-1 justify-center items-center">
+    <View className="flex-1 justify-center items-center relative">
+      <Header title="Tasks" />
+
       <TaskForm onSubmit={handleTaskSubmit} />
       <ListItems
         items={tasks ?? []}
@@ -48,6 +65,7 @@ export default function index() {
           <TaskListItem task={item} onPress={() => console.log("Pressed")} />
         )}
       />
+      <AddButton path="/tasks" />
     </View>
   )
 }

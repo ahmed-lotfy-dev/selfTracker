@@ -25,6 +25,7 @@
     "hono": "^4.7.2",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.3",
+    "redis": "^4.7.0",
     "resend": "^4.1.2"
   },
   "devDependencies": {

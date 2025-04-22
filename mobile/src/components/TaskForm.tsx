@@ -42,7 +42,7 @@ export default function TaskForm({
   }
 
   return (
-    <View className="p-3 bg-zinc-300 m-2">
+    <View className="flex-1 justify-center items-center p-3 bg-zinc-300 m-2">
       {error ? <Text className="text-red-500 mb-2">{error}</Text> : null}
 
       <View className="mb-1">

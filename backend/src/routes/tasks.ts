@@ -4,25 +4,58 @@ import { tasks, users } from "../db/schema.js"
 import { eq } from "drizzle-orm"
 import { sign } from "hono/jwt"
 import { hash } from "bcryptjs"
+import { getRedisClient } from "../../lib/redis.js"
 
 const tasksRouter = new Hono()
+
+const redisClient = await getRedisClient()
 
 // Get all Tasks
 tasksRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
-  const userTasks = await db.query.tasks.findMany({
-    where: eq(tasks.userId, user.userId as string),
-  })
-  return c.json({ success: "true", tasks: userTasks })
+  if (!user) return c.json({ message: "Unauthorized" }, 401)
+
+  try {
+    const cacheKey = `user:${user.id}:tasks`
+
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      return c.json({ success: "true", tasks: JSON.parse(cached) })
+    }
+
+    const userTasks = await db.query.tasks.findMany({
+      where: eq(tasks.userId, user.userId as string),
+    })
+    if (!userTasks) {
+      return c.json({ message: "No tasks found" }, 404)
+    }
+
+    await redisClient.setEx(cacheKey, 36000, JSON.stringify(userTasks))
+
+    return c.json({ success: "true", tasks: userTasks })
+  } catch (error) {
+    console.error("Error fetching tasks:", error)
+    return c.json({ success: "false", message: "Error fetching tasks" }, 500)
+  }
 })
 
 // Create Task
 tasksRouter.post("/", async (c) => {
   const user = c.get("user" as any)
+
+  if (!user) return c.json({ message: "Unauthorized" }, 401)
+
   const { title, description, completed, dueDate, category } =
     await c.req.json()
+
   try {
+    const cacheKey = `user:${user.id}:tasks`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      await redisClient.del(cacheKey)
+    }
+
     const [createdTask] = await db
       .insert(tasks)
       .values({
@@ -50,14 +83,20 @@ tasksRouter.post("/", async (c) => {
 tasksRouter.patch("/:id", async (c) => {
   const user = c.get("user" as any)
 
+  if (!user) return c.json({ message: "Unauthorized" }, 401)
+
   const { id } = c.req.param()
+
+  if (!id) return c.json({ message: "Task ID is required" }, 400)
 
   const { title, description, completed, dueDate, category } =
     await c.req.json()
 
   try {
-    if (!id) {
-      return c.json({ success: false, message: "Task ID is required" }, 400)
+    const cacheKey = `user:${user.id}:tasks`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      await redisClient.del(cacheKey)
     }
 
     // Check if task exists and belongs to the user
@@ -101,15 +140,31 @@ tasksRouter.patch("/:id", async (c) => {
 tasksRouter.delete("/:id", async (c) => {
   const user = c.get("user" as any)
 
+  if (!user) return c.json({ message: "Unauthorized" }, 401)
+
   const id = c.req.param("id")
 
-  const [deletedTask] = await db.delete(tasks).where(eq(tasks.id, id)).returning()
+  if (!id) return c.json({ message: "Task ID is required" }, 400)
 
-  if (!deletedTask) {
-    return c.json({ message: "Task not found" }, 404)
+  try {
+    const cacheKey = `user:${user.id}:tasks`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      await redisClient.del(cacheKey)
+    }
+    const [deletedTask] = await db
+      .delete(tasks)
+      .where(eq(tasks.id, id))
+      .returning()
+
+    if (!deletedTask) {
+      return c.json({ message: "Task not found" }, 404)
+    }
+    return c.json({ message: "Task deleted successfully" })
+  } catch (error) {
+    console.error("Error deleting Task:", error)
+    return c.json({ success: false, message: "Error deleting Task" }, 500)
   }
-
-  return c.json({ message: "Task deleted successfully" })
 })
 
 export default tasksRouter
