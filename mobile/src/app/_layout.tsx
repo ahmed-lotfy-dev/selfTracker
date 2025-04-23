@@ -17,8 +17,6 @@ import { useAuth } from "@/src/hooks/useAuth"
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const router = useRouter()
-
   useOnlineManager()
   useAppState(onAppStateChange)
 

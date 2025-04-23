@@ -13,9 +13,10 @@ export const fetchAllWeightLogs = async (
       limit,
     },
   })
+  console.log(response)
   return {
-    logs: response.data.weightLogs ?? [],
-    nextCursor: response.data.nextCursor,
+    logs: response.data.weightLogs,
+    nextCursor: response.data.nextCursor || "",
   }
 }
 

@@ -27,7 +27,7 @@ weightsLogsRouter.get("/", async (c) => {
     return c.json({
       success: true,
       weightLogs: JSON.parse(cached),
-      nextCursor: cursor || null,
+      nextCursor: cursor,
     })
   }
 
@@ -66,7 +66,7 @@ weightsLogsRouter.get("/", async (c) => {
     return c.json({
       success: true,
       weightLogs: userWeightLogs,
-      nextCursor: cursor || null,
+      nextCursor: cursor,
     })
   } catch (error) {
     console.error("Error fetching weight logs:", error)

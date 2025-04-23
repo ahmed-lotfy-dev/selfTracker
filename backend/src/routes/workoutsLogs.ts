@@ -27,7 +27,7 @@ workoutLogsRouter.get("/", async (c) => {
     return c.json({
       success: true,
       workoutLogs: JSON.parse(cachedData),
-      nextCursor: cursor || null,
+      nextCursor: cursor,
     })
   }
 

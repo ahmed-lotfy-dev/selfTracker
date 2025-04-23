@@ -1,12 +1,5 @@
-import {
-  Text,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
-  Platform,
-} from "react-native"
-import { Route, useRouter, Link } from "expo-router"
-import { useQueryClient } from "@tanstack/react-query"
+import { Text, TouchableOpacity, View } from "react-native"
+import { useRouter, Link } from "expo-router"
 import DateDisplay from "../DateDisplay"
 import { deleteWorkout } from "@/src/utils/api/workoutsApi"
 import { useDelete } from "@/src/hooks/useDelete"
@@ -23,8 +16,6 @@ type WorkoutLogProps = {
 export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
   const router = useRouter()
   const { setSelectedWorkout } = useWorkoutActions()
-  const year = new Date(item.createdAt).getFullYear()
-  const month = new Date(item.createdAt).getMonth() + 1
 
   const { deleteMutation, triggerDelete } = useDelete({
     mutationFn: () => deleteWorkout(String(item.id)),

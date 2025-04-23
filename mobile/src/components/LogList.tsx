@@ -19,7 +19,6 @@ export default function LogList({
   refetch,
   isRefetching,
 }: LogListProps) {
-  console.log(logs)
   return (
     <FlatList
       data={logs}

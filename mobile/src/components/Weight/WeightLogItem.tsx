@@ -30,7 +30,6 @@ type WeightLogProps = {
 
 export default function WeightLogItem({ item, path }: WeightLogProps) {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const { setSelectedWeight } = useWeightLogStore()
   const { deleteMutation, triggerDelete } = useDelete({
     mutationFn: () => deleteWeight(String(item?.id)),
@@ -39,7 +38,6 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
     onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
   })
 
-  console.log(item)
   return (
     <View
       className="flex-row justify-center items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 mt-5"

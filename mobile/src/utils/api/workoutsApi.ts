@@ -13,8 +13,8 @@ export const fetchAllWorkoutLogs = async (
     },
   })
   return {
-    logs: response.data.workoutLogs ?? [],
-    nextCursor: response.data.nextCursor,
+    logs: response.data.workoutLogs,
+    nextCursor: response.data.nextCursor || "",
   }
 }
 
