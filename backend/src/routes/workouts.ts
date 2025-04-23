@@ -1,11 +1,10 @@
 import { Hono } from "hono"
 import { db } from "../db"
 import { workouts } from "../db/schema"
-import { getRedisClient } from "../../lib/redis"
+import { redisClient } from "../../lib/redis"
 
 const workoutsRouter = new Hono()
 
-const redisClient = await getRedisClient()
 
 workoutsRouter.get("/", async (c) => {
   const user = c.get("user" as any)

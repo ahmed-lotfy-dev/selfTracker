@@ -2,11 +2,10 @@ import { Hono } from "hono"
 import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
-import { getRedisClient } from "../../lib/redis"
+import { redisClient } from "../../lib/redis"
 
 const weightsLogsRouter = new Hono()
 
-const redisClient = await getRedisClient()
 
 weightsLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -24,6 +23,7 @@ weightsLogsRouter.get("/", async (c) => {
     cursor || "start"
   }:limit:${limit}`
   const cached = await redisClient.get(cacheKey)
+
   if (cached) {
     return c.json({
       success: true,

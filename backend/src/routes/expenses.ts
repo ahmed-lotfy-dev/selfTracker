@@ -4,11 +4,9 @@ import { expenses, users } from "../db/schema.js"
 import { eq } from "drizzle-orm"
 import { sign } from "hono/jwt"
 import { hash } from "bcryptjs"
-import { getRedisClient } from "../../lib/redis.js"
+import { redisClient } from "../../lib/redis.js"
 
 const expensesRouter = new Hono()
-
-const redisClient = await getRedisClient()
 
 // Get all Expenses
 expensesRouter.get("/", async (c) => {

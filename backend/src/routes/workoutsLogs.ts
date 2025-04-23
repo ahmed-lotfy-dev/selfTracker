@@ -3,11 +3,9 @@ import { workoutLogs, workouts } from "../db/schema"
 import { db } from "../db"
 import { eq, desc, lt, and, not, gte, lte } from "drizzle-orm"
 import { verify } from "hono/jwt"
-import { getRedisClient } from "../../lib/redis"
+import { redisClient } from "../../lib/redis"
 
 const workoutLogsRouter = new Hono()
-
-const redisClient = await getRedisClient()
 
 workoutLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -21,7 +19,9 @@ workoutLogsRouter.get("/", async (c) => {
 
   const { cursor, limit = 10 } = c.req.query()
 
-  const cacheKey = `workoutLogs:${user.id}`
+  const cacheKey = `workoutLogs:${user.id}:limit:${limit}:cursor:${
+    cursor || "start"
+  }`
   const cachedData = await redisClient.get(cacheKey)
   if (cachedData) {
     return c.json({

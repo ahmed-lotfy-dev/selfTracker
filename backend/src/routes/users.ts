@@ -12,11 +12,9 @@ import {
 } from "../../lib/utility.js"
 import { count } from "console"
 import { addDays, endOfWeek, startOfWeek, subDays } from "date-fns"
-import { getRedisClient } from "../../lib/redis"
+import { redisClient } from "../../lib/redis"
 
 const userRouter = new Hono()
-
-const redisClient = await getRedisClient()
 
 userRouter.get("/", async (c) => {
   const user = c.get("user" as any)
