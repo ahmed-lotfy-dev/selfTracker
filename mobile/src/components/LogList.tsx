@@ -19,6 +19,7 @@ export default function LogList({
   refetch,
   isRefetching,
 }: LogListProps) {
+  console.log(logs)
   return (
     <FlatList
       data={logs}
@@ -31,7 +32,7 @@ export default function LogList({
         />
       }
       showsVerticalScrollIndicator={false}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.id.toString()}
       onEndReached={() => {
         if (hasNextPage && !isFetchingNextPage) {
           fetchNextPage()

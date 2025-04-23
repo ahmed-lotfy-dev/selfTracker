@@ -30,8 +30,10 @@ export default function WeightsScreen() {
     refetchOnReconnect: false,
   })
 
-  const logs = data?.pages?.flatMap((page) => page) || []
+const logs = data?.pages.flatMap((page) => page.logs) ?? []
 
+  console.log({ data })
+  console.log({ logs })
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center">

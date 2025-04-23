@@ -13,7 +13,10 @@ export const fetchAllWeightLogs = async (
       limit,
     },
   })
-  return response.data.weightLogs
+  return {
+    logs: response.data.weightLogs ?? [],
+    nextCursor: response.data.nextCursor,
+  }
 }
 
 export const fetchSingleWeightLog = async (weightId: string) => {

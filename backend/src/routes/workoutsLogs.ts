@@ -19,15 +19,15 @@ workoutLogsRouter.get("/", async (c) => {
 
   const { cursor, limit = 10 } = c.req.query()
 
-  const cacheKey = `workoutLogs:${user.id}:limit:${limit}:cursor:${
+  const cacheKey = `workoutLogs:${user.id}:limit-${limit}:cursor-${
     cursor || "start"
   }`
   const cachedData = await redisClient.get(cacheKey)
   if (cachedData) {
     return c.json({
       success: true,
-      weightLogs: JSON.parse(cachedData),
-      nextCursor: cursor,
+      workoutLogs: JSON.parse(cachedData),
+      nextCursor: cursor || null,
     })
   }
 

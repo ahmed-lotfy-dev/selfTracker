@@ -38,7 +38,10 @@ export default function WorkoutScreen() {
     refetchOnReconnect: false,
   })
 
-  const logs = data?.pages?.flatMap((page) => page) || []
+  const logs = data?.pages.flatMap((page) => page.logs) ?? []
+
+  console.log({ data })
+  console.log({ logs })
 
   if (isLoading) {
     return (

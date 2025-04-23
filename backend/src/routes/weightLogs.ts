@@ -6,7 +6,6 @@ import { redisClient } from "../../lib/redis"
 
 const weightsLogsRouter = new Hono()
 
-
 weightsLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
@@ -28,7 +27,7 @@ weightsLogsRouter.get("/", async (c) => {
     return c.json({
       success: true,
       weightLogs: JSON.parse(cached),
-      nextCursor: cursor,
+      nextCursor: cursor || null,
     })
   }
 
@@ -67,7 +66,7 @@ weightsLogsRouter.get("/", async (c) => {
     return c.json({
       success: true,
       weightLogs: userWeightLogs,
-      nextCursor,
+      nextCursor: cursor || null,
     })
   } catch (error) {
     console.error("Error fetching weight logs:", error)

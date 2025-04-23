@@ -12,7 +12,10 @@ export const fetchAllWorkoutLogs = async (
       limit,
     },
   })
-  return response.data.workoutLogs
+  return {
+    logs: response.data.workoutLogs ?? [],
+    nextCursor: response.data.nextCursor,
+  }
 }
 
 export async function fetchWorkoutLogsByMonth(year: number, month: number) {
