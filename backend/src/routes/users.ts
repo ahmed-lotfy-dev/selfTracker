@@ -27,22 +27,12 @@ userRouter.get("/me/home", async (c) => {
 
   const start = startOfWeek(new Date(), { weekStartsOn: 6 })
   const end = endOfWeek(new Date(), { weekStartsOn: 6 })
-  const cacheKey = `user:${
-    user.id
-  }:homedata-${start.toISOString()}-${end.toISOString()}`
-
-  // try {
-  //   const cached = await redisClient.get(cacheKey)
-  //   if (cached) {
-  //     return c.json({
-  //       success: true,
-  //       collectedUserHomeData: JSON.parse(cached),
-  //     })
-  //   }
-  // } catch (err) {
-  //   console.error("Redis GET error:", err)
-  // }
-
+  const version = (await redisClient.get(`workoutLogs:${user.id}:v`)) || "1"
+  const listCacheKey = `userHomeData:${user.id}:v${version}:list`
+  const cached = await redisClient.get(listCacheKey)
+  if (cached) {
+    return c.json(JSON.parse(cached))
+  }
   const [weeklyWorkoutCount] = await db
     .select({ count: sql<number>`count(*)` })
     .from(workoutLogs)
@@ -137,18 +127,16 @@ userRouter.get("/me/home", async (c) => {
     weightDelta,
   }
 
-  try {
-    await redisClient.setEx(
-      cacheKey,
-      3600,
-      JSON.stringify(collectedUserHomeData)
-    )
-    console.log("Cached user home data")
-  } catch (err) {
-    console.error("Redis SET error:", err)
+  const responseData = {
+    success: true,
+    collectedUserHomeData,
   }
 
-  return c.json({ success: true, collectedUserHomeData })
+  await redisClient.set(listCacheKey, JSON.stringify(responseData), {
+    EX: 3600,
+  })
+
+  return c.json(responseData)
 })
 
 userRouter.patch("/:id", async (c) => {
@@ -180,8 +168,6 @@ userRouter.patch("/:id", async (c) => {
     if ("currency" in body) updatedFields.currency = body.currency
     if ("createdAt" in body) updatedFields.createdAt = new Date(body.createdAt)
     if ("updatedAt" in body) updatedFields.updatedAt = new Date(body.updatedAt)
-
-    console.log({ updatedFields })
 
     if (Object.keys(updatedFields).length === 0) {
       return c.json({ success: false, message: "No fields to update" }, 400)

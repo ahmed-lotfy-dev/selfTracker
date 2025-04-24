@@ -51,9 +51,7 @@ getNextPageParam: (lastPage) => lastPage.nextCursor,
       </View>
     )
   }
-  console.log({logs})
-  console.log({data})
-  console.log(hasNextPage)
+
   if (logs.length === 0 && !isLoading) {
     return (
       <View className="flex-1 justify-center items-center">

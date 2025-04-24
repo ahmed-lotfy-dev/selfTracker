@@ -28,7 +28,10 @@ workoutLogsRouter.get("/", async (c) => {
 
   const cached = await redisClient.get(listCacheKey)
   if (cached) {
-    return c.json(JSON.parse(cached))
+    const parsedCache = JSON.parse(cached)
+    if (parsedCache.nextCursor) {
+      return c.json(parsedCache)
+    }
   }
 
   try {
@@ -70,8 +73,8 @@ workoutLogsRouter.get("/", async (c) => {
       nextCursor,
     }
     await redisClient.set(listCacheKey, JSON.stringify(responseData), {
-      EX: 3600, 
-    }) 
+      EX: 3600,
+    })
     return c.json(responseData)
   } catch (error) {
     console.error("Error fetching workout logs:", error)

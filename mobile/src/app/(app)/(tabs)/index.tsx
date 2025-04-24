@@ -1,9 +1,14 @@
-import { View, Text, ActivityIndicator } from "react-native"
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+} from "react-native"
 import { useQuery } from "@tanstack/react-query"
 import { fetchUserHomeInfo } from "@/src/utils/api/userApi"
 import { MaterialIcons } from "@expo/vector-icons"
-
-
+import Card from "@/src/components/Home/Card"
 
 export default function HomeScreen() {
   const {
@@ -11,10 +16,11 @@ export default function HomeScreen() {
     isLoading,
     isError,
     refetch,
+    isRefetching,
   } = useQuery({
     queryKey: ["userHomeData"],
     queryFn: fetchUserHomeInfo,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
   })
 
   if (isLoading) {
@@ -39,7 +45,6 @@ export default function HomeScreen() {
     )
   }
 
-  console.log(userData)
   const {
     weeklyWorkoutCount,
     monthlyWorkoutCount,
@@ -54,10 +59,19 @@ export default function HomeScreen() {
   const isProgressGood = weightDelta <= 0 // Negative delta is good (losing weight)
 
   return (
-    <View className="flex-1 p-4">
+    <ScrollView
+      refreshControl={
+        <RefreshControl onRefresh={refetch} refreshing={isRefetching} />
+      }
+      className="flex-1 p-4"
+    >
       <Text className="text-2xl font-bold mb-6">Dashboard</Text>
 
       {/* Activity Card */}
+      <Card
+        title={"Activity"}
+        route={"/workouts"}
+      />
       <View className="bg-white rounded-xl p-4 shadow-sm mb-4">
         <Text className="text-lg font-semibold mb-3">Activity</Text>
         <View className="flex-row justify-between">
@@ -134,6 +148,6 @@ export default function HomeScreen() {
           </Text>
         </View>
       </View>
-    </View>
+    </ScrollView>
   )
 }

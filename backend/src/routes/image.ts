@@ -53,7 +53,6 @@ imageRouter.post("/upload", async (c) => {
 imageRouter.post("/delete", async (c) => {
   const body = await c.req.json()
   const imageLink = body["imageLink"]
-  console.log(imageLink)
 
   if (!imageLink) {
     return c.json({ message: "No image link provided" }, 400)
@@ -69,7 +68,6 @@ imageRouter.post("/delete", async (c) => {
   if (imageLink) {
     try {
       const results = await cloudinary.uploader.destroy(publicId)
-      console.log(results)
       return c.json(results)
     } catch (error) {
       console.error(error)

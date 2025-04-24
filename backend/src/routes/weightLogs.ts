@@ -27,7 +27,10 @@ weightsLogsRouter.get("/", async (c) => {
 
   const cached = await redisClient.get(listCacheKey)
   if (cached) {
-    return c.json(JSON.parse(cached))
+    const parsedCache = JSON.parse(cached)
+    if (parsedCache.nextCursor) {
+      return c.json(parsedCache)
+    }
   }
 
   try {
@@ -58,7 +61,7 @@ weightsLogsRouter.get("/", async (c) => {
       .execute()
 
     const hasMore = userWeightLogs.length > limitNumber
-    const items = userWeightLogs.slice(0, -1)
+    const items = hasMore ? userWeightLogs.slice(0, -1) : userWeightLogs
     const nextCursor = hasMore
       ? items[items.length - 1]?.createdAt?.toISOString()
       : null
@@ -68,7 +71,7 @@ weightsLogsRouter.get("/", async (c) => {
       weightLogs: items,
       nextCursor,
     }
-    await redisClient.setEx(listCacheKey, 3600, JSON.stringify(responseData))  
+    await redisClient.setEx(listCacheKey, 3600, JSON.stringify(responseData))
 
     return c.json(responseData)
   } catch (error) {
