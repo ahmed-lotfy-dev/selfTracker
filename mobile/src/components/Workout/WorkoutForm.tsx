@@ -31,9 +31,6 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const [showDate, setShowDate] = useState(false)
   const { user } = useAuth()
 
-  const year = new Date().getFullYear()
-  const month = new Date().getMonth() + 1
-
   const selectedWorkout = useSelectedWorkout()
 
   const { data: workouts } = useQuery({

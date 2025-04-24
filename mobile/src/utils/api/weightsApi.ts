@@ -1,22 +1,26 @@
 import { WeightType } from "@/src/types/weightType"
 import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
-import axios from "axios"
 
 export const fetchAllWeightLogs = async (
-  cursor: string | null = null,
-  limit: number = 10
+  cursor: string | null,
+  limit: number
 ) => {
-  const response = await axiosInstance.get(`${API_BASE_URL}/api/weightLogs`, {
-    params: {
-      cursor,
-      limit,
-    },
-  })
-  console.log(response)
-  return {
-    logs: response.data.weightLogs,
-    nextCursor: response.data.nextCursor || "",
+  try {
+    const response = await axiosInstance.get(`${API_BASE_URL}/api/weightLogs`, {
+      params: {
+        cursor,
+        limit,
+      },
+    })
+
+    return {
+      logs: response.data.weightLogs,
+      nextCursor: response.data.nextCursor || null,
+    }
+  } catch (error) {
+    console.error("Error fetching weight logs:", error)
+    throw error
   }
 }
 
@@ -26,6 +30,7 @@ export const fetchSingleWeightLog = async (weightId: string) => {
   )
   return response.data.weightLog
 }
+
 export const createWeight = async (weight: any) => {
   const response = await axiosInstance.post(
     `${API_BASE_URL}/api/weightLogs`,

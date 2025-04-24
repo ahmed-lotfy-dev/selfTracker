@@ -3,18 +3,26 @@ import { API_BASE_URL } from "./config"
 import axiosInstance from "./axiosInstane"
 
 export const fetchAllWorkoutLogs = async (
-  cursor: string | null = null,
-  limit: number = 10
+  cursor: string | null,
+  limit: number
 ) => {
-  const response = await axiosInstance.get(`${API_BASE_URL}/api/workoutLogs`, {
-    params: {
-      cursor,
-      limit,
-    },
-  })
-  return {
-    logs: response.data.workoutLogs,
-    nextCursor: response.data.nextCursor || "",
+  try {
+    const response = await axiosInstance.get(
+      `${API_BASE_URL}/api/workoutLogs`,
+      {
+        params: {
+          cursor,
+          limit,
+        },
+      }
+    )
+    return {
+      logs: response.data.workoutLogs,
+      nextCursor: response.data.nextCursor || null,
+    }
+  } catch (error) {
+    console.error("Error fetching weight logs:", error)
+    throw error
   }
 }
 

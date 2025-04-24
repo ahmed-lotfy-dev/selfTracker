@@ -1,4 +1,3 @@
-// TODO FORM VALIDAITON WITH TANSTACK FORM
 import React, { useState } from "react"
 import {
   Text,

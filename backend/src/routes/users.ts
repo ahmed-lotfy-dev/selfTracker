@@ -1,20 +1,15 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
 import { tasks, userGoals, users, weightLogs, workoutLogs } from "../db/schema"
-import { and, eq, gte, lte, sql, desc } from "drizzle-orm"
-import { sign, verify, decode } from "hono/jwt"
-import { sendEmail } from "../../lib/email.js"
-import { hash, compare } from "bcryptjs"
-import { randomBytes } from "crypto"
-import {
-  findUserByEmail,
-  generateVerificationToken,
-} from "../../lib/utility.js"
-import { count } from "console"
-import { addDays, endOfWeek, startOfWeek, subDays } from "date-fns"
-import { redisClient } from "../../lib/redis"
+import { and, eq, gte, lte, sql, desc, or } from "drizzle-orm"
+import { decode } from "hono/jwt"
+
+import { endOfWeek, startOfWeek, startOfMonth, endOfMonth } from "date-fns"
+import { getRedisClient } from "../../lib/redis.js"
 
 const userRouter = new Hono()
+
+const redisClient = getRedisClient()
 
 userRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -34,22 +29,21 @@ userRouter.get("/me/home", async (c) => {
   const end = endOfWeek(new Date(), { weekStartsOn: 6 })
   const cacheKey = `user:${
     user.id
-  }:homedata:${start.toISOString()}:${end.toISOString()}`
+  }:homedata-${start.toISOString()}-${end.toISOString()}`
 
-  try {
-    const cached = await redisClient.get(cacheKey)
-    if (cached) {
-      return c.json({
-        success: true,
-        collectedUserHomeData: JSON.parse(cached),
-      })
-    }
-  } catch (err) {
-    console.error("Redis GET error:", err)
-  }
+  // try {
+  //   const cached = await redisClient.get(cacheKey)
+  //   if (cached) {
+  //     return c.json({
+  //       success: true,
+  //       collectedUserHomeData: JSON.parse(cached),
+  //     })
+  //   }
+  // } catch (err) {
+  //   console.error("Redis GET error:", err)
+  // }
 
-  // Fallback to DB if no cache or error
-  const weeklyWorkoutCount = await db
+  const [weeklyWorkoutCount] = await db
     .select({ count: sql<number>`count(*)` })
     .from(workoutLogs)
     .where(
@@ -59,28 +53,74 @@ userRouter.get("/me/home", async (c) => {
         lte(workoutLogs.createdAt, end)
       )
     )
+    .prepare("weeklyWorkoutCount")
+    .execute()
 
-  const weeklyTaskCount = await db
+  const [monthlyWorkoutCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(workoutLogs)
+    .where(
+      and(
+        eq(workoutLogs.userId, user.id),
+        gte(workoutLogs.createdAt, startOfMonth(new Date())),
+        lte(workoutLogs.createdAt, endOfMonth(new Date()))
+      )
+    )
+    .prepare("monthlyWorkoutCount")
+    .execute()
+
+  const [weeklyComplletedTaskCount] = await db
     .select({ count: sql<number>`count(*)` })
     .from(tasks)
     .where(
       and(
+        eq(tasks.completed, true),
         eq(tasks.userId, user.id),
         gte(tasks.createdAt, start),
         lte(tasks.createdAt, end)
       )
     )
+    .prepare("weeklyComplletedTaskCount")
+    .execute()
+
+  const [weeklyPendingTaskCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.completed, false),
+        eq(tasks.userId, user.id),
+        gte(tasks.createdAt, start),
+        lte(tasks.createdAt, end)
+      )
+    )
+    .prepare("weeklyPendingTaskCount")
+    .execute()
 
   const [goal] = await db
     .select()
     .from(userGoals)
-    .where(eq(userGoals.userId, user.id))
+    .where(
+      and(
+        eq(userGoals.userId, user.id),
+        or(
+          eq(userGoals.goalType, "loseWeight"),
+          eq(userGoals.goalType, "gainWeight")
+        )
+      )
+    )
+    .prepare("goal")
+    .execute()
+
   const [latestWeight] = await db
     .select()
     .from(weightLogs)
     .where(eq(weightLogs.userId, user.id))
     .orderBy(desc(weightLogs.createdAt))
     .limit(1)
+    .prepare("latestWeight")
+    .execute()
+  console.log(latestWeight)
 
   const weightDelta =
     goal?.targetValue && latestWeight?.weight
@@ -88,10 +128,12 @@ userRouter.get("/me/home", async (c) => {
       : null
 
   const collectedUserHomeData = {
-    workoutCount: Number(weeklyWorkoutCount[0]?.count || 0),
-    taskCount: Number(weeklyTaskCount[0]?.count || 0),
-    goalWeight: goal?.targetValue?.toString() ?? "goal not set yet",
-    userLatestWeight: latestWeight?.weight?.toString() ?? "no weight log yet",
+    weeklyWorkoutCount: weeklyWorkoutCount.count,
+    monthlyWorkoutCount: monthlyWorkoutCount.count,
+    weeklyComplletedTaskCount: weeklyComplletedTaskCount.count || 0,
+    weeklyPendingTaskCount: weeklyPendingTaskCount.count || 0,
+    goalWeight: goal?.targetValue ?? "goal not set yet",
+    userLatestWeight: latestWeight?.weight ?? "no weight log yet",
     weightDelta,
   }
 

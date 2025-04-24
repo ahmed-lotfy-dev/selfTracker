@@ -3,9 +3,11 @@ import { workoutLogs, workouts } from "../db/schema"
 import { db } from "../db"
 import { eq, desc, lt, and, not, gte, lte } from "drizzle-orm"
 import { verify } from "hono/jwt"
-import { redisClient } from "../../lib/redis"
+import { getRedisClient } from "../../lib/redis"
 
 const workoutLogsRouter = new Hono()
+
+const redisClient = getRedisClient()
 
 workoutLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -19,19 +21,19 @@ workoutLogsRouter.get("/", async (c) => {
 
   const { cursor, limit = 10 } = c.req.query()
 
-  const cacheKey = `workoutLogs:${user.id}:limit-${limit}:cursor-${
-    cursor || "start"
-  }`
-  const cachedData = await redisClient.get(cacheKey)
-  if (cachedData) {
-    return c.json({
-      success: true,
-      workoutLogs: JSON.parse(cachedData),
-      nextCursor: cursor,
-    })
+  const version = (await redisClient.get(`workoutLogs:${user.id}:v`)) || "1"
+  const listCacheKey = `workoutLogs:${user.id}:v${version}:list:${
+    cursor ?? "first"
+  }:${limit}`
+
+  const cached = await redisClient.get(listCacheKey)
+  if (cached) {
+    return c.json(JSON.parse(cached))
   }
 
   try {
+    const limitNumber = Number(limit) || 10
+
     const userWorkoutLogs = await db
       .select({
         id: workoutLogs.id,
@@ -52,22 +54,25 @@ workoutLogsRouter.get("/", async (c) => {
           : eq(workoutLogs.userId, user.id as string)
       )
       .orderBy(desc(workoutLogs.createdAt))
-      .limit(Number(limit))
+      .limit(limitNumber + 1)
+      .prepare("userWorkoutLogs")
+      .execute()
 
-    const nextCursor =
-      userWorkoutLogs.length > 0
-        ? new Date(
-            userWorkoutLogs[userWorkoutLogs.length - 1].createdAt ?? new Date()
-          ).toISOString()
-        : null
+    const hasMore = userWorkoutLogs.length > limitNumber
+    const items = hasMore ? userWorkoutLogs.slice(0, -1) : userWorkoutLogs
+    const nextCursor = hasMore
+      ? items[items.length - 1]?.createdAt?.toISOString()
+      : null
 
-    await redisClient.setEx(cacheKey, 36000, JSON.stringify(userWorkoutLogs))
-
-    return c.json({
+    const responseData = {
       success: true,
-      workoutLogs: userWorkoutLogs,
+      workoutLogs: items,
       nextCursor,
-    })
+    }
+    await redisClient.set(listCacheKey, JSON.stringify(responseData), {
+      EX: 3600, 
+    }) 
+    return c.json(responseData)
   } catch (error) {
     console.error("Error fetching workout logs:", error)
     return c.json(
@@ -98,25 +103,11 @@ workoutLogsRouter.get("/calendar", async (c) => {
   }
 
   try {
-    const cacheKey = `workoutLogs:calendar:${year}-${month}:${user.id}`
-    const cached = await redisClient.get(cacheKey)
-    if (cached) {
-      return c.json({
-        success: true,
-        logs: JSON.parse(cached),
-      })
-    }
-
     const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
     const endDate = new Date(year, month, 0, 23, 59, 59, 999)
 
     const allLogCacheKey = `workoutLogs:${user.id}`
     const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
-
-    await Promise.all([
-      redisClient.del(allLogCacheKey),
-      redisClient.del(allLogCalendarCacheKey),
-    ])
 
     const logs = await db
       .select({
@@ -149,8 +140,6 @@ workoutLogsRouter.get("/calendar", async (c) => {
       groupedLogs[date].push(log)
     })
 
-    await redisClient.setEx(cacheKey, 36000, JSON.stringify(groupedLogs))
-
     return c.json({ success: true, logs: groupedLogs })
   } catch (error) {
     console.error("Error fetching calendar logs:", error)
@@ -175,15 +164,6 @@ workoutLogsRouter.get("/:id", async (c) => {
     return c.json({ success: false, message: "ID is required" }, 400)
   }
 
-  const cacheKey = `workoutLogs:${user.id}:${id}`
-  const cached = await redisClient.get(cacheKey)
-  if (cached) {
-    return c.json({
-      success: true,
-      logs: JSON.parse(cached),
-    })
-  }
-
   try {
     const [singleWorkout] = await db
       .select({
@@ -201,8 +181,6 @@ workoutLogsRouter.get("/:id", async (c) => {
     if (!singleWorkout) {
       return c.json({ success: false, message: "Workout log not found" }, 404)
     }
-
-    await redisClient.setEx(cacheKey, 36000, JSON.stringify(singleWorkout))
     return c.json({ success: true, logs: singleWorkout })
   } catch (error) {
     console.error("JWT Verification Error:", error)
@@ -228,13 +206,7 @@ workoutLogsRouter.post("/", async (c) => {
   }
 
   try {
-    const allLogCacheKey = `workoutLogs:${user.id}`
-    const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
-
-    await Promise.all([
-      redisClient.del(allLogCacheKey),
-      redisClient.del(allLogCalendarCacheKey),
-    ])
+    await redisClient.incr(`workoutLogs:${user.id}:v`)
 
     const [newWorkoutLog] = await db
       .insert(workoutLogs)
@@ -272,13 +244,7 @@ workoutLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
-    const allLogCacheKey = `workoutLogs:${user.id}`
-    const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
-
-    await Promise.all([
-      redisClient.del(allLogCacheKey),
-      redisClient.del(allLogCalendarCacheKey),
-    ])
+    await redisClient.incr(`workoutLogs:${user.id}:v`)
 
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
@@ -344,13 +310,7 @@ workoutLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
-    const allLogCacheKey = `workoutLogs:${user.id}`
-    const allLogCalendarCacheKey = `workoutLogs:calendar:${user.id}`
-
-    await Promise.all([
-      redisClient.del(allLogCacheKey),
-      redisClient.del(allLogCalendarCacheKey),
-    ])
+    await redisClient.incr(`workoutLogs:${user.id}:v`)
 
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),

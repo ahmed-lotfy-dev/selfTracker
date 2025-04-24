@@ -1,7 +1,6 @@
 import { db } from "../src/db/index.js"
 import { eq } from "drizzle-orm"
 import { sign } from "jsonwebtoken"
-import { refreshTokens, users } from "../src/db/schema"
 
 interface TokenPayload {
   id: string
@@ -36,16 +35,4 @@ export function generateVerificationToken(userId: string) {
     },
     process.env.JWT_SECRET!
   )
-}
-
-export async function findUserByEmail(email: string) {
-  return db.query.users.findFirst({
-    where: eq(users.email, email),
-  })
-}
-
-export async function findUserById(id: string) {
-  return db.query.users.findFirst({
-    where: eq(users.id, id),
-  })
 }

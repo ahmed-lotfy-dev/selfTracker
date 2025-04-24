@@ -3,7 +3,7 @@ import { FlatList, ActivityIndicator, RefreshControl } from "react-native"
 interface LogListProps {
   logs: any[]
   renderItem: ({ item }: { item: any }) => JSX.Element
-  fetchNextPage: () => void
+  fetchNextPage: () => Promise<any>
   hasNextPage: boolean
   isFetchingNextPage: boolean
   refetch: () => void
@@ -19,6 +19,7 @@ export default function LogList({
   refetch,
   isRefetching,
 }: LogListProps) {
+  console.log(logs)
   return (
     <FlatList
       data={logs}
@@ -31,7 +32,7 @@ export default function LogList({
         />
       }
       showsVerticalScrollIndicator={false}
-      keyExtractor={(item) => item.id.toString()}
+      keyExtractor={(item) => item.id}
       onEndReached={() => {
         if (hasNextPage && !isFetchingNextPage) {
           fetchNextPage()

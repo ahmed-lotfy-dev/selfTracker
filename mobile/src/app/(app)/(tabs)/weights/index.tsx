@@ -23,11 +23,8 @@ export default function WeightsScreen() {
   } = useInfiniteQuery({
     queryKey: ["weightLogs"],
     queryFn: ({ pageParam }) => fetchAllWeightLogs(pageParam, limit),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
   })
 
   const logs = data?.pages.flatMap((page) => page.logs) ?? []
@@ -54,7 +51,9 @@ export default function WeightsScreen() {
       </View>
     )
   }
-
+  console.log({logs})
+  console.log({data})
+  console.log(hasNextPage)
   if (logs.length === 0 && !isLoading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -63,6 +62,7 @@ export default function WeightsScreen() {
       </View>
     )
   }
+
   return (
     <View className="flex-1 p-4 justify-center relative">
       <Header title="Weight Logs" />
