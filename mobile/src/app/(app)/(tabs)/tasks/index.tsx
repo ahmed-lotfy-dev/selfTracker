@@ -1,8 +1,4 @@
-import ListItems from "@/src/components/ListItems"
-import TaskListItem from "@/src/components/TaskListItem"
-import { fetchAllTasks } from "@/src/utils/api/tasksApi"
 import { useQuery } from "@tanstack/react-query"
-import { TaskType } from "@/src/types/taskType"
 import {
   ActivityIndicator,
   FlatList,
@@ -10,12 +6,15 @@ import {
   Text,
   View,
 } from "react-native"
-import TaskForm from "@/src/components/TaskForm"
-import { COLORS } from "@/src/constants/Colors"
-import AddButton from "@/src/components/AddButton"
 import Header from "@/src/components/Header"
+import TaskForm from "@/src/components/Task/TaskForm"
+import TaskListItem from "@/src/components/Task/TaskListItem"
+import AddButton from "@/src/components/Buttons/AddButton"
+import { COLORS } from "@/src/constants/Colors"
+import { fetchAllTasks } from "@/src/utils/api/tasksApi"
+import { TaskType } from "@/src/types/taskType"
 
-export default function index() {
+export default function TaskScreen() {
   const {
     data: tasks,
     refetch,
@@ -27,56 +26,50 @@ export default function index() {
     queryFn: () => fetchAllTasks(),
   })
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <ActivityIndicator
         className="flex-1"
-        size={"large"}
+        size="large"
         color={COLORS.primary}
       />
     )
+  }
 
   if (isError) {
     return (
       <View className="flex-1 justify-center items-center p-4">
-        <Text className="text-red-500">
+        <Text className="text-red-500 text-center">
           Error loading tasks. Please try again later.
         </Text>
       </View>
     )
   }
 
-  if (tasks.length === 0)
-    return (
-      <View className="flex-1 justify-start items-center">
-        <Header title="Tasks" />
-        <Text className="text-lg font-bold">No tasks available</Text>
-      </View>
-    )
-
-  const handleTaskSubmit = (taskData: {
-    title: string
-    description?: string
-  }) => {
-    console.log("Submitting task:", taskData)
-    // Call API or update state here
-  }
-
   return (
-    <View className="flex-1 justify-center items-center relative">
+    <View className=" px-10 pt-3">
       <Header title="Tasks" />
+      <TaskForm />
 
-      <TaskForm onSubmit={handleTaskSubmit} />
-      <FlatList
-        data={tasks}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-        }
-        renderItem={({ item }: { item: TaskType }) => (
-          <TaskListItem task={item} onPress={() => console.log("Pressed")} />
-        )}
-      />
-      <AddButton path="/tasks" />
+      {tasks && tasks.length === 0 ? (
+        <View className="mt-4 items-center">
+          <Text className="text-gray-700 font-medium">
+            No tasks available, add one!
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          className="flex-1 justify-center items-center"
+          data={tasks}
+          keyExtractor={(item) => item.id.toString()}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+          }
+          renderItem={({ item }: { item: TaskType }) => (
+            <TaskListItem task={item} />
+          )}
+        />
+      )}
     </View>
   )
 }

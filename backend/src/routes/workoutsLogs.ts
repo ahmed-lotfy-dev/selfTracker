@@ -4,7 +4,7 @@ import { db } from "../db"
 import { eq, desc, lt, and, not, gte, lte } from "drizzle-orm"
 import { verify } from "hono/jwt"
 import { getRedisClient } from "../../lib/redis"
-import { clearLogsCache } from "../../lib/utility"
+import { clearCache } from "../../lib/utility"
 
 const workoutLogsRouter = new Hono()
 
@@ -69,7 +69,7 @@ workoutLogsRouter.get("/", async (c) => {
       workoutLogs: items,
       nextCursor,
     }
-    
+
     await redisClient.set(cacheKey, JSON.stringify(responseData), {
       EX: 3600,
     })
@@ -214,8 +214,9 @@ workoutLogsRouter.post("/", async (c) => {
   }
 
   try {
-    await clearLogsCache(user.id, "workoutLogs:list")
-    await clearLogsCache(user.id, "workoutLogs:calendar")
+    await clearCache(user.id, "workoutLogs:list")
+    await clearCache(user.id, "workoutLogs:calendar")
+    await clearCache(user.id, `userHomeData`)
 
     const [newWorkoutLog] = await db
       .insert(workoutLogs)
@@ -253,8 +254,9 @@ workoutLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
-    await clearLogsCache(user.id, "workoutLogs:list")
-    await clearLogsCache(user.id, "workoutLogs:calendar")
+    await clearCache(user.id, "workoutLogs:list")
+    await clearCache(user.id, "workoutLogs:calendar")
+    await clearCache(user.id, `userHomeData`)
 
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
@@ -320,8 +322,9 @@ workoutLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
-    await clearLogsCache(user.id, "workoutLogs:list")
-    await clearLogsCache(user.id, "workoutLogs:calendar")
+    await clearCache(user.id, "workoutLogs:list")
+    await clearCache(user.id, "workoutLogs:calendar")
+    await clearCache(user.id, `userHomeData`)
 
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),

@@ -3,8 +3,8 @@ import { useRouter, Link } from "expo-router"
 import DateDisplay from "../DateDisplay"
 import { deleteWorkout } from "@/src/utils/api/workoutsApi"
 import { useDelete } from "@/src/hooks/useDelete"
-import DeleteButton from "../DeleteButton"
-import EditButton from "../EditButton"
+import DeleteButton from "../Buttons/DeleteButton"
+import EditButton from "../Buttons/EditButton"
 import { WorkoutLogType } from "@/src/types/workoutLogType"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
 
@@ -28,8 +28,8 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
   })
 
   return (
-    <View className="flex-1 flex-row items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3">
-      <View className="flex-1 flex-row">
+    <View className="flex-row justify-between items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 mt-5">
+      <View className="flex-row">
         <Link href={`/workouts/${item.id}`} asChild>
           <TouchableOpacity className="flex-1">
             <Text className="text-xl font-bold mb-3">{item.workoutName}</Text>
@@ -40,7 +40,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
         </Link>
       </View>
 
-      <View className="flex-1 flex-row gap-5">
+      <View className="flex-row gap-5">
         <EditButton
           onPress={() => {
             setSelectedWorkout(item)

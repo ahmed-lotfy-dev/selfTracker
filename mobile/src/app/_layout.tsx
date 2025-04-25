@@ -11,7 +11,7 @@ import "react-native-reanimated"
 import "react-native-gesture-handler"
 import "@/global.css"
 
-import { AppProviders } from "@/src/components/AppProviders"
+import { AppProviders } from "@/src/components/Provider/AppProviders"
 import { useAuth } from "@/src/hooks/useAuth"
 
 SplashScreen.preventAutoHideAsync()

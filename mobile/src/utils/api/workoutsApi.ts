@@ -1,4 +1,4 @@
-import { WorkoutType } from "@/src/types/workoutLogType"
+import { WorkoutLogType } from "@/src/types/workoutLogType"
 import { API_BASE_URL } from "./config"
 import axiosInstance from "./axiosInstane"
 
@@ -40,7 +40,7 @@ export const fetchSingleWorkout = async (workoutId: string) => {
   return response.data.logs
 }
 
-export const createWorkout = async (workout: WorkoutType) => {
+export const createWorkout = async (workout: WorkoutLogType) => {
   const response = await axiosInstance.post(
     `${API_BASE_URL}/api/workoutLogs`,
     workout
@@ -55,7 +55,7 @@ export const fetchSingleWorkoutByDate = async (date: string) => {
   return response.data.logs
 }
 
-export const updateWorkout = async (workout: any) => {
+export const updateWorkout = async (workout: WorkoutLogType) => {
   const response = await axiosInstance.patch(
     `${API_BASE_URL}/api/workoutLogs/${workout.id}`,
     workout

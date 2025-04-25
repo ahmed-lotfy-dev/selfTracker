@@ -1,16 +1,8 @@
 import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
 
-export const fetchAllTasks = async (
-  cursor: string | null = null,
-  limit: number = 10
-) => {
-  const response = await axiosInstance.get(`${API_BASE_URL}/api/tasks`, {
-    params: {
-      cursor,
-      limit,
-    },
-  })
+export const fetchAllTasks = async () => {
+  const response = await axiosInstance.get(`${API_BASE_URL}/api/tasks`)
   return response.data.tasks
 }
 
@@ -26,10 +18,11 @@ export const createTask = async (task: any) => {
 }
 
 export const updateTask = async (task: any) => {
-  const response = await axiosInstance.put(
+  const response = await axiosInstance.patch(
     `${API_BASE_URL}/api/tasks/${task.id}`,
     task
   )
+  console.log(task)
   return response.data
 }
 

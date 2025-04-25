@@ -3,7 +3,7 @@ import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
 import { getRedisClient } from "../../lib/redis"
-import { clearLogsCache } from "../../lib/utility"
+import { clearCache } from "../../lib/utility"
 
 const weightsLogsRouter = new Hono()
 
@@ -22,7 +22,7 @@ weightsLogsRouter.get("/", async (c) => {
   const { cursor, limit = 10 } = c.req.query()
 
   try {
-    const cacheKey = `workoutLogs:list:${user.id}:${cursor ?? "first"}:${limit}`
+    const cacheKey = `weightLogs:list:${user.id}:${cursor ?? "first"}:${limit}`
     const cached = await redisClient.get(cacheKey)
     if (cached) {
       const parsedCache = JSON.parse(cached)
@@ -68,7 +68,7 @@ weightsLogsRouter.get("/", async (c) => {
       weightLogs: items,
       nextCursor,
     }
-    
+
     await redisClient.set(cacheKey, JSON.stringify(responseData), {
       EX: 3600,
     })
@@ -98,16 +98,6 @@ weightsLogsRouter.get("/:id", async (c) => {
     return c.json({ success: false, message: "ID is required" }, 400)
   }
 
-  const cacheKey = `weightLogs:${user.id}:${id}`
-  const cached = await redisClient.get(cacheKey)
-
-  if (cached) {
-    return c.json({
-      success: true,
-      weightLog: JSON.parse(cached),
-    })
-  }
-
   try {
     const [singleWeightLog] = await db
       .select({
@@ -125,8 +115,6 @@ weightsLogsRouter.get("/:id", async (c) => {
     if (!singleWeightLog) {
       return c.json({ success: false, message: "Weight log not found" }, 404)
     }
-
-    await redisClient.setEx(cacheKey, 36000, JSON.stringify(singleWeightLog))
 
     return c.json({ success: true, weightLog: singleWeightLog })
   } catch (error) {
@@ -149,7 +137,8 @@ weightsLogsRouter.post("/", async (c) => {
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
 
   try {
-    await clearLogsCache(user.id, "weightLogs:list")
+    await clearCache(user.id, "weightLogs:list")
+    await clearCache(user.id, `userHomeData`)
 
     const [newWeightLog] = await db
       .insert(weightLogs)
@@ -186,7 +175,8 @@ weightsLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
-    await clearLogsCache(user.id, "weightLogs:list")
+    await clearCache(user.id, "weightLogs:list")
+    await clearCache(user.id, `userHomeData`)
 
     const existingLog = await db.query.weightLogs.findFirst({
       where: eq(weightLogs.id, id),
@@ -245,7 +235,8 @@ weightsLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
-    await clearLogsCache(user.id, "weightLogs:list")
+    await clearCache(user.id, "weightLogs:list")
+    await clearCache(user.id, `userHomeData`)
 
     const existingLog = await db.query.weightLogs.findFirst({
       where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),

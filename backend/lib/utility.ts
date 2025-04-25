@@ -2,7 +2,7 @@ import { getRedisClient } from "./redis"
 
 const redisClient = getRedisClient()
 
-export const clearLogsCache = async (userId: string, logs: string) => {
+export const clearCache = async (userId: string, logs: string) => {
   const keys = await redisClient.keys(`${logs}:${userId}:*`)
 
   if (keys.length > 0) {

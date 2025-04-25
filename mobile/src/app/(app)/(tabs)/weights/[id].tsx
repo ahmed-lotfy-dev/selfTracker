@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query"
 import { Route, Stack, useLocalSearchParams, useRouter } from "expo-router"
 import DateDisplay from "@/src/components/DateDisplay"
 import { useDelete } from "@/src/hooks/useDelete"
-import DeleteButton from "@/src/components/DeleteButton"
-import EditButton from "@/src/components/EditButton"
+import DeleteButton from "@/src/components/Buttons/DeleteButton"
+import EditButton from "@/src/components/Buttons/EditButton"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
 
 export default function WeightLog() {

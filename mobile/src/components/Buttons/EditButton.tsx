@@ -10,9 +10,9 @@ export default function EditButton({ className, onPress }: EditButtonProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-1 justify-center items-center p-2 rounded-md bg-green-900 ${className}`}
+      className={`justify-center items-center p-2 rounded-md border border-green-500 ${className}`}
     >
-      <FontAwesome name="pencil" size={20} color="white" />
+      <FontAwesome name="pencil" size={18} color="green" />
     </TouchableOpacity>
   )
 }

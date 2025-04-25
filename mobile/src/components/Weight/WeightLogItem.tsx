@@ -10,9 +10,9 @@ import { Link, Route, useRouter } from "expo-router"
 import { useQueryClient } from "@tanstack/react-query"
 import DateDisplay from "../DateDisplay"
 import { deleteWeight } from "@/src/utils/api/weightsApi"
-import DeleteButton from "../DeleteButton"
+import DeleteButton from "../Buttons/DeleteButton"
 import { useDelete } from "@/src/hooks/useDelete"
-import EditButton from "../EditButton"
+import EditButton from "../Buttons/EditButton"
 import { useWeightLogStore } from "@/src/store/useWeightStore"
 import { WeightLogType } from "@/src/types/weightLogType"
 
@@ -33,10 +33,10 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
 
   return (
     <View
-      className="flex-row justify-center items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 mt-5"
+        className="flex-row justify-between items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 mt-5"
       key={item.id}
     >
-      <View className="flex-1 flex-row">
+      <View className="flex-row">
         <Link href={`/weights/${item.id}`} asChild>
           <TouchableOpacity className="flex-1">
             <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
@@ -47,7 +47,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
         </Link>
       </View>
 
-      <View className="flex-1 flex-row gap-3">
+      <View className="flex-row gap-5">
         <EditButton
           onPress={() => {
             setSelectedWeight(item)

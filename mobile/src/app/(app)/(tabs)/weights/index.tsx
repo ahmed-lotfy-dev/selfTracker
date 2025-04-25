@@ -4,7 +4,7 @@ import { fetchAllWeightLogs } from "@/src/utils/api/weightsApi"
 import LogList from "@/src/components/LogList"
 import WeightLogItem from "@/src/components/Weight/WeightLogItem"
 import Header from "@/src/components/Header"
-import AddButton from "@/src/components/AddButton"
+import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
 
 export default function WeightsScreen() {
@@ -23,11 +23,11 @@ export default function WeightsScreen() {
   } = useInfiniteQuery({
     queryKey: ["weightLogs"],
     queryFn: ({ pageParam }) => fetchAllWeightLogs(pageParam, limit),
-getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage) => lastPage?.nextCursor ?? null,
     initialPageParam: null,
   })
 
-  const logs = data?.pages.flatMap((page) => page.logs) ?? []
+  const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
 
   if (isLoading) {
     return (

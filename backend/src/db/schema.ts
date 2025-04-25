@@ -203,7 +203,6 @@ export const tasks = pgTable("task_items", {
     .notNull()
     .references(() => users.id),
   title: text("title").notNull(),
-  description: text("description"),
   completed: boolean("completed").default(false),
   dueDate: timestamp("due_date", { withTimezone: true }),
   category: text("category").default("general"), // "workout", "finance", etc.

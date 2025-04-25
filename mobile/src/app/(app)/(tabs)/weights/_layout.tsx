@@ -1,4 +1,4 @@
-import BackButton from "@/src/components/BackButton"
+import BackButton from "@/src/components/Buttons/BackButton"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Stack, useRouter } from "expo-router"
 

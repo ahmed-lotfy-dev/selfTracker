@@ -17,13 +17,13 @@ export default function DeleteButton({
     <TouchableOpacity
       onPress={onPress}
       disabled={isLoading}
-      className={`flex-1 justify-center items-center
-       p-2 bg-red-500 rounded-md ${className}`}
+      className={`justify-center items-center
+       p-2 rounded-md border border-red-500 ${className}`}
     >
       {isLoading ? (
         <ActivityIndicator size="small" color={COLORS.primary} />
       ) : (
-        <FontAwesome name="trash-o" size={18} color="white" />
+        <FontAwesome name="trash-o" size={20} color="red" />
       )}
     </TouchableOpacity>
   )

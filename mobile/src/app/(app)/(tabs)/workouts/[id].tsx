@@ -13,9 +13,9 @@ import {
   useRouter,
 } from "expo-router"
 import DateDisplay from "@/src/components/DateDisplay"
-import DeleteButton from "@/src/components/DeleteButton"
+import DeleteButton from "@/src/components/Buttons/DeleteButton"
 import { useDelete } from "@/src/hooks/useDelete"
-import EditButton from "@/src/components/EditButton"
+import EditButton from "@/src/components/Buttons/EditButton"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
 
 export default function WorkoutLog() {

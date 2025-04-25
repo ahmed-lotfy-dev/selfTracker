@@ -66,6 +66,11 @@ export default function SignUp() {
               placeholder="Name"
               autoCapitalize="none"
               autoComplete="name"
+              onSubmitEditing={() => {
+                if (form.state.canSubmit) {
+                  form.handleSubmit()
+                }
+              }}
               className="border border-gray-300 rounded-md px-4 py-2 mb-3"
             />
             {field.state.meta.errors ? (
@@ -99,6 +104,11 @@ export default function SignUp() {
               keyboardType="email-address"
               autoComplete="email"
               textContentType="emailAddress"
+              onSubmitEditing={() => {
+                if (form.state.canSubmit) {
+                  form.handleSubmit()
+                }
+              }}
               className="border border-gray-300 rounded-md px-4 py-2 mb-3"
             />
             {field.state.meta.errors ? (
@@ -130,6 +140,11 @@ export default function SignUp() {
               secureTextEntry
               autoComplete="password"
               textContentType="password"
+              onSubmitEditing={() => {
+                if (form.state.canSubmit) {
+                  form.handleSubmit()
+                }
+              }}
               className="border border-gray-300 rounded-md px-4 py-2 mb-3"
             />
             {field.state.meta.errors ? (

@@ -1,4 +1,4 @@
-import { WeightType } from "@/src/types/weightLogType"
+import { WeightLogType } from "@/src/types/weightLogType"
 import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
 
@@ -31,7 +31,7 @@ export const fetchSingleWeightLog = async (weightId: string) => {
   return response.data.weightLog
 }
 
-export const createWeight = async (weight: any) => {
+export const createWeight = async (weight: WeightLogType) => {
   const response = await axiosInstance.post(
     `${API_BASE_URL}/api/weightLogs`,
     weight
@@ -39,7 +39,7 @@ export const createWeight = async (weight: any) => {
   return response.data
 }
 
-export const updateWeight = async (weight: any) => {
+export const updateWeight = async (weight: WeightLogType) => {
   const response = await axiosInstance.patch(
     `${API_BASE_URL}/api/weightLogs/${weight.id}`,
     weight

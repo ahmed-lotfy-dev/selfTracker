@@ -26,8 +26,8 @@ import { useAuth } from "@/src/hooks/useAuth"
 
 export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
-  const [showDate, setShowDate] = useState(false)
   const { user } = useAuth()
+  const [showDate, setShowDate] = useState(false)
   const selectedWeight = useSelectedWeight()
 
   const { addMutation } = useAdd({

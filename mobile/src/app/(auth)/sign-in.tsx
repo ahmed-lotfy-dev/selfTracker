@@ -50,7 +50,7 @@ export default function SignIn() {
       <form.Field
         name="email"
         validators={{
-          onChangeAsyncDebounceMs: 500,
+          onChangeAsyncDebounceMs: 200,
           onChangeAsync: (value) => {
             const result = signInSchema.shape.email.safeParse(
               value.fieldApi.state.value
@@ -69,6 +69,11 @@ export default function SignIn() {
               keyboardType="email-address"
               autoComplete="email"
               textContentType="emailAddress"
+              onSubmitEditing={() => {
+                if (form.state.canSubmit) {
+                  form.handleSubmit()
+                }
+              }}
               className="border border-gray-300 rounded-md px-4 py-2 mb-3"
             />
 
@@ -84,7 +89,7 @@ export default function SignIn() {
       <form.Field
         name="password"
         validators={{
-          onChangeAsyncDebounceMs: 500,
+          onChangeAsyncDebounceMs: 200,
           onChangeAsync: (value) => {
             const result = signInSchema.shape.password.safeParse(
               value.fieldApi.state.value
@@ -102,6 +107,11 @@ export default function SignIn() {
               secureTextEntry
               autoComplete="password"
               textContentType="password"
+              onSubmitEditing={() => {
+                if (form.state.canSubmit) {
+                  form.handleSubmit()
+                }
+              }}
               className="border border-gray-300 rounded-md px-4 py-2 mb-3"
             />
             {field.state.meta.errors ? (

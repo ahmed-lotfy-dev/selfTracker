@@ -6,7 +6,7 @@ import LogList from "@/src/components/LogList"
 import WorkoutLogItem from "@/src/components/Workout/WorkoutLogItem"
 import Header from "@/src/components/Header"
 import CalendarView from "@/src/components/CalendarView"
-import AddButton from "@/src/components/AddButton"
+import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
 
 const VIEW_TYPES = {
@@ -38,7 +38,7 @@ export default function WorkoutScreen() {
     refetchOnReconnect: false,
   })
 
-  const logs = data?.pages.flatMap((page) => page.logs) ?? []
+  const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
 
   if (isLoading) {
     return (
