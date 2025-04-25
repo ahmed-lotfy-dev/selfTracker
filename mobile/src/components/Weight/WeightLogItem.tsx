@@ -14,17 +14,10 @@ import DeleteButton from "../DeleteButton"
 import { useDelete } from "@/src/hooks/useDelete"
 import EditButton from "../EditButton"
 import { useWeightLogStore } from "@/src/store/useWeightStore"
+import { WeightLogType } from "@/src/types/weightLogType"
 
 type WeightLogProps = {
-  item: {
-    id: string
-    userId: string
-    weight: number
-    mood: string
-    energy: string
-    notes: string
-    createdAt: string
-  }
+  item: WeightLogType
   path: string
 }
 
@@ -35,7 +28,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
     mutationFn: () => deleteWeight(String(item?.id)),
     confirmTitle: "Delete Weight",
     confirmMessage: "Are you sure you want to delete this weight log?",
-    onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
+    onSuccessInvalidate: [{ queryKey: ["weightLogs", "weightLogsCalendar"] }],
   })
 
   return (

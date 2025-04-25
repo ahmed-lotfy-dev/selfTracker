@@ -3,6 +3,7 @@ import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
 import { getRedisClient } from "../../lib/redis"
+import { clearLogsCache } from "../../lib/utility"
 
 const weightsLogsRouter = new Hono()
 
@@ -20,20 +21,16 @@ weightsLogsRouter.get("/", async (c) => {
 
   const { cursor, limit = 10 } = c.req.query()
 
-  const version = (await redisClient.get(`weightLogs:${user.id}:v`)) || "1"
-  const listCacheKey = `weightLogs:${user.id}:v${version}:list:${
-    cursor ?? "first"
-  }:${limit}`
-
-  const cached = await redisClient.get(listCacheKey)
-  if (cached) {
-    const parsedCache = JSON.parse(cached)
-    if (parsedCache.nextCursor) {
-      return c.json(parsedCache)
-    }
-  }
-
   try {
+    const cacheKey = `workoutLogs:list:${user.id}:${cursor ?? "first"}:${limit}`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      const parsedCache = JSON.parse(cached)
+      if (parsedCache.nextCursor) {
+        return c.json(parsedCache)
+      }
+    }
+
     const limitNumber = Number(limit) || 10
 
     const userWeightLogs = await db
@@ -71,7 +68,10 @@ weightsLogsRouter.get("/", async (c) => {
       weightLogs: items,
       nextCursor,
     }
-    await redisClient.setEx(listCacheKey, 3600, JSON.stringify(responseData))
+    
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 3600,
+    })
 
     return c.json(responseData)
   } catch (error) {
@@ -149,7 +149,7 @@ weightsLogsRouter.post("/", async (c) => {
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
 
   try {
-    await redisClient.incr(`weightLogs:${user.id}:v`)
+    await clearLogsCache(user.id, "weightLogs:list")
 
     const [newWeightLog] = await db
       .insert(weightLogs)
@@ -186,7 +186,7 @@ weightsLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
-    await redisClient.incr(`weightLogs:${user.id}:v`)
+    await clearLogsCache(user.id, "weightLogs:list")
 
     const existingLog = await db.query.weightLogs.findFirst({
       where: eq(weightLogs.id, id),
@@ -245,7 +245,7 @@ weightsLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
-    await redisClient.incr(`weightLogs:${user.id}:v`)
+    await clearLogsCache(user.id, "weightLogs:list")
 
     const existingLog = await db.query.weightLogs.findFirst({
       where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),

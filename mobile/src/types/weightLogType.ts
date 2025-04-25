@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const WeightSchema = z.object({
+export const WeightLogSchema = z.object({
   id: z.string().optional(),
   userId: z.string(),
   weight: z.number(),
@@ -10,4 +10,4 @@ export const WeightSchema = z.object({
   createdAt: z.string(),
 })
 
-export type WeightType = z.infer<typeof WeightSchema>;
+export type WeightLogType = z.infer<typeof WeightLogSchema>

@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { persist, createJSONStorage } from "zustand/middleware"
-import { WeightType } from "@/src/types/weightType"
+import { WeightType } from "@/src/types/weightLogType"
 
 type WeightLogState = {
   selectedWeight: WeightType | null

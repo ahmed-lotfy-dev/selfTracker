@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { WorkoutType } from "@/src/types/workoutType"
 import { useForm } from "@tanstack/react-form"
 import {
   View,
@@ -23,67 +22,64 @@ import { useSelectedWorkout } from "@/src/store/useWokoutStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { useDirtyFields } from "@/src/hooks/useDirtyFields"
 import { z } from "zod"
-import { WorkoutSchema } from "@/src/types/workoutType"
+import { WorkoutLogType } from "@/src/types/workoutLogType"
+import { WorkoutType, WorkoutSchema } from "@/src/types/workoutType"
 import { useAuth } from "@/src/hooks/useAuth"
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
   const [showDate, setShowDate] = useState(false)
   const { user } = useAuth()
-
   const selectedWorkout = useSelectedWorkout()
 
-  const { data: workouts } = useQuery({
+  const { data } = useQuery({
     queryKey: ["workouts"],
     queryFn: fetchAllWorkouts,
   })
 
+  const workouts = data?.workouts ?? []
+
   const { addMutation } = useAdd({
-    mutationFn: (workout: WorkoutType) => createWorkout(workout),
+    mutationFn: (workout: WorkoutLogType) => createWorkout(workout),
     onSuccessInvalidate: [
       { queryKey: ["workoutLogs"] },
       { queryKey: ["workoutLogsCalendar"] },
     ],
-    onSuccessCallback: () => {
-      router.push("/workouts")
-    },
+    onSuccessCallback: () => router.push("/workouts"),
     onErrorMessage: "Failed to Add Workout Log.",
   })
 
   const { updateMutation } = useUpdate({
-    mutationFn: (workout: WorkoutType) => updateWorkout(workout),
+    mutationFn: (workout: WorkoutLogType) => updateWorkout(workout),
     onSuccessInvalidate: [
       { queryKey: ["workoutLogs"] },
       { queryKey: ["workoutLogsCalendar"] },
     ],
-    onSuccessCallback: () => {
-      router.push("/workouts")
-    },
+    onSuccessCallback: () => router.push("/workouts"),
     onErrorMessage: "Failed to Update Workout Log.",
   })
 
   const form = useForm({
     onSubmit: async ({ value }) => {
-      onFormSubmit({ value })
+      onFormSubmit(value)
     },
-
     defaultValues: {
-      id: selectedWorkout?.id,
-      userId: isEditing ? user?.id : user?.id,
-      workoutId: isEditing ? selectedWorkout?.workoutId : "",
-      workoutName: isEditing ? selectedWorkout?.workoutName : "",
-      notes: isEditing ? selectedWorkout?.notes : "",
+      id: selectedWorkout?.id ?? "",
+      userId: user?.id ?? "",
+      workoutId: isEditing ? selectedWorkout?.workoutId ?? "" : "",
+      workoutName: isEditing ? selectedWorkout?.workoutName ?? "" : "",
+      notes: isEditing ? selectedWorkout?.notes ?? "" : "",
       createdAt: isEditing
         ? dayjs(selectedWorkout?.createdAt).format("YYYY-MM-DD")
-        : dayjs(new Date()).format("YYYY-MM-DD"),
-    } as WorkoutType,
+        : dayjs().format("YYYY-MM-DD"),
+    },
   })
 
   const dirtyFields = useDirtyFields(form)
 
-  const onFormSubmit = async ({ value }: { value: WorkoutType }) => {
+  const onFormSubmit = (value: WorkoutLogType) => {
     const selectedWorkoutItem = workouts?.find(
-      (w: WorkoutType) => w.id === value.workoutId
+      (w: WorkoutLogType) => w.id === value.workoutId
     )
 
     const fullWorkoutData = {
@@ -93,14 +89,12 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
 
     if (isEditing && selectedWorkout) {
       const payload = dirtyFields.reduce(
-        (acc: { [key: string]: any }, name) => {
-          acc[name as keyof WorkoutType] =
-            fullWorkoutData[name as keyof WorkoutType]
+        (acc: any, name) => {
+          acc[name] = fullWorkoutData[name as keyof WorkoutLogType]
           return acc
         },
         { id: selectedWorkout.id, workoutName: selectedWorkoutItem?.name || "" }
       )
-
       updateMutation.mutate(payload)
     } else {
       addMutation.mutate(fullWorkoutData)
@@ -112,175 +106,143 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
-        <form.Field
-          name="userId"
-          children={(field) => (
+        {/* Hidden Fields */}
+        <form.Field name="userId">
+          {(field) => (
             <TextInput
-              className="hidden"
               value={field.state.value}
               onChangeText={field.handleChange}
+              className="hidden"
             />
           )}
-        />
+        </form.Field>
 
-        <form.Field
-          name="workoutName"
-          validators={{
-            onChangeAsyncDebounceMs: 300,
-            onChangeAsync: (value) => {
-              const result = WorkoutSchema.shape.workoutName.safeParse(
-                value.fieldApi.state.value
-              )
-              return result.success ? undefined : result.error.issues[0].message
-            },
-          }}
-          children={(field) => (
+        <form.Field name="workoutName">
+          {(field) => (
             <TextInput
-              className="hidden"
               value={field.state.value}
               onChangeText={field.handleChange}
+              className="hidden"
             />
           )}
-        />
+        </form.Field>
 
         {isEditing && (
-          <form.Field
-            name="workoutName"
-            validators={{
-              onChangeAsyncDebounceMs: 300,
-              onChangeAsync: (value) => {
-                const result = WorkoutSchema.shape.workoutName.safeParse(
-                  value.fieldApi.state.value
-                )
-                return result.success
-                  ? undefined
-                  : result.error.issues[0].message
-              },
-            }}
-            children={(field) => (
+          <form.Field name="id">
+            {(field) => (
               <TextInput
-                className="hidden"
                 value={field.state.value}
                 onChangeText={field.handleChange}
-              />
-            )}
-          />
-        )}
-
-        {isEditing && (
-          <form.Field
-            name="id"
-            children={(field) => (
-              <TextInput
                 className="hidden"
-                value={field.state.value}
-                onChangeText={field.handleChange}
               />
             )}
-          />
+          </form.Field>
         )}
 
+        {/* Workout Picker */}
         <form.Field
           name="workoutId"
           validators={{
             onChangeAsyncDebounceMs: 300,
-            onChangeAsync: (value) => {
-              const result = WorkoutSchema.shape.workoutId.safeParse(
+            onChangeAsync: async (value) => {
+              const result = WorkoutSchema.shape.id.safeParse(
                 value.fieldApi.state.value
               )
               return result.success ? undefined : result.error.issues[0].message
             },
           }}
-          children={(field) => (
+        >
+          {(field) => (
             <View className="mt-32">
               <Text className="my-3 font-bold">Workout Type:</Text>
-              <View className="border-[1px] border-primary h-12 justify-center text-600 rounded-md p-4">
+              <View className="border-[1px] border-primary h-12 justify-center rounded-md p-4">
                 <Picker
                   selectedValue={field.state.value}
                   onValueChange={field.handleChange}
                 >
-                  <Picker.Item
-                    label="Select a workout type"
-                    value=""
-                    style={{ paddingLeft: 3 }}
-                  />
-                  {workouts &&
-                    workouts.map((option: any, idx: any) => (
-                      <Picker.Item
-                        key={option.id}
-                        label={`${option.name}`}
-                        value={option.id}
-                      />
-                    ))}
+                  <Picker.Item label="Select a workout type" value="" />
+                  {workouts?.map((option: WorkoutType) => (
+                    <Picker.Item
+                      key={option.id}
+                      label={option.name}
+                      value={option.id}
+                    />
+                  ))}
                 </Picker>
               </View>
+              {field.state.meta.errors.length > 0 && (
+                <Text className="text-red-500 mt-2">
+                  {field.state.meta.errors[0]}
+                </Text>
+              )}
             </View>
           )}
-        />
+        </form.Field>
 
+        {/* Date Picker */}
         <form.Field
           name="createdAt"
           validators={{
             onChangeAsyncDebounceMs: 300,
-            onChangeAsync: (value) => {
+            onChangeAsync: async (value) => {
               const result = WorkoutSchema.shape.createdAt.safeParse(
                 value.fieldApi.state.value
               )
               return result.success ? undefined : result.error.issues[0].message
             },
           }}
-          children={(field) => (
-            <View className="">
+        >
+          {(field) => (
+            <View>
               <Text className="my-3 font-bold">Workout Date:</Text>
               <TouchableOpacity onPress={() => setShowDate(!showDate)}>
                 <DateDisplay date={field.state.value} />
               </TouchableOpacity>
-
               {showDate && (
                 <DatePicker
                   date={field.state.value}
-                  setDate={(date: any) => {
-                    field.handleChange(date)
-                  }}
+                  setDate={field.handleChange}
                   showDate={showDate}
                   setShowDate={setShowDate}
                 />
               )}
               {field.state.meta.errors.length > 0 && (
                 <Text className="text-red-500 mt-2">
-                  {field.state.meta.errors}
+                  {field.state.meta.errors[0]}
                 </Text>
               )}
             </View>
           )}
-        />
+        </form.Field>
 
-        <form.Field
-          name="notes"
-          children={(field) => (
+        {/* Notes Input */}
+        <form.Field name="notes">
+          {(field) => (
             <View>
               <Text className="my-3 font-bold">Notes:</Text>
               <TextInput
                 value={field.state.value || ""}
                 onBlur={field.handleBlur}
                 onChangeText={field.handleChange}
-                placeholder="Enter Weight In notes"
+                placeholder="Enter notes"
                 multiline
-                className="border-[1px] text-lg h-[100px] justify-center pl-3 border-primary text-600 rounded-md mb-4 text-start pt-3"
+                className="border-[1px] text-lg h-[100px] pl-3 border-primary rounded-md mb-4 pt-3"
                 style={{ textAlignVertical: "top" }}
               />
               {field.state.meta.errors.length > 0 && (
                 <Text className="text-red-500 mt-2">
-                  {field.state.meta.errors}
+                  {field.state.meta.errors[0]}
                 </Text>
               )}
             </View>
           )}
-        />
+        </form.Field>
 
+        {/* Submit Button */}
         <form.Subscribe
           selector={(state) => [state.canSubmit, state.isSubmitting]}
-          children={([canSubmit, isSubmitting]) => (
+        >
+          {([canSubmit, isSubmitting]) => (
             <TouchableOpacity
               className={`${
                 canSubmit ? "bg-slate-700" : "bg-gray-300"
@@ -293,7 +255,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
               </Text>
             </TouchableOpacity>
           )}
-        />
+        </form.Subscribe>
       </ScrollView>
     </KeyboardAvoidingView>
   )

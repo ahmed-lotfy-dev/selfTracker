@@ -1,5 +1,4 @@
 import React, { useState } from "react"
-import { WeightType } from "@/src/types/weightType"
 import { useForm, useStore } from "@tanstack/react-form"
 import {
   View,
@@ -22,14 +21,13 @@ import { useSelectedWeight } from "@/src/store/useWeightStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { useDirtyFields } from "@/src/hooks/useDirtyFields"
 import { z } from "zod"
-import { WeightSchema } from "@/src/types/weightType"
+import { WeightLogSchema, WeightLogType } from "@/src/types/weightLogType"
 import { useAuth } from "@/src/hooks/useAuth"
 
 export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
   const [showDate, setShowDate] = useState(false)
-  const user = useAuth()
-  const queryClient = useQueryClient()
+  const { user } = useAuth()
   const selectedWeight = useSelectedWeight()
 
   const { addMutation } = useAdd({
@@ -42,7 +40,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   })
 
   const { updateMutation } = useUpdate({
-    mutationFn: (weight) => updateWeight(weight),
+    mutationFn: (weight: WeightLogType) => updateWeight(weight),
     onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
     onSuccessCallback: () => {
       router.push("/weights")
@@ -65,16 +63,16 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
       createdAt: isEditing
         ? dayjs(selectedWeight?.createdAt).format("YYYY-MM-DD")
         : dayjs(new Date()).format("YYYY-MM-DD"),
-    } as WeightType,
+    } as WeightLogType,
   })
 
   const dirtyFields = useDirtyFields(form)
 
-  const onFormSubmit = async ({ value }: { value: WeightType }) => {
+  const onFormSubmit = async ({ value }: { value: WeightLogType }) => {
     if (isEditing && selectedWeight) {
       const payload = dirtyFields.reduce(
         (acc: { [key: string]: any }, name) => {
-          acc[name as keyof WeightType] = value[name as keyof WeightType]
+          acc[name as keyof WeightLogType] = value[name as keyof WeightLogType]
           return acc
         },
         { id: selectedWeight.id }

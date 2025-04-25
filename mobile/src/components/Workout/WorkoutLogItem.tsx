@@ -5,11 +5,11 @@ import { deleteWorkout } from "@/src/utils/api/workoutsApi"
 import { useDelete } from "@/src/hooks/useDelete"
 import DeleteButton from "../DeleteButton"
 import EditButton from "../EditButton"
-import { WorkoutType } from "@/src/types/workoutType"
+import { WorkoutLogType } from "@/src/types/workoutLogType"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
 
 type WorkoutLogProps = {
-  item: WorkoutType
+  item: WorkoutLogType
   path: string
 }
 

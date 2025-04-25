@@ -1,4 +1,4 @@
-import { WorkoutType } from "@/src/types/workoutType"
+import { WorkoutType } from "@/src/types/workoutLogType"
 import { API_BASE_URL } from "./config"
 import axiosInstance from "./axiosInstane"
 

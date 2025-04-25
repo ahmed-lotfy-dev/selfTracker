@@ -1,4 +1,4 @@
-import { WeightType } from "@/src/types/weightType"
+import { WeightType } from "@/src/types/weightLogType"
 import { API_BASE_URL } from "./config"
 import axios from "axios"
 import axiosInstance from "./axiosInstane"

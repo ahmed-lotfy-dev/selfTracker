@@ -1,12 +1,11 @@
-import { z } from "zod";
+import { z } from "zod"
 
 export const WorkoutSchema = z.object({
   id: z.string(),
-  userId: z.string(),
-  workoutId: z.string(),
-  workoutName: z.string(),
-  notes: z.string().nullable(),
+  name: z.string(),
+  trainingSplitId: z.string(),
   createdAt: z.string(),
-});
+  updatedAt: z.string(),
+})
 
-export type WorkoutType = z.infer<typeof WorkoutSchema>;
+export type WorkoutType = z.infer<typeof WorkoutSchema>

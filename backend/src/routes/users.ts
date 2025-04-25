@@ -27,123 +27,136 @@ userRouter.get("/me/home", async (c) => {
 
   const start = startOfWeek(new Date(), { weekStartsOn: 6 })
   const end = endOfWeek(new Date(), { weekStartsOn: 6 })
-  const version = (await redisClient.get(`workoutLogs:${user.id}:v`)) || "1"
-  const listCacheKey = `userHomeData:${user.id}:v${version}:list`
-  const cached = await redisClient.get(listCacheKey)
-  if (cached) {
-    return c.json(JSON.parse(cached))
-  }
-  const [weeklyWorkoutCount] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(workoutLogs)
-    .where(
-      and(
-        eq(workoutLogs.userId, user.id),
-        gte(workoutLogs.createdAt, start),
-        lte(workoutLogs.createdAt, end)
-      )
-    )
-    .prepare("weeklyWorkoutCount")
-    .execute()
 
-  const [monthlyWorkoutCount] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(workoutLogs)
-    .where(
-      and(
-        eq(workoutLogs.userId, user.id),
-        gte(workoutLogs.createdAt, startOfMonth(new Date())),
-        lte(workoutLogs.createdAt, endOfMonth(new Date()))
-      )
-    )
-    .prepare("monthlyWorkoutCount")
-    .execute()
+  try {
+    const cacheKey = `userHomeData:${user.id}`
+    const cached = await redisClient.get(cacheKey)
+    if (cached) {
+      return c.json(JSON.parse(cached))
+    }
 
-  const [weeklyComplletedTaskCount] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.completed, true),
-        eq(tasks.userId, user.id),
-        gte(tasks.createdAt, start),
-        lte(tasks.createdAt, end)
-      )
-    )
-    .prepare("weeklyComplletedTaskCount")
-    .execute()
-
-  const [weeklyPendingTaskCount] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.completed, false),
-        eq(tasks.userId, user.id),
-        gte(tasks.createdAt, start),
-        lte(tasks.createdAt, end)
-      )
-    )
-    .prepare("weeklyPendingTaskCount")
-    .execute()
-
-  const [goal] = await db
-    .select()
-    .from(userGoals)
-    .where(
-      and(
-        eq(userGoals.userId, user.id),
-        or(
-          eq(userGoals.goalType, "loseWeight"),
-          eq(userGoals.goalType, "gainWeight")
+    const [weeklyWorkoutCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(workoutLogs)
+      .where(
+        and(
+          eq(workoutLogs.userId, user.id),
+          gte(workoutLogs.createdAt, start),
+          lte(workoutLogs.createdAt, end)
         )
       )
-    )
-    .prepare("goal")
-    .execute()
+      .prepare("weeklyWorkoutCount")
+      .execute()
 
-  const [latestWeight] = await db
-    .select()
-    .from(weightLogs)
-    .where(eq(weightLogs.userId, user.id))
-    .orderBy(desc(weightLogs.createdAt))
-    .limit(1)
-    .prepare("latestWeight")
-    .execute()
-  console.log(latestWeight)
+    const [monthlyWorkoutCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(workoutLogs)
+      .where(
+        and(
+          eq(workoutLogs.userId, user.id),
+          gte(workoutLogs.createdAt, startOfMonth(new Date())),
+          lte(workoutLogs.createdAt, endOfMonth(new Date()))
+        )
+      )
+      .prepare("monthlyWorkoutCount")
+      .execute()
 
-  const weightDelta =
-    goal?.targetValue && latestWeight?.weight
-      ? Number(latestWeight.weight) - Number(goal.targetValue)
-      : null
+    const [weeklyComplletedTaskCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.completed, true),
+          eq(tasks.userId, user.id),
+          gte(tasks.createdAt, start),
+          lte(tasks.createdAt, end)
+        )
+      )
+      .prepare("weeklyComplletedTaskCount")
+      .execute()
 
-  const collectedUserHomeData = {
-    weeklyWorkoutCount: weeklyWorkoutCount.count,
-    monthlyWorkoutCount: monthlyWorkoutCount.count,
-    weeklyComplletedTaskCount: weeklyComplletedTaskCount.count || 0,
-    weeklyPendingTaskCount: weeklyPendingTaskCount.count || 0,
-    goalWeight: goal?.targetValue ?? "goal not set yet",
-    userLatestWeight: latestWeight?.weight ?? "no weight log yet",
-    weightDelta,
+    const [weeklyPendingTaskCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.completed, false),
+          eq(tasks.userId, user.id),
+          gte(tasks.createdAt, start),
+          lte(tasks.createdAt, end)
+        )
+      )
+      .prepare("weeklyPendingTaskCount")
+      .execute()
+
+    const [goal] = await db
+      .select()
+      .from(userGoals)
+      .where(
+        and(
+          eq(userGoals.userId, user.id),
+          or(
+            eq(userGoals.goalType, "loseWeight"),
+            eq(userGoals.goalType, "gainWeight")
+          )
+        )
+      )
+      .prepare("goal")
+      .execute()
+
+    const [latestWeight] = await db
+      .select()
+      .from(weightLogs)
+      .where(eq(weightLogs.userId, user.id))
+      .orderBy(desc(weightLogs.createdAt))
+      .limit(1)
+      .prepare("latestWeight")
+      .execute()
+    console.log(latestWeight)
+
+    const weightDelta =
+      goal?.targetValue && latestWeight?.weight
+        ? Number(latestWeight.weight) - Number(goal.targetValue)
+        : null
+
+    const collectedUserHomeData = {
+      weeklyWorkoutCount: weeklyWorkoutCount.count,
+      monthlyWorkoutCount: monthlyWorkoutCount.count,
+      weeklyComplletedTaskCount: weeklyComplletedTaskCount.count || 0,
+      weeklyPendingTaskCount: weeklyPendingTaskCount.count || 0,
+      goalWeight: goal?.targetValue ?? "goal not set yet",
+      userLatestWeight: latestWeight?.weight ?? "no weight log yet",
+      weightDelta,
+    }
+
+    const responseData = {
+      success: true,
+      collectedUserHomeData,
+    }
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 3600,
+    })
+
+    return c.json(responseData)
+  } catch (error) {
+    console.error("Error fetching user home data:", error)
+    return c.json({ message: "Internal server error" }, 500)
   }
-
-  const responseData = {
-    success: true,
-    collectedUserHomeData,
-  }
-
-  await redisClient.set(listCacheKey, JSON.stringify(responseData), {
-    EX: 3600,
-  })
-
-  return c.json(responseData)
 })
 
 userRouter.patch("/:id", async (c) => {
+  const user = c.get("user" as any)
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401)
+  }
+
   const id = c.req.param("id")
   const body = await c.req.json()
 
   try {
+    await redisClient.del(`userHomeData:${user.id}:*`)
+
     const existedUser = await db.query.users.findFirst({
       where: eq(users.id, id),
     })
@@ -244,7 +257,14 @@ userRouter.post("/check-verification", async (c) => {
 // })
 
 userRouter.patch("/onboarding", async (c) => {
+  const user = c.get("user" as any)
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401)
+  }
+
   try {
+    await redisClient.del(`userHomeData:${user.id}:*`)
+
     const { userId, weight, height, unitSystem, currency, income } =
       await c.req.json()
 
@@ -285,8 +305,14 @@ userRouter.patch("/onboarding", async (c) => {
 })
 
 userRouter.post("/goals", async (c) => {
+  const user = c.get("user" as any)
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401)
+  }
+
   try {
-    const user = c.get("user" as any)
+    await redisClient.del(`userHomeData:${user.id}:*`)
+
     const { goalType, targetValue, deadline } = await c.req.json()
 
     if (!goalType || !targetValue) {
