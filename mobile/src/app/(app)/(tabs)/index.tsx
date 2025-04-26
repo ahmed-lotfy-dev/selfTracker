@@ -63,15 +63,12 @@ export default function HomeScreen() {
       refreshControl={
         <RefreshControl onRefresh={refetch} refreshing={isRefetching} />
       }
-      className="flex-1 p-4"
+      style={{ flex: 1, padding: 10 }}
     >
       <Text className="text-2xl font-bold mb-6">Dashboard</Text>
 
       {/* Activity Card */}
-      <Card
-        title={"Activity"}
-        route={"/workouts"}
-      />
+      <Card title={"Activity"} route={"/workouts"} />
       <View className="bg-white rounded-xl p-4 shadow-sm mb-4">
         <Text className="text-lg font-semibold mb-3">Activity</Text>
         <View className="flex-row justify-between">

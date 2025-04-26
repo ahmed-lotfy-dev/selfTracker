@@ -45,7 +45,7 @@ export default function TaskScreen() {
       </View>
     )
   }
-
+console.log(tasks)
   return (
     <View className=" px-10 pt-3">
       <Header title="Tasks" />
@@ -59,7 +59,7 @@ export default function TaskScreen() {
         </View>
       ) : (
         <FlatList
-          className="flex-1 justify-center items-center"
+          className="flex-1"
           data={tasks}
           keyExtractor={(item) => item.id.toString()}
           refreshControl={

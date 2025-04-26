@@ -10,7 +10,7 @@ export default function AddWorkout() {
   const queryClient = useQueryClient()
 
   return (
-    <ScrollView className="flex-1">
+    <ScrollView style={{ flex: 1 }}>
       <WorkoutForm isEditing={true} />
     </ScrollView>
   )

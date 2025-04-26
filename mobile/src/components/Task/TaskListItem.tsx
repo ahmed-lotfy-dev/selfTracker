@@ -25,7 +25,7 @@ export default function TaskListItem({ task }: TaskListItemProps) {
     <TouchableOpacity className="flex-1 my-1" onPress={updateMutation.mutate}>
       <View className="flex-row items-center justify-between p-2 border-slate-500 border-[1px] gap-4">
         <Text
-          className={`text-lg px-2 ${
+          className={`text-lg px-2 flex-1 ${
             task.completed && "line-through font-light"
           }`}
         >

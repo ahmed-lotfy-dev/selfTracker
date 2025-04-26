@@ -105,7 +105,10 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={{ flex: 1, padding: 10, marginTop: 80 }}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Hidden Fields */}
         <form.Field name="userId">
           {(field) => (
@@ -153,7 +156,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           }}
         >
           {(field) => (
-            <View className="mt-32">
+            <View className="">
               <Text className="my-3 font-bold">Workout Type:</Text>
               <View className="border-[1px] border-primary h-12 justify-center rounded-md p-4">
                 <Picker

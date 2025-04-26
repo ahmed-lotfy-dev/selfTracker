@@ -8,7 +8,7 @@ export default function AddWeight() {
   const queryClient = useQueryClient()
 
   return (
-    <ScrollView className="flex-1">
+    <ScrollView style={{ flex: 1 }}>
       <WeightForm />
     </ScrollView>
   )
