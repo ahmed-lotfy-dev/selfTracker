@@ -25,16 +25,16 @@ userRouter.get("/me/home", async (c) => {
 
   const start = startOfWeek(new Date(), { weekStartsOn: 6 })
   const end = endOfWeek(new Date(), { weekStartsOn: 6 })
-
   try {
     const cacheKey = `userHomeData:${user.id}`
     const cached = await getCache(cacheKey)
+    console.log(cached)
     if (cached) {
-      return c.json(JSON.parse(cached))
+      return c.json(cached)
     }
 
     const [weeklyWorkoutCount] = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)::int` })
       .from(workoutLogs)
       .where(
         and(
@@ -43,11 +43,9 @@ userRouter.get("/me/home", async (c) => {
           lte(workoutLogs.createdAt, end)
         )
       )
-      .prepare("weeklyWorkoutCount")
-      .execute()
 
     const [monthlyWorkoutCount] = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)::int` })
       .from(workoutLogs)
       .where(
         and(
@@ -56,11 +54,9 @@ userRouter.get("/me/home", async (c) => {
           lte(workoutLogs.createdAt, endOfMonth(new Date()))
         )
       )
-      .prepare("monthlyWorkoutCount")
-      .execute()
 
-    const [weeklyComplletedTaskCount] = await db
-      .select({ count: sql<number>`count(*)` })
+    const [weeklyCompletedTaskCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
       .from(tasks)
       .where(
         and(
@@ -70,11 +66,9 @@ userRouter.get("/me/home", async (c) => {
           lte(tasks.createdAt, end)
         )
       )
-      .prepare("weeklyComplletedTaskCount")
-      .execute()
 
     const [weeklyPendingTaskCount] = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)::int` })
       .from(tasks)
       .where(
         and(
@@ -84,8 +78,6 @@ userRouter.get("/me/home", async (c) => {
           lte(tasks.createdAt, end)
         )
       )
-      .prepare("weeklyPendingTaskCount")
-      .execute()
 
     const [goal] = await db
       .select()
@@ -99,8 +91,6 @@ userRouter.get("/me/home", async (c) => {
           )
         )
       )
-      .prepare("goal")
-      .execute()
 
     const [latestWeight] = await db
       .select()
@@ -110,25 +100,20 @@ userRouter.get("/me/home", async (c) => {
       .limit(1)
       .prepare("latestWeight")
       .execute()
-    console.log(latestWeight)
 
     const weightDelta =
       goal?.targetValue && latestWeight?.weight
         ? Number(latestWeight.weight) - Number(goal.targetValue)
         : null
 
-    const collectedUserHomeData = {
+    const responseData = {
       weeklyWorkoutCount: weeklyWorkoutCount.count,
       monthlyWorkoutCount: monthlyWorkoutCount.count,
-      weeklyComplletedTaskCount: weeklyComplletedTaskCount.count || 0,
+      weeklyCompletedTaskCount: weeklyCompletedTaskCount.count || 0,
       weeklyPendingTaskCount: weeklyPendingTaskCount.count || 0,
-      goalWeight: goal?.targetValue ?? "goal not set yet",
-      userLatestWeight: latestWeight?.weight ?? "no weight log yet",
+      goalWeight: Number(goal?.targetValue) ?? "goal not set yet",
+      userLatestWeight: Number(latestWeight?.weight) ?? "no weight log yet",
       weightDelta,
-    }
-
-    const responseData = {
-      collectedUserHomeData,
     }
 
     await setCache(cacheKey, 3600, responseData)

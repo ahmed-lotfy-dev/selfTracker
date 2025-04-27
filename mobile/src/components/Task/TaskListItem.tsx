@@ -17,6 +17,8 @@ export default function TaskListItem({ task }: TaskListItemProps) {
     confirmMessage: "Are you sure you want to delete this task?",
   })
 
+  console.log({ task })
+  
   const { updateMutation } = useUpdate({
     mutationFn: () => updateTask({ id: task.id, completed: !task.completed }),
     onSuccessInvalidate: [{ queryKey: ["tasks"] }],

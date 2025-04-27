@@ -17,7 +17,7 @@ expensesRouter.get("/", async (c) => {
     const cacheKey = `expenses:${user.id}`
     const cached = await getCache(cacheKey)
     if (cached) {
-      return c.json({ expenses: JSON.parse(cached) })
+      return c.json({ expenses: cached })
     }
 
     const userExpenses = await db.query.expenses.findMany({
@@ -92,10 +92,7 @@ expensesRouter.patch("/:id", async (c) => {
   })
 
   if (!expenseExist || expenseExist.userId !== user.userId) {
-    return c.json(
-      {  message: "Expense not found or unauthorized" },
-      404
-    )
+    return c.json({ message: "Expense not found or unauthorized" }, 404)
   }
 
   const updateFields: Record<string, any> = {}

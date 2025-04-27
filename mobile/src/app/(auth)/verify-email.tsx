@@ -14,7 +14,6 @@ export default function VerifyEmail() {
 
   const { user, isAuthenticated, error, isLoading, refetch } = useAuth()
 
-  console.log({ user })
 
   useEffect(() => {
     if (user?.emailVerified) {

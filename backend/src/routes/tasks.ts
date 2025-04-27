@@ -16,7 +16,7 @@ tasksRouter.get("/", async (c) => {
   try {
     const cacheKey = `tasks:${user.id}`
     const cached = await getCache(cacheKey)
-    if (cached) return c.json(JSON.parse(cached))
+    if (cached) return c.json(cached)
 
     const userTasks = await db.query.tasks.findMany({
       where: eq(tasks.userId, user.id as string),

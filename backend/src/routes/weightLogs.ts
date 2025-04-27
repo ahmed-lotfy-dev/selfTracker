@@ -19,11 +19,10 @@ weightsLogsRouter.get("/", async (c) => {
     const cacheKey = `weightLogs:list:${user.id}:${cursor ?? "first"}:${limit}`
     const cached = await getCache(cacheKey)
     if (cached) {
-      const parsedCache = JSON.parse(cached)
-      if (parsedCache.nextCursor) {
+      if (cached.nextCursor) {
         return c.json({
-          logs: parsedCache.logs,
-          nextCursor: parsedCache.nextCursor,
+          logs: cached.logs,
+          nextCursor: cached.nextCursor,
         })
       }
     }

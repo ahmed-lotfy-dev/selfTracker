@@ -12,7 +12,7 @@ workoutsRouter.get("/", async (c) => {
   const cached = await getCache(`workouts:${user.id}`)
 
   if (cached) {
-    return c.json({ workouts: JSON.parse(cached) })
+    return c.json({ workouts: cached })
   }
   const userWorkouts = await db.query.workouts.findMany()
 
