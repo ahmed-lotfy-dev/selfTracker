@@ -5,7 +5,7 @@ import { fetchAllWorkoutLogs } from "@/src/utils/api/workoutsApi"
 import LogList from "@/src/components/LogList"
 import WorkoutLogItem from "@/src/components/Workout/WorkoutLogItem"
 import Header from "@/src/components/Header"
-import CalendarView from "@/src/components/CalendarView"
+import CalendarView from "@/src/components/Workout/CalendarView"
 import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
 

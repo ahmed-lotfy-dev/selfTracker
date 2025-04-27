@@ -2,7 +2,7 @@ import { View, Text, Image } from "react-native"
 import React, { useEffect } from "react"
 import Fontisto from "@expo/vector-icons/Fontisto"
 import UploadImageBtn from "./UploadImageBtn"
-import LogoutButton from "../LogoutButton"
+import LogoutButton from "../Buttons/LogoutButton"
 import { useAuth } from "@/src/hooks/useAuth"
 
 export default function UserImage() {

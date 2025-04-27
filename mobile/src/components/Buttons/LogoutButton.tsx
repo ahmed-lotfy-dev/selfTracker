@@ -6,7 +6,7 @@ import axios from "axios"
 import { clearTokens } from "@/src/utils/storage"
 import { useAuthActions } from "@/src/store/useAuthStore"
 import { authClient } from "@/src/utils/auth-client"
-import { useAuth } from "../hooks/useAuth"
+import { useAuth } from "../../hooks/useAuth"
 
 type logoutProps = {
   className?: string
