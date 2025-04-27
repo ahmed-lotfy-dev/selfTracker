@@ -3,32 +3,29 @@ import { workoutLogs, workouts } from "../db/schema"
 import { db } from "../db"
 import { eq, desc, lt, and, not, gte, lte } from "drizzle-orm"
 import { verify } from "hono/jwt"
-import { getRedisClient } from "../../lib/redis"
-import { clearCache } from "../../lib/utility"
+import { getCache, setCache, clearCache } from "../../lib/redis"
 
 const workoutLogsRouter = new Hono()
-
-const redisClient = getRedisClient()
 
 workoutLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
   const { cursor, limit = 10 } = c.req.query()
 
   try {
     const cacheKey = `workoutLogs:list:${user.id}:${cursor ?? "first"}:${limit}`
-    const cached = await redisClient.get(cacheKey)
+    const cached = await getCache(cacheKey)
     if (cached) {
       const parsedCache = JSON.parse(cached)
       if (parsedCache.nextCursor) {
-        return c.json(parsedCache)
+        return c.json({
+          logs: parsedCache.logs,
+          nextCursor: parsedCache.nextCursor,
+        })
       }
     }
 
@@ -55,8 +52,6 @@ workoutLogsRouter.get("/", async (c) => {
       )
       .orderBy(desc(workoutLogs.createdAt))
       .limit(limitNumber + 1)
-      .prepare("userWorkoutLogs")
-      .execute()
 
     const hasMore = userWorkoutLogs.length > limitNumber
     const items = hasMore ? userWorkoutLogs.slice(0, -1) : userWorkoutLogs
@@ -65,42 +60,34 @@ workoutLogsRouter.get("/", async (c) => {
       : null
 
     const responseData = {
-      success: true,
-      workoutLogs: items,
+      logs: items,
       nextCursor,
     }
 
-    await redisClient.set(cacheKey, JSON.stringify(responseData), {
-      EX: 3600,
-    })
+    await setCache(cacheKey, 3600, responseData)
+
     return c.json(responseData)
   } catch (error) {
     console.error("Error fetching workout logs:", error)
-    return c.json(
-      { success: false, message: "Failed to fetch workout logs" },
-      500
-    )
+    return c.json({ message: "Failed to fetch workout logs" }, 500)
   }
 })
 
 workoutLogsRouter.get("/calendar", async (c) => {
   const user = c.get("user" as any)
   if (!user || !user.id) {
-    return c.json({ success: false, message: "Unauthorized" }, 401)
+    return c.json({ message: "Unauthorized" }, 401)
   }
 
   const year = Number(c.req.query("year"))
   const month = Number(c.req.query("month"))
 
   if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
-    return c.json({ success: false, message: "Invalid year or month" }, 400)
+    return c.json({ message: "Invalid year or month" }, 400)
   }
 
   if (!year || !month) {
-    return c.json(
-      { success: false, message: "Year and month are required" },
-      400
-    )
+    return c.json({ message: "Year and month are required" }, 400)
   }
 
   try {
@@ -108,7 +95,7 @@ workoutLogsRouter.get("/calendar", async (c) => {
     const endDate = new Date(year, month, 0, 23, 59, 59, 999)
 
     const calendarKey = `workoutLogs:calendar:${user.id}:${year}-${month}`
-    const cached = await redisClient.get(calendarKey)
+    const cached = await getCache(calendarKey)
     if (cached) {
       return c.json(JSON.parse(cached))
     }
@@ -144,13 +131,12 @@ workoutLogsRouter.get("/calendar", async (c) => {
       groupedLogs[date].push(log)
     })
 
-    return c.json({ success: true, logs: groupedLogs })
+    await setCache(calendarKey, 3600, groupedLogs)
+
+    return c.json({ logs: groupedLogs })
   } catch (error) {
     console.error("Error fetching calendar logs:", error)
-    return c.json(
-      { success: false, message: "Failed to fetch calendar logs" },
-      500
-    )
+    return c.json({ message: "Failed to fetch calendar logs" }, 500)
   }
 })
 
@@ -159,13 +145,10 @@ workoutLogsRouter.get("/:id", async (c) => {
   const id = c.req.param("id")
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
   if (!id) {
-    return c.json({ success: false, message: "ID is required" }, 400)
+    return c.json({ message: "ID is required" }, 400)
   }
 
   try {
@@ -183,13 +166,15 @@ workoutLogsRouter.get("/:id", async (c) => {
       .where(eq(workoutLogs.id, id))
 
     if (!singleWorkout) {
-      return c.json({ success: false, message: "Workout log not found" }, 404)
+      return c.json({ message: "Workout log not found" }, 404)
     }
 
-    await redisClient.del(`workoutLogs:list:${user.id}:*`)
-    await redisClient.del(`workoutLogs:calendar:${user.id}:*`)
-
-    return c.json({ success: true, logs: singleWorkout })
+    await clearCache([
+      "userHomeData",
+      "workoutLogs:list:${user.id}:*",
+      `workoutLogs:calendar:${user.id}:*`,
+    ])
+    return c.json({ logs: singleWorkout })
   } catch (error) {
     console.error("JWT Verification Error:", error)
     return c.json({ message: "Invalid token!" }, 401)
@@ -200,23 +185,22 @@ workoutLogsRouter.post("/", async (c) => {
   const user = c.get("user" as any)
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
   const { workoutId, workoutName, notes, createdAt } = await c.req.json()
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
 
   if (!workoutId) {
-    return c.json({ success: false, message: "Workout ID is racequired" }, 400)
+    return c.json({ message: "Workout ID is racequired" }, 400)
   }
 
   try {
-    await clearCache(user.id, "workoutLogs:list")
-    await clearCache(user.id, "workoutLogs:calendar")
-    await clearCache(user.id, `userHomeData`)
+    await clearCache([
+      "userHomeData",
+      "workoutLogs:list:${user.id}:*",
+      "workoutLogs:calendar:${user.id}:*",
+    ])
 
     const [newWorkoutLog] = await db
       .insert(workoutLogs)
@@ -229,13 +213,10 @@ workoutLogsRouter.post("/", async (c) => {
       })
       .returning()
 
-    return c.json({ success: true, workoutLog: newWorkoutLog })
+    return c.json({ workoutLog: newWorkoutLog })
   } catch (error) {
     console.error("Error creating workout log:", error)
-    return c.json(
-      { success: false, message: "Failed to create workout log" },
-      500
-    )
+    return c.json({ message: "Failed to create workout log" }, 500)
   }
 })
 
@@ -244,19 +225,18 @@ workoutLogsRouter.patch("/:id", async (c) => {
   const id = c.req.param("id")
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
   if (!id) {
-    return c.json({ success: false, message: "Weight log ID is required" }, 400)
+    return c.json({ message: "Weight log ID is required" }, 400)
   }
 
   try {
-    await clearCache(user.id, "workoutLogs:list")
-    await clearCache(user.id, "workoutLogs:calendar")
-    await clearCache(user.id, `userHomeData`)
+    await clearCache([
+      "userHomeData",
+      "workoutLogs:list:${user.id}:*",
+      "workoutLogs:calendar:${user.id}:*",
+    ])
 
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
@@ -265,7 +245,6 @@ workoutLogsRouter.patch("/:id", async (c) => {
     if (!existingLog) {
       return c.json(
         {
-          success: false,
           message: "Workout log not found",
         },
         404
@@ -280,7 +259,7 @@ workoutLogsRouter.patch("/:id", async (c) => {
     if ("createdAt" in body) updatedFields.createdAt = new Date(body.createdAt)
 
     if (Object.keys(updatedFields).length === 0) {
-      return c.json({ success: false, message: "No fields to update" }, 400)
+      return c.json({ message: "No fields to update" }, 400)
     }
 
     const [updatedWorkoutLog] = await db
@@ -290,16 +269,12 @@ workoutLogsRouter.patch("/:id", async (c) => {
       .returning()
 
     return c.json({
-      success: true,
       message: "Workout log updated successfully",
       workoutLog: updatedWorkoutLog,
     })
   } catch (error) {
     console.error("Error updating workout log:", error)
-    return c.json(
-      { success: false, message: "Failed to update workout log" },
-      500
-    )
+    return c.json({ message: "Failed to update workout log" }, 500)
   }
 })
 
@@ -307,31 +282,27 @@ workoutLogsRouter.delete("/:id", async (c) => {
   const user = c.get("user" as any)
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
   const id = c.req.param("id")
   if (!id) {
-    return c.json(
-      { success: false, message: "Workout log ID is required" },
-      400
-    )
+    return c.json({ message: "Workout log ID is required" }, 400)
   }
 
   try {
-    await clearCache(user.id, "workoutLogs:list")
-    await clearCache(user.id, "workoutLogs:calendar")
-    await clearCache(user.id, `userHomeData`)
+    await clearCache([
+      "userHomeData",
+      "workoutLogs:list:${user.id}:*",
+      "workoutLogs:calendar:${user.id}:*",
+    ])
 
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
     })
 
     if (!existingLog) {
-      return c.json({ success: false, message: "Workout log not found" }, 404)
+      return c.json({ message: "Workout log not found" }, 404)
     }
 
     const deletedWorkout = await db
@@ -340,19 +311,15 @@ workoutLogsRouter.delete("/:id", async (c) => {
       .returning()
 
     if (deletedWorkout.length === 0) {
-      return c.json({ success: false, message: "Workout log not found" }, 404)
+      return c.json({ message: "Workout log not found" }, 404)
     }
 
     return c.json({
-      success: true,
       message: "Workout log deleted",
     })
   } catch (error) {
     console.error("Delete Workout Error:", error)
-    return c.json(
-      { success: false, message: "Failed to delete workout log" },
-      500
-    )
+    return c.json({ message: "Failed to delete workout log" }, 500)
   }
 })
 

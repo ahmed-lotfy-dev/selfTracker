@@ -59,6 +59,15 @@ export default function WorkoutScreen() {
     )
   }
 
+  if (logs.length === 0 && !isLoading) {
+    return (
+      <View className="flex-1 justify-start items-start">
+        <Header title="Weight Logs" />
+        <Text className="text-gray-500">No weight logs available.</Text>
+      </View>
+    )
+  }
+
   const ViewSelector = () => (
     <View className="flex-row my-4 bg-gray-200 rounded-full p-1">
       <Pressable

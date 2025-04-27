@@ -17,7 +17,7 @@ export const fetchAllWorkoutLogs = async (
       }
     )
     return {
-      logs: response.data.workoutLogs,
+      logs: response.data.logs,
       nextCursor: response.data.nextCursor || null,
     }
   } catch (error) {

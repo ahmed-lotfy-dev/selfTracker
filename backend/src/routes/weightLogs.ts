@@ -2,32 +2,29 @@ import { Hono } from "hono"
 import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
-import { getRedisClient } from "../../lib/redis"
-import { clearCache } from "../../lib/utility"
+import { clearCache, getCache, setCache } from "../../lib/redis"
 
 const weightsLogsRouter = new Hono()
-
-const redisClient = getRedisClient()
 
 weightsLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
   const { cursor, limit = 10 } = c.req.query()
 
   try {
     const cacheKey = `weightLogs:list:${user.id}:${cursor ?? "first"}:${limit}`
-    const cached = await redisClient.get(cacheKey)
+    const cached = await getCache(cacheKey)
     if (cached) {
       const parsedCache = JSON.parse(cached)
       if (parsedCache.nextCursor) {
-        return c.json(parsedCache)
+        return c.json({
+          logs: parsedCache.logs,
+          nextCursor: parsedCache.nextCursor,
+        })
       }
     }
 
@@ -54,8 +51,6 @@ weightsLogsRouter.get("/", async (c) => {
       )
       .orderBy(desc(weightLogs.createdAt))
       .limit(limitNumber + 1)
-      .prepare("userWeightLogs")
-      .execute()
 
     const hasMore = userWeightLogs.length > limitNumber
     const items = hasMore ? userWeightLogs.slice(0, -1) : userWeightLogs
@@ -64,22 +59,16 @@ weightsLogsRouter.get("/", async (c) => {
       : null
 
     const responseData = {
-      success: true,
-      weightLogs: items,
+      logs: items,
       nextCursor,
     }
 
-    await redisClient.set(cacheKey, JSON.stringify(responseData), {
-      EX: 3600,
-    })
+    await setCache(cacheKey, 3600, responseData)
 
     return c.json(responseData)
   } catch (error) {
     console.error("Error fetching workout logs:", error)
-    return c.json(
-      { success: false, message: "Failed to fetch workout logs" },
-      500
-    )
+    return c.json({ message: "Failed to fetch workout logs" }, 500)
   }
 })
 
@@ -88,14 +77,11 @@ weightsLogsRouter.get("/:id", async (c) => {
   const id = c.req.param("id")
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
   if (!id) {
-    return c.json({ success: false, message: "ID is required" }, 400)
+    return c.json({ message: "ID is required" }, 400)
   }
 
   try {
@@ -113,7 +99,7 @@ weightsLogsRouter.get("/:id", async (c) => {
       .where(eq(weightLogs.id, id))
 
     if (!singleWeightLog) {
-      return c.json({ success: false, message: "Weight log not found" }, 404)
+      return c.json({ message: "Weight log not found" }, 404)
     }
 
     return c.json({ success: true, weightLog: singleWeightLog })
@@ -127,19 +113,14 @@ weightsLogsRouter.post("/", async (c) => {
   const user = c.get("user" as any)
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
   const { weight, mood, energy, notes, createdAt } = await c.req.json()
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
 
   try {
-    await clearCache(user.id, "weightLogs:list")
-    await clearCache(user.id, `userHomeData`)
-
+    await clearCache(["weightLogs:list", "userHomeData"])
     const [newWeightLog] = await db
       .insert(weightLogs)
       .values({
@@ -164,26 +145,22 @@ weightsLogsRouter.patch("/:id", async (c) => {
   const id = c.req.param("id")
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
   if (!id) {
-    return c.json({ success: false, message: "Weight log ID is required" }, 400)
+    return c.json({ message: "Weight log ID is required" }, 400)
   }
 
   try {
-    await clearCache(user.id, "weightLogs:list")
-    await clearCache(user.id, `userHomeData`)
+    await clearCache(["weightLogs:list", "userHomeData"])
 
     const existingLog = await db.query.weightLogs.findFirst({
       where: eq(weightLogs.id, id),
     })
 
     if (!existingLog) {
-      return c.json({ success: false, message: "Weight log not found" }, 404)
+      return c.json({ message: "Weight log not found" }, 404)
     }
 
     const body = await c.req.json()
@@ -196,7 +173,7 @@ weightsLogsRouter.patch("/:id", async (c) => {
     if ("createdAt" in body) updateFields.createdAt = new Date(body.createdAt)
 
     if (Object.keys(updateFields).length === 0) {
-      return c.json({ success: false, message: "No fields to update" }, 400)
+      return c.json({ message: "No fields to update" }, 400)
     }
 
     const [updatedWeightLog] = await db
@@ -206,16 +183,12 @@ weightsLogsRouter.patch("/:id", async (c) => {
       .returning()
 
     return c.json({
-      success: true,
       message: "Weight log updated successfully",
       weightLog: updatedWeightLog,
     })
   } catch (error) {
     console.error("Error updating weight log:", error)
-    return c.json(
-      { success: false, message: "Failed to update weight log" },
-      500
-    )
+    return c.json({ message: "Failed to update weight log" }, 500)
   }
 })
 
@@ -223,27 +196,23 @@ weightsLogsRouter.delete("/:id", async (c) => {
   const user = c.get("user" as any)
 
   if (!user || !user.id) {
-    return c.json(
-      { success: false, message: "Unauthorized: User not found in context" },
-      401
-    )
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
   const id = c.req.param("id")
   if (!id) {
-    return c.json({ success: false, message: "Weight log ID is required" }, 400)
+    return c.json({ message: "Weight log ID is required" }, 400)
   }
 
   try {
-    await clearCache(user.id, "weightLogs:list")
-    await clearCache(user.id, `userHomeData`)
+    await clearCache(["weightLogs:list", "userHomeData"])
 
     const existingLog = await db.query.weightLogs.findFirst({
       where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),
     })
 
     if (!existingLog) {
-      return c.json({ success: false, message: "Weight log not found" }, 404)
+      return c.json({ message: "Weight log not found" }, 404)
     }
 
     const deletedWeight = await db
@@ -252,19 +221,15 @@ weightsLogsRouter.delete("/:id", async (c) => {
       .returning({ deletedId: weightLogs.id })
 
     if (deletedWeight.length === 0) {
-      return c.json({ success: false, message: "Weight log not found" }, 404)
+      return c.json({ message: "Weight log not found" }, 404)
     }
 
     return c.json({
-      success: true,
       message: "Weight log deleted",
     })
   } catch (error) {
     console.error("Delete Weight Error:", error)
-    return c.json(
-      { success: false, message: "Failed to delete weight log" },
-      500
-    )
+    return c.json({ message: "Failed to delete weight log" }, 500)
   }
 })
 

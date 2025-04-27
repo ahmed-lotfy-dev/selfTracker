@@ -1,4 +1,4 @@
-import * as schema from "./schema"
+import * as schema from "./schema/index"
 
 import { drizzle } from "drizzle-orm/node-postgres"
 
@@ -8,4 +8,7 @@ export const db = drizzle({
     ssl: true,
   },
   schema,
+  // logger: true,
 })
+
+export type db = typeof db;

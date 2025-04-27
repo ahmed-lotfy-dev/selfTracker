@@ -1,31 +1,22 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
-import { tasks, users } from "../db/schema.js"
+import { tasks, users } from "../db/schema/index"
 import { eq, and, lt, desc } from "drizzle-orm"
 import { sign } from "hono/jwt"
 import { hash } from "bcryptjs"
-import { getRedisClient } from "../../lib/redis.js"
-import { clearCache } from "../../lib/utility"
+import { clearCache, setCache, getCache } from "../../lib/redis.js"
 
 const tasksRouter = new Hono()
 
-const redisClient = getRedisClient()
-
-// Get all Tasks
 tasksRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
   try {
-    const cacheKey = `tasks:list:${user.id}`
-    const cached = await redisClient.get(cacheKey)
-    if (cached) {
-      const parsedCache = JSON.parse(cached)
-      if (parsedCache.nextCursor) {
-        return c.json(parsedCache)
-      }
-    }
+    const cacheKey = `tasks:${user.id}`
+    const cached = await getCache(cacheKey)
+    if (cached) return c.json(JSON.parse(cached))
 
     const userTasks = await db.query.tasks.findMany({
       where: eq(tasks.userId, user.id as string),
@@ -33,22 +24,18 @@ tasksRouter.get("/", async (c) => {
     })
 
     const responseData = {
-      success: true,
       tasks: userTasks,
     }
 
-    await redisClient.set(cacheKey, JSON.stringify(responseData), {
-      EX: 3600, // Cache for 1 hour
-    })
+    await setCache(cacheKey, 3600, responseData)
 
     return c.json(responseData)
   } catch (error) {
     console.error("Error fetching tasks:", error)
-    return c.json({ success: false, message: "Internal server error" }, 500)
+    return c.json({ message: "Internal server error" }, 500)
   }
 })
 
-// Create Task
 tasksRouter.post("/", async (c) => {
   const user = c.get("user" as any)
 
@@ -57,8 +44,8 @@ tasksRouter.post("/", async (c) => {
   const { title, completed, dueDate, category } = await c.req.json()
 
   try {
-    await clearCache(user.id, `userHomeData`)
-    await clearCache(user.id, `tasks:list`)
+    await clearCache(`userHomeData:${user.id}`)
+    await clearCache(`tasks:${user.id}`)
 
     const [createdTask] = await db
       .insert(tasks)
@@ -72,17 +59,15 @@ tasksRouter.post("/", async (c) => {
       .returning()
 
     return c.json({
-      success: true,
       message: "Task created successfully",
       task: createdTask,
     })
   } catch (error) {
     console.error("Error creating task:", error)
-    return c.json({ success: false, message: "Internal server error" }, 500)
+    return c.json({  message: "Internal server error" }, 500)
   }
 })
 
-// Update Task
 tasksRouter.patch("/:id", async (c) => {
   const user = c.get("user" as any)
   console.log(user)
@@ -96,17 +81,16 @@ tasksRouter.patch("/:id", async (c) => {
   console.log()
   console.log(title, completed, dueDate, category)
   try {
-    await clearCache(user.id, `userHomeData`)
-    await clearCache(user.id, `tasks:list`)
+    await clearCache(`userHomeData:${user.id}`)
+    await clearCache(`tasks:list:${user.id}`)
 
-    // Check if task exists and belongs to the user
     const taskExisted = await db.query.tasks.findFirst({
       where: eq(tasks.id, id),
     })
 
     if (!taskExisted || taskExisted.userId !== user.id) {
       return c.json(
-        { success: false, message: "Task not found or unauthorized" },
+        {  message: "Task not found or unauthorized" },
         404
       )
     }
@@ -117,28 +101,25 @@ tasksRouter.patch("/:id", async (c) => {
     if (dueDate) updateFields.dueDate = dueDate
     if (category) updateFields.category = category
 
-    // Update Task
     const [updatedTask] = await db
       .update(tasks)
       .set(updateFields)
       .where(eq(tasks.id, id))
       .returning()
 
-    // Invalidate tasks cache for this user
-    console.log(updateFields)
+    await clearCache(`userHomeData:${user.id}`)
+    await clearCache(`tasks:${user.id}`)
 
     return c.json({
-      success: true,
       message: "Task updated successfully",
       task: updatedTask,
     })
   } catch (error) {
     console.error("Error updating task:", error)
-    return c.json({ success: false, message: "Internal server error" }, 500)
+    return c.json({  message: "Internal server error" }, 500)
   }
 })
 
-// Delete Task
 tasksRouter.delete("/:id", async (c) => {
   const user = c.get("user" as any)
 
@@ -149,8 +130,8 @@ tasksRouter.delete("/:id", async (c) => {
   if (!id) return c.json({ message: "Task ID is required" }, 400)
 
   try {
-    await clearCache(user.id, `userHomeData`)
-    await clearCache(user.id, `tasks:list`)
+    await clearCache(`userHomeData:${user.id}`)
+    await clearCache(`tasks:list:${user.id}`)
 
     const [deletedTask] = await db
       .delete(tasks)
@@ -161,13 +142,15 @@ tasksRouter.delete("/:id", async (c) => {
       return c.json({ message: "Task not found" }, 404)
     }
 
+    await clearCache(`userHomeData:${user.id}`)
+    await clearCache(`tasks:${user.id}`)
+
     return c.json({
-      success: true,
       message: "Task deleted successfully",
     })
   } catch (error) {
     console.error("Error deleting task:", error)
-    return c.json({ success: false, message: "Internal server error" }, 500)
+    return c.json({ message: "Internal server error" }, 500)
   }
 })
 

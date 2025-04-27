@@ -1,24 +1,33 @@
 import { createClient } from "redis"
 
-let redisClient: ReturnType<typeof createClient> | null = null
+const redisClient = createClient({
+  url: process.env.REDIS_URL,
+})
 
-export function getRedisClient() {
-  if (import.meta.hot) {
-    import.meta.hot.dispose(() => {
-      redisClient?.quit()
-    })
-  }
-  if (!redisClient) {
-    redisClient = createClient({
-      url: process.env.REDIS_URL, 
-    })
+redisClient.on("error", (err) => console.error("Redis Client Error", err))
+redisClient.on("connect", () => console.log("Connected to Redis"))
+redisClient.on("close", () => console.log("Disconnected from Redis"))
 
-    redisClient.on("error", (err) => {
-      console.error("Redis Client Error", err)
-    })
+await redisClient.connect()
 
-    redisClient.connect().catch(console.error)
-  }
+export const setCache = async (key: string, ttl: number, data: any) =>
+  redisClient.set(key, JSON.stringify(data), { EX: ttl })
 
-  return redisClient
+export const getCache = async (key: string) => redisClient.get(key)
+
+export const clearCache = async (keys: string | string[]) => {
+  const keyList = Array.isArray(keys) ? keys : [keys]
+  const deletePromises = keyList.map(async (key) => {
+    if (key.includes("*")) {
+      // Find and delete keys matching the pattern
+      const keysToDelete = await redisClient.keys(key)
+      if (keysToDelete.length) {
+        await redisClient.del(keysToDelete)
+      }
+    } else {
+      await redisClient.del(key)
+    }
+  })
+
+  await Promise.all(deletePromises)
 }

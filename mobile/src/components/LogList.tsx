@@ -38,7 +38,7 @@ export default function LogList({
           fetchNextPage()
         }
       }}
-      onEndReachedThreshold={0.5}
+      onEndReachedThreshold={0.2}
       ListFooterComponent={
         isFetchingNextPage ? (
           <ActivityIndicator size="small" className="my-4" />

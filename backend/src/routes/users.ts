@@ -4,12 +4,10 @@ import { tasks, userGoals, users, weightLogs, workoutLogs } from "../db/schema"
 import { and, eq, gte, lte, sql, desc, or } from "drizzle-orm"
 import { decode } from "hono/jwt"
 
-import { endOfWeek, startOfWeek, startOfMonth, endOfMonth } from "date-fns"
-import { getRedisClient } from "../../lib/redis.js"
+import { endOfWeek, startOfWeek, startOfMonth, endOfMonth, set } from "date-fns"
+import { clearCache, getCache, setCache } from "../../lib/redis.js"
 
 const userRouter = new Hono()
-
-const redisClient = getRedisClient()
 
 userRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -30,7 +28,7 @@ userRouter.get("/me/home", async (c) => {
 
   try {
     const cacheKey = `userHomeData:${user.id}`
-    const cached = await redisClient.get(cacheKey)
+    const cached = await getCache(cacheKey)
     if (cached) {
       return c.json(JSON.parse(cached))
     }
@@ -130,13 +128,10 @@ userRouter.get("/me/home", async (c) => {
     }
 
     const responseData = {
-      success: true,
       collectedUserHomeData,
     }
 
-    await redisClient.set(cacheKey, JSON.stringify(responseData), {
-      EX: 3600,
-    })
+    await setCache(cacheKey, 3600, responseData)
 
     return c.json(responseData)
   } catch (error) {
@@ -155,14 +150,14 @@ userRouter.patch("/:id", async (c) => {
   const body = await c.req.json()
 
   try {
-    await redisClient.del(`userHomeData:${user.id}:*`)
+    await clearCache([`userHomeData:${user.id}`])
 
     const existedUser = await db.query.users.findFirst({
       where: eq(users.id, id),
     })
 
     if (!existedUser) {
-      return c.json({ success: false, message: "User log not found" }, 404)
+      return c.json({ message: "User log not found" }, 404)
     }
 
     const updatedFields: Record<string, any> = {}
@@ -183,7 +178,7 @@ userRouter.patch("/:id", async (c) => {
     if ("updatedAt" in body) updatedFields.updatedAt = new Date(body.updatedAt)
 
     if (Object.keys(updatedFields).length === 0) {
-      return c.json({ success: false, message: "No fields to update" }, 400)
+      return c.json({ message: "No fields to update" }, 400)
     }
 
     const updatedUser = await db
@@ -192,13 +187,12 @@ userRouter.patch("/:id", async (c) => {
       .where(eq(users.id, id))
 
     return c.json({
-      success: true,
       message: "User updated successfully",
       user: updatedUser,
     })
   } catch (error) {
     console.error("Error updating user:", error)
-    return c.json({ success: false, message: "Error updating user" }, 500)
+    return c.json({ message: "Error updating user" }, 500)
   }
 })
 
@@ -263,19 +257,18 @@ userRouter.patch("/onboarding", async (c) => {
   }
 
   try {
-    await redisClient.del(`userHomeData:${user.id}:*`)
+    await clearCache(`userHomeData:${user.id}`)
 
     const { userId, weight, height, unitSystem, currency, income } =
       await c.req.json()
 
     if (!userId || !weight || !height || !unitSystem || !currency || !income) {
-      return c.json({ success: false, message: "All fields are required" }, 400)
+      return c.json({ message: "All fields are required" }, 400)
     }
 
     if (!["metric", "imperial"].includes(unitSystem)) {
       return c.json(
         {
-          success: false,
           message: "Invalid unit system. Use 'metric' or 'imperial'.",
         },
         400
@@ -284,7 +277,7 @@ userRouter.patch("/onboarding", async (c) => {
 
     const userExists = await db.select().from(users).where(eq(users.id, userId))
     if (!userExists.length) {
-      return c.json({ success: false, message: "User not found" }, 404)
+      return c.json({ message: "User not found" }, 404)
     }
 
     const updatedUser = await db
@@ -294,13 +287,12 @@ userRouter.patch("/onboarding", async (c) => {
       .returning()
 
     return c.json({
-      success: true,
       message: "Onboarding completed successfully",
       user: updatedUser[0],
     })
   } catch (error) {
     console.error("Error during onboarding:", error)
-    return c.json({ success: false, message: "Internal server error" }, 500)
+    return c.json({ message: "Internal server error" }, 500)
   }
 })
 
@@ -311,19 +303,17 @@ userRouter.post("/goals", async (c) => {
   }
 
   try {
-    await redisClient.del(`userHomeData:${user.id}:*`)
-
+    await clearCache(`userHomeData:${user.id}`)
     const { goalType, targetValue, deadline } = await c.req.json()
 
     if (!goalType || !targetValue) {
-      return c.json({ success: false, message: "All fields are required" }, 400)
+      return c.json({ message: "All fields are required" }, 400)
     }
 
     const validGoalTypes = ["loseWeight", "gainWeight", "bodyFat", "muscleMass"]
     if (!validGoalTypes.includes(goalType)) {
       return c.json(
         {
-          success: false,
           message: `Invalid goal type. Use one of: ${validGoalTypes.join(
             ", "
           )}`,
@@ -338,7 +328,7 @@ userRouter.post("/goals", async (c) => {
       .where(eq(users.id, user.id))
 
     if (!userExists.length) {
-      return c.json({ success: false, message: "User not found" }, 404)
+      return c.json({ message: "User not found" }, 404)
     }
 
     const [newGoal] = await db
@@ -353,7 +343,6 @@ userRouter.post("/goals", async (c) => {
 
     return c.json(
       {
-        success: true,
         message: "Goal created successfully",
         goal: newGoal,
       },
@@ -361,7 +350,7 @@ userRouter.post("/goals", async (c) => {
     )
   } catch (error) {
     console.error("Error creating goal:", error)
-    return c.json({ success: false, message: "Internal server error" }, 500)
+    return c.json({ message: "Internal server error" }, 500)
   }
 })
 
@@ -376,10 +365,10 @@ userRouter.delete("/:id", async (c) => {
   const deletedUser = await db.delete(users).where(eq(users.id, id)).returning()
 
   if (!deletedUser.length) {
-    return c.json({ success: "false", message: "User not found" }, 404)
+    return c.json({ message: "User not found" }, 404)
   }
 
-  return c.json({ success: "true", message: "User deleted successfully" })
+  return c.json({ message: "User deleted successfully" })
 })
 
 export default userRouter

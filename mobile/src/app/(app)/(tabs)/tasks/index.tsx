@@ -58,6 +58,8 @@ console.log(tasks)
           </Text>
         </View>
       ) : (
+        <>
+        <Text>hello world</Text>
         <FlatList
           className="flex-1"
           data={tasks}
@@ -69,6 +71,7 @@ console.log(tasks)
             <TaskListItem task={item} />
           )}
         />
+        </>
       )}
     </View>
   )

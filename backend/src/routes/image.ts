@@ -3,8 +3,7 @@ import { encodeBase64 } from "hono/utils/encode"
 import { v2 as cloudinary } from "cloudinary"
 import { db } from "../db"
 import { eq } from "drizzle-orm"
-import { users } from "../db/schema"
-import { updateUser } from "better-auth/api"
+import { users } from "../db/schema/index"
 
 const imageRouter = new Hono()
 
@@ -40,7 +39,7 @@ imageRouter.post("/upload", async (c) => {
         image: users.image,
       })
 
-    return c.json({ success: true, imageUrl: updatedUserImage[0].image })
+    return c.json({ imageUrl: updatedUserImage[0].image })
   } catch (error) {
     console.error("Upload failed:", error)
     return c.json(
