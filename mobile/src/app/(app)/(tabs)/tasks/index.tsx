@@ -45,7 +45,7 @@ export default function TaskScreen() {
       </View>
     )
   }
-console.log(tasks)
+
   return (
     <View className=" px-10 pt-3">
       <Header title="Tasks" />
@@ -58,8 +58,6 @@ console.log(tasks)
           </Text>
         </View>
       ) : (
-        <>
-        <Text>hello world</Text>
         <FlatList
           className="flex-1"
           data={tasks}
@@ -71,7 +69,6 @@ console.log(tasks)
             <TaskListItem task={item} />
           )}
         />
-        </>
       )}
     </View>
   )
