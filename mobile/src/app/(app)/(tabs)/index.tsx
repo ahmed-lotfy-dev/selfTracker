@@ -53,23 +53,23 @@ export default function HomeScreen() {
       className="flex-1 p-4 bg-gray-200"
     >
       <Text className="text-2xl font-bold mb-6 ">Home Page</Text>
-      
-      <View className="flex-1 gap-10">
-      <WorkoutProgressCard
-        weeklyWorkoutCount={data.weeklyWorkoutCount}
-        monthlyWorkoutCount={data.monthlyWorkoutCount}
-      />
 
-      <TasksProgressCard
-        weeklyPendingTaskCount={data.weeklyPendingTaskCount}
-        weeklyCompletedTaskCount={data.weeklyCompletedTaskCount}
-      />
+      <View className="flex-1 gap-4">
+        <WorkoutProgressCard
+          weeklyWorkoutCount={data.weeklyWorkoutCount}
+          monthlyWorkoutCount={data.monthlyWorkoutCount}
+        />
 
-      <WeightProgressCard
-        currentWeight={data.userLatestWeight}
-        goalWeight={data.goalWeight}
-        delta={data.weightDelta}
-      />
+        <WeightProgressCard
+          currentWeight={data.userLatestWeight}
+          goalWeight={data.goalWeight}
+          delta={data.weightDelta}
+        />
+
+        <TasksProgressCard
+          weeklyPendingTaskCount={data.weeklyPendingTaskCount}
+          weeklyCompletedTaskCount={data.weeklyCompletedTaskCount}
+        />
       </View>
     </ScrollView>
   )

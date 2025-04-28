@@ -2,6 +2,7 @@
 import { View, Text } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
 import { MetricsCard } from "./MetricCard"
+import { CardHeader } from "./CardHeader"
 
 interface WeightProgressCardProps {
   currentWeight: number | null
@@ -22,9 +23,9 @@ export const WeightProgressCard = ({
 
   return (
     <View className="bg-white rounded-xl p-4 shadow-sm">
-      <Text className="text-lg font-semibold mb-3 ">Weight Progress</Text>
+      <CardHeader title="Weigh Logs" route="/weights" />
 
-      <View className="flex-row justify-between mb-3">
+      <View className="flex-row justify-between mb-3 mt-4">
         <MetricsCard
           icon="monitor-weight"
           value={currentWeight ? `${currentWeight} kg` : "N/A"}

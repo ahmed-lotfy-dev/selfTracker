@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native"
 import React from "react"
 import { MetricsCard } from "./MetricCard"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
+import { CardHeader } from "./CardHeader"
 
 interface WorkoutProgressCardProps {
   weeklyWorkoutCount: number
@@ -14,9 +15,9 @@ export const WorkoutProgressCard = ({
 }: WorkoutProgressCardProps) => {
   return (
     <View className="bg-white rounded-xl p-4 shadow-sm">
-      <Text className="text-lg font-semibold mb-3 ">Weight Progress</Text>
+      <CardHeader title="Workout Logs" route="/workouts" />
 
-      <View className="flex-row justify-between mb-3">
+      <View className="flex-row justify-between mb-3 mt-5">
         <View className="items-center flex-1">
           <FontAwesome5 name="dumbbell" size={24} className={"text-blue-500"} />
 

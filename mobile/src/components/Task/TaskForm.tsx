@@ -23,7 +23,10 @@ export default function TaskForm({}: TaskFormProps) {
 
   const { addMutation } = useAdd({
     mutationFn: (task: TaskType) => createTask(task),
-    onSuccessInvalidate: [{ queryKey: ["tasks"] }],
+    onSuccessInvalidate: [
+      { queryKey: ["tasks"] },
+      { queryKey: ["userHomeData"] },
+    ],
     onSuccessCallback() {
       console.log("Task added successfully")
     },

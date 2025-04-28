@@ -32,7 +32,10 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
 
   const { addMutation } = useAdd({
     mutationFn: (weight) => createWeight(weight),
-    onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
+    onSuccessInvalidate: [
+      { queryKey: ["weightLogs"] },
+      { queryKey: ["userHomeData"] },
+    ],
     onSuccessCallback: () => {
       router.push("/weights")
     },
@@ -41,7 +44,10 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
 
   const { updateMutation } = useUpdate({
     mutationFn: (weight: WeightLogType) => updateWeight(weight),
-    onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
+    onSuccessInvalidate: [
+      { queryKey: ["weightLogs"] },
+      { queryKey: ["userHomeData"] },
+    ],
     onSuccessCallback: () => {
       router.push("/weights")
     },

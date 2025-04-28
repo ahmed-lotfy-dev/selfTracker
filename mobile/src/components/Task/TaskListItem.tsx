@@ -21,14 +21,17 @@ export default function TaskListItem({ task }: TaskListItemProps) {
 
   const { updateMutation } = useUpdate({
     mutationFn: () => updateTask({ id: task.id, completed: !task.completed }),
-    onSuccessInvalidate: [{ queryKey: ["tasks"] }],
+    onSuccessInvalidate: [
+      { queryKey: ["tasks"] },
+      { queryKey: ["userHomeData"] },
+    ],
   })
 
   return (
     <TouchableOpacity className="" onPress={updateMutation.mutate}>
-      <View className="flex-row items-center justify-between p-2 border-slate-500 border-[1px] gap-4">
+      <View className="w-full flex-row items-center justify-between p-2 border-slate-500 border-[1px] gap-4">
         <Text
-          className={`text-lg px-2 flex-1 ${
+          className={`text-lg flex-1 px-2 text-wrap w-[50] ${
             task.completed && "line-through font-light"
           }`}
         >

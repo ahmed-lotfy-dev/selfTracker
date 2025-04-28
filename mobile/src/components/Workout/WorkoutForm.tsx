@@ -44,6 +44,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     onSuccessInvalidate: [
       { queryKey: ["workoutLogs"] },
       { queryKey: ["workoutLogsCalendar"] },
+      { queryKey: ["userHomeData"] },
     ],
     onSuccessCallback: () => router.push("/workouts"),
     onErrorMessage: "Failed to Add Workout Log.",
@@ -54,6 +55,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     onSuccessInvalidate: [
       { queryKey: ["workoutLogs"] },
       { queryKey: ["workoutLogsCalendar"] },
+      { queryKey: ["userHomeData"] },
     ],
     onSuccessCallback: () => router.push("/workouts"),
     onErrorMessage: "Failed to Update Workout Log.",
