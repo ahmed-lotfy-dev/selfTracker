@@ -8,14 +8,14 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import users from "./users"
+import { users } from "./users"
 
 // User Tasks Items
-const tasks = pgTable("task_items", {
+export const tasks = pgTable("task_items", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("userId")
-    .notNull()
-    .references(() => users.id),
+  userId: text("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   title: text("title").notNull(),
   completed: boolean("completed").default(false),
   dueDate: timestamp("due_date", { withTimezone: true }),
@@ -24,4 +24,3 @@ const tasks = pgTable("task_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export default tasks

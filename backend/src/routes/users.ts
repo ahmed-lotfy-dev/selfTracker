@@ -356,4 +356,16 @@ userRouter.delete("/:id", async (c) => {
   return c.json({ message: "User deleted successfully" })
 })
 
+userRouter.get("/testing", async (c) => {
+  const user = c.get("user" as any)
+
+  const userWithWorkoutLogs = await db.query.users.findMany({
+    where: eq(users.id, user.id),
+    with: {
+      workoutLogs: true,
+    },
+  })
+  return c.json({ userWithWorkoutLogs })
+})
+
 export default userRouter

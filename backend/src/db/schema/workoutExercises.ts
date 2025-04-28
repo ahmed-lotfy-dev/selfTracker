@@ -8,11 +8,11 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import workouts from "./workouts"
-import exercises from "./exercises"
+import { workouts } from "./workouts"
+import { exercises } from "./exercises"
 
 // Workout Exercises (Defines sets, reps, weight per exercise)
-const workoutExercises = pgTable("workout_exercises", {
+export const workoutExercises = pgTable("workout_exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   workoutId: uuid("workout_id")
     .references(() => workouts.id, { onDelete: "cascade" })
@@ -27,18 +27,14 @@ const workoutExercises = pgTable("workout_exercises", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export const workoutExerciseRelations = relations(
-  workoutExercises,
-  ({ one }) => ({
-    workout: one(workouts, {
-      fields: [workoutExercises.workoutId],
-      references: [workouts.id],
-    }),
-    exercise: one(exercises, {
-      fields: [workoutExercises.exerciseId],
-      references: [exercises.id],
-    }),
-  })
-)
+export const workoutExerciseRelations = relations(workoutExercises, ({ one }) => ({
+  workout: one(workouts, {
+    fields: [workoutExercises.workoutId],
+    references: [workouts.id],
+  }),
+  exercise: one(exercises, {
+    fields: [workoutExercises.exerciseId],
+    references: [exercises.id],
+  }),
+}))
 
-export default workoutExercises

@@ -8,10 +8,10 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import workoutExercises from "./workoutExercises"
+import { workoutExercises } from "./workoutExercises"
 
 // Exercises (Bench Press, Squats, etc.)
-const exercises = pgTable("exercises", {
+export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   description: text("description"),
@@ -22,5 +22,3 @@ const exercises = pgTable("exercises", {
 export const exerciseRelations = relations(exercises, ({ many }) => ({
   workoutExercises: many(workoutExercises),
 }))
-
-export default exercises

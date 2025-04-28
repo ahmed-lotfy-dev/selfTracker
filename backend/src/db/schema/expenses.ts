@@ -8,12 +8,12 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import users from "./users"
+import { users } from "./users"
 
 // Expenses Table
-const expenses = pgTable("expenses", {
+export const expenses = pgTable("expenses", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("userId")
+  userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   category: text("category").notNull(),
@@ -22,5 +22,3 @@ const expenses = pgTable("expenses", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
-
-export default expenses

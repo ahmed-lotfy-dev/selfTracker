@@ -14,7 +14,7 @@ import { COLORS } from "@/src/constants/Colors"
 import { TasksProgressCard } from "@/src/components/Home/TasksProgressCard"
 import { WorkoutProgressCard } from "@/src/components/Home/WorkoutProgressCard"
 import Header from "@/src/components/Header"
-import UserImage from "@/src/components/Profile/UserProfile"
+import UserProfile from "@/src/components/Profile/UserProfile"
 
 export default function HomeScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
@@ -54,7 +54,7 @@ export default function HomeScreen() {
       }
       className="flex-1 px-4 bg-gray-200"
     >
-      <UserImage homeScreen className="mt-4" />
+      <UserProfile homeScreen className="mt-4" />
 
       <View className="flex-1 gap-4">
         <WorkoutProgressCard

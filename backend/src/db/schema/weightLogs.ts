@@ -8,14 +8,13 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import users from "./users"
-import workoutLogs from "./workoutLogs"
-import workouts from "./workouts"
+import { users } from "./users"
+import { workouts } from "./workouts"
 
 // Weight Logs Table
-const weightLogs = pgTable("weight_logs", {
+export const weightLogs = pgTable("weight_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("userId")
+  userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   weight: numeric("weight", { precision: 5, scale: 2 }).notNull(),
@@ -26,15 +25,10 @@ const weightLogs = pgTable("weight_logs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export const workoutLogRelations = relations(workoutLogs, ({ one }) => ({
+export const weightLogRelations = relations(weightLogs, ({ one }) => ({
   user: one(users, {
-    fields: [workoutLogs.userId],
+    fields: [weightLogs.userId],
     references: [users.id],
-  }),
-  workout: one(workouts, {
-    fields: [workoutLogs.workoutId],
-    references: [workouts.id],
   }),
 }))
 
-export default weightLogs

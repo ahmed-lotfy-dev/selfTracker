@@ -8,12 +8,12 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import trainingSplits from "./trainingSplits"
-import workoutLogs from "./workoutLogs"
-import workoutExercises from "./workoutExercises"
+import { trainingSplits } from "./trainingSplits"
+import {workoutLogs} from "./workoutLogs"
+import {workoutExercises} from "./workoutExercises"
 
 // Workouts (Push Day, Pull Day, etc. - Shared Across Users)
-const workouts = pgTable("workouts", {
+export const workouts = pgTable("workouts", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(), // e.g., "Push Day"
   trainingSplitId: uuid("training_split_id")
@@ -32,4 +32,3 @@ export const workoutRelations = relations(workouts, ({ many, one }) => ({
   }),
 }))
 
-export default workouts

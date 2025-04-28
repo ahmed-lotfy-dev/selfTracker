@@ -8,10 +8,15 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import { expenses, tasks, userGoals, weightLogs, workoutLogs } from "."
+
+import { expenses } from "./expenses"
+import { tasks } from "./tasks"
+import { userGoals } from "./userGoals"
+import { weightLogs } from "./weightLogs"
+import { workoutLogs } from "./workoutLogs"
 
 // Users Table
-const users = pgTable("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").unique().notNull(),
   password: text("password"),
@@ -40,5 +45,3 @@ export const userRelations = relations(users, ({ many }) => ({
   tasks: many(tasks),
   goals: many(userGoals),
 }))
-
-export default users

@@ -7,7 +7,7 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import { users } from "."
+import { users } from "./users"
 
 // Sessions Table
 export const sessions = pgTable("sessions", {

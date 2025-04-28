@@ -8,10 +8,10 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import { users } from "."
+import { users } from "./users"
 
 // Training Splits (Public Splits like PPL, Upper-Lower, etc.)
-const trainingSplits = pgTable("training_splits", {
+export const trainingSplits = pgTable("training_splits", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(), // e.g., "Push-Pull-Legs"
   description: text("description"),
@@ -22,5 +22,3 @@ const trainingSplits = pgTable("training_splits", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
-
-export default trainingSplits

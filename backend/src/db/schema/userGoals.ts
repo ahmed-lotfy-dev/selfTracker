@@ -7,12 +7,12 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
-import users from "./users"
+import { users } from "./users"
 
 // User Goals
-const userGoals = pgTable("user_goals", {
+export const userGoals = pgTable("user_goals", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("userId")
+  userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   goalType: text("goal_type", {
@@ -25,4 +25,3 @@ const userGoals = pgTable("user_goals", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export default userGoals
