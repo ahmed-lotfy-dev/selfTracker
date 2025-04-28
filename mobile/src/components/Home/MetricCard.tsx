@@ -24,7 +24,7 @@ export const MetricsCard = ({
     <View className="items-center flex-1">
       <MaterialIcons name={icon} size={24} className="text-blue-500" />
 
-      <Text className="text-2xl font-bold mt-1">{value}</Text>
+      <Text className="text-2xl font-bold">{value}</Text>
       <Text className={"text-sm text-blue-500"}>{label}</Text>
     </View>
   )

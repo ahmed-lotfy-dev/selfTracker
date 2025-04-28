@@ -8,7 +8,7 @@ import AntDesign from "@expo/vector-icons/AntDesign"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 
-import TabBar from "../../../components/TabBar"
+import TabBar from "@/src/components/TabBar"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 import { useAuth } from "@/src/hooks/useAuth"
 import { COLORS } from "@/src/constants/Colors"

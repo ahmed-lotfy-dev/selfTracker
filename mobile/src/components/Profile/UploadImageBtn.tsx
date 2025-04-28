@@ -7,6 +7,7 @@ import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { useAuthActions } from "@/src/store/useAuthStore"
+import Foundation from "@expo/vector-icons/Foundation"
 
 export default function UploadImageBtn({ className }: { className?: string }) {
   const { user, refetch } = useAuth()
@@ -72,11 +73,11 @@ export default function UploadImageBtn({ className }: { className?: string }) {
   }
 
   return (
-    <View className={`flex-row justify-center items-center ${className}`}>
+    <View
+      className={`flex-row justify-center items-center bg-gray-300  ${className}`}
+    >
       <TouchableOpacity onPress={pickImageAndUpload}>
-        <Text className="bg-gray-700 text-white px-4 py-2 rounded-lg">
-          Change Picture
-        </Text>
+        <Foundation name="camera" size={30} color="lightslategray" />
       </TouchableOpacity>
     </View>
   )

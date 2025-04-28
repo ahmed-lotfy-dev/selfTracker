@@ -58,7 +58,7 @@ export default function TaskScreen() {
           </Text>
         </View>
       ) : (
-        <View className="flex-1 ">
+        <View className="flex-1 w-full">
           <FlatList
             data={tasks}
             keyExtractor={(item) => item.id.toString()}

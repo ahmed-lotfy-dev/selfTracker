@@ -2,7 +2,6 @@ import { View, Text, Image } from "react-native"
 import React, { useEffect } from "react"
 import Fontisto from "@expo/vector-icons/Fontisto"
 import UploadImageBtn from "./UploadImageBtn"
-import LogoutButton from "../Buttons/LogoutButton"
 import { useAuth } from "@/src/hooks/useAuth"
 
 interface UserImageProps {
@@ -10,7 +9,7 @@ interface UserImageProps {
   className?: string
 }
 
-export default function UserImage({
+export default function UserP({
   homeScreen = false,
   className,
 }: UserImageProps) {
@@ -19,12 +18,12 @@ export default function UserImage({
   return (
     <View
       className={`justify-center items-center ${
-        homeScreen ? "mb-2" : "my-4"
+        homeScreen ? "mb-4" : "my-4"
       } ${className}`}
     >
       <View
-        className={`flex-row items-center gap-3 ${
-          homeScreen ? "w-full justify-start pl-2" : "justify-center"
+        className={`w-full flex-row items-center gap-3 relative ${
+          homeScreen ? "justify-start pl-2" : "flex-col justify-center"
         }`}
       >
         {!user?.image ? (
@@ -32,33 +31,35 @@ export default function UserImage({
             name="male"
             size={homeScreen ? 32 : 36}
             color="black"
-            className={`rounded-full border ${
-              homeScreen ? "w-16 h-16" : "w-20 h-20"
+            className={`rounded-xl border ${
+              homeScreen ? "w-16 h-16" : "w-24 h-24"
             }`}
           />
         ) : (
           <Image
             source={{ uri: user.image }}
-            className={`rounded-full border ${
-              homeScreen ? "w-14 h-14" : "w-20 h-20"
+            className={`rounded-xl border ${
+              homeScreen ? "w-14 h-14" : "w-24 h-24"
             }`}
           />
         )}
-
-        {homeScreen && (
-          <View className="flex-1 flex-row items-center">
-            <Text className="text-md font-bold mr-2">Welome back:</Text>
-            <Text className="text-lg font-bold capitalize" numberOfLines={1}>
+        <View className="flex-1 mt-2">
+          <View className="flex-row justify-start items-center mb-1">
+            <Text className="text-md font-bold">Welome back:</Text>
+            <Text
+              className="text-md font-bold ml-1 capitalize"
+              numberOfLines={1}
+            >
               {user?.name.split(" ")[0]}
             </Text>
           </View>
-        )}
+          <Text>{user.email}</Text>
+        </View>
       </View>
 
       {!homeScreen && (
         <>
-          <UploadImageBtn className="mt-4" />
-          <LogoutButton className="mt-4" />
+          <UploadImageBtn className="mt-4 w-10 h-10 z-10 absolute translate-x-6 translate-y-1 rounded-full" />
         </>
       )}
     </View>
