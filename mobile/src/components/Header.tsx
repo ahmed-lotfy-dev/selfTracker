@@ -8,7 +8,9 @@ interface HeaderProps {
 
 export default function Header({ title, className }: HeaderProps) {
   return (
-    <View className={`flex-row justify-center items-center relative mya-5 ${className}`}>
+    <View
+      className={`flex-row justify-center items-center relative mt-4 ${className}`}
+    >
       <Text className="text-2xl font-bold">{title}</Text>
     </View>
   )

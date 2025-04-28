@@ -54,7 +54,7 @@ export default function WeightsScreen() {
 
   if (logs.length === 0 && !isLoading) {
     return (
-      <View className="flex-1 justify-center items-center">
+      <View className="flex-1 justify-center items-center px-4">
         <Header title="Weight Logs" />
         <Text className="text-gray-500">No weight logs available.</Text>
       </View>
@@ -62,7 +62,7 @@ export default function WeightsScreen() {
   }
 
   return (
-    <View className="flex-1 p-4 justify-center relative">
+    <View className="flex-1 px-4 justify-center relative">
       <Header title="Weight Logs" />
       <LogList
         logs={logs}

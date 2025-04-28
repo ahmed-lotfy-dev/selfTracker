@@ -38,7 +38,7 @@ export default function TaskScreen() {
 
   if (isError) {
     return (
-      <View className="flex-1 justify-center items-center p-4">
+      <View className="flex-1 justify-center items-center px-4">
         <Text className="text-red-500 text-center">
           Error loading tasks. Please try again later.
         </Text>
@@ -47,7 +47,7 @@ export default function TaskScreen() {
   }
 
   return (
-    <View className="flex-1 justify-start items-center px-10 pt-3">
+    <View className="flex-1 justify-start items-center px-10">
       <Header title="Tasks" />
       <TaskForm />
 

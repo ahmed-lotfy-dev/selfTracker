@@ -13,6 +13,8 @@ import { WeightProgressCard } from "@/src/components/Home/WeightProgressCard"
 import { COLORS } from "@/src/constants/Colors"
 import { TasksProgressCard } from "@/src/components/Home/TasksProgressCard"
 import { WorkoutProgressCard } from "@/src/components/Home/WorkoutProgressCard"
+import Header from "@/src/components/Header"
+import UserImage from "@/src/components/Profile/UserImage"
 
 export default function HomeScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
@@ -50,9 +52,10 @@ export default function HomeScreen() {
           tintColor="#3b82f6"
         />
       }
-      className="flex-1 p-4 bg-gray-200"
+      className="flex-1 px-4 bg-gray-200"
     >
-      <Text className="text-2xl font-bold mb-6 ">Home Page</Text>
+      
+      <UserImage homeScreen className="mt-4" />
 
       <View className="flex-1 gap-4">
         <WorkoutProgressCard

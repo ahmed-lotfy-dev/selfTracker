@@ -5,37 +5,62 @@ import UploadImageBtn from "./UploadImageBtn"
 import LogoutButton from "../Buttons/LogoutButton"
 import { useAuth } from "@/src/hooks/useAuth"
 
-export default function UserImage() {
-  const { user, refetch, isLoading } = useAuth()
+interface UserImageProps {
+  homeScreen?: boolean
+  className?: string
+}
+
+export default function UserImage({
+  homeScreen = false,
+  className,
+}: UserImageProps) {
+  const { user } = useAuth()
 
   return (
-    <View className="flex-1 justify-center items-center">
-      <View className="flex-row justify-center items-center gap-3 mb-4">
-        {!user && (
+    <View
+      className={`justify-center items-center ${
+        homeScreen ? "mb-2" : "my-4"
+      } ${className}`}
+    >
+      <View
+        className={`flex-row items-center gap-3 ${
+          homeScreen ? "w-full justify-start pl-2" : "justify-center"
+        }`}
+      >
+        {!user?.image ? (
           <Fontisto
             name="male"
-            size={36}
+            size={homeScreen ? 32 : 36}
             color="black"
-            className="w-20 h-20 rounded-full border"
+            className={`rounded-full border ${
+              homeScreen ? "w-16 h-16" : "w-20 h-20"
+            }`}
           />
-        )}
-        {user?.image && (
+        ) : (
           <Image
             source={{ uri: user.image }}
-            className="w-20 h-20 rounded-full border"
+            className={`rounded-full border ${
+              homeScreen ? "w-14 h-14" : "w-20 h-20"
+            }`}
           />
         )}
 
-        <Text className="text-lg font-bold">
-          {user?.name ? user.name : "No Name"}
-        </Text>
+        {homeScreen && (
+          <View className="flex-1 flex-row items-center">
+            <Text className="text-md font-bold mr-2">Welome back:</Text>
+            <Text className="text-lg font-bold capitalize" numberOfLines={1}>
+              {user?.name.split(" ")[0]}
+            </Text>
+          </View>
+        )}
       </View>
 
-      {/* Upload Image Button */}
-      <UploadImageBtn />
-
-      {/* Logout Button */}
-      <LogoutButton className="mt-4" />
+      {!homeScreen && (
+        <>
+          <UploadImageBtn className="mt-4" />
+          <LogoutButton className="mt-4" />
+        </>
+      )}
     </View>
   )
 }

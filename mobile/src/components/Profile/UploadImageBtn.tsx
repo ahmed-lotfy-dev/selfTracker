@@ -8,7 +8,7 @@ import * as ImageManipulator from "expo-image-manipulator"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { useAuthActions } from "@/src/store/useAuthStore"
 
-export default function UploadImageBtn() {
+export default function UploadImageBtn({ className }: { className?: string }) {
   const { user, refetch } = useAuth()
   const { setUser } = useAuthActions()
   const [imageFile, setImageFile] =
@@ -66,14 +66,13 @@ export default function UploadImageBtn() {
           },
         }
       )
-
     } catch (error) {
       console.error("Error during image selection or upload:", error)
     }
   }
 
   return (
-    <View>
+    <View className={`flex-row justify-center items-center ${className}`}>
       <TouchableOpacity onPress={pickImageAndUpload}>
         <Text className="bg-gray-700 text-white px-4 py-2 rounded-lg">
           Change Picture

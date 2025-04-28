@@ -111,7 +111,7 @@ export default function WorkoutScreen() {
   }
 
   return (
-    <View className="flex-1 p-4">
+    <View className="flex-1 px-4">
       <Header title="Workout Logs" />
       <ViewSelector />
       {renderContent()}
