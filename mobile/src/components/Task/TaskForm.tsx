@@ -49,6 +49,7 @@ export default function TaskForm({}: TaskFormProps) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="w-full"
     >
       <form.Field
         name="userId"
@@ -64,7 +65,6 @@ export default function TaskForm({}: TaskFormProps) {
       <form.Field
         name="title"
         validators={{
-          onChangeAsyncDebounceMs: 200,
           onChangeAsync: (value) => {
             const result = TaskSchema.shape.title.safeParse(
               value.fieldApi.state.value

@@ -46,9 +46,8 @@ export default function TaskScreen() {
     )
   }
 
-
   return (
-    <View className=" px-10 pt-3">
+    <View className="flex-1 justify-start items-center px-10 pt-3">
       <Header title="Tasks" />
       <TaskForm />
 
@@ -59,17 +58,18 @@ export default function TaskScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
-          className="flex-1"
-          data={tasks}
-          keyExtractor={(item) => item.id.toString()}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-          }
-          renderItem={({ item }: { item: TaskType }) => (
-            <TaskListItem task={item} />
-          )}
-        />
+        <View className="flex-1 ">
+          <FlatList
+            data={tasks}
+            keyExtractor={(item) => item.id.toString()}
+            refreshControl={
+              <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+            }
+            renderItem={({ item }: { item: TaskType }) => (
+              <TaskListItem task={item} />
+            )}
+          />
+        </View>
       )}
     </View>
   )
