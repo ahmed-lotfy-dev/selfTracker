@@ -13,7 +13,6 @@ export const fetchAllWeightLogs = async (
         limit,
       },
     })
-    console.log(response.data.logs)
     return {
       logs: response.data.logs,
       nextCursor: response.data.nextCursor || null,

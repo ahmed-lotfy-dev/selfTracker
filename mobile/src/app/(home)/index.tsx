@@ -23,8 +23,6 @@ export default function HomeScreen() {
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   })
 
-  console.log(data)
-
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center p-4">

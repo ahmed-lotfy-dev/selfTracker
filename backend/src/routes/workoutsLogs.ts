@@ -196,9 +196,9 @@ workoutLogsRouter.post("/", async (c) => {
 
   try {
     await clearCache([
-      "userHomeData",
-      "workoutLogs:list:${user.id}:*",
-      "workoutLogs:calendar:${user.id}:*",
+      `userHomeData:${user.id}`,
+      `workoutLogs:list:${user.id}`,
+      `workoutLogs:calendar:${user.id}`,
     ])
 
     const [newWorkoutLog] = await db
@@ -232,11 +232,10 @@ workoutLogsRouter.patch("/:id", async (c) => {
 
   try {
     await clearCache([
-      "userHomeData",
-      "workoutLogs:list:${user.id}:*",
-      "workoutLogs:calendar:${user.id}:*",
+      `userHomeData:${user.id}`,
+      `workoutLogs:list:${user.id}`,
+      `workoutLogs:calendar:${user.id}`,
     ])
-
     const existingLog = await db.query.workoutLogs.findFirst({
       where: and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)),
     })
@@ -291,9 +290,9 @@ workoutLogsRouter.delete("/:id", async (c) => {
 
   try {
     await clearCache([
-      "userHomeData",
-      "workoutLogs:list:${user.id}:*",
-      "workoutLogs:calendar:${user.id}:*",
+      `userHomeData:${user.id}`,
+      `workoutLogs:list:${user.id}`,
+      `workoutLogs:calendar:${user.id}`,
     ])
 
     const existingLog = await db.query.workoutLogs.findFirst({

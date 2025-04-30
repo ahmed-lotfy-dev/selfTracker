@@ -22,7 +22,6 @@ export const updateTask = async (task: any) => {
     `${API_BASE_URL}/api/tasks/${task.id}`,
     task
   )
-  console.log(task)
   return response.data
 }
 

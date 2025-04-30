@@ -40,19 +40,29 @@ export const setCache = async (key: string, ttl: number, value: any) => {
   }
 }
 
-export const clearCache = async (keys: string | string[]): Promise<void> => {
-  try {
-    const keyList = Array.isArray(keys) ? keys : [keys]
-    await Promise.all(
-      keyList.map((key) =>
-        key.includes("*")
-          ? redisClient
-              .keys(key)
-              .then((keys) => (keys.length ? redisClient.del(keys) : 0))
-          : redisClient.del(key)
+export async function clearCache(keys: string | string[]) {
+  const patterns = Array.isArray(keys) ? keys : [keys]
+
+  for (const rawPattern of patterns) {
+    // Add `*` if not already a pattern
+    const pattern = rawPattern.includes("*") ? rawPattern : `${rawPattern}:*`
+
+    const keysToDelete: string[] = []
+
+    for await (const key of redisClient.scanIterator({
+      MATCH: pattern,
+      COUNT: 100,
+    })) {
+      keysToDelete.push(key)
+    }
+
+    if (keysToDelete.length > 0) {
+      await redisClient.del(keysToDelete)
+      console.log(
+        `[Redis] Cleared ${keysToDelete.length} keys matching pattern: ${pattern}`
       )
-    )
-  } catch (err) {
-    console.error("Cache clear error:", err)
+    } else {
+      console.log(`[Redis] No keys matched for pattern: ${pattern}`)
+    }
   }
 }

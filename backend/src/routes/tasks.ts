@@ -44,8 +44,7 @@ tasksRouter.post("/", async (c) => {
   const { title, completed, dueDate, category } = await c.req.json()
 
   try {
-    await clearCache(`userHomeData:${user.id}`)
-    await clearCache(`tasks:${user.id}`)
+    await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
 
     const [createdTask] = await db
       .insert(tasks)
@@ -64,13 +63,12 @@ tasksRouter.post("/", async (c) => {
     })
   } catch (error) {
     console.error("Error creating task:", error)
-    return c.json({  message: "Internal server error" }, 500)
+    return c.json({ message: "Internal server error" }, 500)
   }
 })
 
 tasksRouter.patch("/:id", async (c) => {
   const user = c.get("user" as any)
-  console.log(user)
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
   const { id } = c.req.param()
@@ -81,18 +79,14 @@ tasksRouter.patch("/:id", async (c) => {
   console.log()
   console.log(title, completed, dueDate, category)
   try {
-    await clearCache(`userHomeData:${user.id}`)
-    await clearCache(`tasks:list:${user.id}`)
+    await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
 
     const taskExisted = await db.query.tasks.findFirst({
       where: eq(tasks.id, id),
     })
 
     if (!taskExisted || taskExisted.userId !== user.id) {
-      return c.json(
-        {  message: "Task not found or unauthorized" },
-        404
-      )
+      return c.json({ message: "Task not found or unauthorized" }, 404)
     }
 
     const updateFields: Record<string, any> = {}
@@ -116,7 +110,7 @@ tasksRouter.patch("/:id", async (c) => {
     })
   } catch (error) {
     console.error("Error updating task:", error)
-    return c.json({  message: "Internal server error" }, 500)
+    return c.json({ message: "Internal server error" }, 500)
   }
 })
 
@@ -130,8 +124,7 @@ tasksRouter.delete("/:id", async (c) => {
   if (!id) return c.json({ message: "Task ID is required" }, 400)
 
   try {
-    await clearCache(`userHomeData:${user.id}`)
-    await clearCache(`tasks:list:${user.id}`)
+    await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
 
     const [deletedTask] = await db
       .delete(tasks)

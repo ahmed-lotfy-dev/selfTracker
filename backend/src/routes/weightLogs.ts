@@ -119,7 +119,8 @@ weightsLogsRouter.post("/", async (c) => {
   const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
 
   try {
-    await clearCache(["weightLogs:list", "userHomeData"])
+    await clearCache([`userHomeData:${user.id}`, `weightLogs:list:${user.id}`])
+
     const [newWeightLog] = await db
       .insert(weightLogs)
       .values({
@@ -152,8 +153,7 @@ weightsLogsRouter.patch("/:id", async (c) => {
   }
 
   try {
-    await clearCache(["weightLogs:list", "userHomeData"])
-
+    await clearCache([`userHomeData:${user.id}`, `weightLogs:list:${user.id}`])
     const existingLog = await db.query.weightLogs.findFirst({
       where: eq(weightLogs.id, id),
     })
@@ -204,7 +204,7 @@ weightsLogsRouter.delete("/:id", async (c) => {
   }
 
   try {
-    await clearCache(["weightLogs:list", "userHomeData"])
+    await clearCache([`userHomeData:${user.id}`, `weightLogs:list:${user.id}`])
 
     const existingLog = await db.query.weightLogs.findFirst({
       where: and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)),
