@@ -76,8 +76,6 @@ tasksRouter.patch("/:id", async (c) => {
   if (!id) return c.json({ message: "Task ID is required" }, 400)
 
   const { title, completed, dueDate, category } = await c.req.json()
-  console.log()
-  console.log(title, completed, dueDate, category)
   try {
     await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
 

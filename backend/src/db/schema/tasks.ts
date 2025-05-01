@@ -24,3 +24,9 @@ export const tasks = pgTable("task_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  user: one(users, {
+    fields: [tasks.userId],
+    references: [users.id],
+  }),
+}))

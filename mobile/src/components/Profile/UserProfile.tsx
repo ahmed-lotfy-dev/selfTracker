@@ -53,7 +53,7 @@ export default function UserP({
               {user?.name.split(" ")[0]}
             </Text>
           </View>
-          <Text>{user.email}</Text>
+          <Text>{user?.email}</Text>
         </View>
       </View>
 

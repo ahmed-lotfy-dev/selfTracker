@@ -44,25 +44,33 @@ export async function clearCache(keys: string | string[]) {
   const patterns = Array.isArray(keys) ? keys : [keys]
 
   for (const rawPattern of patterns) {
-    // Add `*` if not already a pattern
-    const pattern = rawPattern.includes("*") ? rawPattern : `${rawPattern}:*`
+    if (rawPattern.includes("*")) {
+      const keysToDelete: string[] = []
 
-    const keysToDelete: string[] = []
+      for await (const key of redisClient.scanIterator({
+        MATCH: rawPattern,
+        COUNT: 100,
+      })) {
+        keysToDelete.push(key)
+      }
 
-    for await (const key of redisClient.scanIterator({
-      MATCH: pattern,
-      COUNT: 100,
-    })) {
-      keysToDelete.push(key)
-    }
-
-    if (keysToDelete.length > 0) {
-      await redisClient.del(keysToDelete)
-      console.log(
-        `[Redis] Cleared ${keysToDelete.length} keys matching pattern: ${pattern}`
-      )
+      if (keysToDelete.length > 0) {
+        await redisClient.del(keysToDelete)
+        console.log(
+          `[Redis] Cleared ${keysToDelete.length} keys matching pattern: ${rawPattern}`
+        )
+      } else {
+        console.log(`[Redis] No keys matched for pattern: ${rawPattern}`)
+      }
     } else {
-      console.log(`[Redis] No keys matched for pattern: ${pattern}`)
+      // Handle exact key deletion
+      const deleted = await redisClient.del(rawPattern)
+
+      if (deleted > 0) {
+        console.log(`[Redis] Deleted exact key: ${rawPattern}`)
+      } else {
+        console.log(`[Redis] Key not found: ${rawPattern}`)
+      }
     }
   }
 }

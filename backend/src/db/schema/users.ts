@@ -7,6 +7,7 @@ import {
   numeric,
   integer,
   uuid,
+  date,
 } from "drizzle-orm/pg-core"
 
 import { expenses } from "./expenses"
@@ -21,6 +22,7 @@ export const users = pgTable("users", {
   email: text("email").unique().notNull(),
   password: text("password"),
   name: text("name").notNull(),
+  dateOfBirth: date(),
   role: text("role"),
   image: text("image"),
   emailVerified: boolean("email_verified").notNull(),

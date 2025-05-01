@@ -7,6 +7,7 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
+import { relations } from "drizzle-orm"
 import { users } from "./users"
 
 // User Goals
@@ -25,3 +26,9 @@ export const userGoals = pgTable("user_goals", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
+export const userGoalsRelations = relations(userGoals, ({ one }) => ({
+  user: one(users, {
+    fields: [userGoals.userId],
+    references: [users.id],
+  }),
+}))

@@ -3,15 +3,17 @@ import { authClient } from "@/src/utils/auth-client"
 import { useAuthActions, useUser } from "../store/useAuthStore"
 
 export const useAuth = () => {
-  const { data, error, isPending, refetch } = authClient.useSession()
+  const { data: session, error, isPending, refetch } = authClient.useSession()
+  const session2 = authClient.getSession()
+  console.log(session2)
   const user = useUser()
   const { setUser } = useAuthActions()
-
+  console.log({ session, user })
   useEffect(() => {
-    if (data?.user) {
-      setUser(data.user)
+    if (session?.user) {
+      setUser(session.user)
     }
-  }, [data?.user, setUser])
+  }, [session?.user, setUser])
 
   const logout = async () => {
     await authClient.signOut()
@@ -20,10 +22,10 @@ export const useAuth = () => {
   }
 
   return {
-    user: user ?? data?.user ?? null,
-    session: data?.session ?? null,
+    user: user ?? session?.user ?? null,
+    session: session?.session ?? null,
     isAuthenticated: !!user,
-    isResolved: !isPending && data?.user !== undefined,
+    isResolved: !isPending && session?.user !== undefined,
     isLoading: isPending,
     error,
     refetch,
