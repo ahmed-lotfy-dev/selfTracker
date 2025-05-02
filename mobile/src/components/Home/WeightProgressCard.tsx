@@ -3,14 +3,15 @@ import { View, Text } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
 import { MetricsCard } from "./MetricCard"
 import { CardHeader } from "./CardHeader"
-import { ProgressChart } from "react-native-chart-kit"
+import { LineChart } from "react-native-chart-kit"
+import { WeightChart } from "./WeightChat"
 
 interface WeightProgressCardProps {
   currentWeight: number | null
   goalWeight: number | null
   delta: number | null
   bmi: number | null
-  threeMonthsWeightLogs?: { weight: string; date: string }[]
+  weightLogs?: { weight: string; date: string }[]
 }
 
 export const WeightProgressCard = ({
@@ -18,7 +19,7 @@ export const WeightProgressCard = ({
   goalWeight = null,
   delta = null,
   bmi = null,
-  threeMonthsWeightLogs = [],
+  weightLogs = [],
 }: WeightProgressCardProps) => {
   const isProgressGood = delta !== null ? delta <= 0 : false
   const deltaText =
@@ -26,6 +27,7 @@ export const WeightProgressCard = ({
       ? `${delta > 0 ? "+" : ""}${Math.abs(delta).toFixed(1)} kg`
       : "N/A"
 
+  console.log(weightLogs)
   return (
     <View className="bg-white rounded-xl p-4 shadow-sm">
       <CardHeader title="Weight Logs" route="/weights" />
@@ -59,33 +61,8 @@ export const WeightProgressCard = ({
           </Text>
         </View>
       )}
-
-      {threeMonthsWeightLogs.length > 0 ? (
-        <ProgressChart
-          data={{
-            labels: threeMonthsWeightLogs.map((log) => log.date),
-            data: threeMonthsWeightLogs.map((log) => parseFloat(log.weight)),
-          }}
-          width={320}
-          height={200}
-          chartConfig={{
-            backgroundColor: "#ffffff",
-            backgroundGradientFrom: "#f9f9f9",
-            backgroundGradientTo: "#f9f9f9",
-            decimalPlaces: 1,
-            color: (opacity = 1) => `rgba(79, 70, 229, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          }}
-          style={{
-            marginVertical: 8,
-            borderRadius: 16,
-          }}
-        />
-      ) : (
-        <Text className="text-center text-gray-500 mt-4">
-          No weight logs found. Start tracking to see progress.
-        </Text>
-      )}
+      
+      <WeightChart weightLogs={weightLogs} />
     </View>
   )
 }
