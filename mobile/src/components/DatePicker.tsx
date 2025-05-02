@@ -3,7 +3,7 @@ import DateTimePicker, {
   useDefaultClassNames,
 } from "react-native-ui-datepicker"
 import { COLORS, SPACING } from "@/src/constants/Colors"
-import dayjs from "dayjs"
+import { format } from "date-fns"
 
 type DatePickerProps = {
   date: string
@@ -27,7 +27,7 @@ export default function DatePicker({
         date={date}
         onChange={({ date }: any) => {
           if (date) {
-            const formattedDate = dayjs(date).format("YYYY-MM-DD")
+            const formattedDate = format(date, "yyyy-MM-dd")
             setDate(formattedDate)
             setShowDate(false)
           }

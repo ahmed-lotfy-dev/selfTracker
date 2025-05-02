@@ -10,10 +10,10 @@ import {
 import { TaskSchema, TaskType } from "@/src/types/taskType"
 import { useForm } from "@tanstack/react-form"
 import { useAuth } from "../../hooks/useAuth"
-import dayjs from "dayjs"
 import { COLORS } from "../../constants/Colors"
 import { useAdd } from "../../hooks/useAdd"
 import { createTask } from "../../utils/api/tasksApi"
+import { format } from "date-fns"
 
 interface TaskFormProps {}
 
@@ -45,7 +45,7 @@ export default function TaskForm({}: TaskFormProps) {
       completed: false,
       dueDate: null,
       category: "general",
-      createdAt: dayjs(new Date()).format("YYYY-MM-DD"),
+      createdAt: format(new Date(), "yyyy-MM-dd"),
     } as TaskType,
   })
 

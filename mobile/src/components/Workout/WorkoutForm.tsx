@@ -17,7 +17,6 @@ import { fetchAllWorkouts } from "@/src/utils/api/workouts"
 import { useAdd } from "@/src/hooks/useAdd"
 import { createWorkout, updateWorkout } from "@/src/utils/api/workoutsApi"
 import { useRouter } from "expo-router"
-import dayjs from "dayjs"
 import { useSelectedWorkout } from "@/src/store/useWokoutStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { useDirtyFields } from "@/src/hooks/useDirtyFields"
@@ -25,6 +24,7 @@ import { z } from "zod"
 import { WorkoutLogType } from "@/src/types/workoutLogType"
 import { WorkoutType, WorkoutSchema } from "@/src/types/workoutType"
 import { useAuth } from "@/src/hooks/useAuth"
+import { format } from "date-fns"
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
@@ -66,14 +66,14 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
       onFormSubmit(value)
     },
     defaultValues: {
-      id: selectedWorkout?.id ?? "",
-      userId: user?.id ?? "",
-      workoutId: isEditing ? selectedWorkout?.workoutId ?? "" : "",
-      workoutName: isEditing ? selectedWorkout?.workoutName ?? "" : "",
-      notes: isEditing ? selectedWorkout?.notes ?? "" : "",
+      id: selectedWorkout?.id || "",
+      userId: user?.id || "",
+      workoutId: isEditing ? selectedWorkout?.workoutId || "" : "",
+      workoutName: isEditing ? selectedWorkout?.workoutName || "" : "",
+      notes: isEditing ? selectedWorkout?.notes || "" : "",
       createdAt: isEditing
-        ? dayjs(selectedWorkout?.createdAt).format("YYYY-MM-DD")
-        : dayjs().format("YYYY-MM-DD"),
+        ? format(new Date(selectedWorkout?.createdAt || ""), "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd"),
     },
   })
 

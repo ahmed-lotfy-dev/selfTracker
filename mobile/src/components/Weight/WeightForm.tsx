@@ -15,7 +15,6 @@ import DateDisplay from "@/src/components/DateDisplay"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAdd } from "@/src/hooks/useAdd"
 import { useRouter } from "expo-router"
-import dayjs from "dayjs"
 import { createWeight, updateWeight } from "@/src/utils/api/weightsApi"
 import { useSelectedWeight } from "@/src/store/useWeightStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
@@ -23,6 +22,7 @@ import { useDirtyFields } from "@/src/hooks/useDirtyFields"
 import { z } from "zod"
 import { WeightLogSchema, WeightLogType } from "@/src/types/weightLogType"
 import { useAuth } from "@/src/hooks/useAuth"
+import { format } from "date-fns"
 
 export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
@@ -67,8 +67,8 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
       energy: isEditing ? selectedWeight?.energy : "",
       notes: isEditing ? selectedWeight?.notes : "",
       createdAt: isEditing
-        ? dayjs(selectedWeight?.createdAt).format("YYYY-MM-DD")
-        : dayjs(new Date()).format("YYYY-MM-DD"),
+        ? format(new Date(selectedWeight?.createdAt || ""), "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd"),
     } as WeightLogType,
   })
 
