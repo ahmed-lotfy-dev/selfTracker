@@ -8,7 +8,7 @@ export const useAuth = () => {
   console.log(session2)
   const user = useUser()
   const { setUser } = useAuthActions()
-  console.log({ session, user })
+  console.log({ session, user })w
   useEffect(() => {
     if (session?.user) {
       setUser(session.user)

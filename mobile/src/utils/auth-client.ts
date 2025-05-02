@@ -5,6 +5,7 @@ import { oneTapClient } from "better-auth/client/plugins"
 import { API_BASE_URL } from "./api/config"
 import { Platform } from "react-native"
 import { getAccessToken, setAccessToken } from "./storage"
+import { inferAdditionalFields } from "better-auth/client/plugins"
 
 export const authClient = createAuthClient({
   baseURL: API_BASE_URL,
@@ -26,6 +27,13 @@ export const authClient = createAuthClient({
           } else {
             return SecureStore.getItem(key) as any
           }
+        },
+      },
+    }),
+    inferAdditionalFields({
+      user: {
+        role: {
+          type: "string",
         },
       },
     }),

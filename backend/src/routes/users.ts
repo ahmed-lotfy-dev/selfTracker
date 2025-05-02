@@ -1,11 +1,27 @@
 import { Hono } from "hono"
 import { db } from "../db/index.js"
 import { tasks, userGoals, users, weightLogs, workoutLogs } from "../db/schema"
-import { and, eq, gte, lte, sql, desc, or } from "drizzle-orm"
+import { and, eq, gte, lte, sql, desc, or, lt } from "drizzle-orm"
 import { decode } from "hono/jwt"
 
-import { endOfWeek, startOfWeek, startOfMonth, endOfMonth, set } from "date-fns"
+import {
+  endOfWeek,
+  startOfWeek,
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+} from "date-fns"
 import { clearCache, getCache, setCache } from "../../lib/redis.js"
+import {
+  calculateBMI,
+  calculateWeightDelta,
+  getBMICategory,
+  getTaskCount,
+  getUserGoal,
+  getUserLatestWeight,
+  getWorkoutCounts,
+  periodWeightLogs,
+} from "../services/userHomeService.js"
 
 const userRouter = new Hono()
 
@@ -23,100 +39,54 @@ userRouter.get("/me/home", async (c) => {
   const user = c.get("user" as any)
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
-  const start = startOfWeek(new Date(), { weekStartsOn: 6 })
-  const end = endOfWeek(new Date(), { weekStartsOn: 6 })
+  if (!user.weight || !user.height || !user.unitSystem) {
+    return c.json({ message: "Incomplete user profile" }, 400)
+  }
   try {
-    const cacheKey = `userHomeData:${user.id}`
-    const cached = await getCache(cacheKey)
-    console.log(cached)
-    if (cached) {
-      return c.json(cached)
-    }
+    // const cacheKey = `userHomeData:${user.id}`
+    // const cached = await getCache(cacheKey)
+    // if (cached) {
+    //   return c.json(cached)
+    // }
 
-    const [weeklyWorkoutCount] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(workoutLogs)
-      .where(
-        and(
-          eq(workoutLogs.userId, user.id),
-          gte(workoutLogs.createdAt, start),
-          lte(workoutLogs.createdAt, end)
-        )
-      )
+    const { weeklyWorkout, monthlyWorkout } = await getWorkoutCounts(user.id)
+    const { completedTasks, pendingTasks, allTasks } = await getTaskCount(
+      user.id
+    )
 
-    const [monthlyWorkoutCount] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(workoutLogs)
-      .where(
-        and(
-          eq(workoutLogs.userId, user.id),
-          gte(workoutLogs.createdAt, startOfMonth(new Date())),
-          lte(workoutLogs.createdAt, endOfMonth(new Date()))
-        )
-      )
+    const goal = await getUserGoal(user.id)
+    if (!goal) return c.json({ message: "Incomplete user profile" }, 400)
 
-    const [weeklyCompletedTaskCount] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.completed, true),
-          eq(tasks.userId, user.id),
-          gte(tasks.createdAt, start),
-          lte(tasks.createdAt, end)
-        )
-      )
+    const { goalWeight, goalType } = goal
 
-    const [weeklyPendingTaskCount] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.completed, false),
-          eq(tasks.userId, user.id),
-          gte(tasks.createdAt, start),
-          lte(tasks.createdAt, end)
-        )
-      )
-
-    const [goal] = await db
-      .select()
-      .from(userGoals)
-      .where(
-        and(
-          eq(userGoals.userId, user.id),
-          or(
-            eq(userGoals.goalType, "loseWeight"),
-            eq(userGoals.goalType, "gainWeight")
-          )
-        )
-      )
-
-    const [latestWeight] = await db
-      .select()
-      .from(weightLogs)
-      .where(eq(weightLogs.userId, user.id))
-      .orderBy(desc(weightLogs.createdAt))
-      .limit(1)
-      .prepare("latestWeight")
-      .execute()
+    const latestWeight = await getUserLatestWeight(user.id)
 
     const weightDelta =
-      goal?.targetValue && latestWeight?.weight
-        ? Number(latestWeight.weight) - Number(goal.targetValue)
+      latestWeight && goalWeight
+        ? Number(latestWeight) - Number(goalWeight)
         : null
 
+    const threeMonthsWeightLogs = await periodWeightLogs(user.id, 3)
+
+    const userBMI = calculateBMI(user.weight, user.height, user.unitSystem)
+
+    const BMICategory = getBMICategory(Number(userBMI))
+
     const responseData = {
-      weeklyWorkoutCount: weeklyWorkoutCount.count,
-      monthlyWorkoutCount: monthlyWorkoutCount.count,
-      weeklyCompletedTaskCount: weeklyCompletedTaskCount.count || 0,
-      weeklyPendingTaskCount: weeklyPendingTaskCount.count || 0,
-      goalWeight: Number(goal?.targetValue) ?? "goal not set yet",
-      userLatestWeight: Number(latestWeight?.weight) ?? "no weight log yet",
+      weeklyWorkout,
+      monthlyWorkout,
+      completedTasks,
+      pendingTasks,
+      allTasks,
+      goalWeight: goalWeight,
+      latestWeight: latestWeight ? Number(latestWeight) : null,
       weightDelta,
+      userBMI,
+      BMICategory,
+      threeMonthsWeightLogs,
     }
 
-    await setCache(cacheKey, 3600, responseData)
+    // await setCache(cacheKey, 3600, responseData)
 
     return c.json(responseData)
   } catch (error) {

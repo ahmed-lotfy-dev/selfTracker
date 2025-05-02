@@ -66,7 +66,7 @@ export default function WeightsScreen() {
       <Header title="Weight Logs" />
       <LogList
         logs={logs}
-        renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}
+        renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}ww
         refetch={refetch}
         isRefetching={isRefetching}
         fetchNextPage={fetchNextPage}
