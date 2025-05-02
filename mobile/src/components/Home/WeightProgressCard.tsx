@@ -27,7 +27,6 @@ export const WeightProgressCard = ({
       ? `${delta > 0 ? "+" : ""}${Math.abs(delta).toFixed(1)} kg`
       : "N/A"
 
-  console.log(weightLogs)
   return (
     <View className="bg-white rounded-xl p-4 shadow-sm">
       <CardHeader title="Weight Logs" route="/weights" />
@@ -61,7 +60,7 @@ export const WeightProgressCard = ({
           </Text>
         </View>
       )}
-      
+
       <WeightChart weightLogs={weightLogs} />
     </View>
   )

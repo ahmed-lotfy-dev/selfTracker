@@ -13,14 +13,14 @@ interface weightChartProps {
 
 export const WeightChart = ({ weightLogs }: weightChartProps) => {
   return (
-    <View>
+    <View className="flex-1 justify-center items-center">
       {weightLogs.length > 0 ? (
         <LineChart
           data={{
             labels: weightLogs
               .map((log) => log.date)
               .filter(
-                (_, index, array) => index % Math.ceil(array.length / 4) === 0
+                (_, index, array) => index % Math.ceil(array.length / 3) === 0
               ),
             datasets: [
               {
