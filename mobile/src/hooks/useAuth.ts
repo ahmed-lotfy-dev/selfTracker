@@ -4,11 +4,9 @@ import { useAuthActions, useUser } from "../store/useAuthStore"
 
 export const useAuth = () => {
   const { data: session, error, isPending, refetch } = authClient.useSession()
-  const session2 = authClient.getSession()
-  console.log(session2)
   const user = useUser()
   const { setUser } = useAuthActions()
-  console.log({ session, user })w
+
   useEffect(() => {
     if (session?.user) {
       setUser(session.user)

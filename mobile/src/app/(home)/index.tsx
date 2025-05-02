@@ -56,19 +56,22 @@ export default function HomeScreen() {
 
       <View className="flex-1 gap-4">
         <WorkoutProgressCard
-          weeklyWorkoutCount={data.weeklyWorkoutCount}
-          monthlyWorkoutCount={data.monthlyWorkoutCount}
+          weeklyWorkoutCount={data.weeklyWorkout}
+          monthlyWorkoutCount={data.monthlyWorkout}
         />
 
         <WeightProgressCard
-          currentWeight={data.userLatestWeight}
+          currentWeight={data.latestWeight}
           goalWeight={data.goalWeight}
           delta={data.weightDelta}
+          bmi={data.userBMI}
+          weightLogs={data.threeMonthsWeightLogs}
         />
 
         <TasksProgressCard
-          weeklyPendingTaskCount={data.weeklyPendingTaskCount}
-          weeklyCompletedTaskCount={data.weeklyCompletedTaskCount}
+          pendingTasks={data.pendingTasks}
+          completedTasks={data.completedTasks}
+          allTasks={data.allTasks}
         />
       </View>
     </ScrollView>

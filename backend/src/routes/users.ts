@@ -85,7 +85,7 @@ userRouter.get("/me/home", async (c) => {
       BMICategory,
       threeMonthsWeightLogs,
     }
-
+    console.log(responseData)
     // await setCache(cacheKey, 3600, responseData)
 
     return c.json(responseData)

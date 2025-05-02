@@ -8,12 +8,16 @@ interface WeightProgressCardProps {
   currentWeight: number | null
   goalWeight: number | null
   delta: number | null
+  bmi: number | null
+  threeMonthsWeightLogs: { weight: string; date: string }
 }
 
 export const WeightProgressCard = ({
   currentWeight,
   goalWeight,
   delta,
+  bmi,
+  threeMonthsWeightLogs,
 }: WeightProgressCardProps) => {
   const isProgressGood = delta !== null ? delta <= 0 : false
   const deltaText =
@@ -54,6 +58,7 @@ export const WeightProgressCard = ({
           </Text>
         </View>
       )}
+      {threeMonthsWeightLogs&& <L}
     </View>
   )
 }
