@@ -18,6 +18,7 @@
         "foregroundImage": "./src/assets/images/ic_launcher.png",
         "backgroundColor": "#ffffff"
       },
+      "edgeToEdgeEnabled": "true",
       "package": "com.ahmedlotfy.selftracker"
     },
     "web": {
@@ -43,9 +44,7 @@
           "cameraPermission": "Allow $(selfTracker) to access your camera."
         }
       ],
-      [
-        "expo-secure-store"
-      ],
+      ["expo-secure-store"],
       "expo-font",
       "expo-web-browser"
     ],
