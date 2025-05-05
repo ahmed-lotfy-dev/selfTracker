@@ -22,7 +22,7 @@ export const TasksProgressCard = ({
         <MetricsCard
           icon="check-circle"
           value={` ${completedTasks} / ${allTasks}`}
-          label="Tasks Completed"
+          label="completed"
         />
       </View>
     </View>

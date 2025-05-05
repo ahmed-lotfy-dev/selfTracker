@@ -18,7 +18,8 @@
         "foregroundImage": "./src/assets/images/ic_launcher.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": "true",
+      "googleServicesFile": "./google-services.json",
+      "edgeToEdgeEnabled": true,
       "package": "com.ahmedlotfy.selftracker"
     },
     "web": {

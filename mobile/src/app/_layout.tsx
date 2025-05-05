@@ -12,32 +12,53 @@ import "react-native-gesture-handler"
 import "@/global.css"
 
 import { AppProviders } from "@/src/components/Provider/AppProviders"
-import { useAuth } from "@/src/hooks/useAuth"
+import React from "react"
+import {
+  registerForPushNotificationsAsync,
+  setUpNotificationListeners,
+} from "../utils/notifications"
+import axiosInstance from "../utils/api/axiosInstane"
+import { API_BASE_URL } from "../utils/api/config"
 
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
   useOnlineManager()
   useAppState(onAppStateChange)
-
+  const [expoPushToken, setExpoPushToken] = useState<string | undefined>()
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
+
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(setExpoPushToken)
+    const cleanup = setUpNotificationListeners({
+      onReceive: (notification) => {
+        console.log("Notification received in foreground:", notification)
+      },
+      onResponse: (response) => {
+        console.log("User tapped notification:", response)
+      },
+    })
+
+    return cleanup
+  }, [])
+    console.log(expoPushToken)
 
   useEffect(() => {
     const prepareApp = async () => {
       if (loaded) {
         await checkForUpdates()
         await SplashScreen.hideAsync()
+    console.log(expoPushToken)
+
       }
     }
 
     prepareApp()
   }, [loaded])
 
-  // Prevent flashing UI before fonts and auth are ready
-
-  if (!loaded) return null
+  // if (!loaded) return null
 
   return (
     <AppProviders>

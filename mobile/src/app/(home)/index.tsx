@@ -1,3 +1,4 @@
+import React from "react"
 import {
   View,
   Text,
@@ -20,7 +21,7 @@ export default function HomeScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["userHomeData"],
     queryFn: fetchUserHomeInfo,
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    staleTime: 1000 * 60 * 5,
   })
 
   if (isLoading) {
@@ -61,7 +62,7 @@ export default function HomeScreen() {
         />
 
         <WeightProgressCard
-          currentWeight={data.latestWeight}
+          weightChange={data.weightChange}
           goalWeight={data.goalWeight}
           delta={data.weightDelta}
           bmi={data.userBMI}

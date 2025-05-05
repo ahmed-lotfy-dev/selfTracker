@@ -13,6 +13,7 @@ import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
 import { fetchAllTasks } from "@/src/utils/api/tasksApi"
 import { TaskType } from "@/src/types/taskType"
+import React from "react"
 
 export default function TaskScreen() {
   const {
@@ -46,6 +47,10 @@ export default function TaskScreen() {
     )
   }
 
+  const sortedTasks = tasks.sort((a: TaskType, b: TaskType) => {
+    return Number(a.completed) - Number(b.completed)
+  })
+
   return (
     <View className="flex-1 justify-start items-center px-10">
       <Header title="Tasks" />
@@ -60,7 +65,7 @@ export default function TaskScreen() {
       ) : (
         <View className="flex-1 w-full">
           <FlatList
-            data={tasks}
+            data={sortedTasks}
             keyExtractor={(item) => item.id.toString()}
             refreshControl={
               <RefreshControl refreshing={isRefetching} onRefresh={refetch} />

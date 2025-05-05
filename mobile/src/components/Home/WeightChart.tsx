@@ -13,7 +13,7 @@ interface weightChartProps {
 
 export const WeightChart = ({ weightLogs }: weightChartProps) => {
   return (
-    <View className="flex-1 justify-center items-center">
+    <View className="flex-1 justify-center items-center border-[1px] border-slate-300 py-2 m-2 rounded-xl">
       {weightLogs.length > 0 ? (
         <LineChart
           data={{
@@ -28,7 +28,7 @@ export const WeightChart = ({ weightLogs }: weightChartProps) => {
               },
             ],
           }}
-          width={320}
+          width={300} // Adjusted width to prevent overflow
           height={200}
           chartConfig={{
             backgroundColor: "#ffffff",

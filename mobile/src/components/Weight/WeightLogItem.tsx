@@ -15,6 +15,8 @@ import { useDelete } from "@/src/hooks/useDelete"
 import EditButton from "../Buttons/EditButton"
 import { useWeightLogStore } from "@/src/store/useWeightStore"
 import { WeightLogType } from "@/src/types/weightLogType"
+import React from "react"
+import { formatDistanceToNow } from "date-fns"
 
 type WeightLogProps = {
   item: WeightLogType
@@ -44,9 +46,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
         <Link href={`/weights/${item.id}`} asChild>
           <TouchableOpacity className="flex-1">
             <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
-            <Text className="text-sm text-gray-500">
-              <DateDisplay date={item.createdAt} />
-            </Text>
+            <DateDisplay date={item.createdAt} />
           </TouchableOpacity>
         </Link>
       </View>

@@ -45,32 +45,15 @@ export const getWorkoutCounts = async (userId: string) => {
 }
 
 export const getTaskCount = async (userId: string) => {
-  const start = startOfWeek(new Date(), { weekStartsOn: 6 })
-  const end = endOfWeek(new Date(), { weekStartsOn: 6 })
-
   const [weeklyCompletedTaskCount] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(tasks)
-    .where(
-      and(
-        eq(tasks.completed, true),
-        eq(tasks.userId, userId),
-        gte(tasks.createdAt, start),
-        lte(tasks.createdAt, end)
-      )
-    )
+    .where(and(eq(tasks.completed, true), eq(tasks.userId, userId)))
 
   const [weeklyPendingTaskCount] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(tasks)
-    .where(
-      and(
-        eq(tasks.completed, false),
-        eq(tasks.userId, userId),
-        gte(tasks.createdAt, start),
-        lte(tasks.createdAt, end)
-      )
-    )
+    .where(and(eq(tasks.completed, false), eq(tasks.userId, userId)))
 
   return {
     completedTasks: weeklyCompletedTaskCount.count,
@@ -186,4 +169,46 @@ export const periodWeightLogs = async (userId: string, period: number) => {
   })
 
   return periodicalWeightLogs
+}
+
+export const getWeightChangeInPeriod = async (
+  userId: string,
+  period: number
+) => {
+  const threeMonthsAgo = subMonths(new Date(), period)
+
+  const [oldestWeightLog] = await db
+    .select()
+    .from(weightLogs)
+    .where(
+      and(
+        eq(weightLogs.userId, userId),
+        gte(weightLogs.createdAt, threeMonthsAgo),
+        lt(weightLogs.createdAt, new Date())
+      )
+    )
+    .orderBy(weightLogs.createdAt)
+    .limit(1)
+
+  const [latestWeightLog] = await db
+    .select()
+    .from(weightLogs)
+    .where(eq(weightLogs.userId, userId))
+    .orderBy(desc(weightLogs.createdAt))
+    .limit(1)
+
+  if (!oldestWeightLog || !latestWeightLog) {
+    return "Insufficient data to calculate weight change"
+  }
+
+  const weightChange =
+    parseFloat(latestWeightLog.weight) - parseFloat(oldestWeightLog.weight)
+
+  if (weightChange > 0) {
+    return `Gained ${weightChange.toFixed(2)} kg`
+  } else if (weightChange < 0) {
+    return `Lost ${Math.abs(weightChange).toFixed(2)} kg`
+  } else {
+    return "No weight change"
+  }
 }

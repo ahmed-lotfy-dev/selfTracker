@@ -15,6 +15,7 @@ import { tasks } from "./tasks"
 import { userGoals } from "./userGoals"
 import { weightLogs } from "./weightLogs"
 import { workoutLogs } from "./workoutLogs"
+import { z } from "zod"
 
 // Users Table
 export const users = pgTable("users", {
@@ -23,6 +24,7 @@ export const users = pgTable("users", {
   password: text("password"),
   name: text("name").notNull(),
   dateOfBirth: date(),
+  // notificationToken: text("notificationToken"),
   role: text("role"),
   image: text("image"),
   emailVerified: boolean("email_verified").notNull(),
@@ -47,3 +49,28 @@ export const userRelations = relations(users, ({ many }) => ({
   tasks: many(tasks),
   goals: many(userGoals),
 }))
+
+// Zod schema for user validation
+export const userSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  password: z.string().optional(),
+  name: z.string(),
+  dateOfBirth: z.date().optional(),
+  role: z.string().optional(),
+  image: z.string().optional(),
+  emailVerified: z.boolean(),
+  resetToken: z.string().optional(),
+  resetTokenExpiresAt: z.date().optional(),
+  gender: z.string().optional(),
+  weight: z.number().int().optional(),
+  height: z.number().int().optional(),
+  unitSystem: z.enum(["metric", "imperial"]).default("metric"),
+  income: z.number().optional(),
+  currency: z.string().default("EGP"),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+})
+
+// TypeScript type inferred from the Zod schema
+export type User = z.infer<typeof userSchema>

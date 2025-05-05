@@ -6,6 +6,7 @@ import WeightLogItem from "@/src/components/Weight/WeightLogItem"
 import Header from "@/src/components/Header"
 import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
+import React from "react"
 
 export default function WeightsScreen() {
   const limit = 10
@@ -66,7 +67,7 @@ export default function WeightsScreen() {
       <Header title="Weight Logs" />
       <LogList
         logs={logs}
-        renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}ww
+        renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}
         refetch={refetch}
         isRefetching={isRefetching}
         fetchNextPage={fetchNextPage}

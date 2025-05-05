@@ -8,13 +8,10 @@ import AntDesign from "@expo/vector-icons/AntDesign"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 
-import TabBar from "@/src/components/TabBar"
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 import { useAuth } from "@/src/hooks/useAuth"
 import { COLORS } from "@/src/constants/Colors"
 import { useHasHydrated } from "@/src/store/useAuthStore"
-import { GestureHandlerRootView } from "react-native-gesture-handler"
-import Drawer from "expo-router/drawer"
 
 export default function TabsLayout() {
   const user = useAuth()
@@ -35,10 +32,7 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs
-      tabBar={(props: BottomTabBarProps) => <TabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
+    <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen
         name="index"
         options={{

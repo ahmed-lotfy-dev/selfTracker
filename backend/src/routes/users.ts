@@ -19,6 +19,7 @@ import {
   getTaskCount,
   getUserGoal,
   getUserLatestWeight,
+  getWeightChangeInPeriod,
   getWorkoutCounts,
   periodWeightLogs,
 } from "../services/userHomeService.js"
@@ -72,6 +73,8 @@ userRouter.get("/me/home", async (c) => {
 
     const BMICategory = getBMICategory(Number(userBMI))
 
+    const weightChange = await getWeightChangeInPeriod(user.id, 1)
+
     const responseData = {
       weeklyWorkout,
       monthlyWorkout,
@@ -80,12 +83,12 @@ userRouter.get("/me/home", async (c) => {
       allTasks,
       goalWeight: goalWeight,
       latestWeight: latestWeight ? Number(latestWeight) : null,
+      weightChange,
       weightDelta,
       userBMI,
       BMICategory,
       threeMonthsWeightLogs,
     }
-    console.log(responseData)
     // await setCache(cacheKey, 3600, responseData)
 
     return c.json(responseData)
