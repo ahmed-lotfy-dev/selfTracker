@@ -45,6 +45,16 @@
           "cameraPermission": "Allow $(selfTracker) to access your camera."
         }
       ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/images/ic_launcher.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "sounds": ["./src/assets/notification_sound.wav"],
+          "enableBackgroundRemoteNotifications": false
+        }
+      ],
       ["expo-secure-store"],
       "expo-font",
       "expo-web-browser"

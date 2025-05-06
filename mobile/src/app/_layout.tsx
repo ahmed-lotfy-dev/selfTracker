@@ -43,15 +43,14 @@ export default function RootLayout() {
 
     return cleanup
   }, [])
-    console.log(expoPushToken)
+  console.log(expoPushToken)
 
   useEffect(() => {
     const prepareApp = async () => {
       if (loaded) {
         await checkForUpdates()
         await SplashScreen.hideAsync()
-    console.log(expoPushToken)
-
+        console.log(expoPushToken)
       }
     }
 
@@ -62,12 +61,7 @@ export default function RootLayout() {
 
   return (
     <AppProviders>
-      <StatusBar
-        style="light"
-        translucent={true}
-        backgroundColor="#0A2540"
-        animated={true}
-      />
+      <StatusBar style="light" translucent={true} animated={true} />
       <Slot />
     </AppProviders>
   )

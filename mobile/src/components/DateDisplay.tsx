@@ -7,7 +7,9 @@ export default function DateDisplay({ date }: { date: string }) {
 
   const daysAgo = differenceInDays(new Date(), localDate)
   const formattedDate =
-    daysAgo <= 7
+    daysAgo < 1
+      ? "Today"
+      : daysAgo <= 7
       ? `${daysAgo} day${daysAgo === 1 ? "" : "s"} ago`
       : format(localDate, "d MMMM yyyy")
 

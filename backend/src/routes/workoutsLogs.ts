@@ -4,6 +4,13 @@ import { db } from "../db"
 import { eq, desc, lt, and, not, gte, lte } from "drizzle-orm"
 import { verify } from "hono/jwt"
 import { getCache, setCache, clearCache } from "../../lib/redis"
+import {
+  createWorkoutLog,
+  deleteWorkoutLog,
+  getSingleWorkoutLog,
+  getWorkoutLogsCalendar,
+  updateWorkoutLog,
+} from "../services/workoutLogsService"
 
 const workoutLogsRouter = new Hono()
 
@@ -93,46 +100,38 @@ workoutLogsRouter.get("/calendar", async (c) => {
     const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
     const endDate = new Date(year, month, 0, 23, 59, 59, 999)
 
-    const calendarKey = `workoutLogs:calendar:${user.id}:${year}-${month}`
-    const cached = await getCache(calendarKey)
-    if (cached) {
-      return c.json(JSON.parse(cached))
-    }
+    // const calendarKey = `workoutLogs:calendar:${user.id}:${year}-${month}`
+    // const cached = await getCache(calendarKey)
+    // if (cached) {
+    //   return c.json(JSON.parse(cached))
+    // }
 
-    const logs = await db
-      .select({
-        id: workoutLogs.id,
-        userId: workoutLogs.userId,
-        workoutId: workoutLogs.workoutId,
-        workoutName: workouts.name,
-        notes: workoutLogs.notes,
-        createdAt: workoutLogs.createdAt,
-      })
-      .from(workoutLogs)
-      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
-      .where(
-        and(
-          eq(workoutLogs.userId, user.id),
-          and(
-            gte(workoutLogs.createdAt, startDate),
-            lte(workoutLogs.createdAt, endDate)
-          )
-        )
-      )
-      .orderBy(desc(workoutLogs.createdAt))
+    const logs = await getWorkoutLogsCalendar(year, month, user.id)
+    // const logs = await db
+    //   .select({
+    //     id: workoutLogs.id,
+    //     userId: workoutLogs.userId,
+    //     workoutId: workoutLogs.workoutId,
+    //     workoutName: workouts.name,
+    //     notes: workoutLogs.notes,
+    //     createdAt: workoutLogs.createdAt,
+    //   })
+    //   .from(workoutLogs)
+    //   .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
+    //   .where(
+    //     and(
+    //       eq(workoutLogs.userId, user.id),
+    //       and(
+    //         gte(workoutLogs.createdAt, startDate),
+    //         lte(workoutLogs.createdAt, endDate)
+    //       )
+    //     )
+    //   )
+    //   .orderBy(desc(workoutLogs.createdAt))
 
-    const groupedLogs: Record<string, any[]> = {}
-    logs.forEach((log) => {
-      const date = (log.createdAt as Date).toISOString().split("T")[0]
-      if (!groupedLogs[date]) {
-        groupedLogs[date] = []
-      }
-      groupedLogs[date].push(log)
-    })
+    // await setCache(calendarKey, 3600, logs)
 
-    await setCache(calendarKey, 3600, groupedLogs)
-
-    return c.json({ logs: groupedLogs })
+    return c.json({ logs: logs })
   } catch (error) {
     console.error("Error fetching calendar logs:", error)
     return c.json({ message: "Failed to fetch calendar logs" }, 500)
@@ -151,28 +150,12 @@ workoutLogsRouter.get("/:id", async (c) => {
   }
 
   try {
-    const [singleWorkout] = await db
-      .select({
-        id: workoutLogs.id,
-        userId: workoutLogs.userId,
-        workoutId: workoutLogs.workoutId,
-        workoutName: workouts.name,
-        notes: workoutLogs.notes,
-        createdAt: workoutLogs.createdAt,
-      })
-      .from(workoutLogs)
-      .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
-      .where(eq(workoutLogs.id, id))
+    const singleWorkout = await getSingleWorkoutLog(id)
 
     if (!singleWorkout) {
       return c.json({ message: "Workout log not found" }, 404)
     }
 
-    await clearCache([
-      "userHomeData",
-      "workoutLogs:list:${user.id}:*",
-      `workoutLogs:calendar:${user.id}:*`,
-    ])
     return c.json({ logs: singleWorkout })
   } catch (error) {
     console.error("JWT Verification Error:", error)
@@ -188,11 +171,12 @@ workoutLogsRouter.post("/", async (c) => {
   }
 
   const { workoutId, workoutName, notes, createdAt } = await c.req.json()
-  const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
+  const body = await c.req.json()
 
   if (!workoutId) {
     return c.json({ message: "Workout ID is racequired" }, 400)
   }
+  console.log(body)
 
   try {
     await clearCache([
@@ -201,18 +185,9 @@ workoutLogsRouter.post("/", async (c) => {
       `workoutLogs:calendar:${user.id}:*`,
     ])
 
-    const [newWorkoutLog] = await db
-      .insert(workoutLogs)
-      .values({
-        userId: user.id,
-        workoutId,
-        notes: notes || null,
-        createdAt: parsedCreatedAt,
-        workoutName: workoutName || null,
-      })
-      .returning()
+    const created = await createWorkoutLog(user.id, body)
 
-    return c.json({ workoutLog: newWorkoutLog })
+    return c.json({ message: "log created successfully", workoutLog: created })
   } catch (error) {
     console.error("Error creating workout log:", error)
     return c.json({ message: "Failed to create workout log" }, 500)
@@ -255,21 +230,18 @@ workoutLogsRouter.patch("/:id", async (c) => {
 
     if ("notes" in body) updatedFields.notes = body.notes
     if ("workoutId" in body) updatedFields.workoutId = body.workoutId
+    if ("workoutName" in body) updatedFields.workoutName = body.workoutName
     if ("createdAt" in body) updatedFields.createdAt = new Date(body.createdAt)
 
     if (Object.keys(updatedFields).length === 0) {
       return c.json({ message: "No fields to update" }, 400)
     }
 
-    const [updatedWorkoutLog] = await db
-      .update(workoutLogs)
-      .set(updatedFields)
-      .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)))
-      .returning()
+    const updated = await updateWorkoutLog(id, user.id, updatedFields)
 
     return c.json({
-      message: "Workout log updated successfully",
-      workoutLog: updatedWorkoutLog,
+      message: "log updated successfully",
+      workoutLog: updated,
     })
   } catch (error) {
     console.error("Error updating workout log:", error)
@@ -304,17 +276,14 @@ workoutLogsRouter.delete("/:id", async (c) => {
       return c.json({ message: "Workout log not found" }, 404)
     }
 
-    const deletedWorkout = await db
-      .delete(workoutLogs)
-      .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, user.id)))
-      .returning()
+    const deleted = await deleteWorkoutLog(user.id, id)
 
-    if (deletedWorkout.length === 0) {
+    if (deleted.length === 0) {
       return c.json({ message: "Workout log not found" }, 404)
     }
 
     return c.json({
-      message: "Workout log deleted",
+      message: "log deleted successfully",
     })
   } catch (error) {
     console.error("Delete Workout Error:", error)

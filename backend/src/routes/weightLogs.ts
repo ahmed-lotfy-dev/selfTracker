@@ -3,6 +3,13 @@ import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
 import { clearCache, getCache, setCache } from "../../lib/redis"
+import {
+  createWeightLog,
+  deleteWeightLog,
+  getSingleWeightLog,
+  getWeightLogs,
+  updateWeightLog,
+} from "../services/weightLogsService"
 
 const weightsLogsRouter = new Hono()
 
@@ -27,35 +34,7 @@ weightsLogsRouter.get("/", async (c) => {
       }
     }
 
-    const limitNumber = Number(limit) || 10
-
-    const userWeightLogs = await db
-      .select({
-        id: weightLogs.id,
-        userId: weightLogs.userId,
-        weight: weightLogs.weight,
-        energy: weightLogs.energy,
-        mood: weightLogs.mood,
-        notes: weightLogs.notes,
-        createdAt: weightLogs.createdAt,
-      })
-      .from(weightLogs)
-      .where(
-        cursor
-          ? and(
-              eq(weightLogs.userId, user.id as string),
-              lt(weightLogs.createdAt, new Date(cursor))
-            )
-          : eq(weightLogs.userId, user.id as string)
-      )
-      .orderBy(desc(weightLogs.createdAt))
-      .limit(limitNumber + 1)
-
-    const hasMore = userWeightLogs.length > limitNumber
-    const items = hasMore ? userWeightLogs.slice(0, -1) : userWeightLogs
-    const nextCursor = hasMore
-      ? items[items.length - 1]?.createdAt?.toISOString()
-      : null
+    const { items, nextCursor } = await getWeightLogs(user.id, cursor, limit)
 
     const responseData = {
       logs: items,
@@ -84,24 +63,13 @@ weightsLogsRouter.get("/:id", async (c) => {
   }
 
   try {
-    const [singleWeightLog] = await db
-      .select({
-        id: weightLogs.id,
-        userId: weightLogs.userId,
-        weight: weightLogs.weight,
-        energy: weightLogs.energy,
-        mood: weightLogs.mood,
-        notes: weightLogs.notes,
-        createdAt: weightLogs.createdAt,
-      })
-      .from(weightLogs)
-      .where(eq(weightLogs.id, id))
+    const log = await getSingleWeightLog(id)
 
-    if (!singleWeightLog) {
+    if (!log) {
       return c.json({ message: "Weight log not found" }, 404)
     }
 
-    return c.json({ success: true, weightLog: singleWeightLog })
+    return c.json({ weightLog: log })
   } catch (error) {
     console.error("Error fetching single weight log:", error)
     return c.json({ message: "Internal server error" }, 500)
@@ -114,9 +82,7 @@ weightsLogsRouter.post("/", async (c) => {
   if (!user || !user.id) {
     return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
-
-  const { weight, mood, energy, notes, createdAt } = await c.req.json()
-  const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date()
+  const body = await c.req.json()
 
   try {
     await clearCache([
@@ -124,19 +90,9 @@ weightsLogsRouter.post("/", async (c) => {
       `weightLogs:list:${user.id}:*`,
     ])
 
-    const [newWeightLog] = await db
-      .insert(weightLogs)
-      .values({
-        userId: user.id,
-        weight,
-        notes: notes || null,
-        energy: energy || "Medium",
-        mood: mood || "Okay",
-        createdAt: parsedCreatedAt,
-      })
-      .returning()
+    const created = await createWeightLog(user.id, body)
 
-    return c.json({ success: true, weightLog: newWeightLog })
+    return c.json({ message: "log created successfully", weightLog: created })
   } catch (error) {
     console.error("Error creating weight log:", error)
     return c.json({ message: "Internal server error" }, 500)
@@ -182,15 +138,11 @@ weightsLogsRouter.patch("/:id", async (c) => {
       return c.json({ message: "No fields to update" }, 400)
     }
 
-    const [updatedWeightLog] = await db
-      .update(weightLogs)
-      .set(updateFields)
-      .where(and(eq(weightLogs.id, id), eq(weightLogs.userId, user.id)))
-      .returning()
+    const updated = await updateWeightLog(id, user.id, updateFields)
 
     return c.json({
       message: "Weight log updated successfully",
-      weightLog: updatedWeightLog,
+      weightLog: updated,
     })
   } catch (error) {
     console.error("Error updating weight log:", error)
@@ -224,17 +176,14 @@ weightsLogsRouter.delete("/:id", async (c) => {
       return c.json({ message: "Weight log not found" }, 404)
     }
 
-    const deletedWeight = await db
-      .delete(weightLogs)
-      .where(eq(weightLogs.id, id))
-      .returning({ deletedId: weightLogs.id })
+    const deleteLog = await deleteWeightLog(user.id, id)
 
-    if (deletedWeight.length === 0) {
+    if (!deleteLog) {
       return c.json({ message: "Weight log not found" }, 404)
     }
 
     return c.json({
-      message: "Weight log deleted",
+      message: "Weight log deleted successfully",
     })
   } catch (error) {
     console.error("Delete Weight Error:", error)
