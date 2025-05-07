@@ -4,6 +4,7 @@ import DateTimePicker, {
 } from "react-native-ui-datepicker"
 import { COLORS, SPACING } from "@/src/constants/Colors"
 import { format } from "date-fns"
+import React from "react"
 
 type DatePickerProps = {
   date: string
@@ -28,7 +29,7 @@ export default function DatePicker({
         onChange={({ date }: any) => {
           if (date) {
             const formattedDate = format(date, "yyyy-MM-dd")
-            setDate(formattedDate)
+            setDate(date.toISOString())
             setShowDate(false)
           }
         }}

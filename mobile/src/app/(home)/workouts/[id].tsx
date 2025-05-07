@@ -17,6 +17,7 @@ import DeleteButton from "@/src/components/Buttons/DeleteButton"
 import { useDelete } from "@/src/hooks/useDelete"
 import EditButton from "@/src/components/Buttons/EditButton"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
+import React from "react"
 
 export default function WorkoutLog() {
   const router = useRouter()
@@ -64,7 +65,7 @@ export default function WorkoutLog() {
         <Text className="text-xl font-bold mb-2">Workout Log</Text>
         <Text className="text-lg">Workout Name: {log.workoutName}</Text>
         <Text className="text-lg">
-          Date: <DateDisplay date={log.createdAt} />
+          Date: <DateDisplay date={log.createdAt} isCalendar />
         </Text>
         <Text className="text-lg">
           Notes: {log.notes || "No notes available"}

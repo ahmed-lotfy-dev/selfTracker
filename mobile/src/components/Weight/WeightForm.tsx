@@ -1,5 +1,4 @@
 import React, { useState } from "react"
-import { useForm, useStore } from "@tanstack/react-form"
 import {
   View,
   Text,
@@ -12,13 +11,11 @@ import {
 import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/src/components/DatePicker"
 import DateDisplay from "@/src/components/DateDisplay"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAdd } from "@/src/hooks/useAdd"
 import { useRouter } from "expo-router"
 import { createWeight, updateWeight } from "@/src/utils/api/weightsApi"
 import { useSelectedWeight } from "@/src/store/useWeightStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
-import { useDirtyFields } from "@/src/hooks/useDirtyFields"
 import { z } from "zod"
 import { WeightLogSchema, WeightLogType } from "@/src/types/weightLogType"
 import { useAuth } from "@/src/hooks/useAuth"
@@ -27,8 +24,24 @@ import { format } from "date-fns"
 export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
   const { user } = useAuth()
-  const [showDate, setShowDate] = useState(false)
   const selectedWeight = useSelectedWeight()
+  const [showDate, setShowDate] = useState(false)
+
+  // Form state
+  const [weight, setWeight] = useState(
+    isEditing ? String(selectedWeight.weight) : ""
+  )
+  const [energy, setEnergy] = useState(isEditing ? selectedWeight.energy : "")
+  const [mood, setMood] = useState(isEditing ? selectedWeight.mood : "")
+
+  const [notes, setNotes] = useState(isEditing ? selectedWeight.notes : "")
+  const [createdAt, setCreatedAt] = useState(
+    isEditing
+      ? format(new Date(selectedWeight.createdAt || ""), "yyyy-MM-dd")
+      : format(new Date(), "yyyy-MM-dd")
+  )
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { addMutation } = useAdd({
     mutationFn: (weight) => createWeight(weight),
@@ -54,40 +67,37 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
     onErrorMessage: "Failed to Update Weight Log.",
   })
 
-  const form = useForm({
-    onSubmit: async ({ value }) => {
-      onFormSubmit({ value })
-    },
+  const handleSubmit = () => {
+    setIsSubmitting(true)
 
-    defaultValues: {
-      id: selectedWeight?.id,
-      userId: user?.id,
-      weight: isEditing ? selectedWeight?.weight : "",
-      mood: isEditing ? selectedWeight?.mood : "",
-      energy: isEditing ? selectedWeight?.energy : "",
-      notes: isEditing ? selectedWeight?.notes : "",
-      createdAt: isEditing
-        ? format(new Date(selectedWeight?.createdAt || ""), "yyyy-MM-dd")
-        : format(new Date(), "yyyy-MM-dd"),
-    } as WeightLogType,
-  })
-
-  const dirtyFields = useDirtyFields(form)
-
-  const onFormSubmit = async ({ value }: { value: WeightLogType }) => {
-    if (isEditing && selectedWeight) {
-      const payload = dirtyFields.reduce(
-        (acc: { [key: string]: any }, name) => {
-          acc[name as keyof WeightLogType] = value[name as keyof WeightLogType]
-          return acc
-        },
-        { id: selectedWeight.id }
-      )
-
-      updateMutation.mutate({ ...payload, weight: Number(payload.weight) })
-    } else {
-      addMutation.mutate({ ...value, weight: Number(value.weight) })
+    const formData: WeightLogType = {
+      id: isEditing ? selectedWeight.id : undefined,
+      userId: user?.id || "",
+      weight: Number(weight),
+      mood,
+      energy,
+      notes,
+      createdAt,
     }
+
+    const result = WeightLogSchema.safeParse(formData)
+    if (!result.success) {
+      const newErrors: Record<string, string> = {}
+      for (const issue of result.error.issues) {
+        newErrors[issue.path[0]] = issue.message
+      }
+      setErrors(newErrors)
+      setIsSubmitting(false)
+      return
+    }
+
+    if (isEditing && selectedWeight) {
+      updateMutation.mutate(formData)
+    } else {
+      addMutation.mutate(formData)
+    }
+
+    setIsSubmitting(false)
   }
 
   return (
@@ -98,166 +108,93 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
         className="flex-1 px-5 pt-10"
         keyboardShouldPersistTaps="handled"
       >
-        <form.Field
-          name="userId"
-          children={(field) => (
-            <TextInput
-              className="hidden"
-              value={field.state.value}
-              onChangeText={field.handleChange}
-            />
-          )}
-        />
-
-        {isEditing && (
-          <form.Field
-            name="id"
-            children={(field) => (
-              <TextInput
-                className="hidden"
-                value={field.state.value}
-                onChangeText={field.handleChange}
-              />
-            )}
+        <View className="mt-[5.3rem]">
+          <Text className="my-3 font-bold">Weight:</Text>
+          <TextInput
+            className="border-[1px] text-lg h-12 justify-center pl-3 border-primary text-600 rounded-md mb-4"
+            keyboardType="numeric"
+            value={weight}
+            onChangeText={setWeight}
+            placeholder="Enter your weight"
           />
+        </View>
+        {errors.weight && (
+          <Text className="text-red-500 mt-2">{errors.weight}</Text>
         )}
 
-        <form.Field
-          name="weight"
-          children={(field) => (
-            <View className="mt-[5.3rem]">
-              <Text className="my-3 font-bold">Weight:</Text>
-              <TextInput
-                className="border-[1px] text-lg h-12 justify-center pl-3 border-primary text-600 rounded-md mb-4 "
-                keyboardType="numeric"
-                value={String(field.state.value ?? "")}
-                onBlur={field.handleBlur}
-                onChangeText={(text) => field.handleChange(text as any)}
-                placeholder="Enter your weight"
-              />
-              {field.state.meta.errors.length > 0 && (
-                <Text className="text-red-500 mt-2">
-                  {field.state.meta.errors}
-                </Text>
-              )}
-            </View>
-          )}
-        />
+        <View>
+          <Text className="my-3 font-bold">Energy</Text>
+          <View className="border-[1px] border-black rounded-md mb-4 h-12 p-2 justify-center">
+            <Picker selectedValue={energy} onValueChange={setEnergy}>
+              <Picker.Item label="Select your energy" value="" />
+              <Picker.Item label="Low" value="Low" />
+              <Picker.Item label="Okay" value="Okay" />
+              <Picker.Item label="Good" value="Good" />
+              <Picker.Item label="Great" value="Great" />
+            </Picker>
+          </View>
+        </View>
+        {errors.energy && (
+          <Text className="text-red-500 mt-2">{errors.energy}</Text>
+        )}
 
-        <form.Field
-          name="energy"
-          children={(field) => (
-            <View>
-              <Text className="my-3 font-bold">Energy</Text>
-              <View className="border-[1px] border-black rounded-md mb-4 h-12 p-2 justify-center">
-                <Picker
-                  className="w-full px-4 py-2"
-                  selectedValue={field.state.value}
-                  onValueChange={field.handleChange}
-                >
-                  <Picker.Item label="Select your energy" value="" />
-                  <Picker.Item label="Low" value="Low" />
-                  <Picker.Item label="Okay" value="Okay" />
-                  <Picker.Item label="Good" value="Good" />
-                  <Picker.Item label="Great" value="Great" />
-                </Picker>
-              </View>
-            </View>
-          )}
-        />
+        <View>
+          <Text className="my-3 font-bold">Mood</Text>
+          <View className="border-[1px] border-black rounded-md mb-4 h-12 p-2 justify-center">
+            <Picker selectedValue={mood} onValueChange={setMood}>
+              <Picker.Item label="Select your mood" value="" />
+              <Picker.Item label="Low" value="Low" />
+              <Picker.Item label="Medium" value="Medium" />
+              <Picker.Item label="High" value="High" />
+            </Picker>
+          </View>
+        </View>
+        {errors.mood && (
+          <Text className="text-red-500 mt-2">{errors.mood}</Text>
+        )}
 
-        <form.Field
-          name="mood"
-          children={(field) => (
-            <View>
-              <Text className="my-3 font-bold">Mood</Text>
-              <View className="border-[1px] border-black rounded-md mb-4 h-12 p-2 justify-center">
-                <Picker
-                  className="w-full px-4 py-2"
-                  selectedValue={field.state.value}
-                  onValueChange={field.handleChange}
-                >
-                  <Picker.Item label="Select your mood" value="" />
-                  <Picker.Item label="Low" value="Low" />
-                  <Picker.Item label="Medium" value="Medium" />
-                  <Picker.Item label="High" value="High" />
-                </Picker>
-              </View>
-            </View>
+        <View className="mb-2">
+          <Text className="my-3 font-bold">Weight In Date:</Text>
+          <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+            <DateDisplay date={createdAt} />
+          </TouchableOpacity>
+          {showDate && (
+            <DatePicker
+              date={createdAt}
+              setDate={setCreatedAt}
+              showDate={showDate}
+              setShowDate={setShowDate}
+            />
           )}
-        />
+        </View>
 
-        <form.Field
-          name="createdAt"
-          children={(field) => (
-            <View className="mb-2">
-              <Text className="my-3 font-bold">Weight In Date:</Text>
-              <TouchableOpacity onPress={() => setShowDate(!showDate)}>
-                <DateDisplay date={field.state.value} />
-              </TouchableOpacity>
+        <View>
+          <Text className="my-3 font-bold">Notes:</Text>
+          <TextInput
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Enter Weight In notes"
+            multiline
+            className="border-[1px] text-lg h-[100px] justify-center pl-3 border-primary text-600 rounded-md mb-4 text-start pt-3"
+            style={{ textAlignVertical: "top" }}
+          />
+        </View>
 
-              {showDate && (
-                <DatePicker
-                  date={field.state.value}
-                  setDate={(date: any) => {
-                    field.handleChange(date)
-                  }}
-                  showDate={showDate}
-                  setShowDate={setShowDate}
-                />
-              )}
-              {field.state.meta.errors.length > 0 && (
-                <Text style={{ color: "red", marginTop: 4 }}>
-                  {field.state.meta.errors}
-                </Text>
-              )}
-            </View>
-          )}
-        />
-
-        <form.Field
-          name="notes"
-          children={(field) => (
-            <View>
-              <Text className="my-3 font-bold">Notes:</Text>
-              <TextInput
-                value={field.state.value || ""}
-                onBlur={field.handleBlur}
-                onChangeText={field.handleChange}
-                placeholder="Enter Weight In notes"
-                multiline
-                className="border-[1px] text-lg h-[100px] justify-center pl-3 border-primary text-600 rounded-md mb-4 text-start pt-3"
-                style={{ textAlignVertical: "top" }}
-              />
-              {field.state.meta.errors.length > 0 && (
-                <Text className="color-red-500 mt-2">
-                  {field.state.meta.errors}
-                </Text>
-              )}
-            </View>
-          )}
-        />
-
-        <form.Subscribe
-          selector={(state) => [state.canSubmit, state.isSubmitting]}
-          children={([canSubmit, isSubmitting]) => (
-            <TouchableOpacity
-              className={`${
-                canSubmit ? "bg-slate-700" : "bg-gray-300"
-              } rounded-md mt-4 p-3 items-center mb-16`}
-              onPress={() => form.handleSubmit()}
-              disabled={!canSubmit}
-            >
-              <Text className="font-bold text-white">
-                {isSubmitting
-                  ? "Submitting..."
-                  : isEditing
-                  ? "Update Weight Log"
-                  : "Save Weight Log"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
+        <TouchableOpacity
+          className={`${
+            isSubmitting ? "bg-gray-300" : "bg-slate-700"
+          } rounded-md mt-4 p-3 items-center mb-16`}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          <Text className="font-bold text-white">
+            {isSubmitting
+              ? "Submitting..."
+              : isEditing
+              ? "Update Weight Log"
+              : "Add Weight Log"}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   )

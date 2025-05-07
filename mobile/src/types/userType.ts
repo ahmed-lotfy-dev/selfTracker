@@ -24,7 +24,6 @@ const UserSchema = z.object({
 type User = z.infer<typeof UserSchema>
 
 export const signInSchema = z.object({
-  name: z.string().min(3, "Name is required"),
   email: z.string().email("Invalid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 })

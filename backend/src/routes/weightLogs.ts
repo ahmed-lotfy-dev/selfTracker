@@ -83,6 +83,7 @@ weightsLogsRouter.post("/", async (c) => {
     return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
   const body = await c.req.json()
+  const { weight, energy, mood, notes, createdAt } = body
 
   try {
     await clearCache([

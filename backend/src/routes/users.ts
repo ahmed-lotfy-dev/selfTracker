@@ -44,11 +44,11 @@ userRouter.get("/me/home", async (c) => {
     return c.json({ message: "Incomplete user profile" }, 400)
   }
   try {
-    // const cacheKey = `userHomeData:${user.id}`
-    // const cached = await getCache(cacheKey)
-    // if (cached) {
-    //   return c.json(cached)
-    // }
+    const cacheKey = `userHomeData:${user.id}`
+    const cached = await getCache(cacheKey)
+    if (cached) {
+      return c.json(cached)
+    }
 
     const { weeklyWorkout, monthlyWorkout } = await getWorkoutCounts(user.id)
     const { completedTasks, pendingTasks, allTasks } = await getTaskCount(
@@ -89,7 +89,7 @@ userRouter.get("/me/home", async (c) => {
       BMICategory,
       threeMonthsWeightLogs,
     }
-    // await setCache(cacheKey, 3600, responseData)
+    await setCache(cacheKey, 3600, responseData)
 
     return c.json(responseData)
   } catch (error) {

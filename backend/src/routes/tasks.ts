@@ -5,6 +5,12 @@ import { eq, and, lt, desc } from "drizzle-orm"
 import { sign } from "hono/jwt"
 import { hash } from "bcryptjs"
 import { clearCache, setCache, getCache } from "../../lib/redis.js"
+import {
+  createTask,
+  deleteTask,
+  getUserTasks,
+  updateTask,
+} from "../services/tasksService.js"
 
 const tasksRouter = new Hono()
 
@@ -18,18 +24,15 @@ tasksRouter.get("/", async (c) => {
     const cached = await getCache(cacheKey)
     if (cached) return c.json(cached)
 
-    const userTasks = await db.query.tasks.findMany({
-      where: eq(tasks.userId, user.id as string),
-      orderBy: desc(tasks.createdAt),
-    })
+    const userTasks = await getUserTasks
+    // const userTasks = await db.query.tasks.findMany({
+    //   where: eq(tasks.userId, user.id as string),
+    //   orderBy: desc(tasks.createdAt),
+    // })
 
-    const responseData = {
-      tasks: userTasks,
-    }
+    await setCache(cacheKey, 3600, userTasks)
 
-    await setCache(cacheKey, 3600, responseData)
-
-    return c.json(responseData)
+    return c.json(userTasks)
   } catch (error) {
     console.error("Error fetching tasks:", error)
     return c.json({ message: "Internal server error" }, 500)
@@ -41,25 +44,27 @@ tasksRouter.post("/", async (c) => {
 
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
-  const { title, completed, dueDate, category } = await c.req.json()
+  const body = c.req.json()
+  // const { title, completed, dueDate, category } = await c.req.json()
 
   try {
     await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
 
-    const [createdTask] = await db
-      .insert(tasks)
-      .values({
-        userId: user.id,
-        title,
-        completed,
-        dueDate,
-        category,
-      })
-      .returning()
+    const created = await createTask(user.id, body)
+    // const [createdTask] = await db
+    //   .insert(tasks)
+    //   .values({
+    //     userId: user.id,
+    //     title,
+    //     completed,
+    //     dueDate,
+    //     category,
+    //   })
+    //   .returning()
 
     return c.json({
       message: "Task created successfully",
-      task: createdTask,
+      task: created,
     })
   } catch (error) {
     console.error("Error creating task:", error)
@@ -93,18 +98,19 @@ tasksRouter.patch("/:id", async (c) => {
     if (dueDate) updateFields.dueDate = dueDate
     if (category) updateFields.category = category
 
-    const [updatedTask] = await db
-      .update(tasks)
-      .set(updateFields)
-      .where(eq(tasks.id, id))
-      .returning()
+    const updated = await updateTask(id, user.id, updateFields)
+    // const [updatedTask] = await db
+    //   .update(tasks)
+    //   .set(updateFields)
+    //   .where(eq(tasks.id, id))
+    //   .returning()
 
     await clearCache(`userHomeData:${user.id}`)
     await clearCache(`tasks:${user.id}`)
 
     return c.json({
       message: "Task updated successfully",
-      task: updatedTask,
+      task: updated,
     })
   } catch (error) {
     console.error("Error updating task:", error)
@@ -124,12 +130,13 @@ tasksRouter.delete("/:id", async (c) => {
   try {
     await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
 
-    const [deletedTask] = await db
-      .delete(tasks)
-      .where(eq(tasks.id, id))
-      .returning()
+    const deleted = await deleteTask(user.id, id)
+    // const [deletedTask] = await db
+    //   .delete(tasks)
+    //   .where(eq(tasks.id, id))
+    //   .returning()
 
-    if (!deletedTask) {
+    if (!deleted) {
       return c.json({ message: "Task not found" }, 404)
     }
 

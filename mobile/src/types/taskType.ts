@@ -8,7 +8,6 @@ export const TaskSchema = z.object({
   dueDate: z.string().datetime().nullable(),
   category: z.enum(["workout", "finance", "general"]),
   createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
 })
 
 export type TaskType = z.infer<typeof TaskSchema>

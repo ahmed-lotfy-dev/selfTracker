@@ -24,27 +24,6 @@ export const getWeightLogs = async (
     })
     .prepare("getWeightLogs")
     .execute()
-  // const userWeightLogs = await db
-  //   .select({
-  //     id: weightLogs.id,
-  //     userId: weightLogs.userId,
-  //     weight: weightLogs.weight,
-  //     energy: weightLogs.energy,
-  //     mood: weightLogs.mood,
-  //     notes: weightLogs.notes,
-  //     createdAt: weightLogs.createdAt,
-  //   })
-  //   .from(weightLogs)
-  //   .where(
-  //     cursor
-  //       ? and(
-  //           eq(weightLogs.userId, userId as string),
-  //           lt(weightLogs.createdAt, new Date(cursor))
-  //         )
-  //       : eq(weightLogs.userId, userId as string)
-  //   )
-  //   .orderBy(desc(weightLogs.createdAt))
-  //   .limit(limitNumber + 1)
 
   const hasMore = userWeightLogs.length > limitNumber
   const items = hasMore ? userWeightLogs.slice(0, -1) : userWeightLogs
@@ -68,12 +47,16 @@ export const getSingleWeightLog = async (logId: string) => {
 
 export const createWeightLog = async (userId: string, fields: any) => {
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
-
+console.log(fields)
   const [created] = await db
     .insert(weightLogs)
-    .values({ userId, ...fields })
+    .values({
+      ...fields,
+      userId: userId,
+      createdAt: new Date(fields.createdAt),
+    })
     .returning()
-    .prepare("insertWeightLog")
+    .prepare("createWeightLog")
     .execute()
 
   return created
@@ -91,7 +74,7 @@ export const updateWeightLog = async (
     .set(updatedFields)
     .where(and(eq(weightLogs.id, id), eq(weightLogs.userId, userId)))
     .returning()
-    .prepare("insertWeightLog")
+    .prepare("updateWeightLog")
     .execute()
 
   return updated

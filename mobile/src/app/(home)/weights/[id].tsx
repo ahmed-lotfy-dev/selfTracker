@@ -7,6 +7,7 @@ import { useDelete } from "@/src/hooks/useDelete"
 import DeleteButton from "@/src/components/Buttons/DeleteButton"
 import EditButton from "@/src/components/Buttons/EditButton"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
+import React from "react"
 
 export default function WeightLog() {
   const router = useRouter()
@@ -50,7 +51,7 @@ export default function WeightLog() {
         <Text className="text-xl font-semibold mb-2">Weight Log</Text>
         <Text className="text-lg">
           Date:
-          <DateDisplay date={log.createdAt} />
+          <DateDisplay date={log.createdAt} isCalendar />
         </Text>
         <Text className="text-lg">
           Weight: {log.weight || "No weight recorded"}

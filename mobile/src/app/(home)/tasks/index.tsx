@@ -66,7 +66,7 @@ export default function TaskScreen() {
         <View className="flex-1 w-full">
           <FlatList
             data={sortedTasks}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item?.id.toString()}
             refreshControl={
               <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
             }

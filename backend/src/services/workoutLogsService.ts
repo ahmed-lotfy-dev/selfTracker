@@ -80,13 +80,17 @@ export const getSingleWorkoutLog = async (logId: string) => {
 }
 
 export const createWorkoutLog = async (userId: string, fields: any) => {
-  await clearCache([`userHomeData:${userId}`, `workoutLogs:list:${userId}:*`])
-
   const [created] = await db
     .insert(workoutLogs)
-    .values({ ...fields, userId })
+    .values({
+      ...fields,
+      userId,
+      workoutName: fields.workoutName,
+      workoutId: fields.workoutId,
+      createdAt: new Date(fields.createdAt),
+    })
     .returning()
-    .prepare("insertWorkoutLog")
+    .prepare("createWorkoutLog")
     .execute()
 
   return created
@@ -95,16 +99,16 @@ export const createWorkoutLog = async (userId: string, fields: any) => {
 export const updateWorkoutLog = async (
   id: string,
   userId: string,
-  updatedFields: {}
+  fields: any
 ) => {
   await clearCache([`userHomeData:${userId}`, `workoutLogs:list:${userId}:*`])
 
   const [updated] = await db
     .update(workoutLogs)
-    .set({ userId, ...updatedFields })
+    .set({ ...fields, createdAt: fields.createdAt })
     .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, userId)))
     .returning()
-    .prepare("insertWorkoutLog")
+    .prepare("updateWorkotLog")
     .execute()
   console.log(updated)
   return updated

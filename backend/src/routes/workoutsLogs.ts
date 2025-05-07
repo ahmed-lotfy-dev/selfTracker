@@ -97,39 +97,15 @@ workoutLogsRouter.get("/calendar", async (c) => {
   }
 
   try {
-    const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999)
-
-    // const calendarKey = `workoutLogs:calendar:${user.id}:${year}-${month}`
-    // const cached = await getCache(calendarKey)
-    // if (cached) {
-    //   return c.json(JSON.parse(cached))
-    // }
+    const calendarKey = `workoutLogs:calendar:${user.id}:${year}-${month}`
+    const cached = await getCache(calendarKey)
+    if (cached) {
+      return c.json(JSON.parse(cached))
+    }
 
     const logs = await getWorkoutLogsCalendar(year, month, user.id)
-    // const logs = await db
-    //   .select({
-    //     id: workoutLogs.id,
-    //     userId: workoutLogs.userId,
-    //     workoutId: workoutLogs.workoutId,
-    //     workoutName: workouts.name,
-    //     notes: workoutLogs.notes,
-    //     createdAt: workoutLogs.createdAt,
-    //   })
-    //   .from(workoutLogs)
-    //   .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
-    //   .where(
-    //     and(
-    //       eq(workoutLogs.userId, user.id),
-    //       and(
-    //         gte(workoutLogs.createdAt, startDate),
-    //         lte(workoutLogs.createdAt, endDate)
-    //       )
-    //     )
-    //   )
-    //   .orderBy(desc(workoutLogs.createdAt))
 
-    // await setCache(calendarKey, 3600, logs)
+    await setCache(calendarKey, 3600, logs)
 
     return c.json({ logs: logs })
   } catch (error) {
@@ -170,13 +146,11 @@ workoutLogsRouter.post("/", async (c) => {
     return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
-  const { workoutId, workoutName, notes, createdAt } = await c.req.json()
   const body = await c.req.json()
-
-  if (!workoutId) {
+  console.log(body)
+  if (!body.workoutId) {
     return c.json({ message: "Workout ID is racequired" }, 400)
   }
-  console.log(body)
 
   try {
     await clearCache([

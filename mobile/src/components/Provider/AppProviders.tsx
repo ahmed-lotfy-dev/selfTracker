@@ -4,10 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
-import {
-  persistQueryClient,
-  PersistQueryClientProvider,
-} from "@tanstack/react-query-persist-client"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import React from "react"
 

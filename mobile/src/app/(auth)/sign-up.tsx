@@ -10,34 +10,59 @@ import {
   Pressable,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
-import { useForm } from "@tanstack/react-form"
 import { COLORS } from "@/src/constants/Colors"
 import { setAccessToken } from "@/src/utils/storage"
 import { useAuthActions } from "@/src/store/useAuthStore"
-import { authClient } from "@/src/utils/auth-client"
 import { signUp } from "@/src/utils/api/authApi"
-import { z } from "zod"
 import { signUpSchema } from "@/src/types/userType"
 
 export default function SignUp() {
   const router = useRouter()
   const { setUser } = useAuthActions()
 
-  const [errorMessage, setErrorMessage] = useState("")
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
 
-  const form = useForm({
-    defaultValues: { name: "", email: "", password: "" },
-    onSubmit: async ({ value }) => {
-      const response = await signUp(value.name, value.email, value.password)
+  const [nameError, setNameError] = useState("")
+  const [emailError, setEmailError] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+  const [formError, setFormError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async () => {
+    setNameError("")
+    setEmailError("")
+    setPasswordError("")
+    setFormError("")
+
+    const result = signUpSchema.safeParse({ name, email, password })
+
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors
+      if (errors.name) setNameError(errors.name[0])
+      if (errors.email) setEmailError(errors.email[0])
+      if (errors.password) setPasswordError(errors.password[0])
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await signUp(name, email, password)
+
       if (response.error) {
-        setErrorMessage(response.error.message || "")
-      }
-      if (response.data) {
+        setFormError(response.error.message || "Signup failed")
+      } else if (response.data) {
         setUser(response.data.token)
         router.replace("/(auth)/verify-email")
       }
-    },
-  })
+    } catch (err) {
+      setFormError("An unexpected error occurred.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <KeyboardAvoidingView
@@ -46,136 +71,65 @@ export default function SignUp() {
     >
       <Text className="font-bold text-xl mb-4">Sign Up</Text>
 
-      <form.Field
-        name="name"
-        validators={{
-          onChangeAsyncDebounceMs: 300,
-          onChangeAsync: (value) => {
-            const result = signUpSchema.shape.name.safeParse(
-              value.fieldApi.state.value
-            )
-            return result.success ? undefined : result.error.issues[0].message
-          },
-        }}
-        children={(field) => (
-          <View>
-            <TextInput
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChangeText={field.handleChange}
-              placeholder="Name"
-              autoCapitalize="none"
-              autoComplete="name"
-              onSubmitEditing={() => {
-                if (form.state.canSubmit) {
-                  form.handleSubmit()
-                }
-              }}
-              className="border border-gray-300 rounded-md px-4 py-2 mb-3"
-            />
-            {field.state.meta.errors ? (
-              <Text className="text-red-500">
-                {field.state.meta.errors.join(", ")}
-              </Text>
-            ) : null}
-          </View>
-        )}
+      <TextInput
+        value={name}
+        onChangeText={setName}
+        placeholder="Name"
+        autoCapitalize="words"
+        autoComplete="name"
+        className="border border-gray-300 rounded-md px-4 py-2 mb-1"
       />
-
-      <form.Field
-        name="email"
-        validators={{
-          onChangeAsyncDebounceMs: 300,
-          onChangeAsync: (value) => {
-            const result = signUpSchema.shape.email.safeParse(
-              value.fieldApi.state.value
-            )
-            return result.success ? undefined : result.error.issues[0].message
-          },
-        }}
-        children={(field) => (
-          <View>
-            <TextInput
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChangeText={field.handleChange}
-              placeholder="Email"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-              textContentType="emailAddress"
-              onSubmitEditing={() => {
-                if (form.state.canSubmit) {
-                  form.handleSubmit()
-                }
-              }}
-              className="border border-gray-300 rounded-md px-4 py-2 mb-3"
-            />
-            {field.state.meta.errors ? (
-              <Text className="text-red-500">
-                {field.state.meta.errors.join(", ")}
-              </Text>
-            ) : null}
-          </View>
-        )}
-      />
-      <form.Field
-        name="password"
-        validators={{
-          onChangeAsyncDebounceMs: 300,
-          onChangeAsync: (value) => {
-            const result = signUpSchema.shape.password.safeParse(
-              value.fieldApi.state.value
-            )
-            return result.success ? undefined : result.error.issues[0].message
-          },
-        }}
-        children={(field) => (
-          <View>
-            <TextInput
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChangeText={field.handleChange}
-              placeholder="Password"
-              secureTextEntry
-              autoComplete="password"
-              textContentType="password"
-              onSubmitEditing={() => {
-                if (form.state.canSubmit) {
-                  form.handleSubmit()
-                }
-              }}
-              className="border border-gray-300 rounded-md px-4 py-2 mb-3"
-            />
-            {field.state.meta.errors ? (
-              <Text className="text-red-500">
-                {field.state.meta.errors.join(", ")}
-              </Text>
-            ) : null}
-          </View>
-        )}
-      />
-      {errorMessage ? (
-        <Text style={{ color: "red", marginBottom: 10 }}>{errorMessage}</Text>
+      {nameError ? (
+        <Text className="text-red-500 mb-2">{nameError}</Text>
       ) : null}
-      <form.Subscribe
-        selector={(state) => [state.canSubmit, state.isSubmitting]}
-        children={([canSubmit, isSubmitting]) => (
-          <TouchableOpacity
-            onPress={() => form.handleSubmit()}
-            disabled={!canSubmit || isSubmitting}
-            className="bg-[#007bff] p-4 rounded-md items-center font-bold text-xl"
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color={COLORS.primary} />
-            ) : (
-              <Text style={{ color: "white" }}>Sign Up</Text>
-            )}
-          </TouchableOpacity>
-        )}
+
+      <TextInput
+        value={email}
+        onChangeText={setEmail}
+        placeholder="Email"
+        autoCapitalize="none"
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+        className="border border-gray-300 rounded-md px-4 py-2 mb-1"
       />
+      {emailError ? (
+        <Text className="text-red-500 mb-2">{emailError}</Text>
+      ) : null}
+
+      <TextInput
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Password"
+        secureTextEntry
+        autoComplete="password"
+        textContentType="password"
+        className="border border-gray-300 rounded-md px-4 py-2 mb-1"
+      />
+      {passwordError ? (
+        <Text className="text-red-500 mb-2">{passwordError}</Text>
+      ) : null}
+
+      {formError ? (
+        <Text className="text-red-500 mb-3">{formError}</Text>
+      ) : null}
+
+      <TouchableOpacity
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+        className={`p-4 rounded-md items-center ${
+          isSubmitting ? "bg-blue-200" : "bg-[#007bff]"
+        }`}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color={COLORS.primary} />
+        ) : (
+          <Text style={{ color: "white" }}>Sign Up</Text>
+        )}
+      </TouchableOpacity>
+
       <Link href="/sign-in" asChild>
-        <Pressable className="justify-center items-center  rounded-lg p-2 mr-5 mt-4">
+        <Pressable className="justify-center items-center rounded-lg p-2 mr-5 mt-4">
           <Text className="text-blue-500">
             Already have an account? Sign In
           </Text>

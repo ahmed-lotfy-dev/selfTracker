@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react"
-import { useForm } from "@tanstack/react-form"
+import React, { useEffect, useState } from "react"
 import {
   View,
   Text,
@@ -8,6 +7,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  Alert,
 } from "react-native"
 import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/src/components/DatePicker"
@@ -19,25 +19,35 @@ import { createWorkout, updateWorkout } from "@/src/utils/api/workoutsApi"
 import { useRouter } from "expo-router"
 import { useSelectedWorkout } from "@/src/store/useWokoutStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
-import { useDirtyFields } from "@/src/hooks/useDirtyFields"
 import { z } from "zod"
-import { WorkoutLogType } from "@/src/types/workoutLogType"
-import { WorkoutType, WorkoutSchema } from "@/src/types/workoutType"
+import { WorkoutLogType, WorkoutLogSchema } from "@/src/types/workoutLogType"
+import { WorkoutType } from "@/src/types/workoutType"
 import { useAuth } from "@/src/hooks/useAuth"
 import { format } from "date-fns"
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
-  const [showDate, setShowDate] = useState(false)
   const { user } = useAuth()
   const selectedWorkout = useSelectedWorkout()
-
   const { data } = useQuery({
     queryKey: ["workouts"],
     queryFn: fetchAllWorkouts,
   })
-
   const workouts = data?.workouts ?? []
+
+  const [workoutId, setWorkoutId] = useState(
+    isEditing ? selectedWorkout?.workoutId || "" : ""
+  )
+  const [notes, setNotes] = useState(
+    isEditing ? selectedWorkout?.notes || "" : ""
+  )
+  const [createdAt, setCreatedAt] = useState(
+    isEditing
+      ? format(new Date(selectedWorkout?.createdAt || ""), "yyyy-MM-dd")
+      : format(new Date(), "yyyy-MM-dd")
+  )
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showDate, setShowDate] = useState(false)
 
   const { addMutation } = useAdd({
     mutationFn: (workout: WorkoutLogType) => createWorkout(workout),
@@ -61,45 +71,34 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     onErrorMessage: "Failed to Update Workout Log.",
   })
 
-  const form = useForm({
-    onSubmit: async ({ value }) => {
-      onFormSubmit(value)
-    },
-    defaultValues: {
-      id: selectedWorkout?.id || "",
-      userId: user?.id || "",
-      workoutId: isEditing ? selectedWorkout?.workoutId || "" : "",
-      workoutName: isEditing ? selectedWorkout?.workoutName || "" : "",
-      notes: isEditing ? selectedWorkout?.notes || "" : "",
-      createdAt: isEditing
-        ? format(new Date(selectedWorkout?.createdAt || ""), "yyyy-MM-dd")
-        : format(new Date(), "yyyy-MM-dd"),
-    },
-  })
+  const handleSubmit = () => {
+    const workoutName =
+      workouts.find((w: WorkoutLogType) => w.id === workoutId)?.name || ""
 
-  const dirtyFields = useDirtyFields(form)
+    const formData: WorkoutLogType = {
+      id: isEditing ? selectedWorkout?.id : undefined,
+      userId: user?.id,
+      workoutId,
+      workoutName,
+      notes,
+      createdAt,
+    }
 
-  const onFormSubmit = (value: WorkoutLogType) => {
-    const selectedWorkoutItem = workouts?.find(
-      (w: WorkoutLogType) => w.id === value.workoutId
-    )
+    const result = WorkoutLogSchema.safeParse(formData)
 
-    const fullWorkoutData = {
-      ...value,
-      workoutName: selectedWorkoutItem?.name || "",
+    if (!result.success) {
+      const newErrors: Record<string, string> = {}
+      for (const issue of result.error.issues) {
+        newErrors[issue.path[0]] = issue.message
+      }
+      setErrors(newErrors)
+      return
     }
 
     if (isEditing && selectedWorkout) {
-      const payload = dirtyFields.reduce(
-        (acc: any, name) => {
-          acc[name] = fullWorkoutData[name as keyof WorkoutLogType]
-          return acc
-        },
-        { id: selectedWorkout.id, workoutName: selectedWorkoutItem?.name || "" }
-      )
-      updateMutation.mutate(payload)
+      updateMutation.mutate(formData)
     } else {
-      addMutation.mutate(fullWorkoutData)
+      addMutation.mutate(formData)
     }
   }
 
@@ -111,156 +110,63 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
         style={{ flex: 1, padding: 10, marginTop: 80 }}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Hidden Fields */}
-        <form.Field name="userId">
-          {(field) => (
-            <TextInput
-              value={field.state.value}
-              onChangeText={field.handleChange}
-              className="hidden"
-            />
-          )}
-        </form.Field>
-
-        <form.Field name="workoutName">
-          {(field) => (
-            <TextInput
-              value={field.state.value}
-              onChangeText={field.handleChange}
-              className="hidden"
-            />
-          )}
-        </form.Field>
-
-        {isEditing && (
-          <form.Field name="id">
-            {(field) => (
-              <TextInput
-                value={field.state.value}
-                onChangeText={field.handleChange}
-                className="hidden"
-              />
-            )}
-          </form.Field>
+        {/* Workout Picker */}
+        <Text className="my-3 font-bold">Workout Type:</Text>
+        <View className="border-[1px] border-primary h-12 justify-center rounded-md p-4">
+          <Picker
+            selectedValue={workoutId}
+            onValueChange={(val) => setWorkoutId(val)}
+          >
+            <Picker.Item label="Select a workout type" value="" />
+            {workouts.map((w: WorkoutType) => (
+              <Picker.Item key={w.id} label={w.name} value={w.id} />
+            ))}
+          </Picker>
+        </View>
+        {errors.workoutId && (
+          <Text className="text-red-500 mt-2">{errors.workoutId}</Text>
         )}
 
-        {/* Workout Picker */}
-        <form.Field
-          name="workoutId"
-          validators={{
-            onChangeAsyncDebounceMs: 300,
-            onChangeAsync: async (value) => {
-              const result = WorkoutSchema.shape.id.safeParse(
-                value.fieldApi.state.value
-              )
-              return result.success ? undefined : result.error.issues[0].message
-            },
-          }}
-        >
-          {(field) => (
-            <View className="">
-              <Text className="my-3 font-bold">Workout Type:</Text>
-              <View className="border-[1px] border-primary h-12 justify-center rounded-md p-4">
-                <Picker
-                  selectedValue={field.state.value}
-                  onValueChange={field.handleChange}
-                >
-                  <Picker.Item label="Select a workout type" value="" />
-                  {workouts?.map((option: WorkoutType) => (
-                    <Picker.Item
-                      key={option.id}
-                      label={option.name}
-                      value={option.id}
-                    />
-                  ))}
-                </Picker>
-              </View>
-              {field.state.meta.errors.length > 0 && (
-                <Text className="text-red-500 mt-2">
-                  {field.state.meta.errors[0]}
-                </Text>
-              )}
-            </View>
-          )}
-        </form.Field>
-
         {/* Date Picker */}
-        <form.Field
-          name="createdAt"
-          validators={{
-            onChangeAsyncDebounceMs: 300,
-            onChangeAsync: async (value) => {
-              const result = WorkoutSchema.shape.createdAt.safeParse(
-                value.fieldApi.state.value
-              )
-              return result.success ? undefined : result.error.issues[0].message
-            },
-          }}
-        >
-          {(field) => (
-            <View>
-              <Text className="my-3 font-bold">Workout Date:</Text>
-              <TouchableOpacity onPress={() => setShowDate(!showDate)}>
-                <DateDisplay date={field.state.value} />
-              </TouchableOpacity>
-              {showDate && (
-                <DatePicker
-                  date={field.state.value}
-                  setDate={field.handleChange}
-                  showDate={showDate}
-                  setShowDate={setShowDate}
-                />
-              )}
-              {field.state.meta.errors.length > 0 && (
-                <Text className="text-red-500 mt-2">
-                  {field.state.meta.errors[0]}
-                </Text>
-              )}
-            </View>
-          )}
-        </form.Field>
+        <Text className="my-3 font-bold">Workout Date:</Text>
+        <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+          <DateDisplay date={createdAt} />
+        </TouchableOpacity>
+        {showDate && (
+          <DatePicker
+            date={createdAt}
+            setDate={setCreatedAt}
+            showDate={showDate}
+            setShowDate={setShowDate}
+          />
+        )}
+        {errors.createdAt && (
+          <Text className="text-red-500 mt-2">{errors.createdAt}</Text>
+        )}
 
-        {/* Notes Input */}
-        <form.Field name="notes">
-          {(field) => (
-            <View>
-              <Text className="my-3 font-bold">Notes:</Text>
-              <TextInput
-                value={field.state.value || ""}
-                onBlur={field.handleBlur}
-                onChangeText={field.handleChange}
-                placeholder="Enter notes"
-                multiline
-                className="border-[1px] text-lg h-[100px] pl-3 border-primary rounded-md mb-4 pt-3"
-                style={{ textAlignVertical: "top" }}
-              />
-              {field.state.meta.errors.length > 0 && (
-                <Text className="text-red-500 mt-2">
-                  {field.state.meta.errors[0]}
-                </Text>
-              )}
-            </View>
-          )}
-        </form.Field>
+        {/* Notes */}
+        <Text className="my-3 font-bold">Notes:</Text>
+        <TextInput
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Enter notes"
+          multiline
+          className="border-[1px] text-lg h-[100px] pl-3 border-primary rounded-md mb-4 pt-3"
+          style={{ textAlignVertical: "top" }}
+        />
+        {errors.notes && (
+          <Text className="text-red-500 mt-2">{errors.notes}</Text>
+        )}
 
-        {/* Submit Button */}
-        <form.Subscribe
-          selector={(state) => [state.canSubmit, state.isSubmitting]}
+        {/* Submit */}
+        <TouchableOpacity
+          className="bg-slate-700 rounded-md mt-4 items-center p-3 mb-16"
+          onPress={handleSubmit}
         >
-          {([canSubmit, isSubmitting]) => (
-            <TouchableOpacity
-              className={`${
-                canSubmit ? "bg-slate-700" : "bg-gray-300"
-              } rounded-md mt-4 items-center p-3 mb-16`}
-              onPress={() => form.handleSubmit()}
-              disabled={!canSubmit}
-            >
-              <Text className="font-bold text-white">
-                {isSubmitting ? "Submitting..." : "Save Workout"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </form.Subscribe>
+          <Text className="font-bold text-white">
+            {isEditing ? "Update Workout" : "Save Workout"}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   )
