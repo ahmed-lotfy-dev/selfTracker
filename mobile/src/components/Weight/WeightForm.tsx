@@ -13,13 +13,14 @@ import DatePicker from "@/src/components/DatePicker"
 import DateDisplay from "@/src/components/DateDisplay"
 import { useAdd } from "@/src/hooks/useAdd"
 import { useRouter } from "expo-router"
-import { createWeight, updateWeight } from "@/src/utils/api/weightsApi"
+import { createWeight, updateWeight } from "@/src/lib/api/weightsApi"
 import { useSelectedWeight } from "@/src/store/useWeightStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { z } from "zod"
 import { WeightLogSchema, WeightLogType } from "@/src/types/weightLogType"
 import { useAuth } from "@/src/hooks/useAuth"
 import { format } from "date-fns"
+import Header from "../Header"
 
 export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
@@ -104,11 +105,8 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView
-        className="flex-1 px-5 pt-10"
-        keyboardShouldPersistTaps="handled"
-      >
-        <View className="mt-[5.3rem]">
+      <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
+        <View className="">
           <Text className="my-3 font-bold">Weight:</Text>
           <TextInput
             className="border-[1px] text-lg h-12 justify-center pl-3 border-primary text-600 rounded-md mb-4"

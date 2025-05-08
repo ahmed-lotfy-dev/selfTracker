@@ -3,7 +3,7 @@ import {
   deleteWorkout,
   fetchSingleWorkout,
   fetchSingleWorkoutByDate,
-} from "@/src/utils/api/workoutsApi"
+} from "@/src/lib/api/workoutsApi"
 import { useQuery } from "@tanstack/react-query"
 import {
   Route,

@@ -7,7 +7,7 @@ import {
   ScrollView,
 } from "react-native"
 import { useQuery } from "@tanstack/react-query"
-import { fetchUserHomeInfo } from "@/src/utils/api/userApi"
+import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
 import { MaterialIcons } from "@expo/vector-icons"
 import { MetricsCard } from "@/src/components/Home/MetricCard"
 import { WeightProgressCard } from "@/src/components/Home/WeightProgressCard"

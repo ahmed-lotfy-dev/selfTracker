@@ -9,7 +9,7 @@ export default function AddWorkout() {
   const queryClient = useQueryClient()
 
   return (
-    <ScrollView style={{ flex: 1,padding:10 }}>
+    <ScrollView style={{ flex: 1 }}>
       <WorkoutForm />
     </ScrollView>
   )

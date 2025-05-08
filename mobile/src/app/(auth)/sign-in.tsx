@@ -12,8 +12,8 @@ import {
 import { Link, useRouter } from "expo-router"
 import { useAuthActions } from "@/src/store/useAuthStore"
 import { COLORS } from "@/src/constants/Colors"
-import { signIn } from "@/src/utils/api/authApi"
-import { setAccessToken } from "@/src/utils/storage"
+import { signIn } from "@/src/lib/api/authApi"
+import { setAccessToken } from "@/src/lib/storage"
 import { signInSchema } from "@/src/types/userType"
 import { z } from "zod"
 

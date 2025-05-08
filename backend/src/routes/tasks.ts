@@ -24,11 +24,7 @@ tasksRouter.get("/", async (c) => {
     const cached = await getCache(cacheKey)
     if (cached) return c.json(cached)
 
-    const userTasks = await getUserTasks
-    // const userTasks = await db.query.tasks.findMany({
-    //   where: eq(tasks.userId, user.id as string),
-    //   orderBy: desc(tasks.createdAt),
-    // })
+    const userTasks = await getUserTasks(user.id)
 
     await setCache(cacheKey, 3600, userTasks)
 
@@ -44,7 +40,7 @@ tasksRouter.post("/", async (c) => {
 
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
-  const body = c.req.json()
+  const body = await c.req.json()
   // const { title, completed, dueDate, category } = await c.req.json()
 
   try {
@@ -57,10 +53,12 @@ tasksRouter.post("/", async (c) => {
     //     userId: user.id,
     //     title,
     //     completed,
-    //     dueDate,
+    //     dueDate, 
     //     category,
     //   })
     //   .returning()
+    console.log(body)
+    console.log(user.id)
 
     return c.json({
       message: "Task created successfully",

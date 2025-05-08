@@ -1,5 +1,5 @@
 import { View, Text } from "react-native"
-import { deleteWeight, fetchSingleWeightLog } from "@/src/utils/api/weightsApi"
+import { deleteWeight, fetchSingleWeightLog } from "@/src/lib/api/weightsApi"
 import { useQuery } from "@tanstack/react-query"
 import { Route, Stack, useLocalSearchParams, useRouter } from "expo-router"
 import DateDisplay from "@/src/components/DateDisplay"

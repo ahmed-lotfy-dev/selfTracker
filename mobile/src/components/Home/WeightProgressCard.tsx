@@ -4,7 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons"
 import { MetricsCard } from "./MetricCard"
 import { CardHeader } from "./CardHeader"
 import { LineChart } from "react-native-chart-kit"
-import { WeightChart } from "./WeightChart"
+import { WeightChart } from "../Weight/WeightChart"
 import React from "react"
 
 interface WeightProgressCardProps {
@@ -38,8 +38,6 @@ export const WeightProgressCard = ({
           label="goal"
         />
       </View>
-
-      <WeightChart weightLogs={weightLogs} />
     </View>
   )
 }

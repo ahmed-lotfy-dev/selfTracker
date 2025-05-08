@@ -9,7 +9,7 @@ import {
 import { Link, Route, useRouter } from "expo-router"
 import { useQueryClient } from "@tanstack/react-query"
 import DateDisplay from "../DateDisplay"
-import { deleteWeight } from "@/src/utils/api/weightsApi"
+import { deleteWeight } from "@/src/lib/api/weightsApi"
 import DeleteButton from "../Buttons/DeleteButton"
 import { useDelete } from "@/src/hooks/useDelete"
 import EditButton from "../Buttons/EditButton"
@@ -39,7 +39,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
 
   return (
     <View
-      className="flex-1 flex-row justify-between items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 mt-5"
+      className="flex-1 flex-row justify-between items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 my-5"
       key={item.id}
     >
       <View className="flex-1 x flex-row">

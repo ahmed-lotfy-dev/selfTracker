@@ -12,8 +12,11 @@ export const getUserTasks = async (userId: string) => {
 }
 
 export const createTask = async (userId: string, fields: any) => {
-  const [created] = await db.insert(tasks).values(fields).returning()
-
+  console.log(fields)
+  const created = await db
+    .insert(tasks)
+    .values({ ...fields, userId })
+    .returning()
   return created
 }
 

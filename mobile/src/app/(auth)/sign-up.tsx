@@ -11,9 +11,9 @@ import {
 } from "react-native"
 import { Link, useRouter } from "expo-router"
 import { COLORS } from "@/src/constants/Colors"
-import { setAccessToken } from "@/src/utils/storage"
+import { setAccessToken } from "@/src/lib/storage"
 import { useAuthActions } from "@/src/store/useAuthStore"
-import { signUp } from "@/src/utils/api/authApi"
+import { signUp } from "@/src/lib/api/authApi"
 import { signUpSchema } from "@/src/types/userType"
 
 export default function SignUp() {

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Platform } from "react-native"
-import { showAlert } from "@/src/utils/lib"
+import { showAlert } from "@/src/lib/lib"
 
 type UseUpdateOptions = {
   mutationFn: (values: any) => Promise<any>

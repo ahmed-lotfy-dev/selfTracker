@@ -44,6 +44,6 @@ export function AppProviders({ children }: AppProvidersProps) {
       >
         {children}
       </View>
-    </QueryClientProvider>
+        </QueryClientProvider>
   )
 }

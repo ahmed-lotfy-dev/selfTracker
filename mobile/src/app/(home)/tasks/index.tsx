@@ -11,7 +11,7 @@ import TaskForm from "@/src/components/Task/TaskForm"
 import TaskListItem from "@/src/components/Task/TaskListItem"
 import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
-import { fetchAllTasks } from "@/src/utils/api/tasksApi"
+import { fetchAllTasks } from "@/src/lib/api/tasksApi"
 import { TaskType } from "@/src/types/taskType"
 import React from "react"
 

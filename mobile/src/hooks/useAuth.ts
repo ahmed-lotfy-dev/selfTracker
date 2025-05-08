@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { authClient } from "@/src/utils/auth-client"
+import { authClient } from "@/src/lib/auth-client"
 import { useAuthActions, useUser } from "../store/useAuthStore"
 
 export const useAuth = () => {

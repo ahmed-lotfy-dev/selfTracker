@@ -1,6 +1,6 @@
 import { COLORS } from "@/src/constants/Colors"
-import { fetchWorkoutLogsByMonth } from "@/src/utils/api/workoutsApi"
-import { showAlert } from "@/src/utils/lib"
+import { fetchWorkoutLogsByMonth } from "@/src/lib/api/workoutsApi"
+import { showAlert } from "@/src/lib/lib"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "expo-router"
 import React, { useState, useMemo } from "react"

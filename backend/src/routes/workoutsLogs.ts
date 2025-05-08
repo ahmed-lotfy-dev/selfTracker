@@ -8,11 +8,19 @@ import {
   createWorkoutLog,
   deleteWorkoutLog,
   getSingleWorkoutLog,
+  getTimeWorkoutLogs,
   getWorkoutLogsCalendar,
   updateWorkoutLog,
 } from "../services/workoutLogsService"
+import workoutsRouter from "./workouts"
 
 const workoutLogsRouter = new Hono()
+
+workoutsRouter.get("/chart", async (c) => {
+  // Public route — don't assume user exists
+  console.log("triggered chart endpoint")
+  return c.json("hello world")
+})
 
 workoutLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -73,6 +81,46 @@ workoutLogsRouter.get("/", async (c) => {
     await setCache(cacheKey, 3600, responseData)
 
     return c.json(responseData)
+  } catch (error) {
+    console.error("Error fetching workout logs:", error)
+    return c.json({ message: "Failed to fetch workout logs" }, 500)
+  }
+})
+
+workoutLogsRouter.get("/chart", async (c) => {
+  const user = c.get("user" as any)
+
+  if (!user || !user.id) {
+    return c.json({ message: "Unauthorized: User not found in context" }, 401)
+  }
+
+  const monthParam = c.req.query("month") || 3
+  if (!monthParam) {
+    return c.json({ message: "Month query parameter is required" }, 400)
+  }
+
+  const month = Number(monthParam)
+
+  if (isNaN(month) || month < 1 || month > 12) {
+    return c.json({ message: "Month must be between 1 and 12" }, 400)
+  }
+
+  try {
+    const cacheKey = `workoutLogs:chart:${user.id}:${month}`
+    const cached = await getCache(cacheKey)
+    if (cached) {
+      if (cached.nextCursor) {
+        return c.json({
+          logs: cached.logs,
+          nextCursor: cached.nextCursor,
+        })
+      }
+    }
+
+    const userChartLogs = await getTimeWorkoutLogs(user.id, Number(month))
+    await setCache(cacheKey, 3600, userChartLogs)
+
+    return c.json(userChartLogs)
   } catch (error) {
     console.error("Error fetching workout logs:", error)
     return c.json({ message: "Failed to fetch workout logs" }, 500)
@@ -157,6 +205,7 @@ workoutLogsRouter.post("/", async (c) => {
       `userHomeData:${user.id}`,
       `workoutLogs:list:${user.id}:*`,
       `workoutLogs:calendar:${user.id}:*`,
+      `workoutLogs:chart:${user.id}:*`,
     ])
 
     const created = await createWorkoutLog(user.id, body)
@@ -184,6 +233,7 @@ workoutLogsRouter.patch("/:id", async (c) => {
       `userHomeData:${user.id}`,
       `workoutLogs:list:${user.id}:*`,
       `workoutLogs:calendar:${user.id}:*`,
+      `workoutLogs:chart:${user.id}:*`,
     ])
 
     const existingLog = await db.query.workoutLogs.findFirst({
@@ -240,6 +290,7 @@ workoutLogsRouter.delete("/:id", async (c) => {
       `userHomeData:${user.id}`,
       `workoutLogs:list:${user.id}:*`,
       `workoutLogs:calendar:${user.id}:*`,
+      `workoutLogs:chart:${user.id}:*`,
     ])
 
     const existingLog = await db.query.workoutLogs.findFirst({

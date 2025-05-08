@@ -17,11 +17,11 @@ import {
   calculateWeightDelta,
   getBMICategory,
   getTaskCount,
+  getUserData,
   getUserGoal,
   getUserLatestWeight,
   getWeightChangeInPeriod,
   getWorkoutCounts,
-  periodWeightLogs,
 } from "../services/userHomeService.js"
 
 const userRouter = new Hono()
@@ -50,30 +50,27 @@ userRouter.get("/me/home", async (c) => {
       return c.json(cached)
     }
 
-    const { weeklyWorkout, monthlyWorkout } = await getWorkoutCounts(user.id)
-    const { completedTasks, pendingTasks, allTasks } = await getTaskCount(
-      user.id
-    )
+    const {
+      weeklyWorkout,
+      monthlyWorkout,
+      completedTasks,
+      pendingTasks,
+      allTasks,
+      goal,
+      latestWeight,
+      userBMI,
+      BMICategory,
+      weightChange,
+    } = await getUserData(user)
 
-    const goal = await getUserGoal(user.id)
     if (!goal) return c.json({ message: "Incomplete user profile" }, 400)
 
     const { goalWeight, goalType } = goal
-
-    const latestWeight = await getUserLatestWeight(user.id)
 
     const weightDelta =
       latestWeight && goalWeight
         ? Number(latestWeight) - Number(goalWeight)
         : null
-
-    const threeMonthsWeightLogs = await periodWeightLogs(user.id, 3)
-
-    const userBMI = calculateBMI(user.weight, user.height, user.unitSystem)
-
-    const BMICategory = getBMICategory(Number(userBMI))
-
-    const weightChange = await getWeightChangeInPeriod(user.id, 1)
 
     const responseData = {
       weeklyWorkout,
@@ -87,7 +84,6 @@ userRouter.get("/me/home", async (c) => {
       weightDelta,
       userBMI,
       BMICategory,
-      threeMonthsWeightLogs,
     }
     await setCache(cacheKey, 3600, responseData)
 

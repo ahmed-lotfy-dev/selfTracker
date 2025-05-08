@@ -5,7 +5,7 @@ import { useRouter } from "expo-router"
 import {
   checkEmailVerification,
   resendVerificationEmail,
-} from "@/src/utils/api/authApi"
+} from "@/src/lib/api/authApi"
 import { COLORS } from "@/src/constants/Colors"
 import { useAuth } from "@/src/hooks/useAuth"
 
@@ -13,7 +13,6 @@ export default function VerifyEmail() {
   const router = useRouter()
 
   const { user, isAuthenticated, error, isLoading, refetch } = useAuth()
-
 
   useEffect(() => {
     if (user?.emailVerified) {

@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from "react-native"
 import { TaskType } from "@/src/types/taskType"
 import { useDelete } from "@/src/hooks/useDelete"
-import { deleteTask, updateTask } from "@/src/utils/api/tasksApi"
+import { deleteTask, updateTask } from "@/src/lib/api/tasksApi"
 import DeleteButton from "../Buttons/DeleteButton"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import React from "react"

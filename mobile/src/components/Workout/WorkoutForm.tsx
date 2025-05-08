@@ -13,9 +13,9 @@ import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/src/components/DatePicker"
 import DateDisplay from "@/src/components/DateDisplay"
 import { useQuery } from "@tanstack/react-query"
-import { fetchAllWorkouts } from "@/src/utils/api/workouts"
+import { fetchAllWorkouts } from "@/src/lib/api/workouts"
 import { useAdd } from "@/src/hooks/useAdd"
-import { createWorkout, updateWorkout } from "@/src/utils/api/workoutsApi"
+import { createWorkout, updateWorkout } from "@/src/lib/api/workoutsApi"
 import { useRouter } from "expo-router"
 import { useSelectedWorkout } from "@/src/store/useWokoutStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
@@ -24,6 +24,7 @@ import { WorkoutLogType, WorkoutLogSchema } from "@/src/types/workoutLogType"
 import { WorkoutType } from "@/src/types/workoutType"
 import { useAuth } from "@/src/hooks/useAuth"
 import { format } from "date-fns"
+import Header from "../Header"
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
@@ -107,7 +108,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        style={{ flex: 1, padding: 10, marginTop: 80 }}
+        style={{ flex: 1, paddingInline: 10, paddingBlock: 5 }}
         keyboardShouldPersistTaps="handled"
       >
         {/* Workout Picker */}

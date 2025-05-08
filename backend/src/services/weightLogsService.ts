@@ -3,6 +3,7 @@ import { and, eq, desc, gte, lt, lte, or, sql } from "drizzle-orm"
 import { weightLogs } from "../db/schema/weightLogs"
 import type { User } from "../db/schema"
 import { clearCache } from "../../lib/redis"
+import { format, subMonths } from "date-fns"
 
 export const getWeightLogs = async (
   userId: string,
@@ -47,7 +48,7 @@ export const getSingleWeightLog = async (logId: string) => {
 
 export const createWeightLog = async (userId: string, fields: any) => {
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
-console.log(fields)
+  console.log(fields)
   const [created] = await db
     .insert(weightLogs)
     .values({
@@ -89,4 +90,47 @@ export const deleteWeightLog = async (userId: string, weightLogId: string) => {
     .returning()
 
   return deletedWeight
+}
+
+export const getTimeWeightLogs = async (userId: string, month: number) => {
+  try {
+    const now = new Date()
+
+    const periodWeightLogs = await db
+      .select()
+      .from(weightLogs)
+      .where(
+        and(
+          eq(weightLogs.userId, userId),
+          gte(weightLogs.createdAt, subMonths(now, month)),
+          lt(weightLogs.createdAt, now)
+        )
+      )
+      .orderBy(weightLogs.createdAt)
+
+    if (!periodWeightLogs.length) {
+      return {
+        labels: [],
+        datasets: [{ data: [] }],
+      }
+    }
+
+    const labels = periodWeightLogs.map((log) =>
+      log.createdAt ? format(new Date(log.createdAt), "MMM d") : "Unknown"
+    )
+
+    const data = periodWeightLogs.map((log) => parseFloat(log.weight))
+
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+        },
+      ],
+    }
+  } catch (error) {
+    console.error("Failed to fetch weight logs:", error)
+    throw new Error("Could not retrieve weight logs")
+  }
 }

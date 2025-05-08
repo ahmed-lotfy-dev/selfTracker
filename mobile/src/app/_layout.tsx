@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useFonts } from "expo-font"
 import { Slot, useRouter } from "expo-router"
-import { StatusBar } from "expo-status-bar"
-import { checkForUpdates, onAppStateChange } from "@/src/utils/lib"
+import { checkForUpdates, onAppStateChange } from "@/src/lib/lib"
 import { useOnlineManager } from "@/src/hooks/useOnlineManager"
 import { useAppState } from "@/src/hooks/useAppState"
 import * as SplashScreen from "expo-splash-screen"
@@ -12,13 +11,16 @@ import "react-native-gesture-handler"
 import "@/global.css"
 
 import { AppProviders } from "@/src/components/Provider/AppProviders"
+
 import React from "react"
 import {
   registerForPushNotificationsAsync,
   setUpNotificationListeners,
-} from "../utils/notifications"
-import axiosInstance from "../utils/api/axiosInstane"
-import { API_BASE_URL } from "../utils/api/config"
+} from "../lib/notifications"
+import axiosInstance from "../lib/api/axiosInstane"
+import { API_BASE_URL } from "../lib/api/config"
+import { PortalHost } from "@rn-primitives/portal"
+import { StatusBar } from "react-native"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -61,8 +63,9 @@ export default function RootLayout() {
 
   return (
     <AppProviders>
-      <StatusBar style="light" translucent={true} animated={true} />
+      <StatusBar barStyle="dark-content" backgroundColor="#000" />
       <Slot />
+      <PortalHost />
     </AppProviders>
   )
 }

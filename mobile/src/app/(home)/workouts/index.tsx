@@ -1,13 +1,20 @@
 import React, { useState } from "react"
-import { View, Text, Pressable, ActivityIndicator } from "react-native"
+import {
+  View,
+  Text,
+  Pressable,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native"
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { fetchAllWorkoutLogs } from "@/src/utils/api/workoutsApi"
-import LogList from "@/src/components/LogList"
+import { fetchAllWorkoutLogs } from "@/src/lib/api/workoutsApi"
 import WorkoutLogItem from "@/src/components/Workout/WorkoutLogItem"
 import Header from "@/src/components/Header"
 import CalendarView from "@/src/components/Workout/CalendarView"
 import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
+import { FlashList } from "@shopify/flash-list"
+import { WorkoutLogsList } from "@/src/components/Workout/WorkoutLogsList"
 
 const VIEW_TYPES = {
   LIST: "list",
@@ -16,57 +23,6 @@ const VIEW_TYPES = {
 
 export default function WorkoutScreen() {
   const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST)
-  const limit = 10
-
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    refetch,
-    isRefetching,
-    isError,
-    error,
-  } = useInfiniteQuery({
-    queryKey: ["workoutLogs"],
-    queryFn: ({ pageParam }) => fetchAllWorkoutLogs(pageParam, limit),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: null,
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  })
-
-  const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    )
-  }
-
-  if (isError) {
-    return (
-      <View className="p-4">
-        <Text className="text-red-500">
-          Failed to load workouts. Please try again.
-        </Text>
-        <Text className="text-red-500">{error.message}</Text>
-      </View>
-    )
-  }
-
-  if (logs.length === 0 && !isLoading) {
-    return (
-      <View className="flex-1 justify-start items-start">
-        <Header title="Weight Logs" />
-        <Text className="text-gray-500">No weight logs available.</Text>
-      </View>
-    )
-  }
 
   const ViewSelector = () => (
     <View className="flex-row my-4 bg-gray-200 rounded-full p-1">
@@ -94,25 +50,12 @@ export default function WorkoutScreen() {
       return <CalendarView />
     }
     if (currentView === VIEW_TYPES.LIST) {
-      return (
-        <LogList
-          logs={logs}
-          renderItem={({ item }) => (
-            <WorkoutLogItem item={item} path="/workouts" />
-          )}
-          refetch={refetch}
-          isRefetching={isRefetching}
-          fetchNextPage={fetchNextPage}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-        />
-      )
+      return <WorkoutLogsList />
     }
   }
 
   return (
-    <View className="flex-1 px-4">
-      <Header title="Workout Logs" />
+    <View className="flex-1 px-4 ">
       <ViewSelector />
       {renderContent()}
       <AddButton path="/workouts" />

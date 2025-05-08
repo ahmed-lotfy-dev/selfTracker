@@ -12,6 +12,7 @@ import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 import { useAuth } from "@/src/hooks/useAuth"
 import { COLORS } from "@/src/constants/Colors"
 import { useHasHydrated } from "@/src/store/useAuthStore"
+import React from "react"
 
 export default function TabsLayout() {
   const user = useAuth()
@@ -32,7 +33,7 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs screenOptions={{ headerShown: false, headerTransparent: true }}>
       <Tabs.Screen
         name="index"
         options={{

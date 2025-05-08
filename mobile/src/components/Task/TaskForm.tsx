@@ -11,7 +11,7 @@ import { TaskSchema, TaskType } from "@/src/types/taskType"
 import { useAuth } from "../../hooks/useAuth"
 import { COLORS } from "../../constants/Colors"
 import { useAdd } from "../../hooks/useAdd"
-import { createTask } from "../../utils/api/tasksApi"
+import { createTask } from "../../lib/api/tasksApi"
 import { format } from "date-fns"
 
 export default function TaskForm() {

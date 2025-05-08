@@ -1,7 +1,8 @@
-import { and, eq, lt, desc, gte, lte } from "drizzle-orm"
+import { and, eq, lt, desc, gte, lte, count, asc } from "drizzle-orm"
 import { db } from "../db"
 import { workoutLogs } from "../db/schema/workoutLogs"
 import { clearCache } from "../../lib/redis"
+import { format, subMonths } from "date-fns"
 
 export const getWorkoutLogs = async (
   userId: string,
@@ -126,4 +127,42 @@ export const deleteWorkoutLog = async (
     .returning()
 
   return deletedWorkout
+}
+
+export const getTimeWorkoutLogs = async (userId: string, month: number) => {
+  try {
+    const now = new Date()
+
+    const result = await db
+      .select({
+        workoutType: workoutLogs.workoutName,
+        count: count(workoutLogs.id),
+      })
+      .from(workoutLogs)
+      .where(
+        and(
+          eq(workoutLogs.userId, userId),
+          gte(workoutLogs.createdAt, subMonths(now, month)),
+          lte(workoutLogs.createdAt, now)
+        )
+      )
+      .groupBy(workoutLogs.workoutName)
+      .orderBy(asc(workoutLogs.workoutName))
+
+    const labels = result.map((r) => r.workoutType)
+    const data = result.map((r) => r.count)
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Workouts",
+          data,
+        },
+      ],
+    }
+  } catch (error) {
+    console.error("Failed to fetch workout logs:", error)
+    throw new Error("Could not retrieve workout logs")
+  }
 }

@@ -146,30 +146,7 @@ export const calculateWeightDelta = (
   return weightDelta
 }
 
-export const periodWeightLogs = async (userId: string, period: number) => {
-  const periodWeightLogs = await db
-    .select()
-    .from(weightLogs)
-    .where(
-      and(
-        eq(weightLogs.userId, userId),
-        gte(weightLogs.createdAt, subMonths(new Date(), period)),
-        lt(weightLogs.createdAt, new Date())
-      )
-    )
-    .orderBy(weightLogs.createdAt)
 
-  const periodicalWeightLogs = periodWeightLogs.map((weight) => {
-    return {
-      weight: parseFloat(weight.weight),
-      date: weight.createdAt
-        ? format(new Date(weight.createdAt), "MMM d")
-        : "Unknown date",
-    }
-  })
-
-  return periodicalWeightLogs
-}
 
 export const getWeightChangeInPeriod = async (
   userId: string,
@@ -210,5 +187,28 @@ export const getWeightChangeInPeriod = async (
     return `Lost ${Math.abs(weightChange).toFixed(2)} kg`
   } else {
     return "No weight change"
+  }
+}
+
+export const getUserData = async (user: any) => {
+  const { weeklyWorkout, monthlyWorkout } = await getWorkoutCounts(user.id)
+  const { completedTasks, pendingTasks, allTasks } = await getTaskCount(user.id)
+  const goal = await getUserGoal(user.id)
+  const latestWeight = await getUserLatestWeight(user.id)
+  const userBMI = calculateBMI(user.weight, user.height, user.unitSystem)
+  const BMICategory = getBMICategory(Number(userBMI))
+  const weightChange = await getWeightChangeInPeriod(user.id, 1)
+
+  return {
+    weeklyWorkout,
+    monthlyWorkout,
+    completedTasks,
+    pendingTasks,
+    allTasks,
+    goal,
+    latestWeight,
+    userBMI,
+    BMICategory,
+    weightChange,
   }
 }

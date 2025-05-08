@@ -3,9 +3,9 @@ import React, { useState } from "react"
 import { useRouter } from "expo-router"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import axios from "axios"
-import { clearTokens } from "@/src/utils/storage"
+import { clearTokens } from "@/src/lib/storage"
 import { useAuthActions } from "@/src/store/useAuthStore"
-import { authClient } from "@/src/utils/auth-client"
+import { authClient } from "@/src/lib/auth-client"
 import { useAuth } from "../../hooks/useAuth"
 
 type logoutProps = {

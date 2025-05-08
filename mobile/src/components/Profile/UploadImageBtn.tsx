@@ -1,6 +1,6 @@
 import { useAuth } from "@/src/hooks/useAuth"
-import { deleteImage, uploadImage } from "@/src/utils/api/imageApi"
-import { updateUser } from "@/src/utils/api/userApi"
+import { deleteImage, uploadImage } from "@/src/lib/api/imageApi"
+import { updateUser } from "@/src/lib/api/userApi"
 import { useState } from "react"
 import { View, Text, TouchableOpacity, Button } from "react-native"
 import * as ImagePicker from "expo-image-picker"

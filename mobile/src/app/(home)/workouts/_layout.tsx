@@ -1,18 +1,22 @@
 import BackButton from "@/src/components/Buttons/BackButton"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Stack, useRouter } from "expo-router"
+import React from "react"
 
 export default function WorkoutsLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
       }}
     >
       <Stack.Screen
         name="index"
         options={{
           title: "Workouts",
+          headerShown: true,
+          headerTitleAlign: "center",
+          headerLeft: () => <BackButton backTo="/" />,
         }}
       />
       <Stack.Screen
@@ -28,10 +32,9 @@ export default function WorkoutsLayout() {
         name="add"
         options={{
           title: "Add Workout",
-          headerShown: true,
           headerTitleAlign: "center",
-          presentation: "modal",
-          headerTransparent: true,
+          presentation: "formSheet",
+          headerShown: true,
           animation: "slide_from_bottom",
           headerLeft: () => <BackButton backTo="/workouts" />,
         }}
@@ -42,8 +45,7 @@ export default function WorkoutsLayout() {
           title: "Edit Workout",
           headerShown: true,
           headerTitleAlign: "center",
-          presentation: "modal",
-          headerTransparent: true,
+          presentation: "formSheet",
           animation: "slide_from_bottom",
           headerLeft: () => <BackButton backTo="/workouts" />,
         }}
