@@ -146,8 +146,6 @@ export const calculateWeightDelta = (
   return weightDelta
 }
 
-
-
 export const getWeightChangeInPeriod = async (
   userId: string,
   period: number
@@ -199,6 +197,13 @@ export const getUserData = async (user: any) => {
   const BMICategory = getBMICategory(Number(userBMI))
   const weightChange = await getWeightChangeInPeriod(user.id, 1)
 
+  const { goalWeight, goalType } = goal
+
+  const weightDelta =
+    latestWeight && goalWeight
+      ? Number(latestWeight) - Number(goalWeight)
+      : null
+
   return {
     weeklyWorkout,
     monthlyWorkout,
@@ -207,6 +212,7 @@ export const getUserData = async (user: any) => {
     allTasks,
     goal,
     latestWeight,
+    weightDelta,
     userBMI,
     BMICategory,
     weightChange,

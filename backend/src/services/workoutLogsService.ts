@@ -156,7 +156,6 @@ export const getTimeWorkoutLogs = async (userId: string, month: number) => {
       labels,
       datasets: [
         {
-          label: "Workouts",
           data,
         },
       ],

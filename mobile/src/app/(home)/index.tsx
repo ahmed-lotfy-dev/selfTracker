@@ -16,7 +16,6 @@ import { TasksProgressCard } from "@/src/components/Home/TasksProgressCard"
 import { WorkoutProgressCard } from "@/src/components/Home/WorkoutProgressCard"
 import Header from "@/src/components/Header"
 import UserProfile from "@/src/components/Profile/UserProfile"
-
 export default function HomeScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["userHomeData"],
@@ -24,7 +23,7 @@ export default function HomeScreen() {
     staleTime: 1000 * 60 * 5,
   })
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
       <View className="flex-1 justify-center items-center p-4">
         <ActivityIndicator size="large" color={COLORS.primary} />
@@ -63,10 +62,9 @@ export default function HomeScreen() {
 
         <WeightProgressCard
           weightChange={data.weightChange}
-          goalWeight={data.goalWeight}
+          goalWeight={data.goal.goalWeight}
           delta={data.weightDelta}
           bmi={data.userBMI}
-          weightLogs={data.threeMonthsWeightLogs}
         />
 
         <TasksProgressCard

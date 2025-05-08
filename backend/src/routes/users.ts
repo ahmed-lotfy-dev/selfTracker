@@ -50,44 +50,11 @@ userRouter.get("/me/home", async (c) => {
       return c.json(cached)
     }
 
-    const {
-      weeklyWorkout,
-      monthlyWorkout,
-      completedTasks,
-      pendingTasks,
-      allTasks,
-      goal,
-      latestWeight,
-      userBMI,
-      BMICategory,
-      weightChange,
-    } = await getUserData(user)
+    const userData = await getUserData(user)
 
-    if (!goal) return c.json({ message: "Incomplete user profile" }, 400)
+    await setCache(cacheKey, 3600, userData)
 
-    const { goalWeight, goalType } = goal
-
-    const weightDelta =
-      latestWeight && goalWeight
-        ? Number(latestWeight) - Number(goalWeight)
-        : null
-
-    const responseData = {
-      weeklyWorkout,
-      monthlyWorkout,
-      completedTasks,
-      pendingTasks,
-      allTasks,
-      goalWeight: goalWeight,
-      latestWeight: latestWeight ? Number(latestWeight) : null,
-      weightChange,
-      weightDelta,
-      userBMI,
-      BMICategory,
-    }
-    await setCache(cacheKey, 3600, responseData)
-
-    return c.json(responseData)
+    return c.json(userData)
   } catch (error) {
     console.error("Error fetching user home data:", error)
     return c.json({ message: "Internal server error" }, 500)

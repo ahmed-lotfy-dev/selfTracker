@@ -3,7 +3,7 @@ import { API_BASE_URL } from "./config"
 
 export const fetchAllTasks = async () => {
   const response = await axiosInstance.get(`${API_BASE_URL}/api/tasks`)
-  return response.data.tasks
+  return response.data
 }
 
 export const fetchSingleTask = async (taskId: string) => {

@@ -1,71 +1,49 @@
-import { View, Text, Button } from "react-native"
+import { View, Text } from "react-native"
 import React, { useState } from "react"
-import { LineChart } from "react-native-chart-kit"
+import { BarChart } from "react-native-chart-kit"
 import { useQuery } from "@tanstack/react-query"
-import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
+import { fetchWorkoutLogsChart } from "@/src/lib/api/workoutsApi"
 
-interface WeightLog {
-  weight: string
-  date: string
-}
+export const WorkoutChart = () => {
+  const [month, setMonth] = useState<number>(1)
 
-export const 
-WorkoutChart = () => {
-  const { data }: { data?: { threeMonthsWeightLogs?: WeightLog[] } } = useQuery(
-    {
-      queryKey: ["userHomeData"],
-      queryFn: fetchUserHomeInfo,
-      staleTime: 1000 * 60 * 5,
-      enabled: true,
-    }
-  )
-  const [isOpen, setIsOpen] = useState(false)
-  const handlePress = () => {
-    console.log("pressed")
-  }
-  console.log(data)
+  const { data } = useQuery({
+    queryKey: ["workoutLogsChartData", month],
+    queryFn: () => fetchWorkoutLogsChart(month),
+    staleTime: 1000 * 60 * 5,
+  })
+
   return (
-    <View className="flex-1 justify-center items-center ">
-      <Text className="my-2 font-bold text-blue-500">Last Month</Text>
+    <View className="flex-1 justify-center items-center">
+      <Text className="my-2 font-bold text-blue-500">
+        Workouts for Month {month}
+      </Text>
 
-      {data?.threeMonthsWeightLogs && data.threeMonthsWeightLogs.length > 0 ? (
-        <LineChart
-          data={{
-            labels: data.threeMonthsWeightLogs
-              .map((log: WeightLog) => log.date)
-              .filter(
-                (_: string, index: number, array: string[]) =>
-                  index % Math.ceil(array.length / 3) === 0
-              ),
-            datasets: [
-              {
-                data: data.threeMonthsWeightLogs.map((log: WeightLog) =>
-                  parseFloat(log.weight)
-                ),
-              },
-            ],
-          }}
-          width={320} // Adjusted width to prevent overflow
-          height={200}
+      {data && data.labels?.length > 0 ? (
+        <BarChart
+          data={data}
+          width={320}
+          height={220}
+          yAxisLabel=""
+          yAxisSuffix="x"
           chartConfig={{
-            backgroundColor: "#ffffff",
+            backgroundColor: "#fff",
             backgroundGradientFrom: "#f9f9f9",
             backgroundGradientTo: "#f9f9f9",
-            decimalPlaces: 1,
-            color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`, // Changed to blue
+            decimalPlaces: 0,
+            color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
             labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
           }}
           style={{
-            width: "100%",
-            marginVertical: 3,
-            borderRadius: 6,
-            borderColor: "black",
+            marginVertical: 8,
+            borderRadius: 8,
             borderWidth: 1,
+            borderColor: "gray",
           }}
         />
       ) : (
         <Text className="text-center text-gray-500 mt-4">
-          No weight logs found. Start tracking to see progress.
+          No workout data found for this month.
         </Text>
       )}
     </View>

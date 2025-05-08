@@ -33,6 +33,13 @@ export async function fetchWorkoutLogsByMonth(year: number, month: number) {
   return response.data.logs
 }
 
+export async function fetchWorkoutLogsChart(month: number) {
+  const response = await axiosInstance.get(
+    `${API_BASE_URL}/api/workoutLogs/chart?month=${month}`
+  )
+  return response.data
+}
+
 export const fetchSingleWorkout = async (workoutId: string) => {
   const response = await axiosInstance.get(
     `${API_BASE_URL}/api/workoutLogs/${workoutId}`

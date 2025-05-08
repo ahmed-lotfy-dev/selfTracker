@@ -23,6 +23,13 @@ export const fetchAllWeightLogs = async (
   }
 }
 
+export async function fetchWeightLogsChart(month: number) {
+  const response = await axiosInstance.get(
+    `${API_BASE_URL}/api/weightLogs/chart?month=${month}`
+  )
+  return response.data
+}
+
 export const fetchSingleWeightLog = async (weightId: string) => {
   const response = await axiosInstance.get(
     `${API_BASE_URL}/api/weightLogs/${weightId}`
