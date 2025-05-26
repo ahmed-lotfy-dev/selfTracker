@@ -16,12 +16,6 @@ import workoutsRouter from "./workouts"
 
 const workoutLogsRouter = new Hono()
 
-workoutsRouter.get("/chart", async (c) => {
-  // Public route — don't assume user exists
-  console.log("triggered chart endpoint")
-  return c.json("hello world")
-})
-
 workoutLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
@@ -148,7 +142,7 @@ workoutLogsRouter.get("/calendar", async (c) => {
     const calendarKey = `workoutLogs:calendar:${user.id}:${year}-${month}`
     const cached = await getCache(calendarKey)
     if (cached) {
-      return c.json(JSON.parse(cached))
+      return c.json(cached)
     }
 
     const logs = await getWorkoutLogsCalendar(year, month, user.id)
