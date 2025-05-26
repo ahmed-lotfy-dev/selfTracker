@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native"
+import { View, Text, TouchableOpacity, Switch } from "react-native"
 import { TaskType } from "@/src/types/taskType"
 import { useDelete } from "@/src/hooks/useDelete"
 import { deleteTask, updateTask } from "@/src/lib/api/tasksApi"
@@ -27,7 +27,12 @@ export default function TaskListItem({ task }: TaskListItemProps) {
   })
 
   return (
-    <TouchableOpacity className="" onPress={updateMutation.mutate}>
+    <>
+      <Switch
+        value={task.completed}
+        onValueChange={() => updateMutation.mutate({ id: task.id, completed: !task.completed })}
+      />
+      {/* <TouchableOpacity className="" onPress={() => updateMutation.mutate()}> */}
       <View className="w-full flex-row items-center justify-between p-2 border-slate-500 border-[1px] gap-4">
         <Text
           className={`text-lg flex-1 px-2 text-wrap w-[50] ${
@@ -39,6 +44,7 @@ export default function TaskListItem({ task }: TaskListItemProps) {
         <Text className="text-sm font-light">{task.category}</Text>
         <DeleteButton onPress={() => deleteMutation.mutate()} />
       </View>
-    </TouchableOpacity>
+      {/* </TouchableOpacity> */}
+    </>
   )
 }

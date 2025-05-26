@@ -5,6 +5,7 @@ import { fetchAllWeightLogs } from "@/src/lib/api/weightsApi"
 import WeightLogItem from "./WeightLogItem"
 import { FlashList } from "@shopify/flash-list"
 import { WeightChart } from "./WeightChart"
+import { COLORS } from "@/src/constants/Colors"
 
 export const WeightLogsList = () => {
   const limit = 10
@@ -24,10 +25,30 @@ export const WeightLogsList = () => {
     queryFn: ({ pageParam }) => fetchAllWeightLogs(pageParam, limit),
     getNextPageParam: (lastPage) => lastPage?.nextCursor ?? null,
     initialPageParam: null,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   })
 
   const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
 
+  if (isLoading || !data) {
+    return (
+      <View className="flex-1 justify-center items-center p-4">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    )
+  }
+
+  if (isError) {
+    return (
+      <View className="flex-1 justify-center items-center p-4">
+        <Text className="text-red-500 text-center">
+          Error loading chart data. Please try again later.
+        </Text>
+      </View>
+    )
+  }
   return (
     <View className="flex-1">
       <FlashList

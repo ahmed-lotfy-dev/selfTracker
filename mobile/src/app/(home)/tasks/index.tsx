@@ -27,7 +27,7 @@ export default function TaskScreen() {
     queryFn: () => fetchAllTasks(),
   })
 
-  if (isLoading) {
+  if (isLoading || !tasks) {
     return (
       <ActivityIndicator
         className="flex-1"

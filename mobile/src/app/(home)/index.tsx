@@ -1,4 +1,3 @@
-import React from "react"
 import {
   View,
   Text,
@@ -16,6 +15,7 @@ import { TasksProgressCard } from "@/src/components/Home/TasksProgressCard"
 import { WorkoutProgressCard } from "@/src/components/Home/WorkoutProgressCard"
 import Header from "@/src/components/Header"
 import UserProfile from "@/src/components/Profile/UserProfile"
+import React = require("react")
 export default function HomeScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["userHomeData"],

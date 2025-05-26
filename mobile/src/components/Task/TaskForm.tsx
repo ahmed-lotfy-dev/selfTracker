@@ -47,7 +47,6 @@ export default function TaskForm() {
       userId: user?.id || "",
       title: title.trim(),
       category: "general",
-      createdAt: format(new Date(), "yyyy-MM-dd"),
     }
 
     addMutation.mutate(task, {

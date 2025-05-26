@@ -33,7 +33,7 @@ export const WorkoutLogsList = () => {
 
   const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
       <View className="flex-1 justify-center items-center">
         <ActivityIndicator size="large" color={COLORS.primary} />
@@ -63,7 +63,6 @@ export const WorkoutLogsList = () => {
   return (
     <View className="flex-1">
       <FlashList
-        ListHeaderComponent={<WorkoutChart />}
         data={logs}
         renderItem={({ item }) => (
           <WorkoutLogItem item={item} path="/weights" />
@@ -84,6 +83,7 @@ export const WorkoutLogsList = () => {
         }}
         estimatedItemSize={117}
         onEndReachedThreshold={0.5}
+        ListHeaderComponent={<WorkoutChart />}
         ListFooterComponent={
           isFetchingNextPage ? (
             <ActivityIndicator size="small" style={{ marginVertical: 16 }} />

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "719673409235",
+    "project_id": "lifetrack-xa5mt",
+    "storage_bucket": "lifetrack-xa5mt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719673409235:android:015e1995ddf06d1a271e26",
+        "android_client_info": {
+          "package_name": "com.ahmedlotfy.selftracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCidgwEr3GK8NaYHGFXvN0K6ieXa8ww-2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
