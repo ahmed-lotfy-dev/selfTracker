@@ -7,6 +7,7 @@ import React, { useState, useMemo } from "react"
 import { View, Text, ActivityIndicator, Pressable } from "react-native"
 import { Calendar, DateData } from "react-native-calendars"
 import { MarkedDates } from "react-native-calendars/src/types"
+import { format } from "date-fns"
 
 const CalendarView = () => {
   const router = useRouter()
@@ -25,7 +26,7 @@ const CalendarView = () => {
       for (const logs of Object.values(data)) {
         for (const log of logs as any) {
           const localDate = new Date(log.createdAt)
-          const formattedDate = localDate.toISOString().slice(0, 10)
+          const formattedDate = format(new Date(log.createdAt), "yyyy-MM-dd")
           map[formattedDate] = log.id
         }
       }
