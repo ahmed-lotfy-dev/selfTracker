@@ -66,7 +66,7 @@ export const WeightChart = () => {
     <View
       style={{
         width: SCREEN_WIDTH - 32,
-        // height: CHART_HEIGHT,
+        // height: mobileCHART_HEIGHT,
         justifyContent: "center",
         alignItems: "center",
         padding: 16,

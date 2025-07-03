@@ -2,7 +2,7 @@ import { and, eq, lt, desc, gte, lte, count, asc } from "drizzle-orm"
 import { db } from "../db"
 import { workoutLogs } from "../db/schema/workoutLogs"
 import { clearCache } from "../../lib/redis"
-import { format, subMonths } from "date-fns"
+import { endOfMonth, format, startOfMonth, subMonths } from "date-fns"
 
 export const getWorkoutLogs = async (
   userId: string,
@@ -132,6 +132,8 @@ export const deleteWorkoutLog = async (
 export const getTimeWorkoutLogs = async (userId: string, month: number) => {
   try {
     const now = new Date()
+    const startDate = startOfMonth(subMonths(now, month - 1))
+    const endDate = endOfMonth(now)
 
     const result = await db
       .select({
@@ -142,8 +144,8 @@ export const getTimeWorkoutLogs = async (userId: string, month: number) => {
       .where(
         and(
           eq(workoutLogs.userId, userId),
-          gte(workoutLogs.createdAt, subMonths(now, month)),
-          lte(workoutLogs.createdAt, now)
+          gte(workoutLogs.createdAt, startDate),
+          lte(workoutLogs.createdAt, endDate)
         )
       )
       .groupBy(workoutLogs.workoutName)
