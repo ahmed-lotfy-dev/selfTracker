@@ -1,5 +1,4 @@
 import { ActivityIndicator, View } from "react-native"
-import WeightLogItem from "@/src/components/Weight/WeightLogItem"
 import AddButton from "@/src/components/Buttons/AddButton"
 import React from "react"
 import { WeightLogsList } from "@/src/components/Weight/WeightLogsList"

@@ -7,7 +7,6 @@ import {
   Platform,
 } from "react-native"
 import { Link, Route, useRouter } from "expo-router"
-import { useQueryClient } from "@tanstack/react-query"
 import DateDisplay from "../DateDisplay"
 import { deleteWeight } from "@/src/lib/api/weightsApi"
 import DeleteButton from "../Buttons/DeleteButton"
@@ -16,7 +15,6 @@ import EditButton from "../Buttons/EditButton"
 import { useWeightLogStore } from "@/src/store/useWeightStore"
 import { WeightLogType } from "@/src/types/weightLogType"
 import React from "react"
-import { formatDistanceToNow } from "date-fns"
 
 type WeightLogProps = {
   item: WeightLogType

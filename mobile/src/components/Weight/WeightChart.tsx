@@ -2,14 +2,8 @@ import { View, Text, Button, ActivityIndicator, Dimensions } from "react-native"
 import React, { useState } from "react"
 import { LineChart } from "react-native-chart-kit"
 import { useQuery } from "@tanstack/react-query"
-import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
 import { fetchWeightLogsChart } from "@/src/lib/api/weightsApi"
 import { COLORS } from "@/src/constants/Colors"
-
-interface WeightLog {
-  weight: string
-  date: string
-}
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 
@@ -62,24 +56,37 @@ export const WeightChart = () => {
     )
   }
 
+  const noChartData =
+    !data ||
+    !data.labels?.length ||
+    !data.datasets?.[0]?.data?.length ||
+    data.datasets[0].data.every((val:any) => typeof val !== "number" || isNaN(val))
+
   return (
     <View
-      className="flex-1 justify-center items-center "
       style={{
-        width: SCREEN_WIDTH - 32, // Adjusted width to prevent overflow
-        height: CHART_HEIGHT,
+        width: SCREEN_WIDTH - 32,
+        // height: CHART_HEIGHT,
         justifyContent: "center",
         alignItems: "center",
         padding: 16,
-        margin: "auto",
+        alignSelf: "center",
       }}
     >
-      <Text className="my-2 font-bold text-blue-500">Last Month</Text>
+      <Text
+        style={{ marginBottom: 8, fontWeight: "bold", color: COLORS.primary }}
+      >
+        Last Month
+      </Text>
 
-      {data ? (
+      {noChartData ? (
+        <Text style={{ textAlign: "center", color: "#6B7280" }}>
+          No weight logs found this month. Start tracking to see your progress!
+        </Text>
+      ) : (
         <LineChart
           data={data}
-          width={SCREEN_WIDTH - 32} // Adjusted width to prevent overflow
+          width={SCREEN_WIDTH - 32}
           height={200}
           chartConfig={{
             barPercentage: 2,
@@ -87,7 +94,7 @@ export const WeightChart = () => {
             backgroundGradientFrom: "#f9f9f9",
             backgroundGradientTo: "#f9f9f9",
             decimalPlaces: 1,
-            color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`, // Changed to blue
+            color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
             labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
           }}
           bezier
@@ -97,10 +104,6 @@ export const WeightChart = () => {
             borderWidth: 1,
           }}
         />
-      ) : (
-        <Text className="text-center text-gray-500 mt-4">
-          No weight logs found. Start tracking to see progress.
-        </Text>
       )}
     </View>
   )
