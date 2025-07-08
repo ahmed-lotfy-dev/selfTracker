@@ -127,11 +127,17 @@ workoutLogsRouter.get("/calendar", async (c) => {
     return c.json({ message: "Unauthorized" }, 401)
   }
 
-  const year = Number(c.req.query("year"))
-  const month = Number(c.req.query("month"))
-
-  if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
-    return c.json({ message: "Invalid year or month" }, 400)
+  const { year, month } = c.req.query()
+  if (!year || isNaN(Number(year))) {
+    return c.json({ message: "Year must be a valid number" }, 400)
+  }
+  if (
+    !month ||
+    isNaN(Number(month)) ||
+    Number(month) < 1 ||
+    Number(month) > 12
+  ) {
+    return c.json({ message: "Month must be between 1 and 12" }, 400)
   }
 
   if (!year || !month) {
@@ -145,11 +151,11 @@ workoutLogsRouter.get("/calendar", async (c) => {
       return c.json(cached)
     }
 
-    const logs = await getWorkoutLogsCalendar(year, month, user.id)
+    const logs = await getWorkoutLogsCalendar(user.id, +year, +month)
 
     await setCache(calendarKey, 3600, logs)
-
-    return c.json({ logs: logs })
+    console.log(logs)
+    return c.json(logs)
   } catch (error) {
     console.error("Error fetching calendar logs:", error)
     return c.json({ message: "Failed to fetch calendar logs" }, 500)

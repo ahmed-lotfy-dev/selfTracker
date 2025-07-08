@@ -35,38 +35,26 @@ export const getWorkoutLogs = async (
 }
 
 export const getWorkoutLogsCalendar = async (
+  userId: string,
   year: number,
-  month: number,
-  userId: string
+  month: number
 ) => {
-  const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999)
+  const start = new Date(year, month - 1, 1)
+  const end = new Date(year, month, 0, 23, 59, 59, 999)
 
-  const userWorkoutLogs = await db.query.workoutLogs
-    .findMany({
-      where: and(
+  const logs = await db
+    .select()
+    .from(workoutLogs)
+    .where(
+      and(
         eq(workoutLogs.userId, userId),
-        and(
-          gte(workoutLogs.createdAt, startDate),
-          lte(workoutLogs.createdAt, endDate)
-        )
-      ),
-      orderBy: desc(workoutLogs.createdAt),
-    })
-    .prepare("getWorkoutLogsCalendar")
-    .execute()
+        gte(workoutLogs.createdAt, start),
+        lte(workoutLogs.createdAt, end)
+      )
+    )
+    .orderBy(desc(workoutLogs.createdAt))
 
-  //handle logs to match Calendar Component view on the frontend
-  const groupedLogs: Record<string, any[]> = {}
-  userWorkoutLogs.forEach((log) => {
-    const date = (log.createdAt as Date).toISOString().split("T")[0]
-    if (!groupedLogs[date]) {
-      groupedLogs[date] = []
-    }
-    groupedLogs[date].push(log)
-  })
-
-  return groupedLogs
+  return logs
 }
 
 export const getSingleWorkoutLog = async (logId: string) => {

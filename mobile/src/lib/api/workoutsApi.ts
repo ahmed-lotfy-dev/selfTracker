@@ -30,7 +30,8 @@ export async function fetchWorkoutLogsByMonth(year: number, month: number) {
   const response = await axiosInstance.get(
     `${API_BASE_URL}/api/workoutLogs/calendar?year=${year}&month=${month}`
   )
-  return response.data.logs
+  console.log(response.data)
+  return response.data
 }
 
 export async function fetchWorkoutLogsChart(month: number) {
