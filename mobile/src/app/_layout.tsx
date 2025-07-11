@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
-import { Slot, useRouter } from "expo-router"
+import { Slot } from "expo-router"
 import { checkForUpdates, onAppStateChange } from "@/src/lib/lib"
 import { useOnlineManager } from "@/src/hooks/useOnlineManager"
 import { useAppState } from "@/src/hooks/useAppState"
@@ -17,8 +17,6 @@ import {
   registerForPushNotificationsAsync,
   setUpNotificationListeners,
 } from "../lib/notifications"
-import axiosInstance from "../lib/api/axiosInstane"
-import { API_BASE_URL } from "../lib/api/config"
 import { PortalHost } from "@rn-primitives/portal"
 import { StatusBar } from "react-native"
 
@@ -59,7 +57,9 @@ export default function RootLayout() {
     prepareApp()
   }, [loaded])
 
-  // if (!loaded) return null
+  if (!loaded) {
+    return null // or a loading spinner
+  }
 
   return (
     <AppProviders>

@@ -36,6 +36,9 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   })
   const workouts = data?.workouts ?? []
 
+  const selectedYear = new Date().getFullYear()
+  const selectedMonth = new Date().getMonth() + 1
+
   const [workoutId, setWorkoutId] = useState(
     isEditing ? selectedWorkout?.workoutId || "" : ""
   )
@@ -54,7 +57,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     mutationFn: (workout: WorkoutLogType) => createWorkout(workout),
     onSuccessInvalidate: [
       { queryKey: ["workoutLogs"] },
-      { queryKey: ["workoutLogsCalendar"] },
+      { queryKey: ["workoutLogsCalendar", selectedMonth, selectedYear] },
       { queryKey: ["userHomeData"] },
     ],
     onSuccessCallback: () => router.push("/workouts"),
@@ -65,7 +68,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     mutationFn: (workout: WorkoutLogType) => updateWorkout(workout),
     onSuccessInvalidate: [
       { queryKey: ["workoutLogs"] },
-      { queryKey: ["workoutLogsCalendar"] },
+      { queryKey: ["workoutLogsCalendar", selectedMonth, selectedYear] },
       { queryKey: ["userHomeData"] },
     ],
     onSuccessCallback: () => router.push("/workouts"),

@@ -1,9 +1,8 @@
 import React from "react"
-import Entypo from "@expo/vector-icons/Entypo"
 import { Stack, useRouter } from "expo-router"
 import { Pressable } from "react-native"
 
-export default function WeightsLayout() {
+export default function HabitsLayout() {
   const router = useRouter()
 
   return (

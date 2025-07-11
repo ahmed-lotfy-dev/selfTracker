@@ -71,6 +71,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="habits"
+        options={{
+          title: "Tasks",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome5 name="tasks" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",

@@ -66,6 +66,7 @@ export async function getWorkoutLogsCalendar(
   const grouped: Record<string, typeof logs> = {}
 
   for (const log of logs) {
+
     if (log.createdAt) {
       const dateKey = log.createdAt.toISOString().split("T")[0] // "2025-07-10"
       if (!grouped[dateKey]) grouped[dateKey] = []

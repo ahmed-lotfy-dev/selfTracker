@@ -2,6 +2,7 @@ import { View, Text, Pressable, TouchableOpacity } from "react-native"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Route, usePathname, useRouter } from "expo-router"
 import { TouchableOpacityProps } from "react-native-gesture-handler"
+import React from "react"
 
 interface AddButtonProps extends TouchableOpacityProps {
   className?: string
