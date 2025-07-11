@@ -15,12 +15,11 @@ export const getCache = async (key: string) => {
     const data = await redisClient.get(key)
     if (!data) return null
 
-    // Extra validation for malformed JSON
     try {
       return JSON.parse(data)
     } catch (parseError) {
       console.error("JSON parse error for key:", key, "Data:", data)
-      await redisClient.del(key) // Clean up invalid data
+      await redisClient.del(key) 
       return null
     }
   } catch (err) {

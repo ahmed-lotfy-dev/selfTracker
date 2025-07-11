@@ -3,6 +3,7 @@ import { db } from "../db"
 import { workoutLogs } from "../db/schema/workoutLogs"
 import { clearCache } from "../../lib/redis"
 import { endOfMonth, format, startOfMonth, subMonths } from "date-fns"
+import { workouts } from "../db/schema"
 
 export const getWorkoutLogs = async (
   userId: string,
@@ -34,17 +35,26 @@ export const getWorkoutLogs = async (
   return { items, nextCursor }
 }
 
-export const getWorkoutLogsCalendar = async (
+export async function getWorkoutLogsCalendar(
   userId: string,
   year: number,
   month: number
-) => {
-  const start = new Date(year, month - 1, 1)
-  const end = new Date(year, month, 0, 23, 59, 59, 999)
+) {
+  const start = new Date(`${year}-${String(month).padStart(2, "0")}-01`)
+  const end = new Date(year, month, 0, 23, 59, 59, 999) // last day of month
 
   const logs = await db
-    .select()
+    .select({
+      id: workoutLogs.id,
+      userId: workoutLogs.userId,
+      workoutId: workoutLogs.workoutId,
+      workoutName: workouts.name,
+      notes: workoutLogs.notes,
+      createdAt: workoutLogs.createdAt,
+      updatedAt: workoutLogs.updatedAt,
+    })
     .from(workoutLogs)
+    .leftJoin(workouts, eq(workoutLogs.workoutId, workouts.id))
     .where(
       and(
         eq(workoutLogs.userId, userId),
@@ -52,9 +62,18 @@ export const getWorkoutLogsCalendar = async (
         lte(workoutLogs.createdAt, end)
       )
     )
-    .orderBy(desc(workoutLogs.createdAt))
 
-  return logs
+  const grouped: Record<string, typeof logs> = {}
+
+  for (const log of logs) {
+    if (log.createdAt) {
+      const dateKey = log.createdAt.toISOString().split("T")[0] // "2025-07-10"
+      if (!grouped[dateKey]) grouped[dateKey] = []
+      grouped[dateKey].push(log)
+    }
+  }
+
+  return grouped
 }
 
 export const getSingleWorkoutLog = async (logId: string) => {

@@ -4,7 +4,13 @@ import { showAlert } from "@/src/lib/lib"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "expo-router"
 import React, { useState, useMemo } from "react"
-import { View, Text, ActivityIndicator, Pressable, StyleSheet } from "react-native"
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+} from "react-native"
 import { Calendar, DateData } from "react-native-calendars"
 import { MarkedDates } from "react-native-calendars/src/types"
 
@@ -30,7 +36,7 @@ const CalendarView = () => {
     isLoading,
     error,
   } = useQuery<WorkoutLogMap>({
-    queryKey: ["workoutLogsCalendar", selectedYear, selectedMonth],
+    queryKey: ["workoutLogsCalendar"],
     queryFn: () => fetchWorkoutLogsByMonth(selectedYear, selectedMonth),
   })
 
@@ -48,7 +54,7 @@ const CalendarView = () => {
   const handleDayPress = (day: DateData) => {
     const logs = data[day.dateString]
     if (logs && logs.length > 0) {
-      router.push(`/workouts/${logs[0].id}`) // navigate to first log on that day
+      router.push(`/workouts/${logs[0].id}`)
     } else {
       showAlert("No Workouts", "No workouts logged for this day.")
     }
