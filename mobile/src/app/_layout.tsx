@@ -6,13 +6,14 @@ import { useOnlineManager } from "@/src/hooks/useOnlineManager"
 import { useAppState } from "@/src/hooks/useAppState"
 import * as SplashScreen from "expo-splash-screen"
 
-import "react-native-reanimated"
+import "react-native-reanimated"  
 import "react-native-gesture-handler"
 import "@/global.css"
 
 import { AppProviders } from "@/src/components/Provider/AppProviders"
 
 import React from "react"
+
 import {
   registerForPushNotificationsAsync,
   setUpNotificationListeners,
