@@ -1,6 +1,6 @@
 import {
   Text,
-  TouchableOpacity,
+  Pressable,
   View,
   Alert,
   ActivityIndicator,
@@ -42,10 +42,10 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
     >
       <View className="flex-1 x flex-row">
         <Link href={`/weights/${item.id}`} asChild>
-          <TouchableOpacity className="flex-1">
+          <Pressable className="flex-1">
             <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
             <DateDisplay date={item.createdAt} />
-          </TouchableOpacity>
+          </Pressable>
         </Link>
       </View>
 

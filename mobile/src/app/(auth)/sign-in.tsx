@@ -2,12 +2,11 @@ import React, { useState } from "react"
 import {
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   View,
-  Pressable,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
 import { useAuthActions } from "@/src/store/useAuthStore"
@@ -103,7 +102,7 @@ export default function SignIn() {
       ) : null}
 
       {/* Submit Button */}
-      <TouchableOpacity
+      <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
         className={`p-4 rounded-md items-center ${
@@ -115,7 +114,7 @@ export default function SignIn() {
         ) : (
           <Text style={{ color: "white" }}>Login</Text>
         )}
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Link to Sign Up */}
       <Link href="/sign-up" asChild>

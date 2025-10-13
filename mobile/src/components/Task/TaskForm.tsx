@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
@@ -78,7 +78,7 @@ export default function TaskForm() {
         ) : null}
       </View>
 
-      <TouchableOpacity
+      <Pressable
         className={`${
           !isSubmitting ? "bg-slate-700" : "bg-gray-500"
         } rounded-md mt-4 p-3 items-center mb-16`}
@@ -88,7 +88,7 @@ export default function TaskForm() {
         <Text className="font-bold text-white">
           {isSubmitting ? "Adding Task..." : "Add Task"}
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     </KeyboardAvoidingView>
   )
 }

@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from "react-native"
+import { Text, Pressable, View } from "react-native"
 import { useRouter, Link } from "expo-router"
 import DateDisplay from "../DateDisplay"
 import { deleteWorkout } from "@/src/lib/api/workoutsApi"
@@ -32,12 +32,12 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
     <View className="flex-1 flex-row justify-between items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 my-5">
       <View className="flex-1 flex-row">
         <Link href={`/workouts/${item.id}`} asChild>
-          <TouchableOpacity className="flex-1">
+          <Pressable className="flex-1">
             <Text className="text-xl font-bold mb-3">{item.workoutName}</Text>
             <Text className="text-sm text-gray-500">
               <DateDisplay date={item.createdAt} />
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </Link>
       </View>
 

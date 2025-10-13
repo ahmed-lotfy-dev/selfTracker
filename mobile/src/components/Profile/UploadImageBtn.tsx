@@ -1,8 +1,9 @@
+import React from "react"
 import { useAuth } from "@/src/hooks/useAuth"
 import { deleteImage, uploadImage } from "@/src/lib/api/imageApi"
 import { updateUser } from "@/src/lib/api/userApi"
 import { useState } from "react"
-import { View, Text, TouchableOpacity, Button } from "react-native"
+import { View, Text, Pressable, Button } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
 import { useUpdate } from "@/src/hooks/useUpdate"
@@ -76,9 +77,9 @@ export default function UploadImageBtn({ className }: { className?: string }) {
     <View
       className={`flex-row justify-center items-center bg-gray-300  ${className}`}
     >
-      <TouchableOpacity onPress={pickImageAndUpload}>
+      <Pressable onPress={pickImageAndUpload}>
         <Foundation name="camera" size={30} color="lightslategray" />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   )
 }

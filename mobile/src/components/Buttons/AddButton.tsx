@@ -1,10 +1,9 @@
-import { View, Text, Pressable, TouchableOpacity } from "react-native"
+import { View, Text, Pressable } from "react-native"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Route, usePathname, useRouter } from "expo-router"
-import { TouchableOpacityProps } from "react-native-gesture-handler"
 import React from "react"
 
-interface AddButtonProps extends TouchableOpacityProps {
+interface AddButtonProps {
   className?: string
   path: string
 }
@@ -13,11 +12,11 @@ export default function AddButton({ className, path }: AddButtonProps) {
   const router = useRouter()
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={() => router.push(`${path}/add` as Route)}
-      className={`border border-slate-900 bg-slate-700 hover:bg-slate-800  transition-all ease-in-out rounded-full p-4 absolute bottom-10 right-10 z-10 ${className}`}
+      className={`bg-primary p-3 rounded-full ${className}`}
     >
       <Entypo name="plus" size={24} color="white" />
-    </TouchableOpacity>
+    </Pressable>
   )
 }

@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
@@ -153,9 +153,9 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
 
         <View className="mb-2">
           <Text className="my-3 font-bold">Weight In Date:</Text>
-          <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+          <Pressable onPress={() => setShowDate(!showDate)}>
             <DateDisplay date={createdAt} />
-          </TouchableOpacity>
+          </Pressable>
           {showDate && (
             <DatePicker
               date={createdAt}
@@ -178,7 +178,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           />
         </View>
 
-        <TouchableOpacity
+        <Pressable
           className={`${
             isSubmitting ? "bg-gray-300" : "bg-slate-700"
           } rounded-md mt-4 p-3 items-center mb-16`}
@@ -192,7 +192,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
               ? "Update Weight Log"
               : "Add Weight Log"}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   )

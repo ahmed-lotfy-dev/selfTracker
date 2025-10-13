@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
@@ -133,9 +133,9 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
 
         {/* Date Picker */}
         <Text className="my-3 font-bold">Workout Date:</Text>
-        <TouchableOpacity onPress={() => setShowDate(!showDate)}>
+        <Pressable onPress={() => setShowDate(!showDate)}>
           <DateDisplay date={createdAt} />
-        </TouchableOpacity>
+        </Pressable>
         {showDate && (
           <DatePicker
             date={createdAt}
@@ -163,14 +163,14 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
         )}
 
         {/* Submit */}
-        <TouchableOpacity
+        <Pressable
           className="bg-slate-700 rounded-md mt-4 items-center p-3 mb-16"
           onPress={handleSubmit}
         >
           <Text className="font-bold text-white">
             {isEditing ? "Update Workout" : "Save Workout"}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   )

@@ -40,8 +40,13 @@ export async function getWorkoutLogsCalendar(
   year: number,
   month: number
 ) {
-  const start = new Date(`${year}-${String(month).padStart(2, "0")}-01`)
-  const end = new Date(year, month, 0, 23, 59, 59, 999) // last day of month
+  // Calculate the start of the previous month
+  const prevMonthDate = new Date(year, month - 2, 1); // month - 1 is current month, month - 2 is previous
+  const start = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), 1);
+
+  // Calculate the end of the next month
+  const nextMonthDate = new Date(year, month, 1); // month is current month, month + 1 is next
+  const end = new Date(nextMonthDate.getFullYear(), nextMonthDate.getMonth() + 1, 0, 23, 59, 59, 999); // last day of next month
 
   const logs = await db
     .select({

@@ -20,6 +20,7 @@ module.exports = function (api) {
               "./node_modules/@better-auth/expo/dist/client.cjs",
           },
         },
+        "react-native-worklets/plugin",
       ],
     ],
   }

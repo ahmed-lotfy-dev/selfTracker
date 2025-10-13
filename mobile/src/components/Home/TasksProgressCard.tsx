@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native"
+import { View, Text, Pressable } from "react-native"
 import React from "react"
 import { MetricsCard } from "./MetricCard"
 import { CardHeader } from "./CardHeader"

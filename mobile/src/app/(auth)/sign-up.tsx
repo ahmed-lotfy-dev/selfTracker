@@ -3,11 +3,10 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
 import { COLORS } from "@/src/constants/Colors"
@@ -114,7 +113,7 @@ export default function SignUp() {
         <Text className="text-red-500 mb-3">{formError}</Text>
       ) : null}
 
-      <TouchableOpacity
+      <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
         className={`p-4 rounded-md items-center ${
@@ -126,7 +125,7 @@ export default function SignUp() {
         ) : (
           <Text style={{ color: "white" }}>Sign Up</Text>
         )}
-      </TouchableOpacity>
+      </Pressable>
 
       <Link href="/sign-in" asChild>
         <Pressable className="justify-center items-center rounded-lg p-2 mr-5 mt-4">

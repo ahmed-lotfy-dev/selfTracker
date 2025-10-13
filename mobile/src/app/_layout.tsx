@@ -1,3 +1,5 @@
+import "react-native-reanimated"
+
 import { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import { Slot } from "expo-router"
@@ -6,7 +8,6 @@ import { useOnlineManager } from "@/src/hooks/useOnlineManager"
 import { useAppState } from "@/src/hooks/useAppState"
 import * as SplashScreen from "expo-splash-screen"
 
-import "react-native-reanimated"  
 import "react-native-gesture-handler"
 import "@/global.css"
 
@@ -23,7 +24,7 @@ import { StatusBar } from "react-native"
 
 SplashScreen.preventAutoHideAsync()
 
-export default function RootLayout() {
+function RootLayout() {
   useOnlineManager()
   useAppState(onAppStateChange)
   const [expoPushToken, setExpoPushToken] = useState<string | undefined>()
@@ -70,3 +71,5 @@ export default function RootLayout() {
     </AppProviders>
   )
 }
+
+export default RootLayout

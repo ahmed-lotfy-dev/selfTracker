@@ -36,7 +36,7 @@ const CalendarView = () => {
     isLoading,
     error,
   } = useQuery<WorkoutLogMap>({
-    queryKey: ["workoutLogsCalendar", selectedYear, selectedYear],
+    queryKey: ["workoutLogsCalendar", selectedYear, selectedMonth],
     queryFn: () => fetchWorkoutLogsByMonth(selectedYear, selectedMonth),
   })
 
