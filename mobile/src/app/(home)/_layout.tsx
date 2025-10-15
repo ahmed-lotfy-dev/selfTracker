@@ -43,34 +43,38 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs
-      tintColor={COLORS.success}
+      tintColor={"lightgreen"}
       iconColor={"darkgreen"}
       backgroundColor={"white"}
       blurEffect="prominent"
+      labelStyle={{ color: "blue" }}
+      labelVisibilityMode="labeled"
+      rippleColor={"darkgreen"}
+      shadowColor={"green"}
+      indicatorColor={"darkgreen"}
+      backBehavior="initialRoute"
     >
       <NativeTabs.Trigger
         name="index"
         options={{
           labelStyle: { color: "darkgreen", fontWeight: 700 },
-          iconColor: "darkgreena",
-          selectedIconColor: "darkgreen",blurEffect:"dark"
         }}
       >
-        <Label>HOME</Label>
+        <Label>Home</Label>
         <Icon src={<VectorIcon family={Ionicons} name="home" />} />,
       </NativeTabs.Trigger>
       <NativeTabs.Trigger
         name="weights"
         options={{ labelStyle: { color: "darkgreen", fontWeight: 700 } }}
       >
-        <Label>WEIGHTS</Label>
+        <Label>Weight</Label>
         <Icon src={<VectorIcon family={Ionicons} name="scale" />} />,
       </NativeTabs.Trigger>
       <NativeTabs.Trigger
         name="workouts"
         options={{ labelStyle: { color: "darkgreen", fontWeight: 700 } }}
       >
-        <Label>Workouts</Label>
+        <Label>Workout</Label>
         <Icon src={<VectorIcon family={FontAwesome5} name="dumbbell" />} />,
       </NativeTabs.Trigger>
       <NativeTabs.Trigger
@@ -87,50 +91,9 @@ export default function TabsLayout() {
         name="profile"
         options={{ labelStyle: { color: "darkgreen", fontWeight: 700 } }}
       >
-        <Label>Settings</Label>
+        <Label>Setting</Label>
         <Icon src={<VectorIcon family={Ionicons} name="settings" />} />,
       </NativeTabs.Trigger>
     </NativeTabs>
-    // <Tabs
-    //   screenOptions={{ headerShown: false, headerTransparent: true }}
-    //   tabBar={(props) => <AnimatedTabBar {...props} />}
-    // >
-    //   <Tabs.Screen
-    //     name="index"
-    //     options={{
-    //       title: "Home",
-    //     }}
-    //   />
-    //   <Tabs.Screen
-    //     name="weights"
-    //     options={{
-    //       title: "Weights",
-    //     }}
-    //   />
-    //   <Tabs.Screen
-    //     name="workouts"
-    //     options={{
-    //       title: "Workouts",
-    //     }}
-    //   />
-    //   <Tabs.Screen
-    //     name="tasks"
-    //     options={{
-    //       title: "Tasks",
-    //     }}
-    //   />
-    //   <Tabs.Screen
-    //     name="habits"
-    //     options={{
-    //       title: "Habits",
-    //     }}
-    //   />
-    //   <Tabs.Screen
-    //     name="profile"
-    //     options={{
-    //       title: "Profile",
-    //     }}
-    //   />
-    // </Tabs>
   )
 }
