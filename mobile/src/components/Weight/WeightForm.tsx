@@ -106,14 +106,16 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
-        <View className="">
-          <Text className="my-3 font-bold">Weight:</Text>
+        <View className="text-black">
+          <Text className="my-3 font-bold fo">Weight:</Text>
           <TextInput
             className="border-[1px] text-lg h-12 justify-center pl-3 border-primary text-600 rounded-md mb-4"
+            style={{ color: "black" }}
             keyboardType="numeric"
             value={weight}
             onChangeText={setWeight}
             placeholder="Enter your weight"
+            placeholderTextColor={"black"}
           />
         </View>
         {errors.weight && (
@@ -123,7 +125,11 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
         <View>
           <Text className="my-3 font-bold">Energy</Text>
           <View className="border-[1px] border-black rounded-md mb-4 h-12 p-2 justify-center">
-            <Picker selectedValue={energy} onValueChange={setEnergy}>
+            <Picker
+              selectedValue={energy}
+              onValueChange={setEnergy}
+              style={{ color: "black" }}
+            >
               <Picker.Item label="Select your energy" value="" />
               <Picker.Item label="Low" value="Low" />
               <Picker.Item label="Okay" value="Okay" />
@@ -139,7 +145,11 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
         <View>
           <Text className="my-3 font-bold">Mood</Text>
           <View className="border-[1px] border-black rounded-md mb-4 h-12 p-2 justify-center">
-            <Picker selectedValue={mood} onValueChange={setMood}>
+            <Picker
+              selectedValue={mood}
+              onValueChange={setMood}
+              style={{ color: "black" }}
+            >
               <Picker.Item label="Select your mood" value="" />
               <Picker.Item label="Low" value="Low" />
               <Picker.Item label="Medium" value="Medium" />
@@ -175,6 +185,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
             multiline
             className="border-[1px] text-lg h-[100px] justify-center pl-3 border-primary text-600 rounded-md mb-4 text-start pt-3"
             style={{ textAlignVertical: "top" }}
+            placeholderTextColor={"black"}
           />
         </View>
 

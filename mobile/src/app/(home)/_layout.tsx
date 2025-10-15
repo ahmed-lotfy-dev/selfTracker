@@ -42,13 +42,18 @@ export default function TabsLayout() {
   }
 
   return (
-    <NativeTabs tintColor={COLORS.success} iconColor={"darkgreen"}>
+    <NativeTabs
+      tintColor={COLORS.success}
+      iconColor={"darkgreen"}
+      backgroundColor={"white"}
+      blurEffect="prominent"
+    >
       <NativeTabs.Trigger
         name="index"
         options={{
           labelStyle: { color: "darkgreen", fontWeight: 700 },
           iconColor: "darkgreena",
-          selectedIconColor: "blue",
+          selectedIconColor: "darkgreen",blurEffect:"dark"
         }}
       >
         <Label>HOME</Label>

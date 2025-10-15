@@ -116,10 +116,11 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
       >
         {/* Workout Picker */}
         <Text className="my-3 font-bold">Workout Type:</Text>
-        <View className="border-[1px] border-primary h-12 justify-center rounded-md p-4">
+        <View className="border-[1px] border-primary h-12 justify-center rounded-md p-1" >
           <Picker
             selectedValue={workoutId}
             onValueChange={(val) => setWorkoutId(val)}
+            style={{ color: "black" }}
           >
             <Picker.Item label="Select a workout type" value="" />
             {workouts.map((w: WorkoutType) => (
@@ -157,6 +158,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           multiline
           className="border-[1px] text-lg h-[100px] pl-3 border-primary rounded-md mb-4 pt-3"
           style={{ textAlignVertical: "top" }}
+          placeholderTextColor={"black"}
         />
         {errors.notes && (
           <Text className="text-red-500 mt-2">{errors.notes}</Text>

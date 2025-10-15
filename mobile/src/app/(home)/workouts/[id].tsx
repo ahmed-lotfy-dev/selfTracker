@@ -18,6 +18,7 @@ import { useDelete } from "@/src/hooks/useDelete"
 import EditButton from "@/src/components/Buttons/EditButton"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
 import React from "react"
+import BackButton from "@/src/components/Buttons/BackButton"
 
 export default function WorkoutLog() {
   const router = useRouter()
@@ -61,6 +62,8 @@ export default function WorkoutLog() {
           title: `${log.workoutName} - Workout Log`,
         }}
       />
+      <BackButton backTo="/workouts" className="ml-4"/>
+
       <View className="p-5">
         <Text className="text-xl font-bold mb-2">Workout Log</Text>
         <Text className="text-lg">Workout Name: {log.workoutName}</Text>

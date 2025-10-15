@@ -24,7 +24,7 @@ export default function WorkoutsLayout() {
         options={{
           title: "Workout Log",
           headerTitleAlign: "center",
-          headerShown: true,
+          headerShown: false,
           headerLeft: () => <BackButton backTo="/workouts" />,
         }}
       />
@@ -34,7 +34,7 @@ export default function WorkoutsLayout() {
           title: "Add Workout",
           headerTitleAlign: "center",
           presentation: "formSheet",
-          headerShown: true,
+          headerShown: false,
           animation: "slide_from_bottom",
           headerLeft: () => <BackButton backTo="/workouts" />,
         }}
@@ -43,7 +43,7 @@ export default function WorkoutsLayout() {
         name="edit"
         options={{
           title: "Edit Workout",
-          headerShown: true,
+          headerShown: false,
           headerTitleAlign: "center",
           presentation: "formSheet",
           animation: "slide_from_bottom",
