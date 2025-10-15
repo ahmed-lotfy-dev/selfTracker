@@ -2,9 +2,6 @@ import {
   Text,
   Pressable,
   View,
-  Alert,
-  ActivityIndicator,
-  Platform,
 } from "react-native"
 import { Link, Route, useRouter } from "expo-router"
 import DateDisplay from "../DateDisplay"

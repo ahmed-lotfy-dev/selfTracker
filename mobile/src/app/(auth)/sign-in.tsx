@@ -3,7 +3,6 @@ import {
   Text,
   TextInput,
   Pressable,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   View,
@@ -15,6 +14,7 @@ import { signIn } from "@/src/lib/api/authApi"
 import { setAccessToken } from "@/src/lib/storage"
 import { signInSchema } from "@/src/types/userType"
 import { z } from "zod"
+import ActivitySpinner from "@/src/components/ActivitySpinner"
 
 export default function SignIn() {
   const router = useRouter()
@@ -110,7 +110,7 @@ export default function SignIn() {
         }`}
       >
         {isSubmitting ? (
-          <ActivityIndicator color={COLORS.primary} />
+          <ActivitySpinner color={COLORS.primary}  />
         ) : (
           <Text style={{ color: "white" }}>Login</Text>
         )}

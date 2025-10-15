@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { QueryClient } from "@tanstack/react-query"
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister"
+import { COLORS } from "@/src/constants/Colors"
 
 interface AppProvidersProps {
   children: ReactNode
@@ -30,7 +31,12 @@ export function AppProviders({ children }: AppProvidersProps) {
       client={queryClient}
       persistOptions={{ persister: asyncStoragePersister }}
     >
-      <SafeAreaView style={{ flex: 1 }}>{children}</SafeAreaView>
+      <SafeAreaView
+        edges={["top","left", "right",]}
+        style={{ flex: 1, backgroundColor: COLORS.background }}
+      >
+        {children}
+      </SafeAreaView>
     </PersistQueryClientProvider>
   )
 }

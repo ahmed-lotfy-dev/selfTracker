@@ -1,7 +1,8 @@
 import React from "react"
-import { Pressable, ActivityIndicator, PressableProps } from "react-native"
+import { Pressable } from "react-native"
 import FontAwesome from "@expo/vector-icons/FontAwesome"
 import { COLORS } from "@/src/constants/Colors"
+import ActivitySpinner from "../ActivitySpinner"
 
 type DeleteButtonProps = {
   onPress?: () => void
@@ -22,7 +23,7 @@ export default function DeleteButton({
        p-2 rounded-md border border-red-500 ${className}`}
     >
       {isLoading ? (
-        <ActivityIndicator size="small" color={COLORS.primary} />
+        <ActivitySpinner size="small" color={COLORS.primary} />
       ) : (
         <FontAwesome name="trash-o" size={20} color="red" />
       )}

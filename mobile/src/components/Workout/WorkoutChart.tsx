@@ -1,9 +1,10 @@
-import { View, Text, ActivityIndicator, Dimensions } from "react-native"
+import { View, Text,  Dimensions } from "react-native"
 import React, { useState } from "react"
 import { BarChart } from "react-native-chart-kit"
 import { useQuery } from "@tanstack/react-query"
 import { fetchWorkoutLogsChart } from "@/src/lib/api/workoutsApi"
 import { COLORS } from "@/src/constants/Colors"
+import ActivitySpinner from "../ActivitySpinner"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 const CHART_HEIGHT = 280
@@ -27,7 +28,7 @@ export const WorkoutChart = () => {
       }}
     >
       {isLoading || !data ? (
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivitySpinner size="large" color={COLORS.primary} />
       ) : isError ? (
         <Text className="text-red-500 text-center">
           Error loading chart data. Please try again later.

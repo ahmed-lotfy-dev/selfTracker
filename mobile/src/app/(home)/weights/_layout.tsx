@@ -16,7 +16,7 @@ export default function WeightsLayout() {
       name="index"
       options={{
         title: "Weights",
-        headerShown: true,
+        headerShown: false,
         headerTitleAlign: "center",
         headerLeft: () => <BackButton backTo="/" />,
       }}

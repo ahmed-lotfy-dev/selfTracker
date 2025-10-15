@@ -1,4 +1,4 @@
-import { View, Text, RefreshControl, ActivityIndicator } from "react-native"
+import { View, Text, RefreshControl } from "react-native"
 import React from "react"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchAllWeightLogs } from "@/src/lib/api/weightsApi"
@@ -6,6 +6,7 @@ import WeightLogItem from "./WeightLogItem"
 import { FlashList } from "@shopify/flash-list"
 import { WeightChart } from "./WeightChart"
 import { COLORS } from "@/src/constants/Colors"
+import ActivitySpinner from "../ActivitySpinner"
 
 export const WeightLogsList = () => {
   const limit = 10
@@ -35,7 +36,7 @@ export const WeightLogsList = () => {
   if (isLoading || !data) {
     return (
       <View className="flex-1 justify-center items-center p-4">
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivitySpinner size="large" color={COLORS.primary} />
       </View>
     )
   }
@@ -69,11 +70,10 @@ export const WeightLogsList = () => {
             fetchNextPage()
           }
         }}
-        estimatedItemSize={117}
         onEndReachedThreshold={0.5}
         ListFooterComponent={
           isFetchingNextPage ? (
-            <ActivityIndicator size="small" style={{ marginVertical: 16 }} />
+            <ActivitySpinner size="small" className="mx-4"  />
           ) : null
         }
       />

@@ -21,6 +21,7 @@ import {
 } from "../lib/notifications"
 import { PortalHost } from "@rn-primitives/portal"
 import { StatusBar } from "react-native"
+import { COLORS } from "../constants/Colors"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -65,8 +66,8 @@ function RootLayout() {
 
   return (
     <AppProviders>
-      <StatusBar barStyle="dark-content" backgroundColor="#000" />
-      <Slot />
+      <StatusBar barStyle="default" />
+      <Slot/>
       <PortalHost />
     </AppProviders>
   )

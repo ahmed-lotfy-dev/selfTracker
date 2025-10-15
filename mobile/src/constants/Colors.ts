@@ -1,12 +1,14 @@
 // src/constants.ts
 export const COLORS = {
-  primary: "#15803d", // dark theme
-  secondary: "#16a34a", // Darker green
-  background: "#1e293b", // Dark gray-blue
-  text: "#f1f5f9", // Light text
-  border: "#4ade80", // Light green border
-  error: "#ef4444", // Red for errors
-  placeholder: "#94a3b8", // Light gray text for input placeholders
+  primary: "#2C3E50", // Charcoal Blue - professional primary
+  secondary: "#1ABC9C", // Turquoise - professional accent
+  background: "#1A1A1A", // Very Dark Gray - professional dark mode foundation
+  text: "#ECF0F1", // Light Gray - readable on dark backgrounds
+  gray: "#7F8C8D", // Asbestos - neutral for inactive states
+  border: "#34495E", // Wet Asphalt - subtle border
+  error: "#E74C3C", // Alizarin - standard red for error states
+  success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
+  placeholder: "#BDC3C7", // Silver - muted gray for input hints
 }
 
 export const SPACING = {
@@ -31,7 +33,7 @@ export const BUTTONS = {
     backgroundColor: COLORS.placeholder,
   },
   text: {
-    color: "white",
+    color: COLORS.text, // Use the new text color
     fontSize: 16,
     fontWeight: "bold",
   },

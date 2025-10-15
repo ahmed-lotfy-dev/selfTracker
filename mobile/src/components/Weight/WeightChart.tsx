@@ -1,9 +1,10 @@
-import { View, Text, Button, ActivityIndicator, Dimensions } from "react-native"
+import { View, Text,  Dimensions } from "react-native"
 import React, { useState } from "react"
 import { LineChart } from "react-native-chart-kit"
 import { useQuery } from "@tanstack/react-query"
 import { fetchWeightLogsChart } from "@/src/lib/api/weightsApi"
 import { COLORS } from "@/src/constants/Colors"
+import ActivitySpinner from "../ActivitySpinner"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 
@@ -33,7 +34,7 @@ export const WeightChart = () => {
           padding: 16,
         }}
       >
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivitySpinner size="large" color={COLORS.primary} />
       </View>
     )
   }

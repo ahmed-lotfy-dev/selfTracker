@@ -1,4 +1,4 @@
-import { View, Text, RefreshControl, ActivityIndicator } from "react-native"
+import { View, Text, RefreshControl,  } from "react-native"
 import React from "react"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchAllWeightLogs } from "@/src/lib/api/weightsApi"
@@ -7,6 +7,7 @@ import { FlashList } from "@shopify/flash-list"
 import { COLORS } from "@/src/constants/Colors"
 import { fetchAllWorkoutLogs } from "@/src/lib/api/workoutsApi"
 import { WorkoutChart } from "./WorkoutChart"
+import ActivitySpinner from "@/src/components/ActivitySpinner"
 
 export const WorkoutLogsList = () => {
   const limit = 10
@@ -36,7 +37,7 @@ export const WorkoutLogsList = () => {
   if (isLoading || !data) {
     return (
       <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivitySpinner size="large" color={COLORS.primary} />
       </View>
     )
   }
@@ -81,12 +82,11 @@ export const WorkoutLogsList = () => {
             fetchNextPage()
           }
         }}
-        estimatedItemSize={117}
         onEndReachedThreshold={0.5}
         ListHeaderComponent={<WorkoutChart />}
         ListFooterComponent={
           isFetchingNextPage ? (
-            <ActivityIndicator size="small" style={{ marginVertical: 16 }} />
+            <ActivitySpinner size="small" className="mx-4"  />
           ) : null
         }
       />

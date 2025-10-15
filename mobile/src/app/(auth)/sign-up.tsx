@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   Pressable,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
@@ -14,6 +13,7 @@ import { setAccessToken } from "@/src/lib/storage"
 import { useAuthActions } from "@/src/store/useAuthStore"
 import { signUp } from "@/src/lib/api/authApi"
 import { signUpSchema } from "@/src/types/userType"
+import ActivitySpinner from "@/src/components/ActivitySpinner"
 
 export default function SignUp() {
   const router = useRouter()
@@ -121,7 +121,8 @@ export default function SignUp() {
         }`}
       >
         {isSubmitting ? (
-          <ActivityIndicator color={COLORS.primary} />
+          <ActivitySpinner color={COLORS.primary} />
+          
         ) : (
           <Text style={{ color: "white" }}>Sign Up</Text>
         )}

@@ -14,7 +14,7 @@ export default function WorkoutsLayout() {
         name="index"
         options={{
           title: "Workouts",
-          headerShown: true,
+          headerShown: false,
           headerTitleAlign: "center",
           headerLeft: () => <BackButton backTo="/" />,
         }}

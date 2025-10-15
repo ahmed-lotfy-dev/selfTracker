@@ -4,15 +4,10 @@ import { showAlert } from "@/src/lib/lib"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "expo-router"
 import React, { useState, useMemo } from "react"
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-} from "react-native"
+import { View, Text, Pressable, StyleSheet } from "react-native"
 import { Calendar, DateData } from "react-native-calendars"
 import { MarkedDates } from "react-native-calendars/src/types"
+import ActivitySpinner from "@/src/components/ActivitySpinner"
 
 type WorkoutLog = {
   id: string
@@ -63,7 +58,7 @@ const CalendarView = () => {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivitySpinner size="large" color={COLORS.primary} />
         <Text>Loading workout logs...</Text>
       </View>
     )

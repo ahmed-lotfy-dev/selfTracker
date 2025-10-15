@@ -15,6 +15,7 @@ import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
 import { FlashList } from "@shopify/flash-list"
 import { WorkoutLogsList } from "@/src/components/Workout/WorkoutLogsList"
+import BackButton from "@/src/components/Buttons/BackButton"
 
 const VIEW_TYPES = {
   LIST: "list",
@@ -56,6 +57,7 @@ export default function WorkoutScreen() {
 
   return (
     <View className="flex-1 px-4 ">
+      <BackButton backTo="/" />
       <ViewSelector />
       {renderContent()}
       <AddButton path="/workouts" />

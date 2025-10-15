@@ -1,11 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  Text,
-  View,
-} from "react-native"
+import { FlatList, RefreshControl, Text, View } from "react-native"
 import Header from "@/src/components/Header"
 import TaskForm from "@/src/components/Task/TaskForm"
 import TaskListItem from "@/src/components/Task/TaskListItem"
@@ -14,6 +8,7 @@ import { COLORS } from "@/src/constants/Colors"
 import { fetchAllTasks } from "@/src/lib/api/tasksApi"
 import { TaskType } from "@/src/types/taskType"
 import React from "react"
+import ActivitySpinner from "@/src/components/ActivitySpinner"
 
 export default function TaskScreen() {
   const {
@@ -29,11 +24,7 @@ export default function TaskScreen() {
 
   if (isLoading || !tasks) {
     return (
-      <ActivityIndicator
-        className="flex-1"
-        size="large"
-        color={COLORS.primary}
-      />
+      <ActivitySpinner className="flex-1" size="large" color={COLORS.primary} />
     )
   }
 
