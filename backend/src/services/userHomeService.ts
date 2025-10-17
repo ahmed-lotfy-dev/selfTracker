@@ -173,7 +173,7 @@ export const getWeightChangeInPeriod = async (
     .limit(1)
 
   if (!oldestWeightLog || !latestWeightLog) {
-    return "add logs to calculate"
+    return "Insufficient data to calculate weight change"
   }
 
   const weightChange =
