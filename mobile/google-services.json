@@ -7,7 +7,26 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:719673409235:android:015e1995ddf06d1a271e26",
+        "mobilesdk_app_id": "1:719673409235:android:401ee360db289856271e26",
+        "android_client_info": {
+          "package_name": "com.ahmedlotfy.lifetracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCidgwEr3GK8NaYHGFXvN0K6ieXa8ww-2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719673409235:android:b90ac3bdd9d126e9271e26",
         "android_client_info": {
           "package_name": "com.ahmedlotfy.selftracker"
         }
