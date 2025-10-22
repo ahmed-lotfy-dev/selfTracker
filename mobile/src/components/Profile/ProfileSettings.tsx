@@ -18,6 +18,7 @@ import { User } from "@/src/types/userType"
 import { updateUser } from "@/src/lib/api/userApi" // Import the updateUser API function
 import UserProfile from "./UserProfile" // Re-using the UserProfile component for image display
 import { COLORS, useThemeColors } from "@/src/constants/Colors"
+import LogoutButton from "@/src/components/Buttons/LogoutButton" // Import LogoutButton
 
 export default function ProfileSettings() {
   const { user, refetch } = useAuth()
@@ -179,7 +180,7 @@ export default function ProfileSettings() {
               mode="date"
               display="default"
               onChange={handleDateChange}
-              textColor={colors.text} // This might not work directly for native pickers, but good to include
+              textColor={colors.text}
             />
           )}
 
@@ -356,27 +357,24 @@ export default function ProfileSettings() {
           />
         </View>
 
-        <TouchableOpacity
-          style={{
-            paddingVertical: 12,
-            borderRadius: 6,
-            alignItems: "center",
-            marginTop: 24,
-            backgroundColor: colors.success,
-          }}
-          onPress={handleSaveChanges}
-          disabled={isPending}
-        >
-          <Text
-            style={{
-              fontWeight: "bold",
-              fontSize: 18,
-              color: colors.background,
-            }}
+        <View className="flex-1">
+          <TouchableOpacity
+            className="m-auto w-[50%] bg-green-700 py-3 rounded-lg items-center justify-center"
+            onPress={handleSaveChanges}
+            disabled={isPending}
           >
-            {isPending ? "Saving..." : "Save Changes"}
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={{
+                fontWeight: "bold",
+                fontSize: 18,
+                color: colors.background,
+              }}
+            >
+              {isPending ? "Saving..." : "Save Changes"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <LogoutButton />
       </View>
     </ScrollView>
   )

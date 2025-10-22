@@ -1,5 +1,4 @@
 import React from "react"
-import LogoutButton from "@/src/components/Buttons/LogoutButton"
 import Header from "@/src/components/Header"
 import { View } from "react-native"
 import ProfileSettings from "@/src/components/Profile/ProfileSettings" // Import the new ProfileSettings component
@@ -11,7 +10,6 @@ export default function Profile() {
     <View className={`flex-1 mt-10 bg-[${colors.background}]`}>
       <Header title="Settings" />
       <ProfileSettings />
-      <LogoutButton className="mt-2" />
     </View>
   )
 }

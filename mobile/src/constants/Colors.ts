@@ -20,15 +20,17 @@ export const COLORS = { // Keep original COLORS for backward compatibility
 export const Colors = { // New Colors object for dynamic theming
   light: {
     text: '#000',
-    background: '#fff',
+    background: '#ffffff',
+    foreground: '#000000',
+    primary: '#3b82f6',
+    card: '#ffffff',
+    border: '#e5e7eb',
     tint: tintColorLight,
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
-    primary: "#2C3E50", // Charcoal Blue - professional primary
     secondary: "#1ABC9C", // Turquoise - professional accent
     gray: "#7F8C8D", // Asbestos - neutral for inactive states
-    border: "#D1D5DB", // Light Gray for borders
     error: "#E74C3C", // Alizarin - standard red for error states
     success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
     placeholder: "#BDC3C7", // Silver - muted gray for input hints
@@ -37,15 +39,17 @@ export const Colors = { // New Colors object for dynamic theming
   },
   dark: {
     text: '#fff',
-    background: '#000',
+    background: '#000000',
+    foreground: '#ffffff',
+    primary: '#3b82f6',
+    card: '#1f2937',
+    border: '#374151',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
-    primary: "#2C3E50", // Charcoal Blue - professional primary
     secondary: "#1ABC9C", // Turquoise - professional accent
     gray: "#7F8C8D", // Asbestos - neutral for inactive states
-    border: "#34495E", // Wet Asphalt - subtle border
     error: "#E74C3C", // Alizarin - standard red for error states
     success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
     placeholder: "#BDC3C7", // Silver - muted gray for input hints

@@ -33,10 +33,10 @@ export default function LogoutButton({ className }: logoutProps) {
     }
   }
   return (
-    <View className={`felx-1 justify-center items-center ${className}`}>
+    <View className={`w-[50%] m-auto justify-center items-center ${className}`}>
       <Pressable
         onPress={handleLogout}
-        className="bg-red-500 w-36 rounded-lg p-2 justify-center items-center mt-4"
+        className="bg-red-600 rounded-lg w-full justify-center items-center px-5 py-3"
       >
         <Text className="text-white font-bold">Logout</Text>
       </Pressable>

@@ -30,10 +30,10 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
 
   return (
     <View
-      className="flex-row items-center justify-between p-4 my-2 bg-white rounded-lg shadow-md"
+      className="flex-1 flex-row items-center justify-between p-4 my-1 bg-white rounded-lg shadow-md"
       key={item.id}
     >
-      <View className="flex-1 x flex-row">
+      <View className="flex-1  flex-row">
         <Link href={`/weights/${item.id}`} asChild>
           <Pressable className="flex-1">
             <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>

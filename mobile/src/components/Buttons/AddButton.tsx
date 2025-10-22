@@ -15,7 +15,7 @@ export default function AddButton({  path }: AddButtonProps) {
   return (
     <Pressable
       onPress={() => router.push(`${path}/add` as Route)}
-      className={` rounded-full absolute right-10 bottom-40 w-12 h-12 justify-center items-center bg-green-950 hover:bg-green-950 border`}
+      className={`rounded-full absolute right-10 bottom-28 w-12 h-12 justify-center items-center bg-green-950 hover:bg-green-950 border`}
     >
       <Entypo name="plus" size={24} color="white" />
     </Pressable>

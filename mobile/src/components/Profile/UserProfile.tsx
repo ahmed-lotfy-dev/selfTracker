@@ -16,15 +16,11 @@ export default function UserPofile({
   const { user } = useAuth()
 
   return (
-    <View
-      className={`justify-center items-center ${
-        homeScreen ? "mb-4" : ""
-      } ${className}`}
-    >
+    <View className={`flex-1 justify-center items-center ${className}`}>
       <View
         className={`w-full flex-row items-center gap-3 relative ${
           homeScreen ? "justify-start pl-2" : "flex-col justify-center"
-        }`}
+        } `}
       >
         {!user?.image ? (
           <Fontisto
@@ -44,16 +40,12 @@ export default function UserPofile({
           />
         )}
         <View className="flex-1 mt-2">
-          <View className="flex-row justify-start items-center mb-1">
-            <Text className="text-md font-bold">Welome back:</Text>
-            <Text
-              className="text-md font-bold ml-1 capitalize"
-              numberOfLines={1}
-            >
-              {user?.name.split(" ")[0]}
-            </Text>
+          <View
+            className={`flex-row items-center mb-1  ${homeScreen ? "justify-start" : "justify-center"}`}
+          >
+            <Text className="text-md font-bold">{user?.name}</Text>
           </View>
-          <Text>{user?.email}</Text>
+          <Text className="flex-1">{user?.email}</Text>
         </View>
       </View>
 

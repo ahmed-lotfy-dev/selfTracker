@@ -30,7 +30,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
 
   return (
     <View
-      className="flex-row items-center justify-between p-4 my-2 bg-white rounded-lg shadow-md"
+      className="flex-row items-center justify-between p-4 my-1 bg-white rounded-lg shadow-md"
       key={item.id}
     >
       <View className="flex-1 flex-row">

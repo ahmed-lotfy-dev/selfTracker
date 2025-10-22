@@ -113,7 +113,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
             Weight:
           </Text>
           <TextInput
-            className={`border-[1px] text-lg h-12 justify-center pl-3 border-[${colors.border}] rounded-md mb-4 text-[${colors.text}]`}
+            className={`border text-lg h-12 justify-center pl-3 border-[${colors.border}] rounded-md mb-4 text-[${colors.text}]`}
             keyboardType="numeric"
             value={weight}
             onChangeText={setWeight}
@@ -128,7 +128,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
         <View>
           <Text className={`my-3 font-bold text-[${colors.text}]`}>Energy</Text>
           <View
-            className={`border-[1px] border-[${colors.border}] rounded-md mb-4 h-12 p-2 justify-center`}
+            className={`border border-[${colors.border}] rounded-md mb-4 h-12 p-2 justify-center`}
           >
             <Picker
               selectedValue={energy}
@@ -150,7 +150,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
         <View>
           <Text className={`my-3 font-bold text-[${colors.text}]`}>Mood</Text>
           <View
-            className={`border-[1px] border-[${colors.border}] rounded-md mb-4 h-12 p-2 justify-center`}
+            className={`border border-[${colors.border}] rounded-md mb-4 h-12 p-2 justify-center`}
           >
             <Picker
               selectedValue={mood}
@@ -192,7 +192,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
             onChangeText={setNotes}
             placeholder="Enter Weight In notes"
             multiline
-            className={`border-[1px] text-lg h-[100px] justify-center pl-3 border-[${colors.border}] rounded-md mb-4 text-start pt-3 text-[${colors.text}]`}
+            className={`border text-lg h-[100px] justify-center pl-3 border-[${colors.border}] rounded-md mb-4 text-start pt-3 text-[${colors.text}]`}
             style={{ textAlignVertical: "top" }}
             placeholderTextColor={colors.inputText}
           />

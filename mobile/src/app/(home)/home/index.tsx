@@ -49,12 +49,12 @@ export default function HomeScreen() {
           tintColor="#3b82f6"
         />
       }
-      className="flex-1 px-4"
+      className="flex-1 bg-gray-100 px-4 py-4"
     >
       <UserProfile homeScreen className="mt-4" />
       <ActionButtons />
 
-      <View className="flex-1 gap-4">
+      <View className="gap-3">
         <WorkoutProgressCard
           weeklyWorkoutCount={data.weeklyWorkout}
           monthlyWorkoutCount={data.monthlyWorkout}
