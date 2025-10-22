@@ -22,7 +22,6 @@ import { useAuth } from "@/src/hooks/useAuth"
 import { format } from "date-fns"
 import Header from "../Header"
 import { COLORS, useThemeColors } from "@/src/constants/Colors"
-import Entypo from "@expo/vector-icons/Entypo"
 
 export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const colors = useThemeColors();
@@ -52,7 +51,6 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
     onSuccessInvalidate: [
       { queryKey: ["weightLogs"] },
       { queryKey: ["userHomeData"] },
-      { queryKey: ["weightLogsChartData"] }, // Invalidate chart data
     ],
     onSuccessCallback: () => {
       router.push("/weights")
@@ -65,7 +63,6 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
     onSuccessInvalidate: [
       { queryKey: ["weightLogs"] },
       { queryKey: ["userHomeData"] },
-      { queryKey: ["weightLogsChartData"] }, // Invalidate chart data
     ],
     onSuccessCallback: () => {
       router.push("/weights")
@@ -115,25 +112,14 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           <Text className={`my-3 font-bold text-[${colors.text}]`}>
             Weight:
           </Text>
-          <View className="flex-row items-center gap-2">
-            <TextInput
-              className={`flex-1 border-[1px] text-lg h-12 justify-center pl-3 border-[${colors.border}] rounded-md mb-4 text-[${colors.text}]`}
-              keyboardType="numeric"
-              value={weight}
-              onChangeText={setWeight}
-              placeholder="Enter your weight"
-              placeholderTextColor={colors.inputText}
-            />
-            <Pressable
-              className={`${
-                !isSubmitting ? "bg-green-700" : "bg-green-400"
-              } rounded-md mt-4 p-3 items-center mb-4 w-12 h-12 justify-center`}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-            >
-              <Entypo name="plus" size={24} color="white" />
-            </Pressable>
-          </View>
+          <TextInput
+            className={`border-[1px] text-lg h-12 justify-center pl-3 border-[${colors.border}] rounded-md mb-4 text-[${colors.text}]`}
+            keyboardType="numeric"
+            value={weight}
+            onChangeText={setWeight}
+            placeholder="Enter your weight"
+            placeholderTextColor={colors.inputText}
+          />
         </View>
         {errors.weight && (
           <Text className="text-red-500 mt-2">{errors.weight}</Text>
@@ -211,6 +197,18 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
             placeholderTextColor={colors.inputText}
           />
         </View>
+
+      <Pressable
+        className={`${
+          !isSubmitting ? "bg-green-700" : "bg-green-400"
+        } rounded-md mt-4 p-3 items-center mb-16`}
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+      >
+        <Text className="font-bold text-white">
+          {isSubmitting ? "Adding Task..." : "Add Task"}
+        </Text>
+      </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   )
