@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
@@ -14,6 +13,7 @@ import { useAuthActions } from "@/src/store/useAuthStore"
 import { signUp } from "@/src/lib/api/authApi"
 import { signUpSchema } from "@/src/types/userType"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
+import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function SignUp() {
   const router = useRouter()
@@ -76,6 +76,7 @@ export default function SignUp() {
         placeholder="Name"
         autoCapitalize="words"
         autoComplete="name"
+          placeholderTextColor={COLORS.inputText}
         className="border border-gray-300 rounded-md px-4 py-2 mb-1"
       />
       {nameError ? (
@@ -90,6 +91,7 @@ export default function SignUp() {
         keyboardType="email-address"
         autoComplete="email"
         textContentType="emailAddress"
+          placeholderTextColor={COLORS.inputText}
         className="border border-gray-300 rounded-md px-4 py-2 mb-1"
       />
       {emailError ? (
@@ -103,6 +105,7 @@ export default function SignUp() {
         secureTextEntry
         autoComplete="password"
         textContentType="password"
+          placeholderTextColor={COLORS.inputText}
         className="border border-gray-300 rounded-md px-4 py-2 mb-1"
       />
       {passwordError ? (
@@ -122,7 +125,6 @@ export default function SignUp() {
       >
         {isSubmitting ? (
           <ActivitySpinner color={COLORS.primary} />
-          
         ) : (
           <Text style={{ color: "white" }}>Sign Up</Text>
         )}

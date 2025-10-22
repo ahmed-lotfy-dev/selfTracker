@@ -1,3 +1,4 @@
+import React from "react"
 import { useQuery } from "@tanstack/react-query"
 import { FlatList, RefreshControl, Text, View } from "react-native"
 import Header from "@/src/components/Header"
@@ -7,7 +8,6 @@ import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
 import { fetchAllTasks } from "@/src/lib/api/tasksApi"
 import { TaskType } from "@/src/types/taskType"
-import React from "react"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
 
 export default function TaskScreen() {
@@ -43,10 +43,9 @@ export default function TaskScreen() {
   })
 
   return (
-    <View className="flex-1 justify-start items-center px-10">
+    <View className="flex-1 justify-start items-center px-4 mt-10">
       <Header title="Tasks" />
       <TaskForm />
-
       {tasks && tasks.length === 0 ? (
         <View className="mt-4 items-center">
           <Text className="text-gray-700 font-medium">

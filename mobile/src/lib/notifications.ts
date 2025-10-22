@@ -1,20 +1,32 @@
-// lib/notifications.ts
-import * as Notifications from "expo-notifications"
 import * as Device from "expo-device"
+import Constants from "expo-constants"
+import { Platform } from "react-native"
 
 export async function registerForPushNotificationsAsync(): Promise<
   string | undefined
 > {
+  // Skip if web or Expo Go
+  if (Platform.OS === "web") {
+    console.log("Skipping notifications setup on web.")
+    return
+  }
+  if (Constants.appOwnership === "expo") {
+    console.log("Skipping notifications setup in Expo Go.")
+    return
+  }
   if (!Device.isDevice) {
     console.warn("Must use physical device for Push Notifications")
     return
   }
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync()
+  // Dynamically import only when needed (outside Expo Go)
+  const Notifications = await import("expo-notifications")
+
+  const { status: existingStatus } = await Notifications.default.getPermissionsAsync()
   let finalStatus = existingStatus
 
   if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync()
+    const { status } = await Notifications.default.requestPermissionsAsync()
     finalStatus = status
   }
 
@@ -23,7 +35,7 @@ export async function registerForPushNotificationsAsync(): Promise<
     return
   }
 
-  const tokenData = await Notifications.getExpoPushTokenAsync()
+  const tokenData = await Notifications.default.getExpoPushTokenAsync()
   return tokenData.data
 }
 
@@ -31,31 +43,46 @@ export function setUpNotificationListeners({
   onReceive,
   onResponse,
 }: {
-  onReceive?: (notification: Notifications.Notification) => void
-  onResponse?: (response: Notifications.NotificationResponse) => void
+  onReceive?: (notification: any) => void
+  onResponse?: (response: any) => void
 }) {
-  const notificationSubscription =
-    Notifications.addNotificationReceivedListener((notification) => {
+  // Only set up listeners if not in Expo Go or web
+  if (Platform.OS === "web" || Constants.appOwnership === "expo") {
+    return () => {}
+  }
+
+  let notificationSubscription: any
+  let responseSubscription: any
+
+  const Notifications = require("expo-notifications")
+
+  notificationSubscription =
+    Notifications.addNotificationReceivedListener((notification: any) => {
       onReceive?.(notification)
     })
 
-  const responseSubscription =
-    Notifications.addNotificationResponseReceivedListener((response) => {
+  responseSubscription =
+    Notifications.addNotificationResponseReceivedListener((response: any) => {
       onResponse?.(response)
     })
 
   return () => {
-    notificationSubscription.remove()
-    responseSubscription.remove()
+    notificationSubscription?.remove()
+    responseSubscription?.remove()
   }
 }
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-})
+// Setup notification handler only outside Expo Go
+if (Platform.OS !== "web" && Constants.appOwnership !== "expo") {
+  import("expo-notifications").then((Notifications) => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    })
+  })
+}

@@ -1,5 +1,9 @@
-// src/constants.ts
-export const COLORS = {
+import { useColorScheme } from "react-native";
+
+const tintColorLight = '#2f95dc';
+const tintColorDark = '#fff';
+
+export const COLORS = { // Keep original COLORS for backward compatibility
   primary: "#2C3E50", // Charcoal Blue - professional primary
   secondary: "#1ABC9C", // Turquoise - professional accent
   background: "#1A1A1A", // Very Dark Gray - professional dark mode foundation
@@ -9,6 +13,50 @@ export const COLORS = {
   error: "#E74C3C", // Alizarin - standard red for error states
   success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
   placeholder: "#BDC3C7", // Silver - muted gray for input hints
+  darkGreen: "#0A6847", // A dark green color
+  inputText: "#34495E", // Darker gray for input text, readable on light backgrounds
+}
+
+export const Colors = { // New Colors object for dynamic theming
+  light: {
+    text: '#000',
+    background: '#fff',
+    tint: tintColorLight,
+    icon: '#687076',
+    tabIconDefault: '#687076',
+    tabIconSelected: tintColorLight,
+    primary: "#2C3E50", // Charcoal Blue - professional primary
+    secondary: "#1ABC9C", // Turquoise - professional accent
+    gray: "#7F8C8D", // Asbestos - neutral for inactive states
+    border: "#D1D5DB", // Light Gray for borders
+    error: "#E74C3C", // Alizarin - standard red for error states
+    success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
+    placeholder: "#BDC3C7", // Silver - muted gray for input hints
+    darkGreen: "#0A6847", // A dark green color
+    inputText: "#6B7280", // Medium Gray for input text, readable on both light and dark backgrounds
+  },
+  dark: {
+    text: '#fff',
+    background: '#000',
+    tint: tintColorDark,
+    icon: '#9BA1A6',
+    tabIconDefault: '#9BA1A6',
+    tabIconSelected: tintColorDark,
+    primary: "#2C3E50", // Charcoal Blue - professional primary
+    secondary: "#1ABC9C", // Turquoise - professional accent
+    gray: "#7F8C8D", // Asbestos - neutral for inactive states
+    border: "#34495E", // Wet Asphalt - subtle border
+    error: "#E74C3C", // Alizarin - standard red for error states
+    success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
+    placeholder: "#BDC3C7", // Silver - muted gray for input hints
+    darkGreen: "#0A6847", // A dark green color
+    inputText: "#6B7280", // Medium Gray for input text, readable on both light and dark backgrounds
+  },
+};
+
+export function useThemeColors() {
+  const theme = useColorScheme() ?? 'light';
+  return Colors[theme];
 }
 
 export const SPACING = {

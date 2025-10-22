@@ -9,7 +9,7 @@ interface UserImageProps {
   className?: string
 }
 
-export default function UserP({
+export default function UserPofile({
   homeScreen = false,
   className,
 }: UserImageProps) {
@@ -18,7 +18,7 @@ export default function UserP({
   return (
     <View
       className={`justify-center items-center ${
-        homeScreen ? "mb-4" : "my-4"
+        homeScreen ? "mb-4" : ""
       } ${className}`}
     >
       <View

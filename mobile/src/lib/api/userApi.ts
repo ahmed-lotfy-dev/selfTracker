@@ -8,18 +8,15 @@ export const fetchUserHomeInfo = async () => {
   return response.data
 }
 
+import { User } from "@/src/types/userType"
+
 export const updateUser = async ({
   id,
-  image,
-}: {
-  id: string
-  image: string
-}) => {
+  ...updatedFields
+}: Partial<User> & { id: string }) => {
   const response = await axiosInstance.patch(
     `${API_BASE_URL}/api/users/${id}`,
-    {
-      image,
-    }
+    updatedFields
   )
   return response.data
 }

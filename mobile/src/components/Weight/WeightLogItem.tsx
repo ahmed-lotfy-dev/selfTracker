@@ -1,8 +1,4 @@
-import {
-  Text,
-  Pressable,
-  View,
-} from "react-native"
+import { Text, Pressable, View } from "react-native"
 import { Link, Route, useRouter } from "expo-router"
 import DateDisplay from "../DateDisplay"
 import { deleteWeight } from "@/src/lib/api/weightsApi"
@@ -34,7 +30,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
 
   return (
     <View
-      className="flex-1 flex-row justify-between items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 my-5"
+      className="flex-row items-center justify-between p-4 my-2 bg-white rounded-lg shadow-md"
       key={item.id}
     >
       <View className="flex-1 x flex-row">
@@ -46,7 +42,7 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
         </Link>
       </View>
 
-      <View className="flex-1 justify-end flex-row gap-5">
+      <View className="flex-1 justify-end flex-row gap-3">
         <EditButton
           onPress={() => {
             setSelectedWeight(item)

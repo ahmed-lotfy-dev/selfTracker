@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { Redirect, router, Stack, Tabs, useRouter } from "expo-router"
-import { View } from "react-native"
+import { Platform, View } from "react-native"
 import {
   NativeTabs,
   Icon,
@@ -8,12 +8,8 @@ import {
   VectorIcon,
 } from "expo-router/unstable-native-tabs"
 
-import Feather from "@expo/vector-icons/Feather"
 import Ionicons from "@expo/vector-icons/Ionicons"
-import AntDesign from "@expo/vector-icons/AntDesign"
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
-import Entypo from "@expo/vector-icons/Entypo"
 
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs"
 import { useAuth } from "@/src/hooks/useAuth"
@@ -22,78 +18,111 @@ import { useHasHydrated } from "@/src/store/useAuthStore"
 import React from "react"
 import { AnimatedTabBar } from "@/src/components/TabBar"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
-import { MaterialIcons } from "@expo/vector-icons"
+import {
+  AntDesign,
+  Feather,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons"
 
 export default function TabsLayout() {
-  const user = useAuth()
-  const hasHydrated = useHasHydrated()
-  useEffect(() => {
-    if (hasHydrated && !user) {
-      router.replace("/welcome")
-    }
-  }, [user, hasHydrated])
-
-  if (!hasHydrated) {
+  if (Platform.OS === "ios" || Platform.OS === "android") {
     return (
-      <View className="flex-1 justify-center items-center">
-        <ActivitySpinner size="large" color={COLORS.primary} />
-      </View>
+      <NativeTabs
+
+        labelVisibilityMode="labeled"
+        indicatorColor={"green"}
+        backBehavior="initialRoute"
+      >
+        <NativeTabs.Trigger
+          name="home"
+          options={{
+            labelStyle: { color: "white", fontWeight: 700 },
+          }}
+        >
+          <Label>Home</Label>
+          <Icon src={<VectorIcon family={Ionicons} name="home" />} />,
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
+          name="weights"
+          options={{ labelStyle: { color: "white", fontWeight: 700 } }}
+        >
+          <Label>Weight</Label>
+          <Icon src={<VectorIcon family={Ionicons} name="scale" />} />,
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
+          name="workouts"
+          options={{ labelStyle: { color: "white", fontWeight: 700 } }}
+        >
+          <Label>Workout</Label>
+          <Icon src={<VectorIcon family={FontAwesome5} name="dumbbell" />} />,
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
+          name="tasks"
+          options={{ labelStyle: { color: "white", fontWeight: 700 } }}
+        >
+          <Label>Tasks</Label>
+          <Icon src={<VectorIcon family={FontAwesome5} name="tasks" />} />,
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
+          name="profile"
+          options={{ labelStyle: { color: "white", fontWeight: 700 } }}
+        >
+          <Label>Settings</Label>
+          <Icon src={<VectorIcon family={Ionicons} name="settings" />} />,
+        </NativeTabs.Trigger>
+      </NativeTabs>
+    )
+  } else {
+    return (
+      <Tabs screenOptions={{ headerShown: false, headerTransparent: true }}>
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ color }) => (
+              <Feather name="home" size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="weights"
+          options={{
+            title: "Weights",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="scale-outline" size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="workouts"
+          options={{
+            title: "Workouts",
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="dumbbell" size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="tasks"
+          options={{
+            title: "Tasks",
+            tabBarIcon: ({ color }) => (
+              <FontAwesome5 name="tasks" size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ({ color }) => (
+              <AntDesign name="user" size={24} color={color} />
+            ),
+          }}
+        />
+
+      </Tabs>
     )
   }
-
-  return (
-    <NativeTabs
-      tintColor={"lightgreen"}
-      iconColor={"darkgreen"}
-      backgroundColor={"white"}
-      blurEffect="prominent"
-      labelStyle={{ color: "blue" }}
-      labelVisibilityMode="labeled"
-      rippleColor={"darkgreen"}
-      shadowColor={"green"}
-      indicatorColor={"darkgreen"}
-      backBehavior="initialRoute"
-    >
-      <NativeTabs.Trigger
-        name="index"
-        options={{
-          labelStyle: { color: "darkgreen", fontWeight: 700 },
-        }}
-      >
-        <Label>Home</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="home" />} />,
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger
-        name="weights"
-        options={{ labelStyle: { color: "darkgreen", fontWeight: 700 } }}
-      >
-        <Label>Weight</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="scale" />} />,
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger
-        name="workouts"
-        options={{ labelStyle: { color: "darkgreen", fontWeight: 700 } }}
-      >
-        <Label>Workout</Label>
-        <Icon src={<VectorIcon family={FontAwesome5} name="dumbbell" />} />,
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger
-        name="tasks"
-        options={{ labelStyle: { color: "darkgreen", fontWeight: 700 } }}
-      >
-        <Label>Tasks</Label>
-        <Icon src={<VectorIcon family={FontAwesome5} name="tasks" />} />,
-      </NativeTabs.Trigger>
-      {/* <NativeTabs.Trigger name="habits">
-        <label>Habits</label>
-      </NativeTabs.Trigger> */}
-      <NativeTabs.Trigger
-        name="profile"
-        options={{ labelStyle: { color: "darkgreen", fontWeight: 700 } }}
-      >
-        <Label>Setting</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="settings" />} />,
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  )
 }

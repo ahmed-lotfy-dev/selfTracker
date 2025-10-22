@@ -9,48 +9,48 @@ export default function WeightsLayout() {
   return (
     <Stack
       screenOptions={{
-      headerShown: true,
+        headerShown: true,
       }}
     >
       <Stack.Screen
-      name="index"
-      options={{
-        title: "Weights",
-        headerShown: false,
-        headerTitleAlign: "center",
-        headerLeft: () => <BackButton backTo="/" />,
-      }}
+        name="index"
+        options={{
+          title: "Weights",
+          headerShown: false,
+          headerTitleAlign: "center",
+          headerLeft: () => <BackButton backTo="/" />,
+        }}
       />
       <Stack.Screen
-      name="[id]"
-      options={{
-        title: "Weight Log",
-        headerTitleAlign: "center",
-        headerShown: true,
-        headerLeft: () => <BackButton backTo="/weights" />,
-      }}
+        name="[id]"
+        options={{
+          title: "Weight Log",
+          headerTitleAlign: "center",
+          headerShown: false,
+          headerLeft: () => <BackButton backTo="/weights" />,
+        }}
       />
       <Stack.Screen
-      name="add"
-      options={{
-        title: "Add Weight",
-        headerTitleAlign: "center",
-        presentation: "formSheet",
-        headerShown: true,
-        animation: "slide_from_bottom",
-        headerLeft: () => <BackButton backTo="/weights" />,
-      }}
+        name="add"
+        options={{
+          title: "Add Weight",
+          headerTitleAlign: "center",
+          presentation: "formSheet",
+          headerShown: false,
+          animation: "slide_from_bottom",
+          headerLeft: () => <BackButton backTo="/weights" />,
+        }}
       />
       <Stack.Screen
-      name="edit"
-      options={{
-        title: "Edit Weight",
-        headerTitleAlign: "center",
-        presentation: "formSheet",
-        animation: "slide_from_bottom",
-        headerShown: true,
-        headerLeft: () => <BackButton backTo="/weights" />,
-      }}
+        name="edit"
+        options={{
+          title: "Edit Weight",
+          headerTitleAlign: "center",
+          presentation: "formSheet",
+          animation: "slide_from_bottom",
+          headerShown: false,
+          headerLeft: () => <BackButton backTo="/weights" />,
+        }}
       />
     </Stack>
   )

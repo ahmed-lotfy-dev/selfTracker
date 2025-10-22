@@ -25,7 +25,7 @@ export default function LogoutButton({ className }: logoutProps) {
       await clearTokens()
       await authClient.signOut()
       await logout()
-      router.replace("/welcome")
+      router.replace("/")
     } catch (e: any) {
       setError(e.message)
     } finally {

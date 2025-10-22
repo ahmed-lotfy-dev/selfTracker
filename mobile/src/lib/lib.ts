@@ -14,7 +14,7 @@ export const checkForUpdates = async () => {
     if (update.isAvailable) {
       console.log("New update available! Downloading...")
       await Updates.fetchUpdateAsync()
-      await Updates.reloadAsync() // Restarts the app with the new update
+      await Updates.reloadAsync()
     } else {
       console.log("App is up to date.")
     }
@@ -47,7 +47,6 @@ export const showAlert = (
 
 export function formatLocalDate(date: string): string {
   const localDate = new Date(date)
-
   return (
     localDate.toLocaleDateString("en-GB", {
       day: "numeric",
@@ -56,6 +55,3 @@ export function formatLocalDate(date: string): string {
     }) || "No date available"
   )
 }
-
-
-

@@ -5,11 +5,12 @@ import { fetchAllWeightLogs } from "@/src/lib/api/weightsApi"
 import WeightLogItem from "./WeightLogItem"
 import { FlashList } from "@shopify/flash-list"
 import { WeightChart } from "./WeightChart"
-import { COLORS } from "@/src/constants/Colors"
 import ActivitySpinner from "../ActivitySpinner"
+import { useThemeColors } from "@/src/constants/Colors"
 
 export const WeightLogsList = () => {
   const limit = 10
+  const colors = useThemeColors()
 
   const {
     data,
@@ -36,7 +37,7 @@ export const WeightLogsList = () => {
   if (isLoading || !data) {
     return (
       <View className="flex-1 justify-center items-center p-4">
-        <ActivitySpinner size="large" color={COLORS.primary} />
+        <ActivitySpinner size="large" color={colors.primary} />
       </View>
     )
   }
@@ -44,7 +45,7 @@ export const WeightLogsList = () => {
   if (isError) {
     return (
       <View className="flex-1 justify-center items-center p-4">
-        <Text className="text-red-500 text-center">
+        <Text className={`text-[${colors.error}] text-center`}>
           Error loading chart data. Please try again later.
         </Text>
       </View>
@@ -60,7 +61,7 @@ export const WeightLogsList = () => {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#000"
+            tintColor={colors.text}
           />
         }
         showsVerticalScrollIndicator={false}

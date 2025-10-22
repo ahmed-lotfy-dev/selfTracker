@@ -20,10 +20,10 @@ export const WorkoutChart = () => {
 
   return (
     <View
+      className="p-4 my-2 bg-white rounded-lg shadow-md"
       style={{
         height: CHART_HEIGHT,
         justifyContent: "center",
-        alignItems: "center",
         padding: 16,
       }}
     >
@@ -40,7 +40,7 @@ export const WorkoutChart = () => {
           </Text>
           <BarChart
             data={data}
-            width={SCREEN_WIDTH - 32}
+            width={SCREEN_WIDTH - 70}
             height={220}
             yAxisLabel=""
             yAxisSuffix=""

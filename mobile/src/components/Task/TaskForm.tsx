@@ -4,15 +4,16 @@ import {
   Text,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
 } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema, TaskType } from "@/src/types/taskType"
 import { useAuth } from "../../hooks/useAuth"
 import { COLORS } from "../../constants/Colors"
 import { useAdd } from "../../hooks/useAdd"
 import { createTask } from "../../lib/api/tasksApi"
 import { format } from "date-fns"
+import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function TaskForm() {
   const { user } = useAuth()
@@ -65,30 +66,28 @@ export default function TaskForm() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       className="w-full"
     >
-      <View className="my-2">
+      <View className="flex-row items-center mb-5">
         <TextInput
-          className="p-2 border border-gray-500 rounded-md outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-400"
+          className="flex-1  border border-gray-500 pl-3 rounded-md  focus:border-blue-500 focus:ring-1 focus:ring-blue-400 text-inputText"
           placeholder="Task Title..."
           value={title}
           onChangeText={setTitle}
           onSubmitEditing={handleSubmit}
+          placeholderTextColor={COLORS.placeholder}
         />
-        {titleError ? (
-          <Text className="text-red-500 mt-2">{titleError}</Text>
-        ) : null}
+        <Pressable
+          className={`${
+            !isSubmitting ? "bg-green-700" : "bg-green-400"
+          } rounded-md px-3 py-2.5 items-center ml-2`}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          <Ionicons name="add" size={24} color="white" />
+        </Pressable>
       </View>
-
-      <Pressable
-        className={`${
-          !isSubmitting ? "bg-slate-700" : "bg-gray-500"
-        } rounded-md mt-4 p-3 items-center mb-16`}
-        onPress={handleSubmit}
-        disabled={isSubmitting}
-      >
-        <Text className="font-bold text-white">
-          {isSubmitting ? "Adding Task..." : "Add Task"}
-        </Text>
-      </Pressable>
+      {titleError ? (
+        <Text className="text-red-500 mt-2">{titleError}</Text>
+      ) : null}
     </KeyboardAvoidingView>
   )
 }

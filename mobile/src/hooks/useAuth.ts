@@ -11,7 +11,7 @@ export const useAuth = () => {
     if (session?.user) {
       setUser(session.user)
     }
-  }, [session?.user, setUser])
+  }, [session?.user, setUser, user])
 
   const logout = async () => {
     await authClient.signOut()
@@ -22,8 +22,8 @@ export const useAuth = () => {
   return {
     user: user ?? session?.user ?? null,
     session: session?.session ?? null,
-    isAuthenticated: !!user,
-    isResolved: !isPending && session?.user !== undefined,
+    isAuthenticated: !!(user ?? session?.user),
+    isResolved: !isPending && session !== undefined,
     isLoading: isPending,
     error,
     refetch,

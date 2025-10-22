@@ -29,7 +29,10 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
   })
 
   return (
-    <View className="flex-1 flex-row justify-between items-center p-4 border shadow-md border-[#64748b] rounded-lg mb-3 my-5">
+    <View
+      className="flex-row items-center justify-between p-4 my-2 bg-white rounded-lg shadow-md"
+      key={item.id}
+    >
       <View className="flex-1 flex-row">
         <Link href={`/workouts/${item.id}`} asChild>
           <Pressable className="flex-1">

@@ -15,24 +15,6 @@ export default function WeightsLayout() {
           headerShown: false,
         }}
       />
-      {/* <Stack.Screen
-        name="[id]"
-        options={{
-          title: "Weight Log",
-          headerShown: true,
-          headerLeft: () => <BackButton backTo="/tasks" />,
-
-        }}
-      /> */}
-      {/* <Stack.Screen
-        name="add"
-        options={{
-          title: "Add Weight",
-          headerShown: true,
-          headerLeft: () => <BackButton backTo="/tasks" />,
-
-        }}
-      /> */}
     </Stack>
   )
 }

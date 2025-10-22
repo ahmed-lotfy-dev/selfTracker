@@ -9,7 +9,7 @@ interface TasksProgressCardProps {
   completedTasks: number
   allTasks: number
 }
-console.log(allTasks)
+
 export const TasksProgressCard = ({
   pendingTasks,
   completedTasks,

@@ -27,24 +27,27 @@ export default function TaskListItem({ task }: TaskListItemProps) {
   })
 
   return (
-    <>
-      <Switch
-        value={task.completed}
-        onValueChange={() => updateMutation.mutate({ id: task.id, completed: !task.completed })}
-      />
-      {/* <Pressable className="" onPress={() => updateMutation.mutate()}> */}
-      <View className="w-full flex-row items-center justify-between p-2 border-slate-500 border-[1px] gap-4">
-        <Text
-          className={`text-lg flex-1 px-2 text-wrap w-[50] ${
-            task.completed && "line-through font-light"
-          }`}
-        >
-          {task.title.slice(0, 1).toUpperCase() + task.title.slice(1)}
-        </Text>
-        <Text className="text-sm font-light">{task.category}</Text>
+    <Pressable
+      onPress={() => updateMutation.mutate({ id: task.id, completed: !task.completed })}
+      className="flex-row items-center justify-between p-4 my-2 bg-white rounded-lg shadow-md"
+    >
+      <View className="flex-row items-center">
+        <Switch
+          value={task.completed}
+          onValueChange={() => updateMutation.mutate({ id: task.id, completed: !task.completed })}
+        />
+        <View className="flex-1 ml-3">
+          <Text
+            className={`text-lg ${
+              task.completed ? "line-through text-gray-500" : "text-gray-900"
+            }`}
+          >
+            {task.title.slice(0, 1).toUpperCase() + task.title.slice(1)}
+          </Text>
+          <Text className="text-sm font-light text-gray-600 mt-1">{task.category}</Text>
+        </View>
         <DeleteButton onPress={() => deleteMutation.mutate()} />
       </View>
-      {/* </Pressable> */}
-    </>
+    </Pressable>
   )
 }

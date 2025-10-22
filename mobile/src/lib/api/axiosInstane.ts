@@ -1,4 +1,5 @@
 import axios from "axios"
+import { router } from 'expo-router';
 import {
   getAccessToken,
   getRefreshToken,
@@ -34,6 +35,19 @@ axiosInstance.interceptors.request.use(
     return config
   },
   (error) => {
+    return Promise.reject(error)
+  }
+)
+
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  async (error) => {
+    if (error.response?.status === 401) {
+      await authClient.signOut()
+      router.replace("/(auth)/sign-in")
+    }
     return Promise.reject(error)
   }
 )

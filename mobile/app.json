@@ -2,9 +2,9 @@
   "expo": {
     "name": "selfTracker",
     "slug": "selftracker",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
-    "icon": "./src/assets/images/ic_launcher.png",
+    "icon": "./assets/images/splash-screen.png",
     "scheme": "selftracker",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -15,27 +15,25 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/ic_launcher.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#E6F4FE",
+        "backgroundImage":"./assets/images/splash-screen.png"
       },
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "package": "com.ahmedlotfy.selftracker"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./src/assets/images/ic_launcher.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./src/assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "image": "./assets/images/splash-screen.png",
+          "imageWidth": 600,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
         }
       ],
       [
@@ -48,10 +46,10 @@
       [
         "expo-notifications",
         {
-          "icon": "./src/assets/images/ic_launcher.png",
+          "icon": "./assets/images/ic_launcher.png",
           "color": "#ffffff",
           "defaultChannel": "default",
-          "sounds": ["./src/assets/notification_sound.wav"],
+          "sounds": ["./assets/notification_sound.wav"],
           "enableBackgroundRemoteNotifications": false
         }
       ],

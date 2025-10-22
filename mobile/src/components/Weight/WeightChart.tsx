@@ -19,10 +19,6 @@ export const WeightChart = () => {
     staleTime: 1000 * 60 * 5,
   })
 
-  const handlePress = () => {
-    console.log("pressed")
-  }
-
   if (isLoading || !data) {
     return (
       <View
@@ -65,12 +61,8 @@ export const WeightChart = () => {
 
   return (
     <View
+      className="p-4 my-2 bg-white rounded-lg shadow-md"
       style={{
-        width: SCREEN_WIDTH - 32,
-        // height: mobileCHART_HEIGHT,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
         alignSelf: "center",
       }}
     >
@@ -87,7 +79,7 @@ export const WeightChart = () => {
       ) : (
         <LineChart
           data={data}
-          width={SCREEN_WIDTH - 32}
+          width={SCREEN_WIDTH - 60}
           height={200}
           chartConfig={{
             barPercentage: 2,

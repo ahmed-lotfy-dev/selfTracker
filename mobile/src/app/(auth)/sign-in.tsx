@@ -3,7 +3,6 @@ import {
   Text,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
   View,
 } from "react-native"
@@ -15,6 +14,7 @@ import { setAccessToken } from "@/src/lib/storage"
 import { signInSchema } from "@/src/types/userType"
 import { z } from "zod"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
+import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function SignIn() {
   const router = useRouter()
@@ -51,7 +51,7 @@ export default function SignIn() {
       } else if (response.data) {
         await setAccessToken(response.data.token)
         setUser(response.data.user)
-        router.replace("/")
+        router.replace("/(home)")
       }
     } catch (err) {
       setFormError("An unexpected error occurred.")
@@ -76,6 +76,7 @@ export default function SignIn() {
         keyboardType="email-address"
         autoComplete="email"
         textContentType="emailAddress"
+          placeholderTextColor={COLORS.inputText}
         className="border border-gray-300 rounded-md px-4 py-2 mb-1"
       />
       {emailError ? (
@@ -90,7 +91,8 @@ export default function SignIn() {
         secureTextEntry
         autoComplete="password"
         textContentType="password"
-        className="border border-gray-300 rounded-md px-4 py-2 mb-1"
+          placeholderTextColor={COLORS.inputText}
+        className="border border-gray-300 rounded-md px-4 py-2 mb-1 color-inputText"
       />
       {passwordError ? (
         <Text className="text-red-500 mb-2">{passwordError}</Text>
@@ -110,7 +112,7 @@ export default function SignIn() {
         }`}
       >
         {isSubmitting ? (
-          <ActivitySpinner color={COLORS.primary}  />
+          <ActivitySpinner color={COLORS.primary} />
         ) : (
           <Text style={{ color: "white" }}>Login</Text>
         )}

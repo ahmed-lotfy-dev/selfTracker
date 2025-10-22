@@ -1,24 +1,49 @@
 import { View, Text } from "react-native"
 import { Picker } from "@react-native-picker/picker"
 import React from "react"
+import { useThemeColors } from "@/src/constants/Colors"
 
-type Props = {
-  value: string
-  setValue: React.Dispatch<React.SetStateAction<string>>
-  options: { id: string; name: string; trainingSplit: string }[]
+interface SelectProps {
+  options: { label: string; value: string }[]
+  selectedValue: string
+  onValueChange: (value: string) => void
+  label: string
 }
 
-export default function Select({ value, setValue, options }: Props) {
+export default function Select({
+  options,
+  selectedValue,
+  onValueChange,
+  label,
+}: SelectProps) {
+  const colors = useThemeColors()
   return (
-    <View className="h-10 justify-center border border-primary rounded-md overflow-hidden mb-5 p-2">
-      <Picker
-        selectedValue={value}
-        onValueChange={(itemValue) => setValue(itemValue)}
+    <View style={{ marginBottom: 16 }}>
+      <Text
+        style={{
+          fontSize: 18,
+          fontWeight: "600",
+          marginBottom: 8,
+          color: colors.text,
+        }}
       >
-        {options.map((option, index) => (
-          <Picker.Item key={option.id} label={option.name} value={option.id} />
-        ))}
-      </Picker>
+        {label}
+      </Text>
+      <View className="h-10 justify-center border border-primary rounded-md overflow-hidden p-2">
+        <Picker
+          selectedValue={selectedValue}
+          onValueChange={(itemValue) => onValueChange(itemValue as string)}
+          style={{ color: colors.text }}
+        >
+          {options.map((option) => (
+            <Picker.Item
+              key={option.value}
+              label={option.label}
+              value={option.value}
+            />
+          ))}
+        </Picker>
+      </View>
     </View>
   )
 }

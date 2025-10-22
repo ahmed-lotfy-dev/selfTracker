@@ -1,12 +1,7 @@
-const { unstable_batchedUpdates } = require("react-dom")
-
 module.exports = function (api) {
   api.cache(true)
   return {
-    presets: [
-      ["babel-preset-expo", { jsxImportSource: "nativewind" }],
-      "nativewind/babel",
-    ],
+    presets: [["babel-preset-expo"]],
     plugins: [
       [
         "module-resolver",
@@ -20,8 +15,8 @@ module.exports = function (api) {
               "./node_modules/@better-auth/expo/dist/client.cjs",
           },
         },
-        "react-native-worklets/plugin",
       ],
+      "react-native-worklets/plugin",
     ],
   }
 }

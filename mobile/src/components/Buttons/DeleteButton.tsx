@@ -20,12 +20,12 @@ export default function DeleteButton({
       onPress={onPress}
       disabled={isLoading}
       className={`justify-center items-center
-       p-2 rounded-md border border-red-500 ${className}`}
+       p-2 rounded-md ${className}`}
     >
       {isLoading ? (
-        <ActivitySpinner size="small" color={COLORS.primary} />
+        <ActivitySpinner size="small" color={COLORS.error} />
       ) : (
-        <FontAwesome name="trash-o" size={20} color="red" />
+        <FontAwesome name="trash-o" size={20} color={COLORS.error} />
       )}
     </Pressable>
   )
