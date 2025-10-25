@@ -7,10 +7,10 @@ interface EmailType {
 }
 
 export const sendEmail = async ({ email, subject, text }: EmailType) => {
-  const resend = new Resend("re_Z1wF35wP_GhDsCqmyMLGHnGgy719qGf4F")
+  const resend = new Resend(process.env.RESEND_API_KEY as string)
   try {
     const response = await resend.emails.send({
-      from: "admin@ahmedlotfy.dev",
+      from: "contact@ahmedlotfy.site",
       to: email,
       subject,
       text,
