@@ -33,9 +33,19 @@ export const checkEmailVerification = async (userId: string) => {
   return response
 }
 
-export const resendVerificationEmail = async () => {
-  const response = await axiosInstance.post(
-    `${API_BASE_URL}/api/users/resend-verification`
-  )
-  return response
+export const resendVerificationEmail = async (email: string, ) => {
+  const { data, error } = await authClient.emailOtp.sendVerificationOtp({
+    email, // required
+    type: "email-verification", 
+  })
+
+  return data
+}
+
+export const verifyEmailOTP = async (email: string, otp: string) => {
+  const { data, error } = await authClient.emailOtp.verifyEmail({
+    email, // required
+    otp, // required
+  })
+  return data
 }

@@ -5,6 +5,7 @@ import { jwt } from "better-auth/plugins/jwt"
 import { expo } from "@better-auth/expo"
 import { sendEmail } from "./email"
 import { bearer } from "better-auth/plugins/bearer"
+import { emailOTP } from "better-auth/plugins"
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -14,7 +15,7 @@ export const auth = betterAuth({
     enabled: true,
     // sendOnSignUp: true, // with each signinsend email
     autoSignIn: true,
-    requireEmailVerification: true, // cannot login without verified
+    // requireEmailVerification: true, // cannot login without verified
     sendResetPassword: async ({ user, url, token }, request) => {
       await sendEmail({
         email: user.email,
@@ -73,12 +74,27 @@ export const auth = betterAuth({
   verification: {
     modelName: "verifications",
   },
-  plugins: [expo(), jwt(), bearer()],
+  plugins: [
+    expo(),
+    jwt(),
+    bearer(),
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        if (type === "email-verification") {
+          await sendEmail({
+            email,
+            subject: "Verify your email address",
+            text: `Your verification code is: ${otp}`,
+          })
+        }
+      },
+    }),
+  ],
   trustedOrigins: [
     "selftracker://",
-    "http://192.168.1.16:8081",
-    "exp://192.168.1.16:8081",
-    "http://192.168.1.2:8081",
-    "exp://192.168.1.2:8081",
+    "http://192.168.1.5:8081",
+    "exp://192.168.1.5:8081",
+    "http://192.168.1.5:8081",
+    "exp://192.168.1.5:8081",
   ],
 })

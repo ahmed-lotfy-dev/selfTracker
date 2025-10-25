@@ -1,12 +1,14 @@
-import { StyleSheet, Text, View } from "react-native"
+import { StyleSheet, Text, View, Button } from "react-native"
 import React, { useEffect } from "react"
-import { Redirect } from "expo-router"
+import { useRouter } from "expo-router"
 import { useOnboardingStore } from "../store/useOnboardingStore"
 import { useAuthStore } from "../store/useAuthStore"
 
-export default function index() {
-  const { isOnboarding, hasHydrated: onboardingHasHydrated } = useOnboardingStore()
+export default function Index() {
+  const { isOnboarding, hasHydrated: onboardingHasHydrated } =
+    useOnboardingStore()
   const { user, hasHydrated: authHasHydrated } = useAuthStore()
+  const router = useRouter()
 
   useEffect(() => {
     console.log("Onboarding State:", isOnboarding)
@@ -16,7 +18,6 @@ export default function index() {
   }, [isOnboarding, onboardingHasHydrated, authHasHydrated, user])
 
   if (!onboardingHasHydrated || !authHasHydrated) {
-    // Show a loading indicator while stores are hydrating
     return (
       <View style={styles.container}>
         <Text>Loading app...</Text>
@@ -25,18 +26,23 @@ export default function index() {
   }
 
   if (isOnboarding) {
-    // Onboarding is not done, redirect to onboarding screen
-    return <Redirect href={"/onboarding"} />
-  } else {
-    // Onboarding is done
-    if (user) {
-      // User exists, redirect to home
-      return <Redirect href={"/(home)/home"} />
-    } else {
-      // No user, redirect to sign-in
-      return <Redirect href={"/(auth)/sign-in"} />
-    }
+    router.replace("/onboarding")
+    return null
   }
+
+  if (!user) {
+    router.replace("/(auth)/sign-in")
+    return null
+  }
+
+  if (user && !user.emailVerified) {
+    router.replace("/(auth)/verify-email")
+    return null
+  }
+
+  // ✅ If user is logged in & verified, show this index screen (not redirect)
+  return router.replace("/(home)/home")
+
 }
 
 const styles = StyleSheet.create({
