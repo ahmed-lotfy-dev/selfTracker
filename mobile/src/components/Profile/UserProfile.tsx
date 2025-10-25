@@ -3,6 +3,7 @@ import React, { useEffect } from "react"
 import Fontisto from "@expo/vector-icons/Fontisto"
 import UploadImageBtn from "./UploadImageBtn"
 import { useAuth } from "@/src/hooks/useAuth"
+import { Ionicons } from "@expo/vector-icons"
 
 interface UserImageProps {
   homeScreen?: boolean
@@ -23,12 +24,12 @@ export default function UserPofile({
         } `}
       >
         {!user?.image ? (
-          <Fontisto
-            name="male"
-            size={homeScreen ? 32 : 36}
+          <Ionicons
+            name="person"
+            size={homeScreen ? 45 : 80}
             color="black"
-            className={`rounded-xl border ${
-              homeScreen ? "w-16 h-16" : "w-24 h-24"
+            className={`w-full justify-center items-center rounded-xl border border-gray-400 ${
+              homeScreen ? "w-16 h-16 p-2" : "w-24 h-24 p-2"
             }`}
           />
         ) : (
@@ -43,9 +44,11 @@ export default function UserPofile({
           <View
             className={`flex-row items-center mb-1  ${homeScreen ? "justify-start" : "justify-center"}`}
           >
-            <Text className="text-md font-bold">{user?.name}</Text>
+            <Text className="text-md font-bold capitalize flex-1">
+              {user?.name}
+            </Text>
           </View>
-          <Text className="flex-1">{user?.email}</Text>
+          <Text className="flex-1 capitalizes">{user?.email}</Text>
         </View>
       </View>
 

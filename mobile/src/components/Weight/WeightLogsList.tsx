@@ -71,7 +71,7 @@ export const WeightLogsList = () => {
             fetchNextPage()
           }
         }}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.5}        
         ListFooterComponent={
           isFetchingNextPage ? (
             <ActivitySpinner size="small" className="mx-4"  />

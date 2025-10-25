@@ -51,7 +51,7 @@ export default function SignIn() {
       } else if (response.data) {
         await setAccessToken(response.data.token)
         setUser(response.data.user)
-        router.replace("/(home)")
+        router.replace("/(home)/home")
       }
     } catch (err) {
       setFormError("An unexpected error occurred.")

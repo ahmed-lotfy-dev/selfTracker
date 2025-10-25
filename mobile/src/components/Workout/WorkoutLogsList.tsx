@@ -53,13 +53,6 @@ export const WorkoutLogsList = () => {
     )
   }
 
-  if (logs.length === 0 && !isLoading) {
-    return (
-      <View className="flex-1 justify-start items-start">
-        <Text className="text-gray-500">No weight logs available.</Text>
-      </View>
-    )
-  }
 
   return (
     <View className="flex-1">

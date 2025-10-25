@@ -47,7 +47,7 @@ export default function TaskScreen() {
       <Header title="Tasks" />
       <TaskForm />
       {tasks && tasks.length === 0 ? (
-        <View className="mt-4 items-center">
+        <View className="w-full px-4 py-5 my-2 bg-white rounded-lg shadow-md">
           <Text className="text-gray-700 font-medium">
             No tasks available, add one!
           </Text>

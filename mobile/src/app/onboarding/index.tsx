@@ -26,24 +26,38 @@ interface OnboardingStep {
 const onboardingSteps: OnboardingStep[] = [
   {
     id: "1",
-    image: require("@/assets/images/react-logo.png"),
-    title: "Track Your Progress",
+    image: require("@/assets/images/onboarding/home.png"),
+    title: "Home Dashboard",
     description:
-      "Monitor your fitness, habits, and goals with ease. See your journey unfold.",
+      "Home page with some data needed for you to track monthly workouts & weights and tasks",
   },
   {
     id: "2",
-    image: require("@/assets/images/react-logo.png"),
-    title: "Customize Your Journey",
+    image: require("@/assets/images/onboarding/weights.png"),
+    title: "Weights Tracking",
     description:
-      "Tailor your tracking experience to fit your unique needs and preferences.",
+      "Track your weight see weightlogs and shart data for the latest logs of the month.",
   },
   {
     id: "3",
-    image: require("@/assets/images/react-logo.png"), // fixed invalid path
-    title: "Achieve Your Goals",
+    image: require("@/assets/images/onboarding/workouts.png"),
+    title: "Workout Tracking",
     description:
-      "Stay motivated and reach your personal best with insightful data and reminders.",
+      "Track you workouts data see logs & chart data based on these data for the month.",
+  },
+  {
+    id: "4",
+    image: require("@/assets/images/onboarding/calendar-view.png"),
+    title: "Calendar View",
+    description:
+      "Track you workouts data see Calendar View for your workout days.",
+  },
+  {
+    id: "5",
+    image: require("@/assets/images/onboarding/weights.png"),
+    title: "Tasks Tracking",
+    description:
+      "Efficiently manage your daily activities and long-term goals with our intuitive task tracking feature.",
   },
 ]
 
@@ -87,32 +101,27 @@ export default function OnboardingScreen() {
 
   const renderItem: ListRenderItem<OnboardingStep> = ({ item }) => (
     <View
-      style={{
-        width,
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        paddingHorizontal: 24,
-      }}
+      className="flex-1 items-center justify-start px-6 bg-slate-200 dark:bg-slate-900"
+      style={{ width }}
     >
       <Image
         source={item.image}
         style={{
-          width: width * 0.6,
-          height: width * 0.6,
+          width: width,
+          height: width * 1.3,
           marginBottom: 32,
           resizeMode: "contain",
         }}
       />
       <Text
         className="text-2xl font-bold text-center mb-3"
-        style={{ color: colors.secondary }}
+        style={{ color: colors.primary }}
       >
         {item.title}
       </Text>
       <Text
         className="text-base text-center leading-6"
-        style={{ color: colors.text }}
+        style={{ color: colors.secondary }}
       >
         {item.description}
       </Text>
@@ -175,17 +184,13 @@ export default function OnboardingScreen() {
           backgroundColor: colors.primary,
         }}
       >
-        <View
-          className="flex-row justify-center mb-4"
-        >
+        <View className="flex-row justify-center mb-4">
           {onboardingSteps.map((_, i) => (
             <Dot key={i} index={i} />
           ))}
         </View>
 
-        <View
-          className="flex-row justify-between items-center"
-        >
+        <View className="flex-row justify-between items-center">
           <TouchableOpacity onPress={onFinish} activeOpacity={0.8}>
             <Text
               className="text-base font-semibold"

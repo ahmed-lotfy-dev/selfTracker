@@ -1,4 +1,4 @@
-import { View, Text,  Dimensions } from "react-native"
+import { View, Text, Dimensions } from "react-native"
 import React, { useState } from "react"
 import { LineChart } from "react-native-chart-kit"
 import { useQuery } from "@tanstack/react-query"
@@ -57,7 +57,9 @@ export const WeightChart = () => {
     !data ||
     !data.labels?.length ||
     !data.datasets?.[0]?.data?.length ||
-    data.datasets[0].data.every((val:any) => typeof val !== "number" || isNaN(val))
+    data.datasets[0].data.every(
+      (val: any) => typeof val !== "number" || isNaN(val)
+    )
 
   return (
     <View
@@ -73,7 +75,7 @@ export const WeightChart = () => {
       </Text>
 
       {noChartData ? (
-        <Text style={{ textAlign: "center", color: "#6B7280" }}>
+        <Text className="mt-1 text-center pb-3">
           No weight logs found this month. Start tracking to see your progress!
         </Text>
       ) : (

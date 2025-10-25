@@ -29,7 +29,7 @@ export const WeightProgressCard = ({
       <View className="flex-row justify-between mb-3 mt-4">
         <MetricsCard
           icon="monitor-weight"
-          value={weightChange.toLocaleLowerCase()}
+          value={weightChange ? weightChange.toLocaleLowerCase() : "N/A"}
           label="3 months"
         />
         <MetricsCard

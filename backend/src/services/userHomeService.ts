@@ -56,9 +56,11 @@ export const getTaskCount = async (userId: string) => {
     .where(and(eq(tasks.completed, false), eq(tasks.userId, userId)))
 
   return {
-    completedTasks: weeklyCompletedTaskCount.count,
-    pendingTasks: weeklyPendingTaskCount.count,
-    allTasks: weeklyCompletedTaskCount.count + weeklyPendingTaskCount.count,
+    completedTasks: weeklyCompletedTaskCount?.count || 0,
+    pendingTasks: weeklyPendingTaskCount?.count || 0,
+    allTasks:
+      (weeklyCompletedTaskCount?.count || 0) +
+      (weeklyPendingTaskCount?.count || 0),
   }
 }
 
@@ -84,7 +86,7 @@ export const getUserGoal = async (userId: string) => {
   }
 
   return {
-    goalWeight: goal.targetValue,
+    goalWeight: goal.targetValue ? parseFloat(goal.targetValue) : null,
     goalType: goal.goalType,
   }
 }
@@ -97,14 +99,17 @@ export const getUserLatestWeight = async (userId: string) => {
     .orderBy(desc(weightLogs.createdAt))
     .limit(1)
 
-  return latestWeight.weight ?? "no weight log yet"
+  return latestWeight?.weight ? parseFloat(latestWeight.weight) : null
 }
 
 export const calculateBMI = (
-  weight: number,
-  height: number,
+  weight: number | null,
+  height: number | null,
   unitSystem: string
 ) => {
+  if (weight === null || height === null) {
+    return null
+  }
   let bmi = null
   if (height && weight) {
     if (unitSystem === "metric") {
@@ -117,7 +122,8 @@ export const calculateBMI = (
   return bmi && parseFloat(bmi.toFixed(2))
 }
 
-export const getBMICategory = (bmi: number): string => {
+export const getBMICategory = (bmi: number | null): string | null => {
+  if (!bmi) return null
   if (bmi < 18.5) return "Underweight"
   if (bmi < 24.9) return "Normal weight"
   if (bmi < 29.9) return "Overweight"
@@ -125,11 +131,11 @@ export const getBMICategory = (bmi: number): string => {
 }
 
 export const calculateWeightDelta = (
-  goalWeight: number,
-  goalType: string,
-  latestWeight: number
+  goalWeight: number | null,
+  goalType: string | null,
+  latestWeight: number | null
 ) => {
-  if (!goalWeight || !latestWeight || !goalType) {
+  if (goalWeight === null || latestWeight === null || goalType === null) {
     return null
   }
 
@@ -172,8 +178,12 @@ export const getWeightChangeInPeriod = async (
     .orderBy(desc(weightLogs.createdAt))
     .limit(1)
 
-  if (!oldestWeightLog || !latestWeightLog) {
-    return "Insufficient data to calculate weight change"
+  if (
+    !oldestWeightLog ||
+    !latestWeightLog ||
+    oldestWeightLog.id === latestWeightLog.id
+  ) {
+    return null
   }
 
   const weightChange =
@@ -189,20 +199,72 @@ export const getWeightChangeInPeriod = async (
 }
 
 export const getUserData = async (user: any) => {
-  const { weeklyWorkout, monthlyWorkout } = await getWorkoutCounts(user.id)
-  const { completedTasks, pendingTasks, allTasks } = await getTaskCount(user.id)
-  const goal = await getUserGoal(user.id)
-  const latestWeight = await getUserLatestWeight(user.id)
-  const userBMI = calculateBMI(user.weight, user.height, user.unitSystem)
-  const BMICategory = getBMICategory(Number(userBMI))
-  const weightChange = await getWeightChangeInPeriod(user.id, 1)
+  let weeklyWorkout = 0,
+    monthlyWorkout = 0,
+    completedTasks = 0,
+    pendingTasks = 0,
+    allTasks = 0,
+    goal: { goalWeight: number | null; goalType: string | null } = {
+      goalWeight: null,
+      goalType: null,
+    },
+    latestWeight = null,
+    userBMI = null,
+    BMICategory = null,
+    weightChange = null,
+    weightDelta = null
 
-  const { goalWeight, goalType } = goal
+  try {
+    const workoutCounts = await getWorkoutCounts(user.id)
+    weeklyWorkout = workoutCounts.weeklyWorkout
+    monthlyWorkout = workoutCounts.monthlyWorkout
+  } catch (error) {
+    console.error("Error fetching workout counts:", error)
+  }
 
-  const weightDelta =
-    latestWeight && goalWeight
-      ? Number(latestWeight) - Number(goalWeight)
-      : null
+  try {
+    const taskCounts = await getTaskCount(user.id)
+    completedTasks = taskCounts.completedTasks
+    pendingTasks = taskCounts.pendingTasks
+    allTasks = taskCounts.allTasks
+  } catch (error) {
+    console.error("Error fetching task counts:", error)
+  }
+
+  try {
+    goal = await getUserGoal(user.id)
+  } catch (error) {
+    console.error("Error fetching user goal:", error)
+  }
+
+  try {
+    latestWeight = await getUserLatestWeight(user.id)
+  } catch (error) {
+    console.error("Error fetching latest weight:", error)
+  }
+
+  try {
+    userBMI = calculateBMI(user.weight, user.height, user.unitSystem)
+    BMICategory = getBMICategory(userBMI)
+  } catch (error) {
+    console.error("Error calculating BMI:", error)
+  }
+
+  try {
+    weightChange = await getWeightChangeInPeriod(user.id, 3)
+  } catch (error) {
+    console.error("Error fetching weight change:", error)
+  }
+
+  try {
+    weightDelta = calculateWeightDelta(
+      goal.goalWeight,
+      goal.goalType,
+      latestWeight
+    )
+  } catch (error) {
+    console.error("Error calculating weight delta:", error)
+  }
 
   return {
     weeklyWorkout,

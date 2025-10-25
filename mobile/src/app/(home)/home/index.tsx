@@ -22,7 +22,22 @@ export default function HomeScreen() {
     staleTime: 1000 * 60 * 5,
   })
 
-  if (isLoading || !data) {
+  if (data) {
+  console.log({
+    weeklyWorkout: data.weeklyWorkout,
+    monthlyWorkout: data.monthlyWorkout,
+    weightChange: data.weightChange,
+    weightDelta: data.weightDelta,
+    bmi: data.userBMI,
+    pendingTasks: data.pendingTasks,
+    completedTasks: data.completedTasks,
+    allTasks: data.allTasks,
+    goalData: data.goal,
+  })
+}
+
+  console.log(data)
+  if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center p-4">
         <ActivityIndicator size="large" color={COLORS.primary} />
@@ -56,21 +71,21 @@ export default function HomeScreen() {
 
       <View className="gap-3">
         <WorkoutProgressCard
-          weeklyWorkoutCount={data.weeklyWorkout}
-          monthlyWorkoutCount={data.monthlyWorkout}
+          weeklyWorkoutCount={data?.weeklyWorkout}
+          monthlyWorkoutCount={data?.monthlyWorkout}
         />
 
         <WeightProgressCard
-          weightChange={data.weightChange}
-          goalWeight={data.goal.goalWeight}
-          delta={data.weightDelta}
-          bmi={data.userBMI}
+          weightChange={data?.weightChange}
+          goalWeight={data?.goal?.goalWeight}
+          delta={data?.weightDelta}
+          bmi={data?.userBMI}
         />
 
         <TasksProgressCard
-          pendingTasks={data.pendingTasks}
-          completedTasks={data.completedTasks}
-          allTasks={data.allTasks}
+          pendingTasks={data?.pendingTasks}
+          completedTasks={data?.completedTasks}
+          allTasks={data?.allTasks}
         />
       </View>
     </ScrollView>

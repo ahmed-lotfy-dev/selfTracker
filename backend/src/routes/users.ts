@@ -40,19 +40,16 @@ userRouter.get("/me/home", async (c) => {
   const user = c.get("user" as any)
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
-  if (!user.weight || !user.height || !user.unitSystem) {
-    return c.json({ message: "Incomplete user profile" }, 400)
-  }
   try {
     const cacheKey = `userHomeData:${user.id}`
     const cached = await getCache(cacheKey)
     if (cached) {
-      return c.json(cached)
+      return c.json(JSON.parse(cached))
     }
 
     const userData = await getUserData(user)
 
-    await setCache(cacheKey, 3600, userData)
+    await setCache(cacheKey, 3600, JSON.stringify(userData))
 
     return c.json(userData)
   } catch (error) {
