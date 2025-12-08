@@ -26,9 +26,8 @@ app.use(
   "*",
   cors({
     origin: [
-      "http://localhost:8081",
-      "http://192.168.1.16:8081",
-      "exp://192.168.1.16:8081",
+      "http://192.168.1.5:8081",
+      "exp://192.168.1.5:8081",
     ],
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "UPDATE", "DELETE", "PATCH", "OPTIONS"],
@@ -79,6 +78,10 @@ app.get("/api/error", () => {
 })
 
 app.onError((err, c) => {
+  const logger = c.get("logger")
+  if (logger) {
+    logger.error(err)
+  }
   return c.json(
     {
       success: false,

@@ -19,7 +19,7 @@ export const getWorkoutCounts = async (userId: string) => {
 
   const [weeklyWorkoutCount] = await db
     .select({
-      count: sql<number>`count(distinct ${sql`date(${workoutLogs.createdAt})`})`,
+      count: sql<number>`count(distinct ${sql`date(${workoutLogs.createdAt})`})::int`,
     })
     .from(workoutLogs)
     .where(
@@ -32,7 +32,7 @@ export const getWorkoutCounts = async (userId: string) => {
 
   const [monthlyWorkoutCount] = await db
     .select({
-      count: sql<number>`count(distinct ${sql`date(${workoutLogs.createdAt})`})`,
+      count: sql<number>`count(distinct ${sql`date(${workoutLogs.createdAt})`})::int`,
     })
     .from(workoutLogs)
     .where(
