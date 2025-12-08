@@ -38,6 +38,9 @@ export const WeightProgressCard = ({
           label="goal"
         />
       </View>
+      <View className="mt-2">
+        <WeightChart />
+      </View>
     </View>
   )
 }

@@ -1,4 +1,6 @@
 import { Hono } from "hono"
+import { z } from "zod"
+import { zValidator } from "@hono/zod-validator"
 import { weightLogs } from "../db/schema"
 import { db } from "../db"
 import { eq, and, lt, desc } from "drizzle-orm"
@@ -13,6 +15,22 @@ import {
 } from "../services/weightLogsService"
 
 const weightsLogsRouter = new Hono()
+
+const createWeightLogSchema = z.object({
+  weight: z.string().or(z.number()).transform((val) => String(val)),
+  energy: z.enum(["Low", "Okay", "Good", "Great"]),
+  mood: z.enum(["Low", "Medium", "High"]),
+  notes: z.string().optional(),
+  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+})
+
+const updateWeightLogSchema = z.object({
+  weight: z.string().or(z.number()).transform((val) => String(val)).optional(),
+  energy: z.enum(["Low", "Okay", "Good", "Great"]).optional(),
+  mood: z.enum(["Low", "Medium", "High"]).optional(),
+  notes: z.string().optional(),
+  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+})
 
 weightsLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -117,15 +135,14 @@ weightsLogsRouter.get("/:id", async (c) => {
   }
 })
 
-weightsLogsRouter.post("/", async (c) => {
+weightsLogsRouter.post("/", zValidator("json", createWeightLogSchema), async (c) => {
   const user = c.get("user" as any)
 
   if (!user || !user.id) {
     return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
-  const body = await c.req.json()
-  const { weight, energy, mood, notes, createdAt } = body
-
+  const body = c.req.valid("json")
+  
   try {
     await clearCache([
       `userHomeData:${user.id}`,
@@ -142,7 +159,7 @@ weightsLogsRouter.post("/", async (c) => {
   }
 })
 
-weightsLogsRouter.patch("/:id", async (c) => {
+weightsLogsRouter.patch("/:id", zValidator("json", updateWeightLogSchema), async (c) => {
   const user = c.get("user" as any)
   const id = c.req.param("id")
 
@@ -169,14 +186,19 @@ weightsLogsRouter.patch("/:id", async (c) => {
       return c.json({ message: "Weight log not found" }, 404)
     }
 
-    const body = await c.req.json()
+    // Verify ownership
+    if (existingLog.userId !== user.id) {
+        return c.json({ message: "Unauthorized" }, 401)
+    }
+
+    const body = c.req.valid("json")
     const updateFields: Record<string, any> = {}
 
-    if ("weight" in body) updateFields.weight = body.weight
-    if ("mood" in body) updateFields.mood = body.mood
-    if ("energy" in body) updateFields.energy = body.energy
-    if ("notes" in body) updateFields.notes = body.notes
-    if ("createdAt" in body) updateFields.createdAt = new Date(body.createdAt)
+    if (body.weight !== undefined) updateFields.weight = body.weight
+    if (body.mood !== undefined) updateFields.mood = body.mood
+    if (body.energy !== undefined) updateFields.energy = body.energy
+    if (body.notes !== undefined) updateFields.notes = body.notes
+    if (body.createdAt !== undefined) updateFields.createdAt = body.createdAt
 
     if (Object.keys(updateFields).length === 0) {
       return c.json({ message: "No fields to update" }, 400)

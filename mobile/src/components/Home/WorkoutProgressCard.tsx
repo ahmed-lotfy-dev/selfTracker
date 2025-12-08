@@ -3,6 +3,7 @@ import React from "react"
 import { MetricsCard } from "./MetricCard"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import { CardHeader } from "./CardHeader"
+import { WorkoutChart } from "./WorkoutChart"
 
 interface WorkoutProgressCardProps {
   weeklyWorkoutCount: number
@@ -30,6 +31,10 @@ export const WorkoutProgressCard = ({
           <Text className="text-2xl font-bold mt-1">{monthlyWorkoutCount}</Text>
           <Text className={"text-sm text-blue-500"}>monthly</Text>
         </View>
+      </View>
+      
+      <View className="mt-2">
+        <WorkoutChart />
       </View>
     </View>
   )

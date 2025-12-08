@@ -1,6 +1,7 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
-import { logger } from "hono/logger"
+import { loggerMiddleware } from "./middlewares/loggerMiddleware.js"
+import type { Logger } from "pino"
 
 import userRouter from "./routes/users.js"
 import expensesRouter from "./routes/expenses.js"
@@ -15,10 +16,11 @@ const app = new Hono<{
   Variables: {
     user: typeof auth.$Infer.Session.user | null
     session: typeof auth.$Infer.Session.session | null
+    logger: Logger
   }
 }>()
 
-app.use(logger())
+app.use(loggerMiddleware)
 
 app.use(
   "*",

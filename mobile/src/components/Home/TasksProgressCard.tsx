@@ -3,6 +3,7 @@ import React from "react"
 import { MetricsCard } from "./MetricCard"
 import { CardHeader } from "./CardHeader"
 import { allTasks } from "better-auth/react"
+import { TasksChart } from "./TasksChart"
 
 interface TasksProgressCardProps {
   pendingTasks: number
@@ -24,6 +25,9 @@ export const TasksProgressCard = ({
           value={` ${completedTasks} / ${allTasks}`}
           label="completed"
         />
+      </View>
+      <View className="mt-2">
+        <TasksChart pendingTasks={pendingTasks} completedTasks={completedTasks} />
       </View>
     </View>
   )

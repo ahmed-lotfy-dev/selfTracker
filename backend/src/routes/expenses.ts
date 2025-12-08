@@ -1,12 +1,25 @@
 import { Hono } from "hono"
+import { z } from "zod"
+import { zValidator } from "@hono/zod-validator"
 import { db } from "../db/index.js"
-import { expenses, users } from "../db/schema/index"
-import { eq } from "drizzle-orm"
-import { sign } from "hono/jwt"
-import { hash } from "bcryptjs"
+import { expenses } from "../db/schema/index"
+import { eq, and } from "drizzle-orm"
 import { clearCache, getCache, setCache } from "../../lib/redis.js"
 
 const expensesRouter = new Hono()
+
+const createExpenseSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.string().or(z.number()).transform((val) => String(val)),
+  category: z.string().min(1, "Category is required"),
+})
+
+const updateExpenseSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  amount: z.string().or(z.number()).transform((val) => String(val)).optional(),
+  category: z.string().optional(),
+})
 
 expensesRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -41,16 +54,12 @@ expensesRouter.get("/", async (c) => {
   }
 })
 
-expensesRouter.post("/", async (c) => {
+expensesRouter.post("/", zValidator("json", createExpenseSchema), async (c) => {
   const user = c.get("user" as any)
 
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
-  const { description, amount, category } = await c.req.json()
-
-  if (!description || !amount || !category) {
-    return c.json({ message: "All fields are required" }, 400)
-  }
+  const { description, amount, category } = c.req.valid("json")
 
   const [createdExpense] = await db
     .insert(expenses)
@@ -71,7 +80,7 @@ expensesRouter.post("/", async (c) => {
   })
 })
 
-expensesRouter.patch("/:id", async (c) => {
+expensesRouter.patch("/:id", zValidator("json", updateExpenseSchema), async (c) => {
   const user = c.get("user" as any)
 
   if (!user) return c.json({ message: "Unauthorized" }, 401)
@@ -82,16 +91,17 @@ expensesRouter.patch("/:id", async (c) => {
     return c.json({ message: "Expense ID is required" }, 400)
   }
 
-  const { title, description, amount, category } = await c.req.json()
-  if (!title && !description && !amount && !category) {
-    return c.json({ message: "At least one field is required" }, 400)
+  const { description, amount, category } = c.req.valid("json")
+  
+  if (description === undefined && amount === undefined && category === undefined) {
+     return c.json({ message: "At least one field is required" }, 400)
   }
 
   const expenseExist = await db.query.expenses.findFirst({
     where: eq(expenses.id, id),
   })
 
-  if (!expenseExist || expenseExist.userId !== user.userId) {
+  if (!expenseExist || expenseExist.userId !== user.id) {
     return c.json({ message: "Expense not found or unauthorized" }, 404)
   }
 
@@ -128,7 +138,7 @@ expensesRouter.delete("/:id", async (c) => {
 
   const deletedExpense = await db
     .delete(expenses)
-    .where(eq(expenses.id, id))
+    .where(and(eq(expenses.id, id), eq(expenses.userId, user.id)))
     .returning()
 
   if (!deletedExpense.length) {

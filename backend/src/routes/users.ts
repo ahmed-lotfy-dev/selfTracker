@@ -29,6 +29,11 @@ const userRouter = new Hono()
 userRouter.get("/", async (c) => {
   const user = c.get("user" as any)
 
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401)
+  }
+
+
   if (user.role !== "admin") {
     return c.json({ message: "Unauthorized" }, 401)
   }

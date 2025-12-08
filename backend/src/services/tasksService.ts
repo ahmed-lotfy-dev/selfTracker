@@ -33,7 +33,10 @@ export const updateTask = async (id: string, userId: string, fields: any) => {
 }
 
 export const deleteTask = async (userId: string, taskId: string) => {
-  const deleted = await db.delete(tasks).where(eq(tasks.id, taskId))
+  const [deleted] = await db
+    .delete(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .returning()
 
   return deleted
 }
