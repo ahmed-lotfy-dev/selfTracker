@@ -206,7 +206,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
         disabled={isSubmitting}
       >
         <Text className="font-bold text-white">
-          {isSubmitting ? "Adding Task..." : "Add Task"}
+          {isSubmitting ? "Adding Weight..." : "Add Weight"}
         </Text>
       </Pressable>
       </ScrollView>

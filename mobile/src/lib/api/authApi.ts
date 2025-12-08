@@ -33,10 +33,10 @@ export const checkEmailVerification = async (userId: string) => {
   return response
 }
 
-export const resendVerificationEmail = async (email: string, ) => {
+export const resendVerificationEmail = async (email: string) => {
   const { data, error } = await authClient.emailOtp.sendVerificationOtp({
     email, // required
-    type: "email-verification", 
+    type: "email-verification",
   })
 
   return data

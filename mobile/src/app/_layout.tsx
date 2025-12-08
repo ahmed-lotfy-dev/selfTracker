@@ -9,14 +9,12 @@ import "react-native-gesture-handler"
 import "@/src/global.css"
 
 import { AppProviders } from "@/src/components/Provider/AppProviders"
-import { useOnboardingStore } from "../store/useOnboardingStore"
 import {
   registerForPushNotificationsAsync,
   setUpNotificationListeners,
 } from "../lib/notifications"
 import { PortalHost } from "@rn-primitives/portal"
 import { Platform, StatusBar, useColorScheme } from "react-native"
-import { useAuth } from "../hooks/useAuth"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import {
   FontAwesome5,
@@ -41,8 +39,6 @@ function RootLayout() {
     ...FontAwesome5.font,
   })
 
-  const { isAuthenticated } = useAuth()
-  const { isOnboarding } = useOnboardingStore()
   const colorScheme = useColorScheme()
 
   useEffect(() => {
@@ -86,14 +82,12 @@ function RootLayout() {
       <StatusBar
         barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
       />
-
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard={isAuthenticated}>
-          <Stack.Screen name="(home)" options={{ headerShown: false }} />
-        </Stack.Protected>
-        <Stack.Protected guard={!isAuthenticated}>
-          <Stack.Screen name="welcome" />
-        </Stack.Protected>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(home)" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="+not-found" />
       </Stack>
       <PortalHost />
     </AppProviders>

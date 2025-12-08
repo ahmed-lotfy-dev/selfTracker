@@ -26,35 +26,35 @@ interface OnboardingStep {
 const onboardingSteps: OnboardingStep[] = [
   {
     id: "1",
-    image: require("@/assets/images/onboarding/home.png"),
+    image: require("@/assets/images/onboarding/home-page.png"),
     title: "Home Dashboard",
     description:
       "Home page with some data needed for you to track monthly workouts & weights and tasks",
   },
   {
     id: "2",
-    image: require("@/assets/images/onboarding/weights.png"),
+    image: require("@/assets/images/onboarding/weight-logs.png"),
     title: "Weights Tracking",
     description:
       "Track your weight see weightlogs and shart data for the latest logs of the month.",
   },
   {
     id: "3",
-    image: require("@/assets/images/onboarding/workouts.png"),
+    image: require("@/assets/images/onboarding/workout-logs.png"),
     title: "Workout Tracking",
     description:
       "Track you workouts data see logs & chart data based on these data for the month.",
   },
   {
     id: "4",
-    image: require("@/assets/images/onboarding/calendar-view.png"),
+    image: require("@/assets/images/onboarding/workouts-calendarview.png"),
     title: "Calendar View",
     description:
       "Track you workouts data see Calendar View for your workout days.",
   },
   {
     id: "5",
-    image: require("@/assets/images/onboarding/weights.png"),
+    image: require("@/assets/images/onboarding/tasks.png"),
     title: "Tasks Tracking",
     description:
       "Efficiently manage your daily activities and long-term goals with our intuitive task tracking feature.",

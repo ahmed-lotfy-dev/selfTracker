@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, TextInput, Text } from 'react-native';
 import { COLORS } from '@/src/constants/Colors';
 
@@ -8,9 +8,24 @@ interface OTPInputProps {
   error?: string;
 }
 
-export default function OTPInput({ length = 6, onChange, error }: OTPInputProps) {
+export interface OTPInputRef {
+  focus: (index?: number) => void;
+  clear: () => void;
+}
+
+const OTPInput = forwardRef<OTPInputRef, OTPInputProps>(({ length = 6, onChange, error }, ref) => {
   const [otp, setOtp] = useState<string[]>(Array(length).fill(''));
   const inputs = useRef<(TextInput | null)[]>([]);
+
+  useImperativeHandle(ref, () => ({
+    focus: (index = 0) => {
+      inputs.current[index]?.focus();
+    },
+    clear: () => {
+      setOtp(Array(length).fill(''));
+      onChange('');
+    },
+  }));
 
   const handleChange = (text: string, index: number) => {
     if (text.length > 1) return; // Only allow single digit
@@ -22,12 +37,16 @@ export default function OTPInput({ length = 6, onChange, error }: OTPInputProps)
 
     // Auto-focus next input when typing
     if (text && index < length - 1) {
-      inputs.current[index + 1]?.focus();
+      setTimeout(() => {
+        inputs.current[index + 1]?.focus();
+      }, 0);
     }
 
     // Move to previous input when field becomes empty (backspace or delete)
     if (!text && index > 0) {
-      inputs.current[index - 1]?.focus();
+      setTimeout(() => {
+        inputs.current[index - 1]?.focus();
+      }, 0);
     }
   };
 
@@ -35,14 +54,18 @@ export default function OTPInput({ length = 6, onChange, error }: OTPInputProps)
     if (e.nativeEvent.key === 'Backspace' && index > 0) {
       if (!otp[index]) {
         // If current field is empty, move to previous field
-        inputs.current[index - 1]?.focus();
+        setTimeout(() => {
+          inputs.current[index - 1]?.focus();
+        }, 0);
       } else {
         // If current field has text, clear it and move to previous field
         const newOtp = [...otp];
         newOtp[index] = '';
         setOtp(newOtp);
         onChange(newOtp.join(''));
-        inputs.current[index - 1]?.focus();
+        setTimeout(() => {
+          inputs.current[index - 1]?.focus();
+        }, 0);
       }
     }
   };
@@ -53,8 +76,8 @@ export default function OTPInput({ length = 6, onChange, error }: OTPInputProps)
         {otp.map((digit, index) => (
           <TextInput
             key={index}
-            ref={(ref) => {
-              inputs.current[index] = ref;
+            ref={(inputRef) => {
+              inputs.current[index] = inputRef;
             }}
             value={digit}
             onChangeText={(text) => handleChange(text, index)}
@@ -70,4 +93,8 @@ export default function OTPInput({ length = 6, onChange, error }: OTPInputProps)
       {error && <Text className="text-red-500 mt-2 text-center">{error}</Text>}
     </View>
   );
-}
+});
+
+OTPInput.displayName = 'OTPInput';
+
+export default OTPInput;
