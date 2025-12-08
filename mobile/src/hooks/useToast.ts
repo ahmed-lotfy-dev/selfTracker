@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext } from "react"
+import React, { useState, createContext, useContext, useEffect, useRef } from "react"
 import Toast from "@/src/components/ui/Toast"
 
 type ToastMessage = {
@@ -22,10 +22,22 @@ export const useToast = () => {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastMessage | null>(null)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [])
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type })
-    setTimeout(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+    timerRef.current = setTimeout(() => {
       setToast(null)
     }, 3000)
   }

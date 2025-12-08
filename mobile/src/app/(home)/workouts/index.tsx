@@ -13,7 +13,7 @@ import Header from "@/src/components/Header"
 import CalendarView from "@/src/components/Workout/CalendarView"
 import AddButton from "@/src/components/Buttons/AddButton"
 import { COLORS } from "@/src/constants/Colors"
-import { FlashList } from "@shopify/flash-list"
+
 import { WorkoutLogsList } from "@/src/components/Workout/WorkoutLogsList"
 
 const VIEW_TYPES = {

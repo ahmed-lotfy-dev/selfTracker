@@ -77,6 +77,7 @@ export const WeightLogsList = () => {
             <ActivitySpinner size="small" className="mx-4"  />
           ) : null
         }
+        estimatedItemSize={100}
       />
     </View>
   )

@@ -18,7 +18,9 @@ export const getWorkoutCounts = async (userId: string) => {
   const end = endOfWeek(new Date(), { weekStartsOn: 6 })
 
   const [weeklyWorkoutCount] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({
+      count: sql<number>`count(distinct ${sql`date(${workoutLogs.createdAt})`})`,
+    })
     .from(workoutLogs)
     .where(
       and(
@@ -29,7 +31,9 @@ export const getWorkoutCounts = async (userId: string) => {
     )
 
   const [monthlyWorkoutCount] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({
+      count: sql<number>`count(distinct ${sql`date(${workoutLogs.createdAt})`})`,
+    })
     .from(workoutLogs)
     .where(
       and(
@@ -42,6 +46,32 @@ export const getWorkoutCounts = async (userId: string) => {
     weeklyWorkout: weeklyWorkoutCount.count || 0,
     monthlyWorkout: monthlyWorkoutCount.count || 0,
   }
+}
+
+export const getWorkoutChartData = async (userId: string) => {
+  const start = startOfWeek(new Date(), { weekStartsOn: 6 })
+  const end = endOfWeek(new Date(), { weekStartsOn: 6 })
+
+  const weeklyData = await db
+    .select({
+      date: sql<string>`date(${workoutLogs.createdAt})`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(workoutLogs)
+    .where(
+      and(
+        eq(workoutLogs.userId, userId),
+        gte(workoutLogs.createdAt, start),
+        lte(workoutLogs.createdAt, end)
+      )
+    )
+    .groupBy(sql`date(${workoutLogs.createdAt})`)
+    .orderBy(sql`date(${workoutLogs.createdAt})`)
+
+  return weeklyData.map((row) => ({
+    date: format(new Date(row.date), "EEE"),
+    count: row.count,
+  }))
 }
 
 export const getTaskCount = async (userId: string) => {
@@ -212,12 +242,15 @@ export const getUserData = async (user: any) => {
     userBMI = null,
     BMICategory = null,
     weightChange = null,
-    weightDelta = null
+    weightDelta = null,
+    workoutChartData = null
 
   try {
     const workoutCounts = await getWorkoutCounts(user.id)
     weeklyWorkout = workoutCounts.weeklyWorkout
     monthlyWorkout = workoutCounts.monthlyWorkout
+    const chartData = await getWorkoutChartData(user.id)
+    workoutChartData = chartData
   } catch (error) {
     console.error("Error fetching workout counts:", error)
   }
@@ -269,6 +302,7 @@ export const getUserData = async (user: any) => {
   return {
     weeklyWorkout,
     monthlyWorkout,
+    workoutChartData,
     completedTasks,
     pendingTasks,
     allTasks,
