@@ -11,6 +11,8 @@ export const loggerMiddleware: MiddlewareHandler = async (c, next) => {
     msg: "Incoming request",
     method,
     path,
+    ip: c.req.header("x-forwarded-for") || c.env?.incoming?.socket?.remoteAddress,
+    origin: c.req.header("origin"),
   })
 
   await next()
