@@ -22,3 +22,9 @@ export const clearTokens = async (): Promise<void> => {
   await AsyncStorage.removeItem("accessToken")
   await AsyncStorage.removeItem("refreshToken")
 }
+
+export const clearAllUserData = async (): Promise<void> => {
+  await clearTokens()
+  await AsyncStorage.removeItem("auth-storage")
+  await AsyncStorage.removeItem("REACT_QUERY_OFFLINE_CACHE")
+}

@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react"
+import { useEffect } from "react"
 import { authClient } from "@/src/lib/auth-client"
 import { useAuthActions, useUser } from "../store/useAuthStore"
+import { clearAllUserData } from "@/src/lib/storage"
+import { queryClient } from "@/src/components/Provider/AppProviders"
 
 export const useAuth = () => {
   const { data: session, error, isPending, refetch } = authClient.useSession()
@@ -14,9 +16,14 @@ export const useAuth = () => {
   }, [session?.user, setUser, user])
 
   const logout = async () => {
-    await authClient.signOut()
-    refetch()
-    setUser(null)
+    try {
+      await clearAllUserData()
+      queryClient.removeQueries()
+      await authClient.signOut()
+    } finally {
+      setUser(null)
+      refetch()
+    }
   }
 
   return {

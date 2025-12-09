@@ -3,10 +3,7 @@ import { ReactNode, useMemo, useState } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import React from "react"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import { QueryClient } from "@tanstack/react-query"
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 import { KeyboardProvider } from "react-native-keyboard-controller"
 
@@ -25,25 +22,22 @@ export const queryClient = new QueryClient({
   },
 })
 
-const asyncStoragePersister = createAsyncStoragePersister({
-  storage: AsyncStorage,
-})
-
 export function AppProviders({ children }: AppProvidersProps) {
   const theme = useColorScheme()
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister: asyncStoragePersister }}
-    >
+    <QueryClientProvider client={queryClient}>
       <KeyboardProvider>
         <SafeAreaView
-          edges={["top","left", "right"]}
-          style={{ flex: 1, backgroundColor: theme=== "light" ? Colors.light.background : Colors.dark.background }}
+          edges={["top", "left", "right"]}
+          style={{
+            flex: 1,
+            backgroundColor:
+              theme === "light" ? Colors.light.background : Colors.dark.background,
+          }}
         >
           {children}
         </SafeAreaView>
       </KeyboardProvider>
-    </PersistQueryClientProvider>
+    </QueryClientProvider>
   )
 }
