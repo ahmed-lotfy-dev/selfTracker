@@ -1,24 +1,22 @@
-import { View, Text } from "react-native"
+import { View, Text, Pressable } from "react-native"
 import {
   deleteWorkout,
   fetchSingleWorkout,
-  fetchSingleWorkoutByDate,
 } from "@/src/lib/api/workoutsApi"
 import { useQuery } from "@tanstack/react-query"
 import {
-  Route,
   Stack,
   useLocalSearchParams,
-  usePathname,
   useRouter,
 } from "expo-router"
-import DateDisplay from "@/src/components/DateDisplay"
-import DeleteButton from "@/src/components/Buttons/DeleteButton"
 import { useDelete } from "@/src/hooks/useDelete"
-import EditButton from "@/src/components/Buttons/EditButton"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
 import React from "react"
 import BackButton from "@/src/components/Buttons/BackButton"
+import { format } from "date-fns"
+import ActivitySpinner from "@/src/components/ActivitySpinner"
+import { COLORS } from "@/src/constants/Colors"
+import { MaterialIcons } from "@expo/vector-icons"
 
 export default function WorkoutLog() {
   const router = useRouter()
@@ -35,9 +33,6 @@ export default function WorkoutLog() {
     enabled: !!id,
   })
 
-  const currentMonth = new Date().getMonth() + 1
-  const currentYear = new Date().getFullYear()
-
   const { deleteMutation, triggerDelete } = useDelete({
     mutationFn: () => deleteWorkout(String(id)),
     confirmTitle: "Delete Workout",
@@ -45,49 +40,105 @@ export default function WorkoutLog() {
     onSuccessInvalidate: [
       { queryKey: ["workoutLogs"] },
       { queryKey: ["workoutLogsCalendar"] },
+      { queryKey: ["userHomeData"] },
     ],
     onSuccessCallback: () => {
-      router.push("/workouts")
+      router.back()
     },
   })
 
-  if (isLoading) return <Text>Loading...</Text>
-  if (isError) return <Text>Error loading workout</Text>
+  if (isLoading) {
+    return (
+        <View className="flex-1 justify-center items-center bg-gray-50">
+            <ActivitySpinner size="large" color={COLORS.primary} />
+        </View>
+    )
+  }
 
-  const log = workoutLog ?? {}
+  if (isError || !workoutLog) {
+      return (
+        <View className="flex-1 justify-center items-center bg-gray-50">
+            <Text className="text-red-500 font-medium">Error loading workout details.</Text>
+            <BackButton backTo="/workouts" className="mt-4" />
+        </View>
+      )
+  }
+
+  const formattedDate = workoutLog.createdAt 
+    ? format(new Date(workoutLog.createdAt), "EEEE, MMMM dd, yyyy") 
+    : ""
+
   return (
-    <>
+    <View className="flex-1 bg-gray-50">
       <Stack.Screen
         options={{
-          title: `${log.workoutName} - Workout Log`,
+          headerShown: false, 
         }}
       />
-      <BackButton backTo="/workouts" className="ml-4"/>
-
-      <View className="p-5">
-        <Text className="text-xl font-bold mb-2">Workout Log</Text>
-        <Text className="text-lg">Workout Name: {log.workoutName}</Text>
-        <Text className="text-lg">
-          Date: <DateDisplay date={log.createdAt} isCalendar />
-        </Text>
-        <Text className="text-lg">
-          Notes: {log.notes || "No notes available"}
-        </Text>
-        <View className="flex-row justify-start gap-3 w-32 mt-3">
-          <EditButton
-            onPress={() => {
-              setSelectedWorkout(workoutLog)
-              router.push(`/workouts/edit`)
-            }}
-          />
-          <DeleteButton onPress={triggerDelete} />
-          {deleteMutation.isError && (
-            <Text className="text-red-500 mt-2">
-              {deleteMutation.error?.message || "Could not delete workout."}
-            </Text>
-          )}
-        </View>
+      
+      {/* Custom Header Area */}
+      <View className="pt-12 px-4 pb-4">
+        <BackButton backTo="/workouts" />
       </View>
-    </>
+
+      <View className="px-6 mt-2">
+        {/* Title Section */}
+        <Text className="text-4xl font-extrabold text-gray-900 leading-tight">
+            {workoutLog.workoutName}
+        </Text>
+        <Text className="text-base text-gray-500 font-medium mt-2 mb-8 uppercase tracking-wide">
+            {formattedDate}
+        </Text>
+
+        {/* Notes Card */}
+        <View className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+            <Text className="text-xs font-bold text-gray-400 tracking-widest mb-4">
+                NOTES
+            </Text>
+            <Text className="text-lg text-gray-800 leading-relaxed">
+                {workoutLog.notes || "No notes added for this workout."}
+            </Text>
+        </View>
+
+        {/* Actions */}
+        <View className="flex-row items-center gap-4 mt-10">
+            {/* Edit Button */}
+            <Pressable 
+                className="flex-1 bg-indigo-50 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-indigo-100"
+                onPress={() => {
+                    setSelectedWorkout(workoutLog)
+                    router.push(`/workouts/edit`)
+                }}
+            >
+                <MaterialIcons name="edit" size={20} color={COLORS.primary} />
+                <Text className="text-indigo-700 font-bold text-base">Edit</Text>
+            </Pressable>
+
+            {/* Delete Button */}
+            <Pressable 
+                className="flex-1 bg-red-50 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-red-100"
+                onPress={triggerDelete}
+                disabled={deleteMutation.isPending}
+            >
+                {deleteMutation.isPending ? (
+                    <ActivitySpinner size="small" color={COLORS.error} />
+                ) : (
+                    <>
+                        <MaterialIcons name="delete-outline" size={20} color={COLORS.error} />
+                        <Text className="text-red-700 font-bold text-base">Delete</Text>
+                    </>
+                )}
+            </Pressable>
+        </View>
+        
+        {deleteMutation.isError && (
+          <Text className="text-red-500 mt-4 text-center">
+            {deleteMutation.error?.message || "Could not delete workout."}
+          </Text>
+        )}
+      </View>
+    </View>
   )
 }
+
+

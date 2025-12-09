@@ -1,7 +1,6 @@
 import { View, Text, RefreshControl,  } from "react-native"
 import React from "react"
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { fetchAllWeightLogs } from "@/src/lib/api/weightsApi"
 import WorkoutLogItem from "./WorkoutLogItem"
 import { FlashList } from "@shopify/flash-list"
 import { COLORS } from "@/src/constants/Colors"
@@ -9,7 +8,11 @@ import { fetchAllWorkoutLogs } from "@/src/lib/api/workoutsApi"
 import { WorkoutChart } from "./WorkoutChart"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
 
-export const WorkoutLogsList = () => {
+interface WorkoutLogsListProps {
+  headerElement?: React.ReactNode
+}
+
+export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
   const limit = 10
 
   const {
@@ -34,6 +37,21 @@ export const WorkoutLogsList = () => {
 
   const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
 
+  const ListHeader = (
+    <View className="mb-4">
+      {headerElement}
+      <View className="px-2 mt-2">
+        <Text className="text-lg font-semibold text-gray-800 mb-3">Progress Chart</Text>
+        <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden pb-4">
+          <WorkoutChart />
+        </View>
+      </View>
+
+      <Text className="text-lg font-semibold text-gray-800 mt-6 px-4 mb-2">History</Text>
+    </View>
+  )
+
+
   if (isLoading || !data) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -44,7 +62,7 @@ export const WorkoutLogsList = () => {
 
   if (isError) {
     return (
-      <View className="p-4">
+      <View className="p-2">
         <Text className="text-red-500">
           Failed to load workouts. Please try again.
         </Text>
@@ -55,8 +73,9 @@ export const WorkoutLogsList = () => {
 
 
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-gray-50">
       <FlashList
+        ListHeaderComponent={ListHeader}
         data={logs}
         renderItem={({ item }) => (
           <WorkoutLogItem item={item} path="/weights" />
@@ -68,6 +87,7 @@ export const WorkoutLogsList = () => {
             tintColor="#000"
           />
         }
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         keyExtractor={(item, index) => item.id?.toString() || index.toString()}
         onEndReached={() => {
@@ -76,10 +96,9 @@ export const WorkoutLogsList = () => {
           }
         }}
         onEndReachedThreshold={0.5}
-        ListHeaderComponent={<WorkoutChart />}
         ListFooterComponent={
           isFetchingNextPage ? (
-            <ActivitySpinner size="small" className="mx-4"  />
+            <ActivitySpinner size="small" className="mx-4 my-4"  />
           ) : null
         }
       />

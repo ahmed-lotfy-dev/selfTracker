@@ -1,13 +1,14 @@
 import { COLORS } from "@/src/constants/Colors"
 import { fetchWorkoutLogsByMonth } from "@/src/lib/api/workoutsApi"
-import { showAlert } from "@/src/lib/lib"
 import { useQuery } from "@tanstack/react-query"
-import { useRouter } from "expo-router"
 import React, { useState, useMemo } from "react"
-import { View, Text, Pressable, StyleSheet } from "react-native"
+import { View, Text } from "react-native"
 import { Calendar, DateData } from "react-native-calendars"
-import { MarkedDates } from "react-native-calendars/src/types"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
+import { FlashList } from "@shopify/flash-list"
+import WorkoutLogItem from "./WorkoutLogItem"
+import { format } from "date-fns"
+import { MaterialIcons } from "@expo/vector-icons"
 
 type WorkoutLog = {
   id: string
@@ -19,12 +20,16 @@ type WorkoutLog = {
   updatedAt: string
 }
 
-type WorkoutLogMap = Record<string, WorkoutLog[]> // from API
+type WorkoutLogMap = Record<string, WorkoutLog[]>
 
-const CalendarView = () => {
-  const router = useRouter()
+interface CalendarViewProps {
+  headerElement?: React.ReactNode
+}
+
+const CalendarView = ({ headerElement }: CalendarViewProps) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"))
 
   const {
     data = {},
@@ -35,112 +40,122 @@ const CalendarView = () => {
     queryFn: () => fetchWorkoutLogsByMonth(selectedYear, selectedMonth),
   })
 
-  const markedDates: MarkedDates = useMemo(() => {
-    const acc: MarkedDates = {}
-    for (const date in data) {
-      acc[date] = {
-        selected: true,
-        selectedColor: COLORS.primary || "#1A434E",
+  // Format markers for the calendar
+  const markedDates = useMemo(() => {
+    const marks: any = {}
+    
+    // Mark days with data
+    Object.keys(data).forEach((date) => {
+      marks[date] = {
+        marked: true,
+        dotColor: COLORS.primary || "#6366f1",
       }
-    }
-    return acc
-  }, [data])
+    })
 
-  const handleDayPress = (day: DateData) => {
-    const logs = data[day.dateString]
-    if (logs && logs.length > 0) {
-      router.push(`/workouts/${logs[0].id}`)
-    } else {
-      showAlert("No Workouts", "No workouts logged for this day.")
+    // Highlight selected date
+    marks[selectedDate] = {
+      ...(marks[selectedDate] || {}),
+      selected: true,
+      selectedColor: COLORS.primary || "#6366f1",
+      selectedTextColor: "white",
     }
-  }
+
+    return marks
+  }, [data, selectedDate])
+
+  const selectedLogs = data[selectedDate] || []
+
+  const renderHeader = (
+      <View>
+          {headerElement}
+          <View className="bg-white shadow-sm rounded-3xl mx-2 mb-5 overflow-hidden pb-2">
+            <Calendar
+                key={`${selectedYear}-${selectedMonth}`}
+                current={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`}
+                onDayPress={(day: DateData) => {
+                    setSelectedDate(day.dateString)
+                }}
+                onMonthChange={(month: DateData) => {
+                    setSelectedYear(month.year)
+                    setSelectedMonth(month.month)
+                }}
+                enableSwipeMonths={true}
+                renderArrow={(direction) => (
+                    <MaterialIcons 
+                        name={direction === 'left' ? 'chevron-left' : 'chevron-right'} 
+                        size={28} 
+                        color={COLORS.primary || "#6366f1"} 
+                    />
+                )}
+                markedDates={markedDates}
+                theme={{
+                    calendarBackground: 'white',
+                    textSectionTitleColor: '#9ca3af',
+                    selectedDayBackgroundColor: COLORS.primary || '#6366f1',
+                    selectedDayTextColor: '#ffffff',
+                    todayTextColor: COLORS.primary || '#6366f1',
+                    dayTextColor: '#1f2937',
+                    textDisabledColor: '#e5e7eb',
+                    dotColor: COLORS.primary || '#6366f1',
+                    selectedDotColor: '#ffffff',
+                    arrowColor: COLORS.primary || '#6366f1',
+                    monthTextColor: '#111827',
+                    indicatorColor: COLORS.primary || '#6366f1',
+                    textDayFontWeight: '600',
+                    textMonthFontWeight: '900',
+                    textDayHeaderFontWeight: '600',
+                    textDayFontSize: 15,
+                    textMonthFontSize: 22,
+                    textDayHeaderFontSize: 12,
+                }}
+            />
+          </View>
+          <View className="px-2">
+            <Text className="text-2xl font-bold text-gray-900 mb-4 ml-1">
+                {format(new Date(selectedDate), "EEEE, MMM dd")}
+            </Text>
+          </View>
+      </View>
+  )
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivitySpinner size="large" color={COLORS.primary} />
-        <Text>Loading workout logs...</Text>
+      <View className="flex-1 bg-gray-50">
+        {headerElement}
+        <View className="flex-1 justify-center items-center">
+            <ActivitySpinner size="large" color={COLORS.primary} />
+        </View>
       </View>
     )
   }
 
   if (error) {
     return (
-      <View style={styles.centered}>
-        <Text>Error loading data</Text>
-        <Text>{(error as Error).message}</Text>
+      <View className="flex-1 bg-gray-50">
+         {headerElement}
+         <View className="flex-1 justify-center items-center">
+            <Text className="text-red-500">Error loading calendar data.</Text>
+         </View>
       </View>
     )
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <Calendar
-        markedDates={markedDates}
-        onDayPress={handleDayPress}
-        monthFormat="yyyy MM"
-        onMonthChange={({ year, month }) => {
-          setSelectedYear(year)
-          setSelectedMonth(month)
-        }}
-        minDate="1900-01-01"
-        maxDate="2100-12-31"
-        current={`${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`}
-        dayComponent={({ date, state }) => {
-          if (!date) return null
-
-          const logs = data[date.dateString] || []
-          const isSelected = logs.length > 0
-          const bgColor = isSelected ? COLORS.primary : "transparent"
-          const textColor =
-            state === "disabled" ? "#d1d5db" : isSelected ? "white" : "#111827"
-          const workoutName = logs[0]?.workoutName
-
-          return (
-            <Pressable onPress={() => handleDayPress(date)}>
-              <View style={styles.dayContainer}>
-                <View style={[styles.dayCircle, { backgroundColor: bgColor }]}>
-                  <Text style={{ color: textColor }}>{date.day}</Text>
+    <View className="flex-1 bg-gray-50">
+        <FlashList 
+            ListHeaderComponent={renderHeader}
+            data={selectedLogs}
+            renderItem={({ item }) => <WorkoutLogItem item={item as any} path="/workouts" />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            ListEmptyComponent={
+                <View className="flex-1 justify-center items-center">
+                    <Text className="text-gray-400 font-medium">No workouts on this day.</Text>
                 </View>
-                {workoutName && (
-                  <Text style={styles.workoutText} numberOfLines={1}>
-                    {workoutName}
-                  </Text>
-                )}
-              </View>
-            </Pressable>
-          )
-        }}
-      />
+            }
+        />
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  dayContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 2,
-  },
-  dayCircle: {
-    borderRadius: 999,
-    height: 36,
-    width: 36,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 2,
-  },
-  workoutText: {
-    fontSize: 10,
-    color: "#4B5563", // gray-600
-    textAlign: "center",
-    maxWidth: 40,
-  },
-})
 
 export default CalendarView
