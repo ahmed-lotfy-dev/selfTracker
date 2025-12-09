@@ -1,16 +1,23 @@
 import { View, Text, RefreshControl } from "react-native"
 import React from "react"
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { fetchAllWeightLogs } from "@/src/lib/api/weightsApi"
+import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
 import WeightLogItem from "./WeightLogItem"
 import { FlashList } from "@shopify/flash-list"
 import { WeightChart } from "./WeightChart"
 import ActivitySpinner from "../ActivitySpinner"
 import { useThemeColors } from "@/src/constants/Colors"
+import { WeightStatsRow } from "./WeightStatsRow"
 
 export const WeightLogsList = () => {
   const limit = 10
   const colors = useThemeColors()
+
+  const { data: homeData } = useQuery({
+    queryKey: ["userHomeData"],
+    queryFn: fetchUserHomeInfo,
+  })
 
   const {
     data,
@@ -21,7 +28,6 @@ export const WeightLogsList = () => {
     refetch,
     isRefetching,
     isError,
-    error,
   } = useInfiniteQuery({
     queryKey: ["weightLogs"],
     queryFn: ({ pageParam }) => fetchAllWeightLogs(pageParam, limit),
@@ -33,6 +39,29 @@ export const WeightLogsList = () => {
   })
 
   const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
+
+  const ListHeader = (
+    <View className="mb-4 px-2">
+      <View className="">
+        <Text className="text-lg font-semibold text-gray-800 mb-2">Overview</Text>
+        <WeightStatsRow
+          currentWeight={homeData?.latestWeight || null}
+          weightChange={homeData?.weightChange || ""}
+          bmi={homeData?.userBMI || null}
+          goalWeight={homeData?.goal?.goalWeight || null}
+        />
+      </View>
+
+      <View className="mt-6">
+        <Text className="text-lg font-semibold text-gray-800 mb-3">Progress Chart</Text>
+        <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden pb-4">
+          <WeightChart />
+        </View>
+      </View>
+
+      <Text className="text-lg font-semibold text-gray-800 mt-6 px-4 mb-2">History</Text>
+    </View>
+  )
 
   if (isLoading || !data) {
     return (
@@ -46,15 +75,15 @@ export const WeightLogsList = () => {
     return (
       <View className="flex-1 justify-center items-center p-4">
         <Text className={`text-[${colors.error}] text-center`}>
-          Error loading chart data. Please try again later.
+          Error loading data. Please try again later.
         </Text>
       </View>
     )
   }
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-gray-50">
       <FlashList
-        ListHeaderComponent={<WeightChart />}
+        ListHeaderComponent={ListHeader}
         data={logs}
         renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}
         refreshControl={
@@ -64,6 +93,7 @@ export const WeightLogsList = () => {
             tintColor={colors.text}
           />
         }
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         keyExtractor={(item, index) => item.id?.toString() || index.toString()}
         onEndReached={() => {
@@ -74,10 +104,11 @@ export const WeightLogsList = () => {
         onEndReachedThreshold={0.5}        
         ListFooterComponent={
           isFetchingNextPage ? (
-            <ActivitySpinner size="small" className="mx-4"  />
+            <ActivitySpinner size="small" className="mx-4 my-4"  />
           ) : null
         }
       />
     </View>
   )
 }
+

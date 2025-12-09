@@ -1,13 +1,15 @@
-import { View, Text } from "react-native"
+import { View, Text, Pressable } from "react-native"
 import { deleteWeight, fetchSingleWeightLog } from "@/src/lib/api/weightsApi"
 import { useQuery } from "@tanstack/react-query"
 import { Route, Stack, useLocalSearchParams, useRouter } from "expo-router"
-import DateDisplay from "@/src/components/DateDisplay"
 import { useDelete } from "@/src/hooks/useDelete"
-import DeleteButton from "@/src/components/Buttons/DeleteButton"
-import EditButton from "@/src/components/Buttons/EditButton"
 import { useWorkoutActions } from "@/src/store/useWokoutStore"
 import React from "react"
+import ActivitySpinner from "@/src/components/ActivitySpinner"
+import { COLORS } from "@/src/constants/Colors"
+import BackButton from "@/src/components/Buttons/BackButton"
+import { format } from "date-fns"
+import { MaterialIcons } from "@expo/vector-icons"
 
 export default function WeightLog() {
   const router = useRouter()
@@ -29,51 +31,111 @@ export default function WeightLog() {
     mutationFn: () => deleteWeight(String(weightLog?.id)),
     confirmTitle: "Delete Weight",
     confirmMessage: "Are you sure you want to delete this weight log?",
-    onSuccessInvalidate: [{ queryKey: ["weightLogs"] }],
+    onSuccessInvalidate: [
+        { queryKey: ["weightLogs"] },
+        { queryKey: ["userHomeData"] }
+    ],
+    onSuccessCallback: () => {
+        router.back()
+    }
   })
 
-  if (isLoading) return <Text>Loading...</Text>
-  if (isError) return <Text>Error loading weight log</Text>
-
-  const log = weightLog ?? {}
-  return (
-    <>
-      <Stack.Screen
-        options={{
-          title: new Date(log.createdAt).toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          }),
-        }}
-      />
-      <View className="p-5">
-        <Text className="text-xl font-semibold mb-2">Weight Log</Text>
-        <Text className="text-lg">
-          Date:
-          <DateDisplay date={log.createdAt} isCalendar />
-        </Text>
-        <Text className="text-lg">
-          Weight: {log.weight || "No weight recorded"}
-        </Text>
-        <Text className="text-lg">
-          Notes: {log.notes || "No notes available"}
-        </Text>
-        <View className="flex-row justify-start gap-3 w-32 mt-3">
-          <EditButton
-            onPress={() => {
-              setSelectedWorkout(weightLog)
-              router.push(`/workouts/edit` as Route)
-            }}
-          />
-          <DeleteButton onPress={triggerDelete} />
-          {deleteMutation.isError && (
-            <Text className="text-red-500 mt-2">
-              {deleteMutation.error?.message || "Could not delete workout."}
-            </Text>
-          )}
+  if (isLoading) {
+    return (
+        <View className="flex-1 justify-center items-center bg-gray-50">
+            <ActivitySpinner size="large" color={COLORS.primary} />
         </View>
+    )
+  }
+
+  if (isError || !weightLog) {
+      return (
+        <View className="flex-1 justify-center items-center bg-gray-50">
+            <Text className="text-red-500 font-medium">Error loading weight details.</Text>
+            <BackButton backTo="/weights" className="mt-4" />
+        </View>
+      )
+  }
+
+  const formattedDate = weightLog.createdAt 
+    ? format(new Date(weightLog.createdAt), "MMMM dd, yyyy") 
+    : ""
+
+  return (
+    <View className="flex-1 bg-gray-50">
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <View className="pt-12 px-4 pb-4">
+        <BackButton backTo="/weights" />
       </View>
-    </>
+
+      <View className="flex-1 px-6">
+        {/* Hero Section */}
+        <View className="items-center py-10">
+            <Text className="text-7xl font-black text-gray-900 tracking-tighter">
+                {weightLog.weight}
+            </Text>
+            <Text className="text-xl text-gray-400 font-bold -mt-2 mb-8">
+                KG
+            </Text>
+            
+            <View className="bg-indigo-50 px-4 py-2 rounded-full">
+                <Text className="text-sm font-bold text-indigo-500 uppercase tracking-widest">
+                    {formattedDate}
+                </Text>
+            </View>
+        </View>
+
+        {/* Notes Card */}
+        {weightLog.notes && (
+            <View className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mt-4">
+                <Text className="text-xs font-bold text-gray-400 tracking-widest mb-3">
+                    NOTES
+                </Text>
+                <Text className="text-lg text-gray-800 leading-relaxed">
+                    {weightLog.notes}
+                </Text>
+            </View>
+        )}
+
+        {/* Actions */}
+        <View className="flex-row items-center gap-4 mt-10">
+            {/* Edit Button */}
+            <Pressable 
+                className="flex-1 bg-indigo-50 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-indigo-100"
+                onPress={() => {
+                    setSelectedWorkout(weightLog)
+                    router.push(`/weights/edit` as Route)
+                }}
+            >
+                <MaterialIcons name="edit" size={20} color={COLORS.primary} />
+                <Text className="text-indigo-700 font-bold text-base">Edit</Text>
+            </Pressable>
+
+            {/* Delete Button */}
+            <Pressable 
+                className="flex-1 bg-red-50 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-red-100"
+                onPress={triggerDelete}
+                disabled={deleteMutation.isPending}
+            >
+                {deleteMutation.isPending ? (
+                    <ActivitySpinner size="small" color={COLORS.error} />
+                ) : (
+                    <>
+                        <MaterialIcons name="delete-outline" size={20} color={COLORS.error} />
+                        <Text className="text-red-700 font-bold text-base">Delete</Text>
+                    </>
+                )}
+            </Pressable>
+        </View>
+         {deleteMutation.isError && (
+          <Text className="text-red-500 mt-4 text-center">
+            {deleteMutation.error?.message || "Could not delete weight log."}
+          </Text>
+        )}
+      </View>
+    </View>
   )
 }
+
+

@@ -1,13 +1,14 @@
 import { Text, Pressable, View } from "react-native"
 import { Link, Route, useRouter } from "expo-router"
-import DateDisplay from "../DateDisplay"
 import { deleteWeight } from "@/src/lib/api/weightsApi"
-import DeleteButton from "../Buttons/DeleteButton"
 import { useDelete } from "@/src/hooks/useDelete"
-import EditButton from "../Buttons/EditButton"
 import { useWeightLogStore } from "@/src/store/useWeightStore"
+import { MaterialIcons } from "@expo/vector-icons"
+import { COLORS } from "@/src/constants/Colors"
+import ActivitySpinner from "@/src/components/ActivitySpinner"
 import { WeightLogType } from "@/src/types/weightLogType"
 import React from "react"
+import { format } from "date-fns"
 
 type WeightLogProps = {
   item: WeightLogType
@@ -28,37 +29,71 @@ export default function WeightLogItem({ item, path }: WeightLogProps) {
     ],
   })
 
+  // Format date parts
+  const dateObj = new Date(item.createdAt || new Date())
+  const day = format(dateObj, "dd")
+  const month = format(dateObj, "MMM")
+
   return (
-    <View
-      className="flex-1 flex-row items-center justify-between p-4 my-1 bg-white rounded-lg shadow-md"
-      key={item.id}
-    >
-      <View className="flex-1  flex-row">
-        <Link href={`/weights/${item.id}`} asChild>
-          <Pressable className="flex-1">
-            <Text className="text-xl font-bold mb-3">{item.weight} kg</Text>
-            <DateDisplay date={item.createdAt} />
-          </Pressable>
-        </Link>
+    <View className="flex-row items-center my-2 px-4">
+      {/* Date Column */}
+      <View className="items-center w-12 mr-2">
+        <Text className="text-xl font-bold text-gray-800">{day}</Text>
+        <Text className="text-xs font-semibold text-gray-400 uppercase">{month}</Text>
       </View>
 
-      <View className="flex-1 justify-end flex-row gap-3">
-        <EditButton
-          onPress={() => {
-            setSelectedWeight(item)
-            router.push(`${path}/edit` as Route)
-          }}
-        />
-        <DeleteButton
-          onPress={triggerDelete}
-          isLoading={deleteMutation.isPending}
-        />
-        {deleteMutation.isError && (
-          <Text className="text-red-500 mt-2">
-            {deleteMutation.error?.message || "Could not delete workout."}
-          </Text>
-        )}
-      </View>
+      {/* Content Card */}
+      <Link href={`/weights/${item.id}`} asChild>
+        <Pressable 
+          className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-row items-center justify-between"
+          style={{ elevation: 1 }} // Android shadow
+        >
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-end gap-1">
+                <Text className="text-2xl font-bold text-gray-900">{item.weight}</Text>
+                <Text className="text-sm font-medium text-gray-400 mb-1">kg</Text>
+            </View>
+            <Text 
+                className="text-xs text-gray-400 mt-1" 
+                numberOfLines={1}
+                ellipsizeMode="tail"
+            >
+              {item.notes || (item.mood ? `Mood: ${item.mood}` : "No details")}
+            </Text>
+          </View>
+
+          <View className="flex-row gap-2 items-center">
+             {/* Edit Button */}
+             <Pressable
+              className="w-10 h-10 rounded-full bg-indigo-50 justify-center items-center active:bg-indigo-100"
+              onPress={(e: any) => {
+                e.stopPropagation()
+                setSelectedWeight(item)
+                router.push(`${path}/edit` as Route)
+              }}
+            >
+               <MaterialIcons name="edit" size={18} color={COLORS.primary || "#6366f1"} />
+            </Pressable>
+
+            {/* Delete Button */}
+            <Pressable
+              className="w-10 h-10 rounded-full bg-red-50 justify-center items-center active:bg-red-100"
+              onPress={(e: any) => {
+                 e.stopPropagation()
+                 triggerDelete()
+              }}
+              disabled={deleteMutation.isPending}
+            >
+                {deleteMutation.isPending ? (
+                     <ActivitySpinner size="small" color={COLORS.error || "#ef4444"} />
+                ) : (
+                    <MaterialIcons name="delete-outline" size={20} color={COLORS.error || "#ef4444"} />
+                )}
+            </Pressable>
+          </View>
+        </Pressable>
+      </Link>
     </View>
   )
 }
+

@@ -6,7 +6,7 @@ import Header from "@/src/components/Header"
 
 export default function WeightsScreen() {
   return (
-    <View className="flex-1 px-4 mt-10">
+    <View className="flex-1 px-3 pt-3">
       <Header title="Weights" backTo="/" />
       <WeightLogsList />
       <AddButton path="/weights" />
