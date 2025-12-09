@@ -219,13 +219,8 @@ export const getWeightChangeInPeriod = async (
   const weightChange =
     parseFloat(latestWeightLog.weight) - parseFloat(oldestWeightLog.weight)
 
-  if (weightChange > 0) {
-    return `Gained ${weightChange.toFixed(2)} kg`
-  } else if (weightChange < 0) {
-    return `Lost ${Math.abs(weightChange).toFixed(2)} kg`
-  } else {
-    return "No weight change"
-  }
+  const sign = weightChange > 0 ? "+" : ""
+  return `${sign}${weightChange.toFixed(2)} kg`
 }
 
 export const getUserData = async (user: any) => {
