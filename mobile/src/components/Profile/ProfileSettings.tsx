@@ -7,24 +7,21 @@ import {
   Platform,
   Alert,
   ScrollView,
+  Pressable,
 } from "react-native"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { useAuth } from "@/src/hooks/useAuth"
-import { SelectComponent } from "@/src/components/ui/Select"
-import * as SelectPrimitive from "@rn-primitives/select"
 import { ProfileOption } from "@/src/components/ui/ProfileOption"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { User } from "@/src/types/userType"
-import { updateUser } from "@/src/lib/api/userApi" // Import the updateUser API function
-import UserProfile from "./UserProfile" // Re-using the UserProfile component for image display
-import { COLORS, useThemeColors } from "@/src/constants/Colors"
-import LogoutButton from "@/src/components/Buttons/LogoutButton" // Import LogoutButton
+import { updateUser } from "@/src/lib/api/userApi"
+import UserProfile from "./UserProfile"
+import LogoutButton from "@/src/components/Buttons/LogoutButton"
 
 export default function ProfileSettings() {
   const { user, refetch } = useAuth()
   const { updateMutation } = useUpdate({ mutationFn: updateUser })
   const { mutate: updateUserMutation, isPending } = updateMutation
-  const colors = useThemeColors()
 
   const [name, setName] = useState(user?.name || "")
   const [email, setEmail] = useState(user?.email || "")
@@ -55,7 +52,7 @@ export default function ProfileSettings() {
     const updatedFields: Partial<User> = {
       name,
       email,
-      dateOfBirth: dateOfBirth?.toISOString().split("T")[0], // Format to YYYY-MM-DD
+      dateOfBirth: dateOfBirth?.toISOString().split("T")[0],
       gender: gender || null,
       weight: weight ? parseInt(weight, 10) : null,
       height: height ? parseInt(height, 10) : null,
@@ -70,7 +67,7 @@ export default function ProfileSettings() {
       {
         onSuccess: () => {
           Alert.alert("Success", "Profile updated successfully!")
-          refetch() // Use the refetch function from useAuth
+          refetch()
         },
         onError: (error: Error) => {
           Alert.alert("Error", "Failed to update profile: " + error.message)
@@ -80,107 +77,56 @@ export default function ProfileSettings() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 100 }} className="pt-3">
+    <ScrollView 
+      contentContainerStyle={{ paddingBottom: 100 }} 
+      showsVerticalScrollIndicator={false}
+      className="flex-1"
+    >
       <UserProfile />
-      <View
-        style={{ marginHorizontal: 12, flex: 1, gap: 12, marginVertical: 40 }}
-      >
+
+      <View className="px-2">
         {/* Personal Information Card */}
-        <View className="bg-white p-4 rounded-lg shadow-md mb-6">
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "600",
-              color: COLORS.primary,
-              marginBottom: 16,
-            }}
-          >
+        <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
+          <Text className="text-lg font-bold text-gray-900 mb-4">
             Personal Information
           </Text>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              marginBottom: 4,
-              color: COLORS.inputText,
-            }}
-          >
-            Name
-          </Text>
+
+          <Text className="text-sm font-medium text-gray-700 mb-1.5">Name</Text>
           <TextInput
-            style={{
-              padding: 8,
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: colors.border,
-              color: colors.background,
-              marginBottom: 12,
-            }}
-            placeholder="Name"
-            placeholderTextColor={COLORS.primary}
+            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
+            placeholder="Enter your name"
+            placeholderTextColor="#9ca3af"
             value={name}
             onChangeText={setName}
           />
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              marginBottom: 4,
-              color: COLORS.inputText,
-            }}
-          >
-            Email
-          </Text>
+
+          <Text className="text-sm font-medium text-gray-700 mb-1.5">Email</Text>
           <TextInput
-            style={{
-              padding: 8,
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: colors.border,
-              color: colors.inputText,
-              marginBottom: 12,
-            }}
-            placeholder="Email"
-            placeholderTextColor={COLORS.primary}
+            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
+            placeholder="Enter your email"
+            placeholderTextColor="#9ca3af"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
           />
 
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              marginBottom: 4,
-              color: COLORS.inputText,
-            }}
-          >
+          <Text className="text-sm font-medium text-gray-700 mb-1.5">
             Date of Birth
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowDatePicker(true)}
-            style={{
-              padding: 8,
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: colors.border,
-              marginBottom: 12,
-            }}
+            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-3"
           >
-            <Text style={{ color: colors.inputText }}>
-              {dateOfBirth
-                ? dateOfBirth.toDateString()
-                : "Select Date of Birth"}
+            <Text className="text-gray-900 text-base">
+              {dateOfBirth ? dateOfBirth.toDateString() : "Select Date of Birth"}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
           {showDatePicker && (
             <DateTimePicker
               value={dateOfBirth || new Date()}
-              className="text-black"
               mode="date"
               display="default"
               onChange={handleDateChange}
-              textColor={colors.text}
             />
           )}
 
@@ -196,63 +142,30 @@ export default function ProfileSettings() {
         </View>
 
         {/* Physical Details Card */}
-        <View className="bg-white p-4 rounded-lg shadow-md mb-6">
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "600",
-              color: COLORS.primary,
-              marginBottom: 16,
-            }}
-          >
+        <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
+          <Text className="text-lg font-bold text-gray-900 mb-4">
             Physical Details
           </Text>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              marginBottom: 4,
-              color: COLORS.inputText,
-            }}
-          >
-            Weight
+
+          <Text className="text-sm font-medium text-gray-700 mb-1.5">
+            Weight ({unitSystem === "metric" ? "kg" : "lbs"})
           </Text>
           <TextInput
-            style={{
-              padding: 8,
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: colors.border,
-              color: colors.inputText,
-              marginBottom: 12,
-            }}
-            placeholder="Weight"
-            placeholderTextColor={COLORS.primary}
+            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
+            placeholder="Enter your weight"
+            placeholderTextColor="#9ca3af"
             value={weight}
             onChangeText={setWeight}
             keyboardType="numeric"
           />
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              marginBottom: 4,
-              color: COLORS.inputText,
-            }}
-          >
-            Height
+
+          <Text className="text-sm font-medium text-gray-700 mb-1.5">
+            Height ({unitSystem === "metric" ? "cm" : "inches"})
           </Text>
           <TextInput
-            style={{
-              padding: 8,
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: colors.border,
-              color: colors.inputText,
-              marginBottom: 12,
-            }}
-            placeholder="Height"
-            placeholderTextColor={COLORS.primary}
+            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
+            placeholder="Enter your height"
+            placeholderTextColor="#9ca3af"
             value={height}
             onChangeText={setHeight}
             keyboardType="numeric"
@@ -269,193 +182,66 @@ export default function ProfileSettings() {
           />
         </View>
 
-        {/* Financial Details Card */}
-        <View className="bg-white p-4 rounded-lg shadow-md mb-6">
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "600",
-              color: COLORS.primary,
-              marginBottom: 16,
-            }}
-          >
-            Financial Details
+        {/* Preferences Card */}
+        <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
+          <Text className="text-lg font-bold text-gray-900 mb-4">
+            Preferences
           </Text>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              marginBottom: 4,
-              color: COLORS.inputText,
-            }}
-          >
-            Income
+
+          <Text className="text-sm font-medium text-gray-700 mb-1.5">
+            Monthly Income
           </Text>
           <TextInput
-            style={{
-              padding: 8,
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: colors.border,
-              color: colors.inputText,
-              marginBottom: 12,
-            }}
-            placeholder="Income"
-            placeholderTextColor={COLORS.primary}
+            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
+            placeholder="Enter your income"
+            placeholderTextColor="#9ca3af"
             value={income}
             onChangeText={setIncome}
             keyboardType="numeric"
           />
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              marginBottom: 4,
-              color: COLORS.inputText,
-            }}
-          >
+
+          <Text className="text-sm font-medium text-gray-700 mb-1.5">
             Currency
           </Text>
           <TextInput
-            style={{
-              padding: 8,
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: colors.border,
-              color: colors.inputText,
-              marginBottom: 12,
-            }}
-            placeholder="Currency"
-            placeholderTextColor={COLORS.primary}
+            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
+            placeholder="e.g., USD, EUR, EGP"
+            placeholderTextColor="#9ca3af"
             value={currency}
             onChangeText={setCurrency}
           />
 
-          {/* Image input - for simplicity, this might be a text input for a URL or a more complex image picker */}
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              marginBottom: 4,
-              color: COLORS.inputText,
-            }}
-          >
+          <Text className="text-sm font-medium text-gray-700 mb-1.5">
             Profile Image URL
           </Text>
           <TextInput
-            style={{
-              padding: 8,
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: colors.border,
-              color: colors.inputText,
-            }}
-            placeholder="Profile Image URL"
-            placeholderTextColor={COLORS.primary}
+            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base"
+            placeholder="Enter image URL"
+            placeholderTextColor="#9ca3af"
             value={image}
             onChangeText={setImage}
           />
         </View>
 
-        <View className="flex-1">
-          <TouchableOpacity
-            className="m-auto w-[50%] bg-green-700 py-3 rounded-lg items-center justify-center"
+        {/* Action Buttons */}
+        <View className="flex-1 m-auto w-32 gap-3">
+          {/* Save Button */}
+          <Pressable
+            className={`${
+              isPending ? "bg-gray-300" : "bg-emerald-600"
+            } rounded-2xl py-2 items-center active:bg-emerald-700`}
             onPress={handleSaveChanges}
             disabled={isPending}
           >
-            <Text
-              style={{
-                fontWeight: "bold",
-                fontSize: 18,
-                color: colors.background,
-              }}
-            >
-              {isPending ? "Saving..." : "Save Changes"}
+            <Text className="flex-1 text-white font-bold text-lg">
+              {isPending ? "Saving..." : "Save"}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
+
+          {/* Logout Button */}
+          <LogoutButton />
         </View>
-        <LogoutButton />
       </View>
     </ScrollView>
-  )
-}
-
-interface ProfileSelectProps {
-  options: { label: string; value: string }[]
-  selectedValue: string
-  onValueChange: (value: string) => void
-  label: string
-}
-
-const ProfileSelect = ({
-  options,
-  selectedValue,
-  onValueChange,
-  label,
-}: ProfileSelectProps) => {
-  const colors = useThemeColors()
-  const selectedOption = options.find(
-    (option) => option.value === selectedValue
-  )
-
-  return (
-    <View style={{ marginBottom: 16 }}>
-      <Text
-        style={{
-          fontSize: 16,
-          fontWeight: "500",
-          marginBottom: 4,
-          color: colors.inputText,
-        }}
-      >
-        {label}
-      </Text>
-      <SelectPrimitive.Root
-        value={selectedOption}
-        onValueChange={(option: SelectPrimitive.Option | undefined) => {
-          if (option) {
-            onValueChange(option.value)
-          }
-        }}
-      >
-        <SelectPrimitive.Trigger
-          style={{
-            padding: 8,
-            borderRadius: 6,
-            borderWidth: 1,
-            borderColor: colors.border,
-            marginBottom: 12,
-            height: 40, // Adjust height to match TextInput
-            justifyContent: "center",
-          }}
-        >
-          <SelectPrimitive.Value
-            placeholder={`Select a ${label}`}
-            style={{ color: colors.inputText }}
-          />
-        </SelectPrimitive.Trigger>
-        <SelectPrimitive.Portal>
-          <SelectPrimitive.Overlay />
-          <SelectPrimitive.Content>
-            <SelectPrimitive.ScrollUpButton />
-            <SelectPrimitive.Viewport>
-              <SelectPrimitive.Group>
-                {options.map((option) => (
-                  <SelectPrimitive.Item
-                    key={option.value}
-                    label={option.label}
-                    value={option.value}
-                  >
-                    <Text>{option.label}</Text>
-                    <SelectPrimitive.ItemIndicator />
-                  </SelectPrimitive.Item>
-                ))}
-              </SelectPrimitive.Group>
-            </SelectPrimitive.Viewport>
-            <SelectPrimitive.ScrollDownButton />
-          </SelectPrimitive.Content>
-        </SelectPrimitive.Portal>
-      </SelectPrimitive.Root>
-    </View>
   )
 }
