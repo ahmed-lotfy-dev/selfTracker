@@ -1,91 +1,64 @@
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-} from "react-native"
+import { View, Text, ScrollView, RefreshControl } from "react-native"
+import React from "react"
 import { useQuery } from "@tanstack/react-query"
 import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
-import { WeightProgressCard } from "@/src/components/Home/WeightProgressCard"
-import { COLORS } from "@/src/constants/Colors"
-import { TasksProgressCard } from "@/src/components/Home/TasksProgressCard"
-import { WorkoutProgressCard } from "@/src/components/Home/WorkoutProgressCard"
+import { TasksChart } from "@/src/components/Home/TasksChart"
 import UserProfile from "@/src/components/Profile/UserProfile"
-import ActionButtons from "@/src/components/Home/ActionButtons" // Import ActionButtons
-import React from "react"
+import ActionButtons from "@/src/components/Home/ActionButtons"
+import { StatsRow } from "@/src/components/Home/StatsRow"
 
 export default function HomeScreen() {
-  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
+  const { data, refetch, isRefetching } = useQuery({
     queryKey: ["userHomeData"],
     queryFn: fetchUserHomeInfo,
     staleTime: 1000 * 60 * 5,
   })
 
-  if (data) {
-  console.log({
-    weeklyWorkout: data.weeklyWorkout,
-    monthlyWorkout: data.monthlyWorkout,
-    weightChange: data.weightChange,
-    weightDelta: data.weightDelta,
-    bmi: data.userBMI,
-    pendingTasks: data.pendingTasks,
-    completedTasks: data.completedTasks,
-    allTasks: data.allTasks,
-    goalData: data.goal,
-  })
-}
+  return (
+    <ScrollView 
+      className="flex-1 bg-white px-4 pt-5"
+      contentContainerStyle={{ paddingBottom: 150 }}
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+      }
+    >
+      <UserProfile homeScreen className="m" />
 
-  console.log(data)
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center p-4">
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="items-start mt-3">
+        <View className="">
+          <Text className="text-2xl font-bold text-gray-900">
+            Design your life,
+          </Text>
+          <Text className="text-xl font-bold text-gray-400">
+            one habit at a time.
+          </Text>
+        </View>
       </View>
-    )
-  }
-
-  if (isError) {
-    return (
-      <View className="flex-1 justify-center items-center p-4">
-        <Text className="text-red-500 text-center">
-          Error loading user data. Please try again later.
+      
+      <View className="mt-4">
+        <Text className="text-lg font-semibold text-gray-800">
+          Quick Actions
         </Text>
       </View>
-    )
-  }
-
-  return (
-    <ScrollView
-      refreshControl={
-        <RefreshControl
-          onRefresh={refetch}
-          refreshing={isRefetching}
-          tintColor="#3b82f6"
-        />
-      }
-      className="flex-1 bg-gray-100 px-4 py-4"
-    >
-      <UserProfile homeScreen className="mt-4" />
       <ActionButtons />
 
-      <View className="gap-3">
-        <WorkoutProgressCard
-          weeklyWorkoutCount={data?.weeklyWorkout}
-          monthlyWorkoutCount={data?.monthlyWorkout}
+      <View className="mt-4">
+        <Text className="text-lg font-semibold text-gray-800">
+          Insights
+        </Text>
+        <StatsRow
+            weeklyWorkouts={data?.weeklyWorkout || 0}
+            monthlyWorkouts={data?.monthlyWorkout || 0}
+            weightChange={data?.weightChange || ""}
+            bmi={data?.userBMI || null}
+            goalWeight={data?.goal?.goalWeight || null}
         />
+      </View>
 
-        <WeightProgressCard
-          weightChange={data?.weightChange}
-          goalWeight={data?.goal?.goalWeight}
-          delta={data?.weightDelta}
-          bmi={data?.userBMI}
-        />
-
-        <TasksProgressCard
-          pendingTasks={data?.pendingTasks}
-          completedTasks={data?.completedTasks}
-          allTasks={data?.allTasks}
+      <View className="mt-4">
+         <TasksChart
+          pendingTasks={data?.pendingTasks || 0}
+          completedTasks={data?.completedTasks || 0}
         />
       </View>
     </ScrollView>

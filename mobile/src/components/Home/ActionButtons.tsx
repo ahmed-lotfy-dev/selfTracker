@@ -40,7 +40,7 @@ export default function ActionButtons() {
   const router = useRouter()
 
   return (
-    <View className="flex-row flex-wrap justify-center mt-4 mb-3">
+    <View className="flex-row flex-wrap justify-center">
       <ActionButton
         icon="plus-circle"
         label="Weight"
