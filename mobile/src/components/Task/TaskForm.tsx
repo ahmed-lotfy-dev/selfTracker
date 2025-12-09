@@ -7,12 +7,11 @@ import {
   Platform,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { TaskSchema, TaskType } from "@/src/types/taskType"
+import { TaskSchema } from "@/src/types/taskType"
 import { useAuth } from "../../hooks/useAuth"
 import { COLORS } from "../../constants/Colors"
 import { useAdd } from "../../hooks/useAdd"
 import { createTask } from "../../lib/api/tasksApi"
-import { format } from "date-fns"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function TaskForm() {
@@ -22,7 +21,7 @@ export default function TaskForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { addMutation } = useAdd({
-    mutationFn: (task: TaskType) => createTask(task),
+    mutationFn: createTask,
     onSuccessInvalidate: [
       { queryKey: ["tasks"] },
       { queryKey: ["userHomeData"] },
@@ -66,19 +65,19 @@ export default function TaskForm() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       className="w-full"
     >
-      <View className="flex-row items-center mb-5">
+      <View className="flex-row items-center bg-white rounded-2xl p-2 shadow-sm border border-gray-100 mb-2">
         <TextInput
-          className="flex-1  border border-gray-500 pl-3 rounded-md  focus:border-blue-500 focus:ring-1 focus:ring-blue-400 text-inputText"
-          placeholder="Task Title..."
+          className="flex-1 ml-3 text-base text-gray-800"
+          placeholder="What needs to be done?"
           value={title}
           onChangeText={setTitle}
           onSubmitEditing={handleSubmit}
-          placeholderTextColor={COLORS.placeholder}
+          placeholderTextColor="#9ca3af" 
         />
         <Pressable
           className={`${
-            !isSubmitting ? "bg-green-700" : "bg-green-400"
-          } rounded-md px-3 py-2.5 items-center ml-2`}
+            !isSubmitting ? "bg-emerald-600" : "bg-emerald-400"
+          } w-10 h-10 rounded-xl items-center justify-center shadow-sm shadow-emerald-200`}
           onPress={handleSubmit}
           disabled={isSubmitting}
         >
@@ -86,7 +85,7 @@ export default function TaskForm() {
         </Pressable>
       </View>
       {titleError ? (
-        <Text className="text-red-500 mt-2">{titleError}</Text>
+        <Text className="text-red-500 text-xs ml-2 mb-2">{titleError}</Text>
       ) : null}
     </KeyboardAvoidingView>
   )
