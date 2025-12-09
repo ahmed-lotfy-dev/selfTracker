@@ -21,16 +21,18 @@ export default function Header({ title, className, backTo }: HeaderProps) {
   ]
   const shouldShowBackButton = !noBackButtonPaths.includes(pathname)
 
-  // Use the provided backTo prop if available, otherwise calculate, otherwise default to /
-
   return (
     <View
-      className={`w-full flex-row justify-center items-center relative  mb-5 ${className}`}
+      className={`w-full ${className} ${shouldShowBackButton ? "flex-row items-center" : "mb-3"}`}
     >
-      {shouldShowBackButton && (
-        <BackButton backTo={backTo} className="absolute top-0 left-4" />
+      {shouldShowBackButton ? (
+        <>
+            <BackButton backTo={backTo} className="mr-3" />
+            <Text className="text-xl font-bold text-gray-900 flex-1" numberOfLines={1}>{title}</Text>
+        </>
+      ) : (
+        <Text className="text-3xl font-extrabold text-gray-900 tracking-tight">{title}</Text>
       )}
-      <Text className="text-2xl font-bold border border-b-2 px-4 py-2 rounded-md">{title}</Text>
     </View>
   )
 }

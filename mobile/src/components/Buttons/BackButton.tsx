@@ -22,12 +22,11 @@ export default function BackButton({
   }, [backTo, router])
 
   return (
-    <View
-      className={` w-10 h-10 rounded-full flex items-center justify-center mt-5  ${className}`}
+    <Pressable 
+        onPress={handlePress} 
+        className={`w-10 h-10 rounded-full bg-gray-100 items-center justify-center active:bg-gray-200 ${className}`}
     >
-      <Pressable onPress={handlePress} className="">
-        <Entypo name="chevron-left" size={24} />
-      </Pressable>
-    </View>
+        <Entypo name="chevron-left" size={24} color="#374151" />
+    </Pressable>
   )
 }
