@@ -5,7 +5,7 @@ import { COLORS } from "@/src/constants/Colors"
 import ActivitySpinner from "../ActivitySpinner"
 
 type DeleteButtonProps = {
-  onPress?: () => void
+  onPress?: (event?: any) => void
   isLoading?: boolean
   className?: string
 }

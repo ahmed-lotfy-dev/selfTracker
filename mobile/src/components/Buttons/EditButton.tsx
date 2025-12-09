@@ -4,7 +4,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome"
 import { COLORS } from "@/src/constants/Colors"
 
 interface EditButtonProps extends PressableProps {
-  onPress?: () => void
+  onPress?: (event?: any) => void
   className?: string
 }
 
