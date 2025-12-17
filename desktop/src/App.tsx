@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { RouterProvider, createRouter, createRoute, createRootRoute, Outlet } from "@tanstack/react-router";
+import { RouterProvider, createRouter, createRoute, createRootRoute, Outlet, redirect } from "@tanstack/react-router";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { Toaster } from "@/components/ui/sonner";
@@ -7,6 +7,8 @@ import "./index.css";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { TimerController } from "@/components/timer/TimerController";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 
 // Pages
 import DashboardPage from "./routes/dashboard";
@@ -19,6 +21,7 @@ import HabitsPage from "./routes/habits";
 import TasksPage from "./routes/tasks";
 import TimersPage from "./routes/timers";
 import TimerOverlayPage from "./routes/timer-overlay";
+import OnboardingPage from "./routes/onboarding";
 
 // Create a client with persistence settings
 const queryClient = new QueryClient({
@@ -34,22 +37,42 @@ const persister = createSyncStoragePersister({
   storage: window.localStorage,
 });
 
-// 1. Root Route (Global Providers & Logic)
-const rootRoute = createRootRoute({
-  component: () => (
+// Root Layout Component - renders inside providers
+function RootLayout() {
+  // Handle deep link authentication from social OAuth providers
+  useDeepLinkHandler();
+
+  return (
     <>
       <TimerController /> {/* Global Timer Logic runs everywhere */}
       <Outlet />
       <Toaster />
     </>
-  ),
+  );
+}
+
+// 1. Root Route (Global Providers & Logic)
+const rootRoute = createRootRoute({
+  beforeLoad: ({ location }) => {
+    const onboardingComplete = localStorage.getItem("onboarding_complete");
+    if (!onboardingComplete && location.pathname !== '/onboarding') {
+      throw redirect({
+        to: '/onboarding',
+      })
+    }
+  },
+  component: RootLayout,
 });
 
 // 2. App Shell Route (Sidebar Layout)
 const shellRoute = createRoute({
   id: 'shell',
   getParentRoute: () => rootRoute,
-  component: AppShell,
+  component: () => (
+    <ProtectedRoute>
+      <AppShell />
+    </ProtectedRoute>
+  ),
 });
 
 // --- Routes inside App Shell ---
@@ -116,6 +139,12 @@ const overlayRoute = createRoute({
   component: TimerOverlayPage,
 });
 
+const onboardingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/onboarding",
+  component: OnboardingPage,
+});
+
 import ProjectsPage from "./routes/projects/index";
 import ProjectDetailPage from "./routes/projects/$projectId";
 
@@ -147,6 +176,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   overlayRoute,
+  onboardingRoute,
 ]);
 
 // Create router
