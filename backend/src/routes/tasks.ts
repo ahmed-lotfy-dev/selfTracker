@@ -17,6 +17,11 @@ const createTaskSchema = z.object({
   completed: z.boolean().optional(),
   dueDate: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
   category: z.string().optional(),
+  description: z.string().optional(),
+  projectId: z.string().optional(),
+  columnId: z.string().optional(),
+  priority: z.enum(["low", "medium", "high"]).optional(),
+  order: z.number().int().optional(),
 })
 
 const updateTaskSchema = z.object({
@@ -24,6 +29,11 @@ const updateTaskSchema = z.object({
   completed: z.boolean().optional(),
   dueDate: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
   category: z.string().optional(),
+  description: z.string().optional(),
+  projectId: z.string().optional(),
+  columnId: z.string().optional(),
+  priority: z.enum(["low", "medium", "high"]).optional(),
+  order: z.number().int().optional(),
 })
 
 tasksRouter.get("/", async (c) => {
@@ -60,9 +70,9 @@ tasksRouter.post("/", zValidator("json", createTaskSchema), async (c) => {
     // But original code: await clearCache(...)
     // I'll move it to after success or keep it if "optimistic". 
     // Moving it to after success is better practice.
-    
+
     const created = await createTask(user.id, body)
-    
+
     await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
 
     return c.json({
@@ -84,16 +94,21 @@ tasksRouter.patch("/:id", zValidator("json", updateTaskSchema), async (c) => {
   if (!id) return c.json({ message: "Task ID is required" }, 400)
 
   const body = c.req.valid("json")
-  
+
   // Clean up undefined fields
   const updateFields: Record<string, any> = {}
   if (body.title !== undefined) updateFields.title = body.title
   if (body.completed !== undefined) updateFields.completed = body.completed
   if (body.dueDate !== undefined) updateFields.dueDate = body.dueDate
   if (body.category !== undefined) updateFields.category = body.category
+  if (body.description !== undefined) updateFields.description = body.description
+  if (body.projectId !== undefined) updateFields.projectId = body.projectId
+  if (body.columnId !== undefined) updateFields.columnId = body.columnId
+  if (body.priority !== undefined) updateFields.priority = body.priority
+  if (body.order !== undefined) updateFields.order = body.order
 
   if (Object.keys(updateFields).length === 0) {
-      return c.json({ message: "At least one field is required" }, 400)
+    return c.json({ message: "At least one field is required" }, 400)
   }
 
   try {
@@ -106,15 +121,15 @@ tasksRouter.patch("/:id", zValidator("json", updateTaskSchema), async (c) => {
     // const taskExisted = await db.query.tasks.findFirst(...)
     // if (!taskExisted ...)
     // const updated = await updateTask(...)
-    
+
     // Pass user.id to updateTask and let it handle or I should add check here.
     // I will look at `updateTask` signature in `services/tasksService.ts`.
     // Assuming `updateTask` takes `(taskId, userId, fields)`.
-    
+
     const updated = await updateTask(id, user.id, updateFields)
-    
+
     if (!updated) {
-         return c.json({ message: "Task not found or unauthorized" }, 404)
+      return c.json({ message: "Task not found or unauthorized" }, 404)
     }
 
     await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
@@ -144,7 +159,7 @@ tasksRouter.delete("/:id", async (c) => {
     if (!deleted) {
       return c.json({ message: "Task not found" }, 404)
     }
-    
+
     await clearCache([`userHomeData:${user.id}`, `tasks:${user.id}`])
 
     return c.json({

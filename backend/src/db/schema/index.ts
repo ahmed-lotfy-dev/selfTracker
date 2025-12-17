@@ -9,4 +9,5 @@ export * from "./workoutExercises"
 export * from "./workoutLogs"
 export * from "./workouts"
 export * from "./auth-schema"
-  
+export * from "./projects"
+export * from "./timer"

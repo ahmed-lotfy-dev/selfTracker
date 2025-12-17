@@ -10,6 +10,8 @@ import weightsLogsRouter from "./routes/weightLogs.js"
 import workoutsRouter from "./routes/workouts.js"
 import workoutLogsRouter from "./routes/workoutsLogs.js"
 import uploadRouter from "./routes/image.js"
+import projectsRouter from "./routes/projects.js"
+import timerRouter from "./routes/timer.js"
 import { auth } from "../lib/auth.js"
 
 const app = new Hono<{
@@ -28,6 +30,8 @@ app.use(
     origin: [
       "http://192.168.1.5:8081",
       "exp://192.168.1.5:8081",
+      "http://localhost:1420", // Tauri
+      "http://localhost:5173", // Vite local
     ],
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "UPDATE", "DELETE", "PATCH", "OPTIONS"],
@@ -66,6 +70,10 @@ app.route("/api/weightLogs", weightsLogsRouter)
 app.route("/api/workouts", workoutsRouter)
 
 app.route("/api/workoutLogs", workoutLogsRouter)
+
+app.route("/api/projects", projectsRouter)
+
+app.route("/api/timer", timerRouter)
 
 app.route("/api/image", uploadRouter)
 
