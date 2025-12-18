@@ -65,38 +65,28 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
   };
 
   return (
-    <View className={`mt-6 ${className || ''}`}>
-      {/* Divider */}
-      <View className="flex-row items-center mb-4">
-        <View className="flex-1 h-px bg-gray-300" />
-        <Text className="mx-4 text-gray-500 text-sm">Or continue with</Text>
-        <View className="flex-1 h-px bg-gray-300" />
-      </View>
+    <View className={`gap-3 ${className || ''}`}>
+      {/* Google Sign In */}
+      <Pressable
+        onPress={() => handleSocialLogin('google')}
+        className="flex-row items-center justify-center border border-gray-300 rounded-md px-4 py-3 bg-white active:bg-gray-50"
+      >
+        <AntDesign name="google" size={20} color="#4285F4" />
+        <Text className="ml-3 text-gray-700 font-medium">
+          Sign in with Google
+        </Text>
+      </Pressable>
 
-      {/* Social Login Buttons */}
-      <View className="gap-3">
-        {/* Google Sign In */}
-        <Pressable
-          onPress={() => handleSocialLogin('google')}
-          className="flex-row items-center justify-center border border-gray-300 rounded-md px-4 py-3 bg-white active:bg-gray-50"
-        >
-          <AntDesign name="google" size={20} color="#4285F4" />
-          <Text className="ml-3 text-gray-700 font-medium">
-            Sign in with Google
-          </Text>
-        </Pressable>
-
-        {/* GitHub Sign In */}
-        <Pressable
-          onPress={() => handleSocialLogin('github')}
-          className="flex-row items-center justify-center border border-gray-300 rounded-md px-4 py-3 bg-white active:bg-gray-50"
-        >
-          <AntDesign name="github" size={20} color="#333" />
-          <Text className="ml-3 text-gray-700 font-medium">
-            Sign in with GitHub
-          </Text>
-        </Pressable>
-      </View>
+      {/* GitHub Sign In */}
+      <Pressable
+        onPress={() => handleSocialLogin('github')}
+        className="flex-row items-center justify-center border border-gray-300 rounded-md px-4 py-3 bg-white active:bg-gray-50"
+      >
+        <AntDesign name="github" size={20} color="#333" />
+        <Text className="ml-3 text-gray-700 font-medium">
+          Sign in with GitHub
+        </Text>
+      </Pressable>
     </View>
   );
 }
