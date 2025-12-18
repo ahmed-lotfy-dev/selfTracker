@@ -24,8 +24,18 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons"
 import { Colors } from "../constants/Colors"
+import { useDeepLinkHandler } from "@/src/hooks/useDeepLinkHandler"
 
 SplashScreen.preventAutoHideAsync()
+
+/**
+ * Wrapper component to initialize hooks that need provider context.
+ * This component is rendered inside AppProviders so hooks have access to providers.
+ */
+function DeepLinkWrapper({ children }: { children: React.ReactNode }) {
+  useDeepLinkHandler()
+  return <>{children}</>
+}
 
 function RootLayout() {
   useOnlineManager()
@@ -54,7 +64,7 @@ function RootLayout() {
       })
       return cleanup
     }
-    return () => {} // Return an empty cleanup function for web
+    return () => { } // Return an empty cleanup function for web
   }, [])
 
   useEffect(() => {
@@ -79,17 +89,19 @@ function RootLayout() {
 
   return (
     <AppProviders>
-      <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
-      />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(home)" />
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <PortalHost />
+      <DeepLinkWrapper>
+        <StatusBar
+          barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(home)" />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <PortalHost />
+      </DeepLinkWrapper>
     </AppProviders>
   )
 }

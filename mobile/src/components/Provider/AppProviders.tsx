@@ -1,5 +1,5 @@
 // TODO revert back to safe area view when they fix it expo SDK 53
-import { ReactNode, useMemo, useState } from "react"
+import { ReactNode } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import React from "react"
@@ -9,6 +9,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller"
 
 import { Colors } from "@/src/constants/Colors"
 import { useColorScheme } from "react-native"
+import { ToastProvider } from "@/src/hooks/useToast"
 
 interface AppProvidersProps {
   children: ReactNode
@@ -26,18 +27,20 @@ export function AppProviders({ children }: AppProvidersProps) {
   const theme = useColorScheme()
   return (
     <QueryClientProvider client={queryClient}>
-      <KeyboardProvider>
-        <SafeAreaView
-          edges={["top", "left", "right"]}
-          style={{
-            flex: 1,
-            backgroundColor:
-              theme === "light" ? Colors.light.background : Colors.dark.background,
-          }}
-        >
-          {children}
-        </SafeAreaView>
-      </KeyboardProvider>
+      <ToastProvider>
+        <KeyboardProvider>
+          <SafeAreaView
+            edges={["top", "left", "right"]}
+            style={{
+              flex: 1,
+              backgroundColor:
+                theme === "light" ? Colors.light.background : Colors.dark.background,
+            }}
+          >
+            {children}
+          </SafeAreaView>
+        </KeyboardProvider>
+      </ToastProvider>
     </QueryClientProvider>
   )
 }

@@ -42,3 +42,5 @@ app-example
 /dist
 /node_modules
 google-services.json
+.apk
+docs
