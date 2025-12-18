@@ -15,6 +15,7 @@ import { signInSchema } from "@/src/types/userType"
 import { z } from "zod"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
+import { SocialLoginButtons } from "@/src/components/Auth/SocialLoginButtons"
 
 export default function SignIn() {
   const router = useRouter()
@@ -67,6 +68,9 @@ export default function SignIn() {
     >
       <Text className="font-bold text-xl mb-4">Sign In</Text>
 
+      {/* Social Login Buttons - shown first */}
+      <SocialLoginButtons />
+
       {/* Email Input */}
       <TextInput
         value={email}
@@ -76,7 +80,7 @@ export default function SignIn() {
         keyboardType="email-address"
         autoComplete="email"
         textContentType="emailAddress"
-          placeholderTextColor={COLORS.inputText}
+        placeholderTextColor={COLORS.inputText}
         className="border border-gray-300 rounded-md px-4 py-2 mb-1"
       />
       {emailError ? (
@@ -91,7 +95,7 @@ export default function SignIn() {
         secureTextEntry
         autoComplete="password"
         textContentType="password"
-          placeholderTextColor={COLORS.inputText}
+        placeholderTextColor={COLORS.inputText}
         className="border border-gray-300 rounded-md px-4 py-2 mb-1 color-inputText"
       />
       {passwordError ? (
@@ -107,9 +111,8 @@ export default function SignIn() {
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        className={`p-4 rounded-md items-center ${
-          isSubmitting ? "bg-blue-300" : "bg-[#007bff]"
-        }`}
+        className={`p-4 rounded-md items-center ${isSubmitting ? "bg-blue-300" : "bg-[#007bff]"
+          }`}
       >
         {isSubmitting ? (
           <ActivitySpinner color={COLORS.primary} />
