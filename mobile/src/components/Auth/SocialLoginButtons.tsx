@@ -50,12 +50,12 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
     try {
       console.log(`Initiating ${provider} OAuth flow...`);
 
-      // Use full URL for callback (better-auth requires this for mobile)
+      // Use full URL for callback with platform identifier
       const backendUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
       await authClient.signIn.social({
         provider,
-        callbackURL: `${backendUrl}/api/social-success`,
+        callbackURL: `${backendUrl}/api/social-success?platform=mobile`,
       });
 
       console.log(`${provider} OAuth initiated - will redirect via /api/social-success`);

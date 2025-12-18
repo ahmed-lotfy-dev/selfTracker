@@ -49,26 +49,22 @@ app.get("/api/social-success", async (c) => {
 
   const token = session?.session.token;
 
-  // Detect platform from User-Agent
-  const userAgent = c.req.header('User-Agent') || '';
-  const isMobileApp = userAgent.includes('Expo') || userAgent.includes('okhttp');
-  const isDesktopApp = userAgent.includes('Tauri');
-  const isWeb = !isMobileApp && !isDesktopApp;
+  // Detect platform from query parameter (more reliable than User-Agent)
+  const platform = c.req.query('platform') || 'web';
+  const isApp = platform === 'mobile' || platform === 'desktop';
 
   console.log('OAuth callback - Platform detection:', {
-    userAgent,
-    isMobileApp,
-    isDesktopApp,
-    isWeb,
+    platform,
+    isApp,
     hasToken: !!token
   });
 
   // Redirect based on platform
-  if (isMobileApp || isDesktopApp) {
+  if (isApp) {
     // Mobile/Desktop: redirect to deep link
     return c.redirect(`selftracker://auth?token=${token || ''}`, 302);
   } else {
-    // Web: redirect to dashboard with token in cookie (better-auth handles this)
+    // Web: redirect to dashboard
     return c.redirect('/', 302);
   }
 })
