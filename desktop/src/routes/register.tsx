@@ -108,7 +108,7 @@ export default function RegisterPage() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         provider: "google",
-                        callbackURL: `${backendUrl}/api/social-success`,
+                        callbackURL: `${backendUrl}/api/social-success?platform=desktop`,
                       }),
                     });
 
@@ -147,7 +147,7 @@ export default function RegisterPage() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         provider: "github",
-                        callbackURL: `${backendUrl}/api/social-success`,
+                        callbackURL: `${backendUrl}/api/social-success?platform=desktop`,
                       }),
                     });
 
