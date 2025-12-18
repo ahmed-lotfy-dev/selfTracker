@@ -49,24 +49,73 @@ app.get("/api/social-success", async (c) => {
 
   const token = session?.session.token;
 
-  // Detect platform from query parameter (more reliable than User-Agent)
+  // Detect platform from query parameter
   const platform = c.req.query('platform') || 'web';
-  const isApp = platform === 'mobile' || platform === 'desktop';
+  const isDesktop = platform === 'desktop';
+  const isMobile = platform === 'mobile';
 
   console.log('OAuth callback - Platform detection:', {
     platform,
-    isApp,
     hasToken: !!token
   });
 
-  // Redirect based on platform
-  if (isApp) {
-    // Mobile/Desktop: redirect to deep link
-    return c.redirect(`selftracker://auth?token=${token || ''}`, 302);
-  } else {
-    // Web: redirect to dashboard
-    return c.redirect('/', 302);
+  // For desktop: return HTML that redirects AND closes the tab
+  if (isDesktop) {
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Authentication Successful</title>
+        <style>
+          body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #f8f9fa;
+          }
+          .message {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+        </style>
+      </head>
+      <body>
+        <div class="message">
+          <h2>✅ Authentication Successful</h2>
+          <p>Returning to app...</p>
+        </div>
+        <script>
+          // Redirect to deep link
+          window.location.href = 'selftracker://auth?token=${token || ''}';
+          
+          // Close window after a brief delay
+          setTimeout(() => {
+            window.close();
+            // If close() doesn't work, show message
+            setTimeout(() => {
+              document.querySelector('.message').innerHTML = 
+                '<h2>✅ Success!</h2><p>You can close this tab now.</p>';
+            }, 500);
+          }, 1000);
+        </script>
+      </body>
+      </html>
+    `);
   }
+
+  // For mobile: direct 302 redirect
+  if (isMobile) {
+    return c.redirect(`selftracker://auth?token=${token || ''}`, 302);
+  }
+
+  // For web: redirect to dashboard
+  return c.redirect('/', 302);
 })
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
