@@ -41,6 +41,18 @@ app.use(
   })
 )
 
+app.get("/api/social-success", async (c) => {
+  // Get session to extract token
+  const session = await auth.api.getSession({
+    headers: c.req.raw.headers
+  });
+
+  const token = session?.session.token;
+
+  // Direct redirect to deep link (no HTML page)
+  return c.redirect(`selftracker://auth?token=${token || ''}`, 302);
+})
+
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw)
 })
