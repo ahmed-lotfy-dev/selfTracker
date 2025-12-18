@@ -6,6 +6,8 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "core:window:allow-hide"
+    "deep-link:default",
+    "core:window:allow-hide",
+    "shell:allow-open"
   ]
 }

@@ -54,5 +54,14 @@
         ]
       }
     }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "selftracker"
+        ]
+      }
+    }
   }
 }

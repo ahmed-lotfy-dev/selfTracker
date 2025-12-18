@@ -1,15 +1,16 @@
-import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { LayoutDashboard, Settings, Minimize2, LogOut, Timer, Dumbbell, Scale, CalendarCheck, ListTodo, FolderKanban } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 
 export function AppShell() {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-
   const mainNavItems = [
     {
       to: "/",
@@ -53,36 +54,11 @@ export function AppShell() {
 
   const handleLogout = async () => {
     await authClient.signOut();
+    localStorage.removeItem("bearer_token");
+    await queryClient.invalidateQueries({ queryKey: ["session"] });
     navigate({ to: "/login" });
   };
 
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    const initDeepLink = async () => {
-      try {
-        const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
-        unlisten = await onOpenUrl((urls) => {
-          console.log("Deep link received:", urls);
-          for (const url of urls) {
-            if (url.startsWith("selftracker://auth")) {
-              // TODO: Hand off to Auth Handler
-              console.log("Processing Auth Deep Link", url);
-              // Check if there is a code or token?
-              // For now just alert/log to confirm flow
-            }
-          }
-        });
-      } catch (error) {
-        console.error("Deep Link Error:", error);
-      }
-    };
-
-    initDeepLink();
-
-    return () => {
-      if (unlisten) unlisten();
-    };
-  }, []);
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">

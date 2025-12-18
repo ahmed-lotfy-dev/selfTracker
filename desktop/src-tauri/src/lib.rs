@@ -2,7 +2,7 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager,
+    Manager, Emitter,
 };
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -21,6 +21,23 @@ pub fn run() {
             _ => {}
         })
         .setup(|app| {
+            #[cfg(desktop)]
+            app.handle().plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+                println!("Single Instance - Args: {:?}", argv);
+                // Manually check for deep link in args and emit if found
+                for arg in argv {
+                    if arg.starts_with("selftracker://") {
+                        println!("Emitting manual deep link event: {}", arg);
+                        let _ = app.emit("app-deep-link", vec![arg]);
+                    }
+                }
+
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }))?;
+
             // 1. Create a Menu (optional, but good for "Quit")
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "show", "Show / Hide", true, None::<&str>)?;
@@ -65,6 +82,13 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
+
+            #[cfg(any(windows, target_os = "linux"))]
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                app.deep_link().register("selftracker")?;
+            }
+
             Ok(())
         })
         .plugin(tauri_plugin_shell::init())
