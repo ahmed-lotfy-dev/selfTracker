@@ -50,15 +50,16 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
     try {
       console.log(`Initiating ${provider} OAuth flow...`);
 
-      // Use full URL for callback with platform identifier
-      const backendUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-
+      // Better Auth Expo plugin automatically handles:
+      // - Converting callback URL to deep link (selftracker://auth)
+      // - Adding session token to URL
+      // - Opening browser and handling redirect
       await authClient.signIn.social({
         provider,
-        callbackURL: `${backendUrl}/api/social-success?platform=mobile`,
+        callbackURL: '/api/social-success?platform=mobile', // Legacy endpoint handling for deployed backend
       });
 
-      console.log(`${provider} OAuth initiated - will redirect via /api/social-success`);
+      console.log(`${provider} OAuth initiated`);
 
     } catch (error) {
       console.error(`Error during ${provider} OAuth:`, error);

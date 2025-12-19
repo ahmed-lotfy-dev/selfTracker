@@ -32,3 +32,7 @@ lerna-debug.log*
 /build
 /dist
 /node_modules
+
+# Ignored large files and secrets
+*.apk
+google-services.json

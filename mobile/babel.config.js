@@ -12,7 +12,7 @@ module.exports = function (api) {
             "better-auth/client/plugins":
               "./node_modules/better-auth/dist/client/plugins/index.cjs",
             "@better-auth/expo/client":
-              "./node_modules/@better-auth/expo/dist/client.cjs",
+              "./node_modules/@better-auth/expo/dist/client.mjs",  // .mjs NOT .cjs!
           },
         },
       ],

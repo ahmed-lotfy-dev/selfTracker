@@ -42,25 +42,21 @@ app.use(
 )
 
 app.get("/api/social-success", async (c) => {
+  // This endpoint is now only used for DESKTOP OAuth
+  // Mobile uses Better Auth Expo plugin's automatic callback handling
+
   // Get session to extract token
   const session = await auth.api.getSession({
     headers: c.req.raw.headers
   });
 
   const token = session?.session.token;
-
-  // Detect platform from query parameter
   const platform = c.req.query('platform') || 'web';
-  const isDesktop = platform === 'desktop';
-  const isMobile = platform === 'mobile';
 
-  console.log('OAuth callback - Platform detection:', {
-    platform,
-    hasToken: !!token
-  });
+  console.log('OAuth callback:', { platform, hasToken: !!token });
 
-  // For desktop: return HTML that redirects AND closes the tab
-  if (isDesktop) {
+  // Desktop: return HTML that redirects to deep link and closes tab
+  if (platform === 'desktop') {
     return c.html(`
       <!DOCTYPE html>
       <html>
@@ -91,13 +87,9 @@ app.get("/api/social-success", async (c) => {
           <p>Returning to app...</p>
         </div>
         <script>
-          // Redirect to deep link
           window.location.href = 'selftracker://auth?token=${token || ''}';
-          
-          // Close window after a brief delay
           setTimeout(() => {
             window.close();
-            // If close() doesn't work, show message
             setTimeout(() => {
               document.querySelector('.message').innerHTML = 
                 '<h2>✅ Success!</h2><p>You can close this tab now.</p>';
@@ -109,12 +101,7 @@ app.get("/api/social-success", async (c) => {
     `);
   }
 
-  // For mobile: direct 302 redirect
-  if (isMobile) {
-    return c.redirect(`selftracker://auth?token=${token || ''}`, 302);
-  }
-
-  // For web: redirect to dashboard
+  // Web: redirect to dashboard
   return c.redirect('/', 302);
 })
 

@@ -9,6 +9,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { TimerController } from "@/components/timer/TimerController";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
+import { TimerProvider } from "@/context/TimerContext";
+import { FloatingTimer } from "@/components/timer/FloatingTimer";
 
 // Pages
 import DashboardPage from "./routes/dashboard";
@@ -45,6 +47,7 @@ function RootLayout() {
   return (
     <>
       <TimerController /> {/* Global Timer Logic runs everywhere */}
+      <FloatingTimer /> {/* Floating Timer Overlay */}
       <Outlet />
       <Toaster />
     </>
@@ -195,9 +198,13 @@ function App() {
       client={queryClient}
       persistOptions={{ persister }}
     >
-      <RouterProvider router={router} />
+      <TimerProvider>
+        <RouterProvider router={router} />
+      </TimerProvider>
     </PersistQueryClientProvider>
   );
 }
+
+export default App;
 
 export default App;
