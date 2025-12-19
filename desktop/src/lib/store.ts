@@ -22,6 +22,7 @@ interface TimerState {
 
   setTimeLeft: (time: number) => void;
   startTimer: () => void;
+  pauseTimer: () => void;
   stopTimer: () => void;
   toggleTimer: () => void;
   resetTimer: (mode?: TimerState["mode"]) => void;
@@ -61,6 +62,11 @@ export const useTimerStore = create<TimerState>((set, get) => {
     startTimer: () => {
       set({ isRunning: true });
       syncState({ isRunning: true });
+    },
+
+    pauseTimer: () => {
+      set({ isRunning: false });
+      syncState({ isRunning: false });
     },
 
     stopTimer: () => {

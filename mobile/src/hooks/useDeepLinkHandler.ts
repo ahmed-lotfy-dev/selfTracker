@@ -98,7 +98,7 @@ export function useDeepLinkHandler() {
 
         // Navigate to home page
         console.log('Redirecting to home page...');
-        router.replace('/(home)/home');
+        router.replace('/home');
 
         // Reset processing flag after navigation
         setTimeout(() => {

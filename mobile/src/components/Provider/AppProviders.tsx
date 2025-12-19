@@ -41,7 +41,7 @@ export function AppProviders({ children }: AppProvidersProps) {
           </SafeAreaView>
         </KeyboardProvider>
       </ToastProvider>
-      the auth is working but it fetchd successfully just the weight logs not the workout logs not working show no logs i guess on tauri app
+
     </QueryClientProvider>
   )
 }

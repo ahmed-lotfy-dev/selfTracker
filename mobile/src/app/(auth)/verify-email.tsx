@@ -13,7 +13,7 @@ export default function VerifyEmail() {
   const [otp, setOtp] = useState("")
   const [otpError, setOtpError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-3
+  3
   const { user, isAuthenticated, error, isLoading, refetch } = useAuth()
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function VerifyEmail() {
       } else {
         // Refresh auth state to get updated user
         await refetch()
-        requestAnimationFrame(() => router.replace("/(home)/home"))
+        requestAnimationFrame(() => router.replace("/home"))
       }
     } catch (err) {
       setOtpError("Invalid verification code")
@@ -49,7 +49,7 @@ export default function VerifyEmail() {
   const handleResendCode = async () => {
     try {
       await resendVerificationEmail(user?.email)
-      
+
       // You could add a toast/snackbar success message here
     } catch (err) {
       // Handle resend error
@@ -72,9 +72,8 @@ export default function VerifyEmail() {
       <Pressable
         onPress={handleVerifyOTP}
         disabled={isSubmitting || otp.length !== 6}
-        className={`p-4 rounded-md items-center mb-4 ${
-          isSubmitting || otp.length !== 6 ? "bg-blue-200" : "bg-[#007bff]"
-        }`}
+        className={`p-4 rounded-md items-center mb-4 ${isSubmitting || otp.length !== 6 ? "bg-blue-200" : "bg-[#007bff]"
+          }`}
       >
         {isSubmitting ? (
           <ActivitySpinner color={COLORS.primary} />

@@ -37,7 +37,7 @@ export default function Index() {
   }
 
   // ✅ If user is logged in & verified, show this index screen (not redirect)
-  return <Redirect href="/(home)/home" />
+  return <Redirect href="/home" />
 
 }
 

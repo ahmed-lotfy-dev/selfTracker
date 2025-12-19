@@ -2,11 +2,37 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    image::Image,
     Manager, Emitter,
 };
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+fn toggle_overlay(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("timer-overlay") {
+        if window.is_visible().unwrap_or(false) {
+            let _ = window.hide();
+        } else {
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }
+}
+
+#[tauri::command]
+fn start_drag(window: tauri::Window) {
+    let _ = window.start_dragging();
+}
+
+#[tauri::command]
+fn toggle_pin(window: tauri::Window, pinned: bool) {
+    match window.set_always_on_top(pinned) {
+        Ok(_) => println!("Successfully set always_on_top to {}", pinned),
+        Err(e) => println!("Failed to set always_on_top: {}", e),
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -42,11 +68,15 @@ pub fn run() {
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "show", "Show / Hide", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+            
             // 2. Build the Tray Icon
+            println!("Loading tray icon...");
+            let tray_icon = Image::from_bytes(include_bytes!("../icons/32x32.png")).expect("failed to load tray icon");
+
             let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone()) // Use the app icon
+                .icon(tray_icon) // Use explicit 32x32 icon
                 .menu(&menu)
-                .show_menu_on_left_click(false)
+                .show_menu_on_left_click(true) // Changed to true to behave more like standard apps if menu is desired on left click, or control strictly via events
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "quit" => {
                         app.exit(0);
@@ -64,24 +94,31 @@ pub fn run() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click {
-                        button: MouseButton::Left,
-                        button_state: MouseButtonState::Up,
-                        ..
-                    } = event
-                    {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            if window.is_visible().unwrap_or(false) {
-                                let _ = window.hide();
-                            } else {
-                                let _ = window.show();
-                                let _ = window.set_focus();
+                    match event {
+                         TrayIconEvent::Click {
+                            button: MouseButton::Left,
+                            button_state: MouseButtonState::Up,
+                            ..
+                        } => {
+                            let app = tray.app_handle();
+                            if let Some(window) = app.get_webview_window("main") {
+                                if window.is_visible().unwrap_or(false) {
+                                    let _ = window.hide();
+                                } else {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
                             }
                         }
+                         _ => {}
                     }
                 })
-                .build(app)?;
+                .build(app);
+
+            match _tray {
+                Ok(_) => println!("System tray built successfully!"),
+                Err(e) => println!("Error building system tray: {}", e),
+            }
 
             #[cfg(any(windows, target_os = "linux"))]
             {
@@ -94,7 +131,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, toggle_overlay, start_drag, toggle_pin])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

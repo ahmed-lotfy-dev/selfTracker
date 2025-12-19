@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "uniwind";
+@import 'tailwindcss';
+@import 'uniwind';
 
 @layer theme {
   :root {
@@ -10,20 +10,23 @@
       --color-primary: #3b82f6;
       --color-card: #ffffff;
       --color-border: #e5e7eb;
-      --color-tint: ##2f95dc;
+      --color-tint: #2f95dc;
       --color-icon: #687076;
       --color-tabIconDefault: #687076;
       --color-tabIconSelected: #2f95dc;
-      --color-secondary: "#1ABC9C";
-      --color-gray: "#7F8C8D";
-      --color-error: "#E74C3C";
-      --color-success: "#2ECC71";
-      --color-placeholder: "#BDC3C7";
-      --color-darkGreen: "#0A6847";
-      --color-inputText: "#6B7280";
-      --color-lightGreen: #90EE90; /* Light Green */
-      --color-darkGreen: #006400; /* Dark Green */
+      --color-secondary: #1ABC9C;
+      --color-gray: #7F8C8D;
+      --color-error: #E74C3C;
+      --color-success: #2ECC71;
+      --color-placeholder: #BDC3C7;
+      --color-darkGreen: #0A6847;
+      --color-inputText: #6B7280;
+      --color-lightGreen: #90EE90;
+      /* Light Green */
+      --color-darkGreen: #006400;
+      /* Dark Green */
     }
+
     @variant dark {
       --color-text: #fff;
       --color-background: #000000;
@@ -31,19 +34,21 @@
       --color-primary: #3b82f6;
       --color-card: #1f2937;
       --color-border: #374151;
-      --color-tint: ##fff;
+      --color-tint: #fff;
       --color-icon: #9ba1a6;
       --color-tabIconDefault: #9ba1a6;
       --color-tabIconSelected: #fff;
-      --color-secondary: "#1ABC9C";
-      --color-gray: "#7F8C8D";
-      --color-error: "#E74C3C";
-      --color-success: "#2ECC71";
-      --color-placeholder: "#BDC3C7";
-      --color-darkGreen: "#0A6847";
-      --color-inputText: "#6B7280";
-      --color-lightGreen: #90EE90; /* Light Green */
-      --color-darkGreen: #006400; /* Dark Green */
+      --color-secondary: #1ABC9C;
+      --color-gray: #7F8C8D;
+      --color-error: #E74C3C;
+      --color-success: #2ECC71;
+      --color-placeholder: #BDC3C7;
+      --color-darkGreen: #0A6847;
+      --color-inputText: #6B7280;
+      --color-lightGreen: #90EE90;
+      /* Light Green */
+      --color-darkGreen: #006400;
+      /* Dark Green */
     }
   }
 }

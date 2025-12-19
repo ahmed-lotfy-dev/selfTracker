@@ -17,6 +17,9 @@
       "autoIncrement": true
     },
     "production": {
+      "env": {
+        "NODE_ENV": "production"
+      },
       "android": {
         "buildType": "apk"
       },

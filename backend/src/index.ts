@@ -56,7 +56,7 @@ app.get("/api/social-success", async (c) => {
   console.log('OAuth callback:', { platform, hasToken: !!token });
 
   // Desktop: return HTML that redirects to deep link and closes tab
-  if (platform === 'desktop') {
+  if (platform === 'desktop' || platform === 'mobile') {
     return c.html(`
       <!DOCTYPE html>
       <html>
