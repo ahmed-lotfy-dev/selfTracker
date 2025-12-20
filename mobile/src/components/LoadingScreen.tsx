@@ -1,26 +1,19 @@
 import React from "react"
-import { View, ActivityIndicator, StyleSheet, Text } from "react-native"
-import { Colors } from "../constants/Colors"
+import { View, Image, StyleSheet } from "react-native"
+import { useThemeColors } from "../constants/Colors"
 
 export function LoadingScreen() {
+  const colors = useThemeColors()
+
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color={Colors.light.tint} />
-      <Text style={styles.text}>Preparing your experience...</Text>
+    <View className="flex-1 justify-center items-center bg-background">
+      <Image
+        source={require("@/assets/images/splash-screen.png")}
+        style={{ width: "100%", height: "100%", resizeMode: "contain" }}
+        className="flex-1"
+      />
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  text: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#666",
-  },
-})
+const styles = StyleSheet.create({})

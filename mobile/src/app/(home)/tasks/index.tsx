@@ -2,13 +2,13 @@ import React from "react"
 import { useQuery } from "@tanstack/react-query"
 import { FlatList, RefreshControl, Text, View } from "react-native"
 import Header from "@/src/components/Header"
-import TaskForm from "@/src/components/Task/TaskForm"
-import TaskListItem from "@/src/components/Task/TaskListItem"
+import TaskForm from "@/src/components/features/tasks/TaskForm"
+import TaskListItem from "@/src/components/features/tasks/TaskListItem"
 import { COLORS } from "@/src/constants/Colors"
 import { fetchAllTasks } from "@/src/lib/api/tasksApi"
 import { TaskType } from "@/src/types/taskType"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
-import TaskProgress from "@/src/components/Task/TaskProgress"
+import TaskProgress from "@/src/components/features/tasks/TaskProgress"
 
 export default function TaskScreen() {
   const {
@@ -24,7 +24,7 @@ export default function TaskScreen() {
 
   if (isLoading || !tasks) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center">
+      <View className="flex-1 bg-background justify-center items-center">
         <ActivitySpinner size="large" color={COLORS.primary} />
       </View>
     )
@@ -32,8 +32,8 @@ export default function TaskScreen() {
 
   if (isError) {
     return (
-      <View className="flex-1 justify-center items-center px-4 bg-gray-50">
-        <Text className="text-red-500 text-center">
+      <View className="flex-1 justify-center items-center px-4 bg-background">
+        <Text className="text-error text-center">
           Error loading tasks. Please try again later.
         </Text>
       </View>
@@ -51,12 +51,12 @@ export default function TaskScreen() {
       <Header title="Tasks" />
       <TaskProgress tasks={tasks} />
       <TaskForm />
-      <Text className="text-lg font-bold text-gray-900 mb-3 mt-4">Your List</Text>
+      <Text className="text-lg font-bold text-text mb-3 mt-4">Your List</Text>
     </View>
   )
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-background">
       <FlatList
         data={sortedTasks}
         keyExtractor={(item) => item?.id.toString()}
@@ -67,7 +67,7 @@ export default function TaskScreen() {
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={
           <View className="items-center justify-center py-10">
-            <Text className="text-gray-400 font-medium text-center">
+            <Text className="text-placeholder font-medium text-center">
               No tasks yet. Add one to get started!
             </Text>
           </View>

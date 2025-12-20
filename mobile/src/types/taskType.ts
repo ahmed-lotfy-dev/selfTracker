@@ -6,7 +6,7 @@ export const TaskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   completed: z.boolean(),
   dueDate: z.string().datetime().nullable(),
-  category: z.enum(["workout", "finance", "general"]),
+  category: z.string(),
   createdAt: z.string().datetime(),
 })
 

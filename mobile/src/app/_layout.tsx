@@ -28,6 +28,8 @@ import {
 } from "@expo/vector-icons"
 import { Colors } from "../constants/Colors"
 import { useDeepLinkHandler } from "@/src/hooks/useDeepLinkHandler"
+import CustomAlert from "@/src/components/ui/CustomAlert"
+import Toast from "@/src/components/ui/Toast"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -104,6 +106,7 @@ function RootLayout() {
       <DeepLinkWrapper>
         <StatusBar
           barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+          backgroundColor={themeColors.background}
         />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
@@ -113,6 +116,8 @@ function RootLayout() {
           <Stack.Screen name="+not-found" />
         </Stack>
         <PortalHost />
+        <CustomAlert />
+        <Toast />
       </DeepLinkWrapper>
     </AppProviders>
   )

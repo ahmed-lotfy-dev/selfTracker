@@ -84,11 +84,16 @@ export function useDeepLinkHandler() {
           // We store the signed token (from cookie param) for Cookie usage
           await SecureStore.setItemAsync("auth_cookie_token", token);
 
+          // CRITICAL FIX: Store the token as 'auth_token_axios' IMMEDIATELY.
+          // This fixes the race condition where 'sync' calls fire before the session check completes.
+          // Even if we validate later, we need the token available for Axios interceptors NOW.
+          await SecureStore.setItemAsync("auth_token_axios", token);
+
           // Also set as 'selftracker.session_token' for better-auth client persistence (using signed version to be safe)
           await SecureStore.setItemAsync("selftracker.session_token", token);
           await SecureStore.setItemAsync("better-auth.session_token", token);
 
-          console.log('[DEBUG] Signed Token stored in SecureStore (auth_cookie_token & selftracker.session_token)');
+          console.log('[DEBUG] Signed Token stored in SecureStore (auth_cookie_token, auth_token_axios & selftracker.session_token)');
 
           // 2. Wait a brief moment for storage to propagate if needed (rarely needed but safe)
           await new Promise(resolve => setTimeout(resolve, 100));
@@ -110,19 +115,13 @@ export function useDeepLinkHandler() {
 
           if (!session.data) {
             console.warn('[DEBUG] Session data missing in response, but token is present. Proceeding with optimistic auth.');
-            // Fallback: use signed token for axios if we couldn't get unsigned one
-            await SecureStore.setItemAsync("auth_token_axios", token);
+            // Token is already stored above, so no need to fallback-store here.
           } else {
             console.log('[DEBUG] Session established:', JSON.stringify(session.data, null, 2));
             console.log('Session established successfully');
 
             // Update query cache with the new session
             queryClient.setQueryData(['session'], session.data);
-
-            // Store UNSIGNED token for Bearer usage
-            // session.data doesn't contain the token, so we use the one we extracted
-            await SecureStore.setItemAsync("auth_token_axios", token);
-            console.log('[DEBUG] Token stored in SecureStore as auth_token_axios');
           }
 
         } catch (error: any) {

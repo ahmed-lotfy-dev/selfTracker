@@ -36,14 +36,26 @@ axiosInstance.interceptors.request.use(
       const cookieValue = signedCookieToken || fallbackToken;
       const bearerValue = unsignedBearerToken || fallbackToken;
 
+      // Construct a robust Cookie header with multiple potential names
+      // The server might expect __Secure- prefix or just the base name depending on config
+      const cookieString = [
+        `better-auth.session_token=${bearerValue || cookieValue}`,
+        `__Secure-better-auth.session_token=${bearerValue || cookieValue}`,
+        `session_token=${bearerValue || cookieValue}`,
+        `selftracker.session_token=${bearerValue || cookieValue}`
+      ].join('; ');
+
       // Prioritize Bearer token to avoid CSRF issues with manual Cookies
       if (bearerValue) {
         config.headers.Authorization = `Bearer ${bearerValue}`;
-        console.log(`[DEBUG] Axios Headers: Bearer=YES (${bearerValue.substring(0, 10)}...)`);
+        config.headers.Cookie = cookieString;
+
+        console.log(`[DEBUG] Axios Headers: Bearer=YES & Cookie Set (${bearerValue.substring(0, 10)}...)`);
       } else if (cookieValue) {
         // Fallback if we only have the cookie-intended token
         config.headers.Authorization = `Bearer ${cookieValue}`;
-        console.log(`[DEBUG] Axios Headers: Bearer=YES (from cookie)`);
+        config.headers.Cookie = cookieString;
+        console.log(`[DEBUG] Axios Headers: Bearer=YES & Cookie Set (from cookie)`);
       } else {
         console.warn("[DEBUG] Axios Request: No valid auth tokens found in SecureStore");
       }
@@ -74,7 +86,7 @@ axiosInstance.interceptors.response.use(
       const currentSegments = router.canGoBack() ? "somewhere" : "root"; // rudimentary check
       // Better check: don't redirect if we are already at sign-in
 
-      console.warn("Signing out due to 401... (DISABLED FOR DEBUGGING)");
+      console.warn("Signing out due to 401... (DISABLED FOR DEBUGGING/SYNC STABILITY)");
       // await authClient.signOut()
       // router.replace("/(auth)/sign-in")
     }

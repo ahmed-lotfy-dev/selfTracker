@@ -17,12 +17,11 @@ export const Delta = ({ delta }: DeltaProps) => {
           <MaterialIcons
             name={isProgressGood ? "trending-up" : "trending-down"}
             size={24}
-            color={isProgressGood ? "#10b981" : "#ef4444"}
+            className={isProgressGood ? "text-success" : "text-error"}
           />
           <Text
-            className={`ml-2 font-semibold ${
-              isProgressGood ? "text-green-500" : "text-red-500"
-            }`}
+            className={`ml-2 font-semibold ${isProgressGood ? "text-success" : "text-error"
+              }`}
           >
             {deltaText}
           </Text>

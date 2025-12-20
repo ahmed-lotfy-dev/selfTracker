@@ -60,11 +60,12 @@ export default function VerifyEmail() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, justifyContent: "center", padding: 20 }}
+      className="bg-background"
     >
-      <Text className="font-bold text-xl mb-4 text-center">
+      <Text className="font-bold text-xl mb-4 text-center text-text">
         Verify Your Email
       </Text>
-      <Text className="text-md mb-8 text-center">
+      <Text className="text-md mb-8 text-center text-placeholder">
         We've sent a 6-digit code to your email. Enter it below to verify your
         account.
       </Text>
@@ -72,25 +73,25 @@ export default function VerifyEmail() {
       <Pressable
         onPress={handleVerifyOTP}
         disabled={isSubmitting || otp.length !== 6}
-        className={`p-4 rounded-md items-center mb-4 ${isSubmitting || otp.length !== 6 ? "bg-blue-200" : "bg-[#007bff]"
+        className={`p-4 rounded-md items-center mb-4 ${isSubmitting || otp.length !== 6 ? "bg-primary/50" : "bg-primary"
           }`}
       >
         {isSubmitting ? (
           <ActivitySpinner color={COLORS.primary} />
         ) : (
-          <Text style={{ color: "white" }}>Verify Code</Text>
+          <Text className="text-white font-semibold">Verify Code</Text>
         )}
       </Pressable>
       <Pressable
         onPress={handleResendCode}
         className="justify-center items-center rounded-lg p-2"
       >
-        <Text className="text-blue-500">Didn't receive the code? Resend</Text>
+        <Text className="text-primary font-medium">Didn't receive the code? Resend</Text>
       </Pressable>
       {isLoading && (
-        <Text className="mt-4">Checking verification status...</Text>
+        <Text className="mt-4 text-placeholder">Checking verification status...</Text>
       )}
-      {error && <Text className="text-red-600 mt-4">{error.message}</Text>}
+      {error && <Text className="text-error mt-4">{error.message}</Text>}
     </KeyboardAvoidingView>
   )
 }

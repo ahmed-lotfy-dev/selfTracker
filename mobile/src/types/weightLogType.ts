@@ -3,20 +3,15 @@ import { z } from "zod"
 export const WeightLogSchema = z.object({
   id: z.string().optional(),
   userId: z.string(),
-  weight: z
-    .number()
-    .min(0.1, "Weight is needed")
-    .refine((value) => value > 0, {
-      message: "Weight must be a positive number",
-    }),
+  weight: z.union([z.number(), z.string()]),
   mood: z.enum(["Low", "Medium", "High"], {
     errorMap: () => ({ message: "Mood must be Low, Medium, or High" }),
-  }),
+  }).nullable(),
   energy: z.enum(["Low", "Okay", "Good", "Great"], {
     errorMap: () => ({ message: "Energy must be Low, Okay, Good, or Great" }),
-  }),
+  }).nullable(),
   notes: z.string().nullable(),
-  createdAt: z.string(),
+  createdAt: z.any(),
 })
 
 export type WeightLogType = z.infer<typeof WeightLogSchema>

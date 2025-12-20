@@ -24,51 +24,24 @@ export const ProfileOption = ({
   const colors = useThemeColors()
 
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text
-        style={{
-          fontSize: 16,
-          fontWeight: "500",
-          marginBottom: 4,
-          color: colors.inputText,
-        }}
-      >
+    <View className="mb-4">
+      <Text className="text-base font-medium mb-1 text-text">
         {label}
       </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          borderRadius: 6,
-          borderWidth: 1,
-          borderColor: colors.border,
-          overflow: "hidden",
-          marginBottom: 12,
-        }}
-      >
+      <View className="flex-row rounded-md border border-border overflow-hidden mb-3">
         {options.map((option) => (
           <TouchableOpacity
             key={option.value}
             onPress={() => onValueChange(option.value)}
+            className={`flex-1 py-2 items-center justify-center border-border ${selectedValue === option.value ? "bg-primary" : "bg-card"
+              }`}
             style={{
-              flex: 1,
-              paddingVertical: 8,
-              alignItems: "center",
-              backgroundColor:
-                selectedValue === option.value
-                  ? colors.darkGreen // Dark green background for selected
-                  : "white", // White background for not selected
               borderRightWidth: option.value === options[0].value ? 1 : 0,
-              borderColor: colors.border,
             }}
           >
             <Text
-              style={{
-                color:
-                  selectedValue === option.value
-                    ? "lightgreen" // White text for selected
-                    : "black", // Black text for not selected
-                fontWeight: "500",
-              }}
+              className={`font-medium ${selectedValue === option.value ? "text-white" : "text-text"
+                }`}
             >
               {option.label}
             </Text>

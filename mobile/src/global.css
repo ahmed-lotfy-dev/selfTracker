@@ -2,53 +2,154 @@
 @import 'uniwind';
 
 @layer theme {
-  :root {
-    @variant light {
-      --color-text: #000;
-      --color-background: #ffffff;
-      --color-foreground: #000000;
-      --color-primary: #3b82f6;
-      --color-card: #ffffff;
-      --color-border: #e5e7eb;
-      --color-tint: #2f95dc;
-      --color-icon: #687076;
-      --color-tabIconDefault: #687076;
-      --color-tabIconSelected: #2f95dc;
-      --color-secondary: #1ABC9C;
-      --color-gray: #7F8C8D;
-      --color-error: #E74C3C;
-      --color-success: #2ECC71;
-      --color-placeholder: #BDC3C7;
-      --color-darkGreen: #0A6847;
-      --color-inputText: #6B7280;
-      --color-lightGreen: #90EE90;
-      /* Light Green */
-      --color-darkGreen: #006400;
-      /* Dark Green */
-    }
+   :root {
+      @variant light {
+         /* =========================
+         Brand (used sparingly)
+      ========================= */
+         --color-primary: #10B981;
+         /* Emerald 500 */
+         --color-primary-dark: #059669;
+         /* Emerald 600 */
+         --color-secondary: #34D399;
+         /* Emerald 400 */
 
-    @variant dark {
-      --color-text: #fff;
-      --color-background: #000000;
-      --color-foreground: #ffffff;
-      --color-primary: #3b82f6;
-      --color-card: #1f2937;
-      --color-border: #374151;
-      --color-tint: #fff;
-      --color-icon: #9ba1a6;
-      --color-tabIconDefault: #9ba1a6;
-      --color-tabIconSelected: #fff;
-      --color-secondary: #1ABC9C;
-      --color-gray: #7F8C8D;
-      --color-error: #E74C3C;
-      --color-success: #2ECC71;
-      --color-placeholder: #BDC3C7;
-      --color-darkGreen: #0A6847;
-      --color-inputText: #6B7280;
-      --color-lightGreen: #90EE90;
-      /* Light Green */
-      --color-darkGreen: #006400;
-      /* Dark Green */
-    }
-  }
+         /* =========================
+         Neutrals (UI foundation)
+      ========================= */
+         --color-background: #F9FAFB;
+         /* Neutral 50 */
+         --color-surface: #FFFFFF;
+         --color-card: #FFFFFF;
+
+         --color-text: #111827;
+         /* Neutral 900 */
+         --color-text-secondary: #4B5563;
+         /* Neutral 600 */
+         --color-foreground: #111827;
+
+         --color-border: #E5E7EB;
+         /* Neutral 200 */
+         --color-placeholder: #9CA3AF;
+         /* Neutral 400 */
+
+         /* =========================
+         Inputs
+      ========================= */
+         --color-input-background: #FFFFFF;
+         --color-input-text: #111827;
+
+         /* =========================
+         Feedback
+      ========================= */
+         --color-success: #10B981;
+         --color-error: #EF4444;
+
+         /* =========================
+         Charts / Stats
+      ========================= */
+         --color-stat-primary: #10B981;
+         /* Emerald */
+         --color-stat-secondary: #0EA5E9;
+         /* Sky 500 */
+         --color-stat-tertiary: #F59E0B;
+         /* Amber 500 */
+         --color-stat-quaternary: #6366F1;
+         /* Indigo 500 */
+
+         /* =========================
+         Social
+      ========================= */
+         --color-social-google: #4285F4;
+         --color-social-github: #18181B;
+
+         /* =========================
+         Legacy compatibility
+      ========================= */
+         --color-tint: #10B981;
+         --color-icon: #6B7280;
+         --color-tabIconDefault: #9CA3AF;
+         --color-tabIconSelected: #10B981;
+         --color-gray: #6B7280;
+         --color-darkGreen: #065F46;
+         --color-lightGreen: #D1FAE5;
+         --color-inputText: #111827;
+      }
+
+      @variant dark {
+         /* =========================
+     Brand
+  ========================= */
+         --color-primary: #34D399;
+         /* Emerald 400 */
+         --color-primary-dark: #10B981;
+         --color-secondary: #6EE7B7;
+
+         /* =========================
+     Background layers (KEY FIX)
+  ========================= */
+         --color-background: #14161A;
+         /* Soft charcoal */
+         --color-surface: #1C1F26;
+         /* Elevated surface */
+         --color-card: #232733;
+         /* Card layer */
+
+         /* =========================
+     Text
+  ========================= */
+         --color-text: #F8FAFC;
+         /* Near white */
+         --color-text-secondary: #B6BCC8;
+         /* Calm gray */
+         --color-foreground: #F8FAFC;
+
+         --color-border: #2D3340;
+         /* Soft border */
+         --color-placeholder: #8B93A7;
+
+         /* =========================
+     Inputs
+  ========================= */
+         --color-input-background: #1F2430;
+         --color-input-text: #F8FAFC;
+
+         /* =========================
+     Feedback
+  ========================= */
+         --color-success: #34D399;
+         --color-error: #F87171;
+
+         /* =========================
+     Charts / Stats
+  ========================= */
+         --color-stat-primary: #34D399;
+         --color-stat-secondary: #38BDF8;
+         --color-stat-tertiary: #FBBF24;
+         --color-stat-quaternary: #818CF8;
+
+         /* =========================
+         Social
+      ========================= */
+         --color-social-google: #4285F4;
+         --color-social-github: #F8FAFC;
+
+         /* =========================
+     Icons & Nav
+  ========================= */
+         --color-icon: #A1A7B5;
+         --color-tabIconDefault: #7C8394;
+         --color-tabIconSelected: #34D399;
+
+         /* =========================
+     Legacy
+  ========================= */
+         --color-tint: #34D399;
+         --color-gray: #A1A7B5;
+         --color-darkGreen: #34D399;
+         --color-lightGreen: #2A2F3A;
+         --color-inputText: #F8FAFC;
+      }
+
+   }
 }

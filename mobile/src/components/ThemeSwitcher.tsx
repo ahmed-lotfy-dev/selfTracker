@@ -25,12 +25,12 @@ export const ThemeSwitcher = () => {
           onPress={() => Uniwind.setTheme(t.name)}
           className={`
             px-4 py-2 rounded-lg
-            ${theme === t.name ? "bg-blue-500" : "bg-gray-200 dark:bg-gray-700"}
+            ${theme === t.name ? "bg-primary shadow-sm" : "bg-card border border-border"}
           `}
         >
           <Text
             className={
-              theme === t.name ? "text-white" : "text-gray-900 dark:text-white"
+              theme === t.name ? "text-white font-bold" : "text-text"
             }
           >
             {t.icon} {t.label}

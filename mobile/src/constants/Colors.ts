@@ -1,103 +1,77 @@
-import { useColorScheme } from "react-native";
+import { useCSSVariable } from "uniwind";
 
-const tintColorLight = '#2f95dc';
-const tintColorDark = '#fff';
-
-export const COLORS = { // Keep original COLORS for backward compatibility
-  primary: "#2C3E50", // Charcoal Blue - professional primary
-  secondary: "#1ABC9C", // Turquoise - professional accent
-  background: "#1A1A1A", // Very Dark Gray - professional dark mode foundation
-  text: "#ECF0F1", // Light Gray - readable on dark backgrounds
-  gray: "#7F8C8D", // Asbestos - neutral for inactive states
-  border: "#34495E", // Wet Asphalt - subtle border
-  error: "#E74C3C", // Alizarin - standard red for error states
-  success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
-  placeholder: "#BDC3C7", // Silver - muted gray for input hints
-  darkGreen: "#0A6847", // A dark green color
-  inputText: "#34495E", // Darker gray for input text, readable on light backgrounds
-}
-
-export const Colors = { // New Colors object for dynamic theming
-  light: {
-    text: '#000',
-    background: '#ffffff',
-    foreground: '#000000',
-    primary: '#3b82f6',
-    card: '#ffffff',
-    border: '#e5e7eb',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-    secondary: "#1ABC9C", // Turquoise - professional accent
-    gray: "#7F8C8D", // Asbestos - neutral for inactive states
-    error: "#E74C3C", // Alizarin - standard red for error states
-    success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
-    placeholder: "#BDC3C7", // Silver - muted gray for input hints
-    darkGreen: "#0A6847", // A dark green color
-    inputText: "#6B7280", // Medium Gray for input text, readable on both light and dark backgrounds
-  },
-  dark: {
-    text: '#fff',
-    background: '#000000',
-    foreground: '#ffffff',
-    primary: '#3b82f6',
-    card: '#1f2937',
-    border: '#374151',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-    secondary: "#1ABC9C", // Turquoise - professional accent
-    gray: "#7F8C8D", // Asbestos - neutral for inactive states
-    error: "#E74C3C", // Alizarin - standard red for error states
-    success: "#2ECC71", // Emerald - healthy green → confirmations, streaks
-    placeholder: "#BDC3C7", // Silver - muted gray for input hints
-    darkGreen: "#0A6847", // A dark green color
-    inputText: "#6B7280", // Medium Gray for input text, readable on both light and dark backgrounds
-  },
-};
-
+// Export a hook that mimics the old behavior but pulls from CSS variables
+// This allows strict adherence to global.css as source of truth
 export function useThemeColors() {
-  const theme = useColorScheme() ?? 'light';
-  return Colors[theme];
+  // Force string cast or fallback to ensure TS is happy for Chart components
+  const primary = useCSSVariable('--color-primary') as string ?? '#10B981';
+  const secondary = useCSSVariable('--color-secondary') as string ?? '#34D399';
+  const background = useCSSVariable('--color-background') as string ?? '#F0FDF4';
+  const card = useCSSVariable('--color-card') as string ?? '#FFFFFF';
+  const text = useCSSVariable('--color-text') as string ?? '#064E3B';
+  const border = useCSSVariable('--color-border') as string ?? '#D1FAE5';
+  const error = useCSSVariable('--color-error') as string ?? '#EF4444';
+  const success = useCSSVariable('--color-success') as string ?? '#10B981';
+  const placeholder = useCSSVariable('--color-placeholder') as string ?? '#6EE7B7';
+  const tint = useCSSVariable('--color-tint') as string ?? '#10B981';
+  const icon = useCSSVariable('--color-icon') as string ?? '#10B981';
+
+  // Semantic Stats Colors
+  const statPrimary = useCSSVariable('--color-stat-primary') as string ?? '#10B981';
+  const statSecondary = useCSSVariable('--color-stat-secondary') as string ?? '#34D399';
+  const statTertiary = useCSSVariable('--color-stat-tertiary') as string ?? '#4ade80';
+  const statQuaternary = useCSSVariable('--color-stat-quaternary') as string ?? '#818CF8';
+
+  return {
+    primary,
+    secondary,
+    background,
+    card,
+    text,
+    border,
+    error,
+    success,
+    placeholder,
+    tint,
+    icon,
+    statPrimary,
+    statSecondary,
+    statTertiary,
+    statQuaternary,
+  };
 }
+
+// Keep legacy constant for non-hook usage if absolutely needed (fallback to light theme defaults)
+// But prefer the hook above for dynamic themes
+export const COLORS = {
+  primary: "#10B981",
+  secondary: "#34D399",
+  background: "#F0FDF4",
+  text: "#064E3B",
+  gray: "#6B7280",
+  border: "#D1FAE5",
+  error: "#EF4444",
+  success: "#10B981",
+  placeholder: "#6EE7B7",
+  darkGreen: "#064E3B",
+  inputText: "#064E3B",
+}
+
+export const Colors = {
+  light: COLORS,
+  dark: {
+    ...COLORS,
+    primary: "#10B981",
+    background: "#020617",
+    text: "#F8FAFC",
+    card: "#0f172a",
+    border: "#1e293b",
+  }
+};
 
 export const SPACING = {
   small: 8,
   medium: 16,
   large: 24,
-}
-
-export const FONTS = {
-  regular: { fontSize: 16, color: COLORS.text },
-  bold: { fontSize: 18, fontWeight: "bold", color: COLORS.text },
-}
-
-export const BUTTONS = {
-  primary: {
-    backgroundColor: COLORS.primary,
-    padding: SPACING.medium,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  disabled: {
-    backgroundColor: COLORS.placeholder,
-  },
-  text: {
-    color: COLORS.text, // Use the new text color
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-}
-
-export const INPUTS = {
-  container: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    padding: SPACING.small,
-    color: COLORS.text,
-    backgroundColor: "transparent",
-  },
+  xl: 32,
 }

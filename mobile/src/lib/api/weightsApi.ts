@@ -24,7 +24,7 @@ export const fetchAllWeightLogs = async (
       query = db
         .select()
         .from(weightLogs)
-        .where(sql`${weightLogs.deletedAt} IS NULL AND ${weightLogs.createdAt} < ${cursorLog[0].createdAt}`)
+        .where(sql`${weightLogs.deletedAt} IS NULL AND ${weightLogs.createdAt} < ${cursorLog[0].createdAt.getTime()}`)
         .orderBy(desc(weightLogs.createdAt))
         .limit(limit + 1)
     }
@@ -46,15 +46,14 @@ export async function fetchWeightLogsChart(months: number) {
   const now = new Date()
   const pastDate = new Date(now)
   pastDate.setMonth(now.getMonth() - months)
-  const sinceDateIso = pastDate.toISOString()
 
-  console.log("[DEBUG] Fetching weight logs since:", sinceDateIso)
+  console.log("[DEBUG] Fetching weight logs since:", pastDate.getTime())
 
   const allLogs = await db
     .select()
     .from(weightLogs)
     .where(
-      sql`${weightLogs.deletedAt} IS NULL AND ${weightLogs.createdAt} >= ${sinceDateIso}`
+      sql`${weightLogs.deletedAt} IS NULL AND ${weightLogs.createdAt} >= ${pastDate.getTime()}`
     )
     .orderBy(desc(weightLogs.createdAt))
 
@@ -82,7 +81,8 @@ export async function fetchWeightLogsChart(months: number) {
     const d = new Date(log.createdAt)
     const key = getKey(d)
     const current = groupedMap.get(key) || { sum: 0, count: 0 }
-    groupedMap.set(key, { sum: current.sum + log.weight, count: current.count + 1 })
+    const numericWeight = typeof log.weight === 'string' ? parseFloat(log.weight) : (log.weight as number)
+    groupedMap.set(key, { sum: current.sum + (numericWeight || 0), count: current.count + 1 })
   })
 
   // We do NOT pre-fill missing days for weights because 0 weight breaks the line chart (drops to zero).
@@ -136,11 +136,11 @@ export const createWeight = async (weight: WeightLogType) => {
   const newLog = {
     id,
     userId: weight.userId,
-    weight: weight.weight,
+    weight: String(weight.weight),
     mood: weight.mood || null,
     energy: weight.energy || null,
     notes: weight.notes || null,
-    createdAt: weight.createdAt || now.toISOString(),
+    createdAt: weight.createdAt ? new Date(weight.createdAt) : now,
     updatedAt: now,
     syncStatus: "pending" as const,
   }
@@ -162,7 +162,7 @@ export const updateWeight = async (weight: WeightLogType) => {
 
   const now = new Date()
   const updateData = {
-    weight: weight.weight,
+    weight: String(weight.weight),
     mood: weight.mood,
     energy: weight.energy,
     notes: weight.notes,

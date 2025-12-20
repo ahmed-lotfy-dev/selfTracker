@@ -1,21 +1,18 @@
 import React, { useState } from "react"
 import {
   Text,
-  TextInput,
-  Pressable,
-  Platform,
   View,
+  Platform,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
 import { useAuthActions } from "@/src/store/useAuthStore"
-import { COLORS } from "@/src/constants/Colors"
 import { signIn } from "@/src/lib/api/authApi"
 import { setAccessToken } from "@/src/lib/storage"
 import { signInSchema } from "@/src/types/userType"
-import { z } from "zod"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
-import { SocialLoginButtons } from "@/src/components/Auth/SocialLoginButtons"
+import { SocialLoginButtons } from "@/src/components/features/auth/SocialLoginButtons"
+import Input from "@/src/components/ui/Input"
+import Button from "@/src/components/ui/Button"
 
 export default function SignIn() {
   const router = useRouter()
@@ -64,76 +61,71 @@ export default function SignIn() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, justifyContent: "center", padding: 20 }}
+      style={{ flex: 1, justifyContent: "center", padding: 24 }}
+      className="bg-background"
     >
-      <Text className="font-bold text-xl mb-4">Sign In</Text>
+      <View className="mb-8">
+        <Text className="font-bold text-3xl text-text mb-2">Welcome Back</Text>
+        <Text className="text-placeholder font-medium">Sign in to continue your journey</Text>
+      </View>
 
       {/* Social Login Buttons - shown first */}
       <SocialLoginButtons />
 
       {/* Divider */}
-      <View className="flex-row items-center my-6">
-        <View className="flex-1 h-px bg-gray-300" />
-        <Text className="mx-4 text-gray-500 text-sm">Or continue with</Text>
-        <View className="flex-1 h-px bg-gray-300" />
+      <View className="flex-row items-center my-8">
+        <View className="flex-1 h-px bg-border" />
+        <Text className="mx-4 text-placeholder text-sm font-medium">Or continue with email</Text>
+        <View className="flex-1 h-px bg-border" />
       </View>
 
       {/* Email Input */}
-      <TextInput
+      <Input
+        label="Email"
         value={email}
         onChangeText={setEmail}
-        placeholder="Email"
+        placeholder="hello@example.com"
         autoCapitalize="none"
         keyboardType="email-address"
         autoComplete="email"
         textContentType="emailAddress"
-        placeholderTextColor={COLORS.inputText}
-        className="border border-gray-300 rounded-md px-4 py-2 mb-1"
+        error={emailError}
       />
-      {emailError ? (
-        <Text className="text-red-500 mb-2">{emailError}</Text>
-      ) : null}
 
       {/* Password Input */}
-      <TextInput
+      <Input
+        label="Password"
         value={password}
         onChangeText={setPassword}
-        placeholder="Password"
+        placeholder="Enter your password"
         secureTextEntry
         autoComplete="password"
         textContentType="password"
-        placeholderTextColor={COLORS.inputText}
-        className="border border-gray-300 rounded-md px-4 py-2 mb-1 color-inputText"
+        error={passwordError}
       />
-      {passwordError ? (
-        <Text className="text-red-500 mb-2">{passwordError}</Text>
-      ) : null}
 
       {/* Form Error */}
       {formError ? (
-        <Text className="text-red-500 mb-3">{formError}</Text>
+        <Text className="text-error mb-4 font-medium text-center">{formError}</Text>
       ) : null}
 
       {/* Submit Button */}
-      <Pressable
+      <Button
         onPress={handleSubmit}
-        disabled={isSubmitting}
-        className={`p-4 rounded-md items-center ${isSubmitting ? "bg-blue-300" : "bg-[#007bff]"
-          }`}
+        loading={isSubmitting}
+        size="lg"
+        className="mt-2"
       >
-        {isSubmitting ? (
-          <ActivitySpinner color={COLORS.primary} />
-        ) : (
-          <Text style={{ color: "white" }}>Login</Text>
-        )}
-      </Pressable>
+        Sign In
+      </Button>
 
       {/* Link to Sign Up */}
-      <Link href="/sign-up" asChild>
-        <Pressable className="justify-center items-center rounded-lg p-2 mr-5 mt-4">
-          <Text className="text-blue-500">Don't have an account? Sign Up</Text>
-        </Pressable>
-      </Link>
+      <View className="flex-row justify-center mt-6">
+        <Text className="text-placeholder">Don't have an account? </Text>
+        <Link href="/sign-up" asChild>
+          <Text className="text-primary font-bold">Sign Up</Text>
+        </Link>
+      </View>
     </KeyboardAvoidingView>
   )
 }

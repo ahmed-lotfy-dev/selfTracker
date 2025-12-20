@@ -1,5 +1,5 @@
 import { ScrollView, View } from "react-native"
-import WeightForm from "@/src/components/Weight/WeightForm"
+import WeightForm from "@/src/components/features/weight/WeightForm"
 import { useRouter } from "expo-router"
 import { useQueryClient } from "@tanstack/react-query"
 import React from "react"
@@ -11,8 +11,8 @@ export default function AddWeight() {
   const queryClient = useQueryClient()
 
   return (
-    <ScrollView style={{ flex: 1, marginVertical: 32 }}>
-      <Header backTo="/weights"  title={"Add Weight"} />
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="py-8 pb-32">
+      <Header backTo="/weights" title={"Add Weight"} />
       <WeightForm />
     </ScrollView>
   )

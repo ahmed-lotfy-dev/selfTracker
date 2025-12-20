@@ -27,11 +27,11 @@ export default function Header({ title, className, backTo }: HeaderProps) {
     >
       {shouldShowBackButton ? (
         <>
-            <BackButton backTo={backTo} className="mr-3" />
-            <Text className="text-xl font-bold text-gray-900 flex-1" numberOfLines={1}>{title}</Text>
+          <BackButton backTo={backTo} className="mr-3" />
+          <Text className="text-xl font-bold text-text flex-1" numberOfLines={1}>{title}</Text>
         </>
       ) : (
-        <Text className="text-3xl font-extrabold text-gray-900 tracking-tight">{title}</Text>
+        <Text className="text-3xl font-extrabold text-text tracking-tight">{title}</Text>
       )}
     </View>
   )

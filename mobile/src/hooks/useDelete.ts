@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Platform } from "react-native"
-import { showAlert } from "@/src/lib/lib"
+import { useAlertStore } from "@/src/store/useAlertStore"
+import { useToastStore } from "@/src/store/useToastStore"
 
 type UseDeleteOptions = {
   mutationFn: () => Promise<any>
@@ -20,6 +20,8 @@ export function useDelete({
   onErrorMessage = "Failed to delete.",
 }: UseDeleteOptions) {
   const queryClient = useQueryClient()
+  const showAlert = useAlertStore((state) => state.showAlert)
+  const showToast = useToastStore((state) => state.showToast)
 
   const mutation = useMutation({
     mutationFn,
@@ -27,27 +29,23 @@ export function useDelete({
       onSuccessInvalidate.forEach((invalidate) =>
         queryClient.invalidateQueries(invalidate)
       )
+      showToast("Deleted successfully", "success")
       onSuccessCallback?.()
     },
     onError: () => {
-      showAlert("Error", onErrorMessage)
+      showToast(onErrorMessage, "error")
     },
   })
 
   const triggerDelete = () => {
-    if (Platform.OS === "web") {
-      const confirmed = window.confirm(confirmMessage)
-      if (confirmed) mutation.mutate()
-    } else {
-      showAlert(confirmTitle, confirmMessage, [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => mutation.mutate(),
-        },
-      ])
-    }
+    showAlert(
+      confirmTitle,
+      confirmMessage,
+      () => mutation.mutate(), // onConfirm
+      undefined,               // onCancel
+      "Delete",                // confirmText
+      "Cancel"                 // cancelText
+    )
   }
 
   return {

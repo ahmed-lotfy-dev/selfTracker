@@ -2,19 +2,17 @@ import React, { useState } from "react"
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   Platform,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
-import { COLORS } from "@/src/constants/Colors"
-import { setAccessToken } from "@/src/lib/storage"
 import { useAuthActions } from "@/src/store/useAuthStore"
 import { signUp } from "@/src/lib/api/authApi"
 import { signUpSchema } from "@/src/types/userType"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
-import { SocialLoginButtons } from "@/src/components/Auth/SocialLoginButtons"
+import { SocialLoginButtons } from "@/src/components/features/auth/SocialLoginButtons"
+import Input from "@/src/components/ui/Input"
+import Button from "@/src/components/ui/Button"
 
 export default function SignUp() {
   const router = useRouter()
@@ -67,86 +65,76 @@ export default function SignUp() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, justifyContent: "center", padding: 20 }}
+      style={{ flex: 1, justifyContent: "center", padding: 24 }}
+      className="bg-background"
     >
-      <Text className="font-bold text-xl mb-4">Sign Up</Text>
+      <View className="mb-8">
+        <Text className="font-bold text-3xl text-text mb-2">Create Account</Text>
+        <Text className="text-placeholder font-medium">Join us and start tracking your journey</Text>
+      </View>
 
       {/* Social Login Buttons - shown first */}
       <SocialLoginButtons />
 
       {/* Divider */}
-      <View className="flex-row items-center my-6">
-        <View className="flex-1 h-px bg-gray-300" />
-        <Text className="mx-4 text-gray-500 text-sm">Or continue with</Text>
-        <View className="flex-1 h-px bg-gray-300" />
+      <View className="flex-row items-center my-8">
+        <View className="flex-1 h-px bg-border" />
+        <Text className="mx-4 text-placeholder text-sm font-medium">Or sign up with email</Text>
+        <View className="flex-1 h-px bg-border" />
       </View>
 
-      <TextInput
+      <Input
+        label="Name"
         value={name}
         onChangeText={setName}
-        placeholder="Name"
+        placeholder="Full Name"
         autoCapitalize="words"
         autoComplete="name"
-        placeholderTextColor={COLORS.inputText}
-        className="border border-gray-300 rounded-md px-4 py-2 mb-1"
+        error={nameError}
       />
-      {nameError ? (
-        <Text className="text-red-500 mb-2">{nameError}</Text>
-      ) : null}
 
-      <TextInput
+      <Input
+        label="Email"
         value={email}
         onChangeText={setEmail}
-        placeholder="Email"
+        placeholder="hello@example.com"
         autoCapitalize="none"
         keyboardType="email-address"
         autoComplete="email"
         textContentType="emailAddress"
-        placeholderTextColor={COLORS.inputText}
-        className="border border-gray-300 rounded-md px-4 py-2 mb-1"
+        error={emailError}
       />
-      {emailError ? (
-        <Text className="text-red-500 mb-2">{emailError}</Text>
-      ) : null}
 
-      <TextInput
+      <Input
+        label="Password"
         value={password}
         onChangeText={setPassword}
-        placeholder="Password"
+        placeholder="Create a strong password"
         secureTextEntry
         autoComplete="password"
         textContentType="password"
-        placeholderTextColor={COLORS.inputText}
-        className="border border-gray-300 rounded-md px-4 py-2 mb-1"
+        error={passwordError}
       />
-      {passwordError ? (
-        <Text className="text-red-500 mb-2">{passwordError}</Text>
-      ) : null}
 
       {formError ? (
-        <Text className="text-red-500 mb-3">{formError}</Text>
+        <Text className="text-error mb-4 font-medium text-center">{formError}</Text>
       ) : null}
 
-      <Pressable
+      <Button
         onPress={handleSubmit}
-        disabled={isSubmitting}
-        className={`p-4 rounded-md items-center ${isSubmitting ? "bg-blue-200" : "bg-[#007bff]"
-          }`}
+        loading={isSubmitting}
+        size="lg"
+        className="mt-2"
       >
-        {isSubmitting ? (
-          <ActivitySpinner color={COLORS.primary} />
-        ) : (
-          <Text style={{ color: "white" }}>Sign Up</Text>
-        )}
-      </Pressable>
+        Create Account
+      </Button>
 
-      <Link href="/sign-in" asChild>
-        <Pressable className="justify-center items-center rounded-lg p-2 mr-5 mt-4">
-          <Text className="text-blue-500">
-            Already have an account? Sign In
-          </Text>
-        </Pressable>
-      </Link>
+      <View className="flex-row justify-center mt-6">
+        <Text className="text-placeholder">Already have an account? </Text>
+        <Link href="/sign-in" asChild>
+          <Text className="text-primary font-bold">Sign In</Text>
+        </Link>
+      </View>
     </KeyboardAvoidingView>
   )
 }

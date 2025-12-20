@@ -83,8 +83,8 @@ export default function OnboardingScreen() {
   // Gradient Colors based on Theme
   const gradientColors =
     theme === "light"
-      ? ["#FFFFFF", "#F0F4F8", "#E6F0FF"]
-      : ["#0F172A", "#1E293B", "#000000"]
+      ? (["#FFFFFF", "#F0F4F8", "#E6F0FF"] as const)
+      : (["#0F172A", "#1E293B", "#000000"] as const)
 
   // Handlers
   const onScroll = useAnimatedScrollHandler({
@@ -248,7 +248,7 @@ export default function OnboardingScreen() {
               {item.title}
             </Text>
             <Text
-              className="text-lg font-medium text-left leading-6 text-gray"
+              className="text-lg font-medium text-left leading-6 text-placeholder"
             >
               {item.description}
             </Text>
