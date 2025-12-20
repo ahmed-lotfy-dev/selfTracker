@@ -5,29 +5,15 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1766192321891,
-      "tag": "0000_swift_demogoblin",
+      "when": 1766241688506,
+      "tag": "0000_colossal_surge",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "6",
-      "when": 1766192393667,
-      "tag": "0001_giant_power_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1766226588200,
-      "tag": "0002_nebulous_silk_fever",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1766228620960,
-      "tag": "0003_colorful_bishop",
+      "when": 1766252444403,
+      "tag": "0001_pretty_machine_man",
       "breakpoints": true
     }
   ]
