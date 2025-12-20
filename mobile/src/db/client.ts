@@ -1,6 +1,4 @@
 import { dbManager, getDb } from "./dbManager";
-import migrations from "../../drizzle/migrations";
-import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 
 /**
  * Database client with per-user isolation
@@ -23,14 +21,7 @@ export const db = new Proxy({} as ReturnType<typeof getDb>, {
 
 // Migration hook for React components
 export const useDatabaseMigrations = () => {
-  // Run migrations on the current user's database
-  try {
-    const currentDb = dbManager.isInitialized() ? dbManager.getCurrentDatabase() : null;
-    if (currentDb) {
-      return useMigrations(currentDb, migrations);
-    }
-  } catch (e) {
-    console.error("[DB] Migration error:", e);
-  }
-  return { success: false, error: undefined };
+  // Migrations are now handled by dbManager using custom runner
+  // This hook is kept for backward compatibility
+  return { success: true, error: undefined };
 };

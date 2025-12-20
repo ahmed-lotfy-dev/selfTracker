@@ -5,7 +5,17 @@ import { db } from "@/src/db/client"
 import { weightLogs } from "@/src/db/schema"
 import { desc, eq, isNull, lt, sql } from "drizzle-orm"
 import { createId } from "@paralleldrive/cuid2"
-import { addToSyncQueue } from "@/src/services/sync"
+import { addToSyncQueue, pushChanges } from "@/src/services/sync"
+import * as Network from "expo-network"
+
+const silentSync = async () => {
+  try {
+    const networkState = await Network.getNetworkStateAsync()
+    if (networkState.isConnected && networkState.isInternetReachable) {
+      await pushChanges()
+    }
+  } catch { }
+}
 
 export const fetchAllWeightLogs = async (
   cursor: string | null,
@@ -149,7 +159,7 @@ export const createWeight = async (weight: WeightLogType) => {
     await db.insert(weightLogs).values(newLog)
     console.log("Weight inserted to local DB:", newLog.id)
     await addToSyncQueue("INSERT", "weight_logs", id, newLog)
-    console.log("Added to sync queue")
+    silentSync()
     return newLog
   } catch (e) {
     console.error("Error inserting weight to local DB:", e)
@@ -172,6 +182,7 @@ export const updateWeight = async (weight: WeightLogType) => {
 
   await db.update(weightLogs).set(updateData).where(eq(weightLogs.id, weight.id))
   await addToSyncQueue("UPDATE", "weight_logs", weight.id, { ...weight, ...updateData })
+  silentSync()
 
   return { ...weight, ...updateData }
 }
@@ -186,6 +197,7 @@ export const deleteWeight = async (weightId: string) => {
   }).where(eq(weightLogs.id, weightId))
 
   await addToSyncQueue("DELETE", "weight_logs", weightId, { id: weightId })
+  silentSync()
 
   return { success: true }
 }

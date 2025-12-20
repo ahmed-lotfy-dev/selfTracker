@@ -1,10 +1,10 @@
 import { useEffect } from "react"
-import * as SecureStore from "expo-secure-store"
 import { authClient } from "@/src/lib/auth-client"
 import { useAuthActions, useUser } from "../store/useAuthStore"
 import { clearAllUserData } from "@/src/lib/storage"
 import { queryClient } from "@/src/components/Provider/AppProviders"
 import { dbManager } from "@/src/db/client"
+import { initialSync } from "@/src/services/sync"
 
 export const useAuth = () => {
   const { data: session, error, isPending, refetch } = authClient.useSession()
@@ -15,10 +15,20 @@ export const useAuth = () => {
     const initializeUserDatabase = async () => {
       if (session?.user?.id) {
         try {
-          // Initialize user-specific database
           await dbManager.initializeUserDatabase(session.user.id)
           console.log(`[Auth] Database initialized for user: ${session.user.id}`)
+
           setUser(session.user)
+
+          initialSync().then(result => {
+            if (result.success) {
+              console.log(`[Auth] Initial sync completed: ${result.synced} records`)
+            } else {
+              console.warn(`[Auth] Initial sync failed - app will work offline`)
+            }
+          }).catch(err => {
+            console.warn(`[Auth] Initial sync error (non-blocking):`, err.message)
+          })
         } catch (error) {
           console.error("[Auth] Failed to initialize user database:", error)
         }
@@ -30,12 +40,10 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      // Close user-specific database
       dbManager.closeCurrentDatabase()
       console.log("[Auth] Database closed for current user")
 
       await clearAllUserData()
-      await SecureStore.deleteItemAsync("auth_token_axios")
       queryClient.removeQueries()
       await authClient.signOut()
     } finally {

@@ -10,62 +10,58 @@ import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from "dat
 export const fetchUserHomeInfo = async () => {
   const now = new Date()
 
-  // Date ranges for stats (matching backend logic)
-  const startOfThisWeek = startOfWeek(now, { weekStartsOn: 6 }).toISOString() // Saturday start
-  const endOfThisWeek = endOfWeek(now, { weekStartsOn: 6 }).toISOString()
-  const startOfThisMonth = startOfMonth(now).toISOString()
-  const endOfThisMonth = endOfMonth(now).toISOString()
-  const threeMonthsAgo = subMonths(now, 3).toISOString()
+  const startOfThisWeek = startOfWeek(now, { weekStartsOn: 6 })
+  const endOfThisWeek = endOfWeek(now, { weekStartsOn: 6 })
+  const startOfThisMonth = startOfMonth(now)
+  const endOfThisMonth = endOfMonth(now)
+  const threeMonthsAgo = subMonths(now, 3)
 
-  // 1. Fetch Workouts
   const allWorkouts = await db.select().from(workoutLogs).where(isNull(workoutLogs.deletedAt)).orderBy(desc(workoutLogs.createdAt))
 
-  // Calculate Weekly/Monthly Workout Counts (Distinct Days)
   const weeklyWorkouts = new Set(
     allWorkouts
-      .filter(w => w.createdAt >= startOfThisWeek && w.createdAt <= endOfThisWeek)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map(w => (typeof w.createdAt === 'string' ? w.createdAt.split('T')[0] : (w.createdAt as any).toISOString().split('T')[0]))
+      .filter(w => {
+        const createdAt = new Date(w.createdAt)
+        return createdAt >= startOfThisWeek && createdAt <= endOfThisWeek
+      })
+      .map(w => new Date(w.createdAt).toISOString().split('T')[0])
   ).size
 
   const monthlyWorkouts = new Set(
     allWorkouts
-      .filter(w => w.createdAt >= startOfThisMonth && w.createdAt <= endOfThisMonth)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map(w => (typeof w.createdAt === 'string' ? w.createdAt.split('T')[0] : (w.createdAt as any).toISOString().split('T')[0]))
+      .filter(w => {
+        const createdAt = new Date(w.createdAt)
+        return createdAt >= startOfThisMonth && createdAt <= endOfThisMonth
+      })
+      .map(w => new Date(w.createdAt).toISOString().split('T')[0])
   ).size
 
-  // 2. Fetch Tasks
   const allTasksList = await db.select().from(tasks).where(isNull(tasks.deletedAt))
   const completedTasks = allTasksList.filter(t => t.completed).length
   const pendingTasks = allTasksList.filter(t => !t.completed).length
   const allTasksCount = allTasksList.length
 
-  // 3. Fetch Weights
   const weights = await db.select().from(weightLogs).where(isNull(weightLogs.deletedAt)).orderBy(desc(weightLogs.createdAt))
-  const latestWeight = weights.length > 0 ? weights[0].weight : null
+  const latestWeight = weights.length > 0 ? parseFloat(String(weights[0].weight)) : null
 
-  // 4. Weight Change (3 Months)
   let weightChange = null
   if (latestWeight) {
-    // Find oldest weight in the last 3 months
     const threeMonthsLog = weights
-      .filter(w => w.createdAt >= threeMonthsAgo)
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0] // Sort ASC to get oldest
+      .filter(w => new Date(w.createdAt) >= threeMonthsAgo)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0]
 
     if (threeMonthsLog && threeMonthsLog.id !== weights[0].id) {
-      const change = latestWeight - threeMonthsLog.weight
+      const oldWeight = parseFloat(String(threeMonthsLog.weight))
+      const change = latestWeight - oldWeight
       const sign = change > 0 ? "+" : ""
       weightChange = `${sign}${change.toFixed(2)} kg`
     }
   }
 
-  // Calculate Streak locally
   const streak = calculateStreak(allWorkouts.map(w => new Date(w.createdAt)))
 
-  // Recent activity (Last 7 days active)
   const activeDays = new Set(
-    allWorkouts.map(w => w.createdAt.split('T')[0])
+    allWorkouts.map(w => new Date(w.createdAt).toISOString().split('T')[0])
   ).size
 
   return {
@@ -84,7 +80,6 @@ export const fetchUserHomeInfo = async () => {
       tasksCompleted: completedTasks,
       tasksTotal: allTasksCount
     },
-    // Keep recent for lists
     recentWorkouts: allWorkouts.slice(0, 5),
     recentWeights: weights.slice(0, 5)
   }

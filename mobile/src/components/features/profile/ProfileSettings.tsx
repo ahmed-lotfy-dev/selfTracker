@@ -1,12 +1,9 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   View,
   Text,
   ScrollView,
   Pressable,
-  Alert,
-  Modal,
-  FlatList,
   Platform,
 } from "react-native"
 import { Feather } from "@expo/vector-icons"
@@ -18,21 +15,17 @@ import { useAlertStore } from "@/src/store/useAlertStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { User } from "@/src/types/userType"
 import { updateUser } from "@/src/lib/api/userApi"
-import { runSync } from "@/src/services/sync"
 import LogoutButton from "@/src/components/features/auth/LogoutButton"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { fetchGoals, createGoal, deleteGoal } from "@/src/lib/api/goalsApi"
-import { GoalType } from "@/src/types/goalType"
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from "react-native-reanimated"
+import Animated, { FadeInDown } from "react-native-reanimated"
 import { useThemeColors } from "@/src/constants/Colors"
 
-// UI Components
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
 import Row from "@/src/components/ui/Row"
 import Input from "@/src/components/ui/Input"
-import Card from "@/src/components/ui/Card"
-import { useEffect } from "react"
+import SyncSection from "./SyncSection"
 
 export default function ProfileSettings() {
   const { user, refetch } = useAuth()
@@ -42,33 +35,6 @@ export default function ProfileSettings() {
   const { showAlert } = useAlertStore()
   const colors = useThemeColors()
 
-  const [isSyncing, setIsSyncing] = useState(false)
-
-  // Rotation animation
-  const rotation = useSharedValue(0)
-
-  useEffect(() => {
-    if (isSyncing) {
-      rotation.value = withRepeat(
-        withTiming(360, {
-          duration: 1000,
-          easing: Easing.linear,
-        }),
-        -1, // infinite
-        false
-      )
-    } else {
-      rotation.value = withTiming(0, { duration: 200 })
-    }
-  }, [isSyncing])
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ rotate: `${rotation.value}deg` }],
-    }
-  })
-
-  // Form State
   const [name, setName] = useState(user?.name || "")
   const [weight, setWeight] = useState(user?.weight?.toString() || "")
   const [height, setHeight] = useState(user?.height?.toString() || "")
@@ -83,19 +49,16 @@ export default function ProfileSettings() {
   )
   const [showDatePicker, setShowDatePicker] = useState(false)
 
-  // Goals State
   const [showAddGoal, setShowAddGoal] = useState(false)
   const [newGoalType, setNewGoalType] = useState<"loseWeight" | "gainWeight" | "bodyFat" | "muscleMass">("loseWeight")
   const [newGoalTarget, setNewGoalTarget] = useState("")
 
-  // Fetch Goals
   const { data: goals, isLoading: isLoadingGoals } = useQuery({
     queryKey: ['userGoals', user?.id],
     queryFn: () => fetchGoals(user?.id),
     enabled: !!user?.id
   })
 
-  // Mutations
   const createGoalMutation = useMutation({
     mutationFn: createGoal,
     onSuccess: () => {
@@ -112,90 +75,6 @@ export default function ProfileSettings() {
       queryClient.invalidateQueries({ queryKey: ['userGoals'] })
     }
   })
-
-  const handleSync = async () => {
-    setIsSyncing(true)
-    try {
-      const result = await runSync()
-      if (result.pullSuccess && result.pushSuccess) {
-        showAlert(
-          "Sync Complete",
-          `Successfully synced your data!\n\nPulled: ${result.pulled} records\nPushed: ${result.pushed} records`,
-          () => { },
-          undefined,
-          "Got it",
-          undefined
-        )
-      } else {
-        showAlert(
-          "Sync Issue",
-          "Some data might not have synced. Please try again.",
-          () => { },
-          undefined,
-          "OK",
-          undefined
-        )
-      }
-    } catch (e) {
-      showAlert(
-        "Sync Failed",
-        "Failed to sync your data. Please check your connection.",
-        () => { },
-        undefined,
-        "OK",
-        undefined
-      )
-    } finally {
-      setIsSyncing(false)
-    }
-  }
-
-  const handleResetAndSync = async () => {
-    showAlert(
-      "Reset Local Data?",
-      "This will clear all local data and re-download everything from the cloud. Your cloud data is safe. This fixes corrupted local data.\n\nContinue?",
-      async () => {
-        setIsSyncing(true)
-        try {
-          const { resetAndSync } = await import("@/src/services/sync")
-          const result = await resetAndSync()
-          if (result.success) {
-            showAlert(
-              "Reset Complete",
-              `Successfully reset and synced ${result.synced} records from the cloud!`,
-              () => { },
-              undefined,
-              "Got it",
-              undefined
-            )
-          } else {
-            showAlert(
-              "Reset Failed",
-              "Failed to reset data. Please try again.",
-              () => { },
-              undefined,
-              "OK",
-              undefined
-            )
-          }
-        } catch (e) {
-          showAlert(
-            "Error",
-            "An error occurred during reset. Please try again.",
-            () => { },
-            undefined,
-            "OK",
-            undefined
-          )
-        } finally {
-          setIsSyncing(false)
-        }
-      },
-      () => { },
-      "Reset",
-      "Cancel"
-    )
-  }
 
   const handleSave = () => {
     if (!user?.id) return
@@ -240,7 +119,7 @@ export default function ProfileSettings() {
     createGoalMutation.mutate({
       userId: user.id,
       goalType: newGoalType,
-      targetValue: parseFloat(newGoalTarget),
+      targetValue: newGoalTarget
     })
   }
 
@@ -489,51 +368,8 @@ export default function ProfileSettings() {
             </Section>
           </Animated.View>
 
-          {/* Section: App Data */}
           <Animated.View entering={FadeInDown.delay(500).duration(500)}>
-            <Section title="Sync">
-              {/* ... content ... */}
-              <Pressable
-                onPress={handleSync}
-                disabled={isSyncing}
-              >
-                <View className="flex-row items-center py-4 px-4 bg-card active:bg-inputBackground">
-                  <Animated.View
-                    className="w-8 items-center justify-center mr-3"
-                    style={animatedStyle}
-                  >
-                    <Feather name="refresh-cw" size={20} color={isSyncing ? colors.primary : colors.placeholder} />
-                  </Animated.View>
-                  <View className="flex-1">
-                    <Text className="text-base text-text font-medium">Sync Data</Text>
-                    <Text className="text-xs text-placeholder">Push local changes to cloud</Text>
-                  </View>
-                  {isSyncing ? (
-                    <View />
-                  ) : (
-                    <Feather name="chevron-right" size={20} color={colors.primary} />
-                  )}
-                </View>
-              </Pressable>
-
-              {/* Reset & Resync Button */}
-              <Pressable
-                onPress={handleResetAndSync}
-                disabled={isSyncing}
-                className="border-t border-border"
-              >
-                <View className="flex-row items-center py-4 px-4 bg-card active:bg-inputBackground">
-                  <View className="w-8 items-center justify-center mr-3">
-                    <Feather name="database" size={20} color={colors.error} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-base text-error font-medium">Reset & Resync Data</Text>
-                    <Text className="text-xs text-placeholder">Fix corrupted local data</Text>
-                  </View>
-                  <Feather name="chevron-right" size={20} color={colors.error} />
-                </View>
-              </Pressable>
-            </Section>
+            <SyncSection />
           </Animated.View>
 
           {/* Save Action */}

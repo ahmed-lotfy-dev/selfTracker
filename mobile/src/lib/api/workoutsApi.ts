@@ -5,7 +5,17 @@ import { db } from "@/src/db/client"
 import { workoutLogs } from "@/src/db/schema"
 import { desc, eq, isNull, sql } from "drizzle-orm"
 import { createId } from "@paralleldrive/cuid2"
-import { addToSyncQueue } from "@/src/services/sync"
+import { addToSyncQueue, pushChanges } from "@/src/services/sync"
+import * as Network from "expo-network"
+
+const silentSync = async () => {
+  try {
+    const networkState = await Network.getNetworkStateAsync()
+    if (networkState.isConnected && networkState.isInternetReachable) {
+      await pushChanges()
+    }
+  } catch { }
+}
 
 export const fetchAllWorkoutLogs = async (
   cursor: string | null,
@@ -21,10 +31,11 @@ export const fetchAllWorkoutLogs = async (
   if (cursor) {
     const cursorLog = await db.select().from(workoutLogs).where(eq(workoutLogs.id, cursor))
     if (cursorLog.length > 0) {
+      const cursorTime = new Date(cursorLog[0].createdAt).getTime()
       query = db
         .select()
         .from(workoutLogs)
-        .where(sql`${workoutLogs.deletedAt} IS NULL AND ${workoutLogs.createdAt} < ${cursorLog[0].createdAt}`)
+        .where(sql`${workoutLogs.deletedAt} IS NULL AND ${workoutLogs.createdAt} < ${cursorTime}`)
         .orderBy(desc(workoutLogs.createdAt))
         .limit(limit + 1)
     }
@@ -42,36 +53,22 @@ export const fetchAllWorkoutLogs = async (
 }
 
 export async function fetchWorkoutLogsByMonth(year: number, month: number) {
-  // Calendar expects an array of logs for the given month
-  // Local implementation: Fetch all logs for the year-month
+  const startDate = new Date(year, month - 1, 1)
+  const endDate = new Date(year, month, 1)
 
-  // Construct date range for simple string comparison (since createdAt is ISO string)
-  const paddedMonth = month.toString().padStart(2, '0')
-  const startDate = `${year}-${paddedMonth}-01`
-  // Simple "next month" logic
-  const nextMonth = month === 12 ? 1 : month + 1
-  const nextYear = month === 12 ? year + 1 : year
-  const paddedNextMonth = nextMonth.toString().padStart(2, '0')
-  const endDate = `${nextYear}-${paddedNextMonth}-01`
-
-  /* 
-     Fetch logs and group them by date string (YYYY-MM-DD) 
-     Returns: { "2024-05-20": [log1, log2], "2024-05-21": [logA] }
-  */
   const logs = await db
     .select()
     .from(workoutLogs)
     .where(
       sql`${workoutLogs.deletedAt} IS NULL 
-      AND ${workoutLogs.createdAt} >= ${startDate} 
-      AND ${workoutLogs.createdAt} < ${endDate}`
+      AND ${workoutLogs.createdAt} >= ${startDate.getTime()} 
+      AND ${workoutLogs.createdAt} < ${endDate.getTime()}`
     )
     .orderBy(desc(workoutLogs.createdAt))
 
   const grouped: Record<string, typeof logs> = {}
 
   logs.forEach((log) => {
-    // Assuming createdAt is ISO string, take YYYY-MM-DD
     const dateKey = new Date(log.createdAt).toISOString().split('T')[0]
     if (!grouped[dateKey]) {
       grouped[dateKey] = []
@@ -82,20 +79,16 @@ export async function fetchWorkoutLogsByMonth(year: number, month: number) {
   return grouped
 }
 
-// Local fallback for chart data if backend fails or for offline mode
-// Local fallback for chart data if backend fails or for offline mode
 export async function fetchWorkoutLogsChart(month: number) {
-  // Safe approach: Get all logs for the last X months
   const now = new Date()
   const pastDate = new Date(now)
-  pastDate.setMonth(now.getMonth() - month) // Dynamic months from props
-  const sinceDateIso = pastDate.toISOString()
+  pastDate.setMonth(now.getMonth() - month)
 
   const logs = await db
     .select()
     .from(workoutLogs)
     .where(
-      sql`${workoutLogs.deletedAt} IS NULL AND ${workoutLogs.createdAt} >= ${sinceDateIso}`
+      sql`${workoutLogs.deletedAt} IS NULL AND ${workoutLogs.createdAt} >= ${pastDate.getTime()}`
     )
     .orderBy(desc(workoutLogs.createdAt))
 
@@ -151,6 +144,7 @@ export const createWorkout = async (workout: WorkoutLogType) => {
 
   await db.insert(workoutLogs).values(newLog)
   await addToSyncQueue("INSERT", "workout_logs", id, newLog)
+  silentSync()
 
   return newLog
 }
@@ -176,6 +170,7 @@ export const updateWorkout = async (workout: WorkoutLogType) => {
 
   await db.update(workoutLogs).set(updateData).where(eq(workoutLogs.id, workout.id))
   await addToSyncQueue("UPDATE", "workout_logs", workout.id, { ...workout, ...updateData })
+  silentSync()
 
   return { ...workout, ...updateData }
 }
@@ -190,6 +185,7 @@ export const deleteWorkout = async (workoutId: string) => {
   }).where(eq(workoutLogs.id, workoutId))
 
   await addToSyncQueue("DELETE", "workout_logs", workoutId, { id: workoutId })
+  silentSync()
 
   return { success: true }
 }

@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as Linking from "expo-linking"
 import { useRouter } from "expo-router"
-import * as SecureStore from "expo-secure-store"
 import { useToast } from './useToast';
 import { authClient } from "../lib/auth-client"
 import { Platform } from "react-native"
@@ -73,61 +72,29 @@ export function useDeepLinkHandler() {
           return;
         }
 
-        // Set processing flag
         isProcessingRef.current = true;
 
         console.log('Token extracted from deep link, establishing session...');
-        console.log(`[DEBUG] Handling token: ${token.substring(0, 10)}...`);
 
         try {
-          // 1. Store the token immediately in SecureStore
-          // We store the signed token (from cookie param) for Cookie usage
-          await SecureStore.setItemAsync("auth_cookie_token", token);
-
-          // CRITICAL FIX: Store the token as 'auth_token_axios' IMMEDIATELY.
-          // This fixes the race condition where 'sync' calls fire before the session check completes.
-          // Even if we validate later, we need the token available for Axios interceptors NOW.
-          await SecureStore.setItemAsync("auth_token_axios", token);
-
-          // Also set as 'selftracker.session_token' for better-auth client persistence (using signed version to be safe)
-          await SecureStore.setItemAsync("selftracker.session_token", token);
-          await SecureStore.setItemAsync("better-auth.session_token", token);
-
-          console.log('[DEBUG] Signed Token stored in SecureStore (auth_cookie_token, auth_token_axios & selftracker.session_token)');
-
-          // 2. Wait a brief moment for storage to propagate if needed (rarely needed but safe)
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-          // 3. Verify session using authClient
-
-          let session = await authClient.getSession();
-
-          if (!session.data) {
-            console.log('[DEBUG] getSession() from storage returned null, trying with explicit header...');
-            session = await authClient.getSession({
-              fetchOptions: {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
+          const session = await authClient.getSession({
+            fetchOptions: {
+              headers: {
+                Authorization: `Bearer ${token}`,
               },
-            });
-          }
+            },
+          });
 
-          if (!session.data) {
-            console.warn('[DEBUG] Session data missing in response, but token is present. Proceeding with optimistic auth.');
-            // Token is already stored above, so no need to fallback-store here.
-          } else {
-            console.log('[DEBUG] Session established:', JSON.stringify(session.data, null, 2));
-            console.log('Session established successfully');
-
-            // Update query cache with the new session
+          if (session.data) {
+            console.log('[Auth] Session established successfully');
             queryClient.setQueryData(['session'], session.data);
+          } else {
+            console.warn('[Auth] Session data missing, proceeding anyway');
           }
 
         } catch (error: any) {
-          console.error('Failed to establish session validation:', error);
-          // We don't return here if we have the token stored; we try to proceed.
-          showToast('Session check failed, but trying to proceed...', 'error');
+          console.error('Failed to establish session:', error);
+          showToast('Session setup failed, please try again', 'error');
         }
 
         // Invalidate React Query cache to refetch user data

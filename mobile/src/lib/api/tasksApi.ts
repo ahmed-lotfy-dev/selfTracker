@@ -3,7 +3,17 @@ import { tasks } from "@/src/db/schema"
 import { desc, eq, isNull } from "drizzle-orm"
 import { TaskType } from "@/src/types/taskType"
 import { createId } from "@paralleldrive/cuid2"
-import { addToSyncQueue } from "@/src/services/sync"
+import { addToSyncQueue, pushChanges } from "@/src/services/sync"
+import * as Network from "expo-network"
+
+const silentSync = async () => {
+  try {
+    const networkState = await Network.getNetworkStateAsync()
+    if (networkState.isConnected && networkState.isInternetReachable) {
+      await pushChanges()
+    }
+  } catch { }
+}
 
 export const fetchAllTasks = async () => {
   const localTasks = await db
@@ -30,15 +40,16 @@ export const createTask = async (task: TaskType) => {
     userId: task.userId,
     title: task.title,
     completed: task.completed ?? false,
-    dueDate: task.dueDate || null,
+    dueDate: task.dueDate ? new Date(task.dueDate) : null,
     category: task.category || "general",
-    createdAt: task.createdAt || now.toISOString(),
+    createdAt: task.createdAt ? new Date(task.createdAt) : now,
     updatedAt: now,
     syncStatus: "pending" as const,
   }
 
   await db.insert(tasks).values(newTask)
   await addToSyncQueue("INSERT", "tasks", id, newTask)
+  silentSync()
 
   return newTask
 }
@@ -90,6 +101,7 @@ export const updateTask = async (task: Partial<TaskType> & { id: string }) => {
     })
 
     console.log("[DEBUG] Added to sync queue successfully")
+    silentSync()
 
     return { ...task, ...finalUpdateData }
   } catch (e) {
@@ -108,6 +120,7 @@ export const deleteTask = async (taskId: string) => {
   }).where(eq(tasks.id, taskId))
 
   await addToSyncQueue("DELETE", "tasks", taskId, { id: taskId })
+  silentSync()
 
   return { success: true }
 }

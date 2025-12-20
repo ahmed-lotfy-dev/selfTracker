@@ -9,6 +9,7 @@ import { createId } from "@paralleldrive/cuid2";
 import axiosInstance from "../lib/api/axiosInstane";
 import { API_BASE_URL } from "../lib/api/config";
 import * as SecureStore from "expo-secure-store";
+import { queryClient } from "@/src/components/Provider/AppProviders";
 
 // Helper to get user-specific sync keys
 const getUserSyncKey = (key: string): string => {
@@ -112,11 +113,6 @@ export const pushChanges = async (): Promise<{ success: boolean; pushed: number 
 const sanitizeRecord = (change: any) => {
   const sanitized = { ...change };
 
-  // Backend sends timestamps as integers (milliseconds since epoch)
-  // Our schema uses integer({ mode: "timestamp" }) which expects raw numbers
-  // DO NOT convert to Date objects - Drizzle handles that internally
-
-  // Just ensure null/undefined fields are removed
   const dateFields = [
     "updatedAt", "deletedAt", "createdAt", "dueDate",
     "deadline", "startTime", "endTime"
@@ -125,12 +121,13 @@ const sanitizeRecord = (change: any) => {
   dateFields.forEach(field => {
     if (sanitized[field] == null) {
       delete sanitized[field];
+    } else if (typeof sanitized[field] === 'string') {
+      sanitized[field] = new Date(sanitized[field]);
+    } else if (typeof sanitized[field] === 'number') {
+      sanitized[field] = new Date(sanitized[field]);
     }
-    // If the field exists and is a valid number or ISO string, keep it as-is
-    // Drizzle will handle the conversion based on the schema definition
   });
 
-  // Remove fields that shouldn't be in the SQLite DB directly
   delete sanitized.tableName;
   delete sanitized.syncStatus;
   return sanitized;
@@ -258,6 +255,15 @@ export const initialSync = async (): Promise<{ success: boolean; synced: number 
     await SecureStore.setItemAsync(getUserSyncKey(LAST_SYNCED_KEY), serverTime || new Date().toISOString());
     await SecureStore.setItemAsync(INITIAL_SYNC_DONE_KEY, "true");
     console.log(`Initial sync complete. Synced ${synced} records.`);
+
+    queryClient.invalidateQueries({ queryKey: ['weightLogs'] });
+    queryClient.invalidateQueries({ queryKey: ['workoutLogs'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
+    queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
+    queryClient.invalidateQueries({ queryKey: ['userGoals'] });
+    queryClient.invalidateQueries({ queryKey: ['expenses'] });
+
     return { success: true, synced };
   } catch (error) {
     console.error("Initial sync failed:", error);

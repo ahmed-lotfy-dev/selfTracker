@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { openDatabaseSync, SQLiteDatabase } from "expo-sqlite";
+import { runMigrations } from "./customMigrations";
 
 /**
  * Database Manager for Per-User Database Isolation
@@ -24,28 +25,26 @@ class DatabaseManager {
    * Initialize database for a specific user
    */
   async initializeUserDatabase(userId: string): Promise<ReturnType<typeof drizzle>> {
-    // If already initialized for this user, return existing instance
     if (this.currentUserId === userId && this.currentDb) {
       return this.currentDb;
     }
 
-    // Close existing database if switching users
     if (this.currentExpoDb) {
       this.closeCurrentDatabase();
     }
 
-    // Open user-specific database
     const dbPath = this.getUserDbPath(userId);
     console.log(`[DB Manager] Opening database: ${dbPath}`);
 
     const expoDb = openDatabaseSync(dbPath);
+
+    await runMigrations(expoDb);
+    console.log(`[DB Manager] Migrations completed for user: ${userId}`);
+
     const db = drizzle(expoDb);
 
-    // Note: Migrations are handled by useMigrations hook in the app component
-    // We don't run them here to avoid PostgreSQL syntax errors
     console.log(`[DB Manager] Database ready for user: ${userId}`);
 
-    // Store current database instance
     this.currentExpoDb = expoDb;
     this.currentDb = db;
     this.currentUserId = userId;

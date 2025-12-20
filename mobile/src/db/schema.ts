@@ -18,8 +18,8 @@ export const weightLogs = sqliteTable("weight_logs", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
   weight: text("weight").notNull(), // text to match backend numeric
-  mood: text("mood"),
-  energy: text("energy"),
+  mood: text("mood").$type<"Low" | "Medium" | "High">(),
+  energy: text("energy").$type<"Low" | "Okay" | "Good" | "Great">(),
   notes: text("notes"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).defaultNow(),

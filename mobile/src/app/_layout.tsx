@@ -7,10 +7,6 @@ import { useAppState } from "@/src/hooks/useAppState"
 import * as SplashScreen from "expo-splash-screen"
 import "react-native-gesture-handler"
 import "@/src/global.css"
-import { useMigrations } from "drizzle-orm/expo-sqlite/migrator"
-import migrations from "../../drizzle/migrations"
-import { db } from "../db/client"
-import { runSync, initialSync } from "../services/sync"
 
 import { AppProviders } from "@/src/components/Provider/AppProviders"
 import {
@@ -72,20 +68,11 @@ function RootLayout() {
     return () => { } // Return an empty cleanup function for web
   }, [])
 
-  /* @ts-ignore */
-  const { success: migrationSuccess, error: migrationError } = useMigrations(db, migrations)
 
-  useEffect(() => {
-    if (migrationError) {
-      console.error("Migration error:", migrationError)
-      // Optionally show an alert or toast here
-    }
-  }, [migrationError])
 
   useEffect(() => {
     const prepareApp = async () => {
-      if (loaded && !appIsReady && migrationSuccess) {
-        await initialSync()
+      if (loaded && !appIsReady) {
         checkForUpdates()
         SplashScreen.hide()
         setAppIsReady(true)
@@ -93,7 +80,7 @@ function RootLayout() {
     }
 
     prepareApp()
-  }, [loaded, appIsReady, migrationSuccess])
+  }, [loaded, appIsReady])
 
   if (!appIsReady) {
     return null
