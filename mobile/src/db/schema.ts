@@ -56,3 +56,16 @@ export const workouts = sqliteTable("workouts", {
   createdAt: text("created_at"),
   updatedAt: text("updated_at"),
 });
+
+export const userGoals = sqliteTable("user_goals", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  goalType: text("goal_type").notNull(), // 'loseWeight', 'gainWeight', etc.
+  targetValue: integer("target_value").notNull(), // Storing as integer/real might differ, simple text/real works
+  deadline: integer("deadline", { mode: "timestamp" }),
+  achieved: integer("achieved", { mode: "boolean" }).default(false),
+  createdAt: text("created_at").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }), // For sync
+  syncStatus: text("sync_status").$type<SyncStatus>().default("pending"),
+});
