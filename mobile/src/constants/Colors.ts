@@ -22,6 +22,10 @@ export function useThemeColors() {
   const statTertiary = useCSSVariable('--color-stat-tertiary') as string ?? '#4ade80';
   const statQuaternary = useCSSVariable('--color-stat-quaternary') as string ?? '#818CF8';
 
+  // Social Colors
+  const socialGoogle = useCSSVariable('--color-social-google') as string ?? '#4285F4';
+  const socialGithub = useCSSVariable('--color-social-github') as string ?? '#18181B';
+
   return {
     primary,
     secondary,
@@ -38,6 +42,8 @@ export function useThemeColors() {
     statSecondary,
     statTertiary,
     statQuaternary,
+    socialGoogle,
+    socialGithub,
   };
 }
 

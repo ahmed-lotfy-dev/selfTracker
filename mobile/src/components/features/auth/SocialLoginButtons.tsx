@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { authClient } from '@/src/lib/auth-client';
 import { useToast } from '@/src/hooks/useToast';
+import { useThemeColors } from '@/src/constants/Colors';
 import * as Linking from 'expo-linking';
 
 /**
@@ -17,6 +18,7 @@ interface SocialLoginButtonsProps {
 
 export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
   const { showToast } = useToast();
+  const colors = useThemeColors();
 
   const handleSocialLogin = async (provider: OAuthProvider) => {
     try {
@@ -49,7 +51,7 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
         onPress={() => handleSocialLogin('google')}
         className="flex-row items-center justify-center border border-border rounded-2xl px-4 py-4 bg-card active:bg-gray-50/50 dark:active:bg-emerald-900/10 shadow-sm"
       >
-        <AntDesign name="google" size={20} className="text-socialGoogle" />
+        <AntDesign name="google" size={20} color={colors.socialGoogle} />
         <Text className="ml-3 text-text font-semibold">
           Sign in with Google
         </Text>
@@ -60,7 +62,7 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
         onPress={() => handleSocialLogin('github')}
         className="flex-row items-center justify-center border border-border rounded-2xl px-4 py-4 bg-card active:bg-gray-50/50 dark:active:bg-emerald-900/10 shadow-sm"
       >
-        <AntDesign name="github" size={20} className="text-socialGithub" />
+        <AntDesign name="github" size={20} color={colors.socialGithub} />
         <Text className="ml-3 text-text font-semibold">
           Sign in with GitHub
         </Text>
