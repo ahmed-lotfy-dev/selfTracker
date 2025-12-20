@@ -3,39 +3,86 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
-  Platform,
-  Alert,
   ScrollView,
   Pressable,
+  Alert,
+  Switch,
+  ActivityIndicator,
+  Modal,
+  Platform,
 } from "react-native"
+import { Feather } from "@expo/vector-icons"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { useAuth } from "@/src/hooks/useAuth"
-import { ProfileOption } from "@/src/components/ui/ProfileOption"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { User } from "@/src/types/userType"
 import { updateUser } from "@/src/lib/api/userApi"
-import UserProfile from "./UserProfile"
+import { runSync } from "@/src/services/sync"
 import LogoutButton from "@/src/components/Buttons/LogoutButton"
+import UserProfile from "./UserProfile"
 
 export default function ProfileSettings() {
   const { user, refetch } = useAuth()
   const { updateMutation } = useUpdate({ mutationFn: updateUser })
   const { mutate: updateUserMutation, isPending } = updateMutation
 
+  // Edit State
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  // Form State
   const [name, setName] = useState(user?.name || "")
-  const [email, setEmail] = useState(user?.email || "")
+  const [weight, setWeight] = useState(user?.weight?.toString() || "")
+  const [height, setHeight] = useState(user?.height?.toString() || "")
+  const [unitSystem, setUnitSystem] = useState(user?.unitSystem || "metric")
+  const [theme, setTheme] = useState(user?.theme || "system")
+  const [currency, setCurrency] = useState(user?.currency || "EGP")
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(
     user?.dateOfBirth ? new Date(user.dateOfBirth) : undefined
   )
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [gender, setGender] = useState(user?.gender || "")
-  const [weight, setWeight] = useState(user?.weight?.toString() || "")
-  const [height, setHeight] = useState(user?.height?.toString() || "")
-  const [unitSystem, setUnitSystem] = useState(user?.unitSystem || "metric")
-  const [income, setIncome] = useState(user?.income?.toString() || "")
-  const [currency, setCurrency] = useState(user?.currency || "EGP")
-  const [image, setImage] = useState(user?.image || "")
+
+  const handleSync = async () => {
+    setIsSyncing(true)
+    try {
+      const result = await runSync()
+      if (result.pullSuccess && result.pushSuccess) {
+        Alert.alert("Synced", `Pulled: ${result.pulled}, Pushed: ${result.pushed}`)
+      } else {
+        Alert.alert("Sync Issue", "Some data might not have synced.")
+      }
+    } catch (e) {
+      Alert.alert("Error", "Failed to sync.")
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const handleSave = () => {
+    if (!user?.id) return
+
+    const updatedFields: Partial<User> = {
+      name,
+      weight: weight ? parseFloat(weight) : null,
+      height: height ? parseFloat(height) : null,
+      unitSystem,
+      currency,
+      theme,
+      dateOfBirth: dateOfBirth?.toISOString().split("T")[0],
+    }
+
+    updateUserMutation(
+      { id: user.id, ...updatedFields },
+      {
+        onSuccess: () => {
+          setIsEditing(false)
+          refetch()
+          Alert.alert("Saved", "Profile updated.")
+        },
+        onError: (e) => Alert.alert("Error", e.message),
+      }
+    )
+  }
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || dateOfBirth
@@ -43,205 +90,172 @@ export default function ProfileSettings() {
     setDateOfBirth(currentDate)
   }
 
-  const handleSaveChanges = () => {
-    if (!user?.id) {
-      Alert.alert("Error", "User not authenticated.")
-      return
-    }
-
-    const updatedFields: Partial<User> = {
-      name,
-      email,
-      dateOfBirth: dateOfBirth?.toISOString().split("T")[0],
-      gender: gender || null,
-      weight: weight ? parseInt(weight, 10) : null,
-      height: height ? parseInt(height, 10) : null,
-      unitSystem,
-      income: income ? parseFloat(income) : null,
-      currency,
-      image: image || null,
-    }
-
-    updateUserMutation(
-      { id: user.id, ...updatedFields },
-      {
-        onSuccess: () => {
-          Alert.alert("Success", "Profile updated successfully!")
-          refetch()
-        },
-        onError: (error: Error) => {
-          Alert.alert("Error", "Failed to update profile: " + error.message)
-        },
-      }
-    )
-  }
+  // Helper Component for Settings Row
+  const SettingRow = ({ label, value, icon, isLast = false, children }: any) => (
+    <View className={`flex-row items-center py-4 px-4 ${!isLast ? "border-b border-gray-100" : ""} bg-white`}>
+      <View className="w-8 items-center justify-center mr-3">
+        <Feather name={icon} size={20} color="#4b5563" />
+      </View>
+      <View className="flex-1">
+        <Text className="text-base text-gray-900 font-medium">{label}</Text>
+      </View>
+      <View className="flex-row items-center">
+        {children ? (
+          children
+        ) : (
+          <Text className="text-gray-500 text-sm">{value || "Not set"}</Text>
+        )}
+      </View>
+    </View>
+  )
 
   return (
-    <ScrollView 
-      contentContainerStyle={{ paddingBottom: 100 }} 
-      showsVerticalScrollIndicator={false}
-      className="flex-1"
-    >
-      <UserProfile />
+    <View className="flex-1 bg-gray-50">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
 
-      <View className="px-2">
-        {/* Personal Information Card */}
-        <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
-          <Text className="text-lg font-bold text-gray-900 mb-4">
-            Personal Information
-          </Text>
+        {/* Header Profile Card */}
+        <View className="bg-white p-6 pb-8 items-center border-b border-gray-200 rounded-b-3xl shadow-sm mb-6">
+          <View className="h-24 w-24 bg-emerald-100 rounded-full items-center justify-center mb-4 border-4 border-white shadow-sm">
+            <Text className="text-3xl font-bold text-emerald-600">
+              {user?.name?.charAt(0).toUpperCase() || "U"}
+            </Text>
+          </View>
+          <Text className="text-xl font-bold text-gray-900 mb-1">{user?.name || "User"}</Text>
+          <Text className="text-gray-500 text-sm mb-4">{user?.email}</Text>
 
-          <Text className="text-sm font-medium text-gray-700 mb-1.5">Name</Text>
-          <TextInput
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
-            placeholder="Enter your name"
-            placeholderTextColor="#9ca3af"
-            value={name}
-            onChangeText={setName}
-          />
-
-          <Text className="text-sm font-medium text-gray-700 mb-1.5">Email</Text>
-          <TextInput
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
-            placeholder="Enter your email"
-            placeholderTextColor="#9ca3af"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
-
-          <Text className="text-sm font-medium text-gray-700 mb-1.5">
-            Date of Birth
-          </Text>
           <Pressable
-            onPress={() => setShowDatePicker(true)}
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-3"
+            onPress={() => setIsEditing(!isEditing)}
+            className={`flex-row items-center px-5 py-2 rounded-full ${isEditing ? 'bg-gray-200' : 'bg-gray-100'}`}
           >
-            <Text className="text-gray-900 text-base">
-              {dateOfBirth ? dateOfBirth.toDateString() : "Select Date of Birth"}
+            <Feather name={isEditing ? "x" : "edit-2"} size={14} color="#374151" />
+            <Text className="ml-2 text-gray-700 font-medium text-sm">
+              {isEditing ? "Cancel Editing" : "Edit Profile"}
             </Text>
           </Pressable>
-          {showDatePicker && (
-            <DateTimePicker
-              value={dateOfBirth || new Date()}
-              mode="date"
-              display="default"
-              onChange={handleDateChange}
-            />
+        </View>
+
+        {/* Content */}
+        <View className="px-4">
+
+          {/* Section: Physical Stats */}
+          <Text className="text-gray-500 font-semibold mb-2 ml-1 uppercase text-xs tracking-wider">Physical Stats</Text>
+          <View className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-6">
+            <SettingRow label="Weight" icon="activity" value={`${weight} ${user?.unitSystem === 'imperial' ? 'lbs' : 'kg'}`}>
+              {isEditing && (
+                <TextInput
+                  className="text-right text-gray-900 border-b border-gray-200 p-1 w-20"
+                  value={weight}
+                  onChangeText={setWeight}
+                  keyboardType="numeric"
+                  placeholder="0"
+                />
+              )}
+            </SettingRow>
+            <SettingRow label="Height" icon="bar-chart-2" value={`${height} ${user?.unitSystem === 'imperial' ? 'in' : 'cm'}`} isLast>
+              {isEditing && (
+                <TextInput
+                  className="text-right text-gray-900 border-b border-gray-200 p-1 w-20"
+                  value={height}
+                  onChangeText={setHeight}
+                  keyboardType="numeric"
+                  placeholder="0"
+                />
+              )}
+            </SettingRow>
+          </View>
+
+          {/* Section: Preferences */}
+          <Text className="text-gray-500 font-semibold mb-2 ml-1 uppercase text-xs tracking-wider">Preferences</Text>
+          <View className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-6">
+            <SettingRow label="Unit System" icon="box">
+              {isEditing ? (
+                <View className="flex-row bg-gray-100 rounded-lg p-1">
+                  <Pressable
+                    onPress={() => setUnitSystem('metric')}
+                    className={`px-3 py-1 rounded-md ${unitSystem === 'metric' ? 'bg-white shadow-sm' : ''}`}
+                  >
+                    <Text className={`text-xs ${unitSystem === 'metric' ? 'font-bold' : 'text-gray-500'}`}>Metric</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setUnitSystem('imperial')}
+                    className={`px-3 py-1 rounded-md ${unitSystem === 'imperial' ? 'bg-white shadow-sm' : ''}`}
+                  >
+                    <Text className={`text-xs ${unitSystem === 'imperial' ? 'font-bold' : 'text-gray-500'}`}>Imperial</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Text className="text-gray-500 text-sm capitalize">{unitSystem}</Text>
+              )}
+            </SettingRow>
+            <SettingRow label="Currency" icon="dollar-sign" value={currency} isLast>
+              {isEditing && (
+                <TextInput
+                  className="text-right text-gray-900 border-b border-gray-200 p-1 w-20"
+                  value={currency}
+                  onChangeText={setCurrency}
+                />
+              )}
+            </SettingRow>
+          </View>
+
+          {/* Section: Appearance */}
+          <Text className="text-gray-500 font-semibold mb-2 ml-1 uppercase text-xs tracking-wider">Appearance</Text>
+          <View className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-6">
+            <SettingRow label="Theme" icon="moon" isLast>
+              <View className="flex-row bg-gray-100 rounded-lg p-1">
+                {['light', 'dark', 'system'].map((option) => (
+                  <Pressable
+                    key={option}
+                    onPress={() => isEditing && setTheme(option)}
+                    className={`px-3 py-1 rounded-md ${theme === option ? 'bg-white shadow-sm' : ''}`}
+                  >
+                    <Text className={`text-xs capitalize ${theme === option ? 'font-bold' : 'text-gray-500'}`}>{option}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </SettingRow>
+          </View>
+
+          {/* Section: App Data */}
+          <Text className="text-gray-500 font-semibold mb-2 ml-1 uppercase text-xs tracking-wider">Data & Sync</Text>
+          <View className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-6">
+            <Pressable
+              onPress={handleSync}
+              disabled={isSyncing}
+            >
+              <View className="flex-row items-center py-4 px-4 bg-white active:bg-gray-50">
+                <View className="w-8 items-center justify-center mr-3">
+                  <Feather name="refresh-cw" size={20} color={isSyncing ? "#10b981" : "#4b5563"} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base text-gray-900 font-medium">Sync Data</Text>
+                </View>
+                {isSyncing ? (
+                  <ActivityIndicator size="small" color="#10b981" />
+                ) : (
+                  <Feather name="chevron-right" size={20} color="#9ca3af" />
+                )}
+              </View>
+            </Pressable>
+          </View>
+
+          {/* Save Action */}
+          {isEditing && (
+            <Pressable onPress={handleSave} className="bg-emerald-600 rounded-2xl py-4 mb-6 shadow-md shadow-emerald-200 active:bg-emerald-700">
+              {isPending ? <ActivityIndicator color="white" /> : <Text className="text-center text-white font-bold text-lg">Save Changes</Text>}
+            </Pressable>
           )}
 
-          <ProfileOption
-            label="Gender"
-            options={[
-              { label: "Male", value: "male" },
-              { label: "Female", value: "female" },
-            ]}
-            selectedValue={gender}
-            onValueChange={setGender}
-          />
+          {/* Log Out */}
+          <View className="mt-8 mb-10">
+            <LogoutButton />
+          </View>
+
         </View>
 
-        {/* Physical Details Card */}
-        <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
-          <Text className="text-lg font-bold text-gray-900 mb-4">
-            Physical Details
-          </Text>
+      </ScrollView>
 
-          <Text className="text-sm font-medium text-gray-700 mb-1.5">
-            Weight ({unitSystem === "metric" ? "kg" : "lbs"})
-          </Text>
-          <TextInput
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
-            placeholder="Enter your weight"
-            placeholderTextColor="#9ca3af"
-            value={weight}
-            onChangeText={setWeight}
-            keyboardType="numeric"
-          />
-
-          <Text className="text-sm font-medium text-gray-700 mb-1.5">
-            Height ({unitSystem === "metric" ? "cm" : "inches"})
-          </Text>
-          <TextInput
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
-            placeholder="Enter your height"
-            placeholderTextColor="#9ca3af"
-            value={height}
-            onChangeText={setHeight}
-            keyboardType="numeric"
-          />
-
-          <ProfileOption
-            label="Unit System"
-            options={[
-              { label: "Metric (kg, cm)", value: "metric" },
-              { label: "Imperial (lbs, inches)", value: "imperial" },
-            ]}
-            selectedValue={unitSystem}
-            onValueChange={setUnitSystem}
-          />
-        </View>
-
-        {/* Preferences Card */}
-        <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
-          <Text className="text-lg font-bold text-gray-900 mb-4">
-            Preferences
-          </Text>
-
-          <Text className="text-sm font-medium text-gray-700 mb-1.5">
-            Monthly Income
-          </Text>
-          <TextInput
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
-            placeholder="Enter your income"
-            placeholderTextColor="#9ca3af"
-            value={income}
-            onChangeText={setIncome}
-            keyboardType="numeric"
-          />
-
-          <Text className="text-sm font-medium text-gray-700 mb-1.5">
-            Currency
-          </Text>
-          <TextInput
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base mb-3"
-            placeholder="e.g., USD, EUR, EGP"
-            placeholderTextColor="#9ca3af"
-            value={currency}
-            onChangeText={setCurrency}
-          />
-
-          <Text className="text-sm font-medium text-gray-700 mb-1.5">
-            Profile Image URL
-          </Text>
-          <TextInput
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base"
-            placeholder="Enter image URL"
-            placeholderTextColor="#9ca3af"
-            value={image}
-            onChangeText={setImage}
-          />
-        </View>
-
-        {/* Action Buttons */}
-        <View className="flex-1 m-auto w-32 gap-3">
-          {/* Save Button */}
-          <Pressable
-            className={`${
-              isPending ? "bg-gray-300" : "bg-emerald-600"
-            } rounded-2xl py-2 items-center active:bg-emerald-700`}
-            onPress={handleSaveChanges}
-            disabled={isPending}
-          >
-            <Text className="flex-1 text-white font-bold text-lg">
-              {isPending ? "Saving..." : "Save"}
-            </Text>
-          </Pressable>
-
-          {/* Logout Button */}
-          <LogoutButton />
-        </View>
-      </View>
-    </ScrollView>
+      {/* Date Picker Modal if needed, ignoring for now as simple redesign */}
+    </View>
   )
 }
