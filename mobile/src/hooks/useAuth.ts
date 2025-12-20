@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import * as SecureStore from "expo-secure-store"
 import { authClient } from "@/src/lib/auth-client"
 import { useAuthActions, useUser } from "../store/useAuthStore"
 import { clearAllUserData } from "@/src/lib/storage"
@@ -18,6 +19,7 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       await clearAllUserData()
+      await SecureStore.deleteItemAsync("auth_token_axios")
       queryClient.removeQueries()
       await authClient.signOut()
     } finally {

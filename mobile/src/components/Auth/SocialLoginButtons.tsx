@@ -56,7 +56,7 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
       // - Opening browser and handling redirect
       await authClient.signIn.social({
         provider,
-        callbackURL: '/api/social-success?platform=mobile', // Legacy endpoint handling for deployed backend
+        callbackURL: '/home',
       });
 
       console.log(`${provider} OAuth initiated`);

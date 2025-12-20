@@ -10,6 +10,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller"
 import { Colors } from "@/src/constants/Colors"
 import { useColorScheme } from "react-native"
 import { ToastProvider } from "@/src/hooks/useToast"
+import { ElectricWrapper } from "./ElectricWrapper"
 
 interface AppProvidersProps {
   children: ReactNode
@@ -18,30 +19,43 @@ interface AppProvidersProps {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+      gcTime: 1000 * 60 * 60 * 24,
+      staleTime: 1000 * 60 * 5,
+      networkMode: "offlineFirst",
+      retry: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      networkMode: "offlineFirst",
+      retry: false,
     },
   },
 })
 
+import { GestureHandlerRootView } from "react-native-gesture-handler"
+
 export function AppProviders({ children }: AppProvidersProps) {
   const theme = useColorScheme()
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <KeyboardProvider>
-          <SafeAreaView
-            edges={["top", "left", "right"]}
-            style={{
-              flex: 1,
-              backgroundColor:
-                theme === "light" ? Colors.light.background : Colors.dark.background,
-            }}
-          >
-            {children}
-          </SafeAreaView>
-        </KeyboardProvider>
-      </ToastProvider>
-
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <ElectricWrapper>
+            <KeyboardProvider>
+              <SafeAreaView
+                edges={["top", "left", "right"]}
+                style={{
+                  flex: 1,
+                  backgroundColor:
+                    theme === "light" ? Colors.light.background : Colors.dark.background,
+                }}
+              >
+                {children}
+              </SafeAreaView>
+            </KeyboardProvider>
+          </ElectricWrapper>
+        </ToastProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   )
 }

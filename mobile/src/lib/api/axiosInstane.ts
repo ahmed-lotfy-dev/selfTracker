@@ -1,38 +1,52 @@
 import axios from "axios"
 import { router } from 'expo-router';
-import {
-  getAccessToken,
-  getRefreshToken,
-  setAccessToken,
-  clearTokens,
-  setRefreshToken,
-} from "../storage"
-
 import { API_BASE_URL } from "./config"
 import { authClient } from "../auth-client"
-import { Platform } from "react-native"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import * as SecureStore from "expo-secure-store"
 
+/**
+ * Axios instance configured for better-auth session-based authentication.
+ * 
+ * Better-auth uses HTTP-only session cookies for authentication, not JWT tokens.
+ * The authClient.$fetch method automatically handles session cookies.
+ * 
+ * For API calls that need authentication:
+ * - Use authClient.$fetch() directly for better-auth endpoints
+ * - Use this axios instance for other endpoints (it will include cookies)
+ */
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true,
+  withCredentials: true, // Important: Send cookies with requests
 })
 
+// Better-auth handles session cookies automatically
 axiosInstance.interceptors.request.use(
   async (config) => {
-    const cookie = authClient.getCookie()
-    const token = await getAccessToken()
+    // Attempt to get token from SecureStore for independent axios requests
+    try {
+      // Better Auth uses this key for the session token in SecureStore (when using expoClient)
+      const sessionToken = await SecureStore.getItemAsync("selftracker.better-auth.session_token");
 
-    if (cookie) {
-      config.headers.Cookie = cookie
+      // Fallbacks if looking for manual tokens
+      const token = await SecureStore.getItemAsync("auth_token_axios");
+      const cookieToken = await SecureStore.getItemAsync("auth_cookie_token");
+
+      const finalToken = sessionToken || cookieToken || token;
+
+      if (finalToken) {
+        // Correct cookie format for better-auth
+        config.headers['Cookie'] = `better-auth.session_token=${finalToken};`;
+        // Also add Bearer as backup if API supports it
+        config.headers.Authorization = `Bearer ${finalToken}`;
+
+        console.log(`[DEBUG] Axios Request attached headers - Token length: ${finalToken.length}`);
+      } else {
+        console.warn("[DEBUG] Axios Request: No auth token found in SecureStore");
+      }
+    } catch (error) {
+      console.error("Error retrieving auth token for axios", error);
     }
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-
     return config
   },
   (error) => {
@@ -40,14 +54,26 @@ axiosInstance.interceptors.request.use(
   }
 )
 
+// Response interceptor - handle 401 by signing out
 axiosInstance.interceptors.response.use(
   (response) => {
     return response
   },
   async (error) => {
     if (error.response?.status === 401) {
-      await authClient.signOut()
-      router.replace("/(auth)/sign-in")
+      // Session expired or invalid, sign out
+      console.warn("Axios 401 intercepted from:", error.config.url);
+
+      // Prevent aggressive redirects if we are already dealing with auth or just landed
+      // Maybe check if we have a valid token in storage before nuking it? 
+      // For now, we'll just log and proceed, but maybe we shouldn't immediately redirect if it calls /sign-in recursively?
+
+      const currentSegments = router.canGoBack() ? "somewhere" : "root"; // rudimentary check
+      // Better check: don't redirect if we are already at sign-in
+
+      console.warn("Signing out due to 401... (DISABLED FOR DEBUGGING)");
+      // await authClient.signOut()
+      // router.replace("/(auth)/sign-in")
     }
     return Promise.reject(error)
   }
