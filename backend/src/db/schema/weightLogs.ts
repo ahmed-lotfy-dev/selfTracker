@@ -23,6 +23,7 @@ export const weightLogs = pgTable("weight_logs", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const weightLogRelations = relations(weightLogs, ({ one }) => ({

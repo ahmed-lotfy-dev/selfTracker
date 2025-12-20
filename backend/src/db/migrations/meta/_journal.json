@@ -8,6 +8,20 @@
       "when": 1745758500911,
       "tag": "0000_damp_corsair",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766227132992,
+      "tag": "0001_even_cable",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766234508058,
+      "tag": "0002_superb_omega_flight",
+      "breakpoints": true
     }
   ]
 }

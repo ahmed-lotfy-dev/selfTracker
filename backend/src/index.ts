@@ -12,6 +12,7 @@ import workoutLogsRouter from "./routes/workoutsLogs.js"
 import uploadRouter from "./routes/image.js"
 import projectsRouter from "./routes/projects.js"
 import timerRouter from "./routes/timer.js"
+import syncRouter from "./routes/sync.js"
 import { auth } from "../lib/auth.js"
 
 const app = new Hono<{
@@ -140,6 +141,8 @@ app.route("/api/projects", projectsRouter)
 app.route("/api/timer", timerRouter)
 
 app.route("/api/image", uploadRouter)
+
+app.route("/api/sync", syncRouter)
 
 app.get("/", async (c) => {
   return c.json({ message: "Hello world" })

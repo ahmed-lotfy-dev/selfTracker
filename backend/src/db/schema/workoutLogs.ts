@@ -21,11 +21,10 @@ export const workoutLogs = pgTable("workout_logs", {
     .references(() => workouts.id, { onDelete: "cascade" })
     .notNull(),
   workoutName: text("workout_name").notNull(),
-  //TODO in the future
-  // duration: interval("duration").notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const workoutLogRelations = relations(workoutLogs, ({ one }) => ({

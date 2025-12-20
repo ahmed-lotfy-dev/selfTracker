@@ -27,14 +27,15 @@ export const tasks = pgTable("task_items", {
     onDelete: "set null",
   }),
   title: text("title").notNull(),
-  description: text("description"), // Added description
+  description: text("description"),
   completed: boolean("completed").default(false),
   dueDate: timestamp("due_date", { withTimezone: true }),
   priority: priorityEnum("priority").default("medium"),
-  order: integer("order").default(0), // For Kanban sorting
-  category: text("category").default("general"), // Keeping for backward compatibility or general grouping
+  order: integer("order").default(0),
+  category: text("category").default("general"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
