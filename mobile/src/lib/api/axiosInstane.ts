@@ -36,18 +36,14 @@ axiosInstance.interceptors.request.use(
       const cookieValue = signedCookieToken || fallbackToken;
       const bearerValue = unsignedBearerToken || fallbackToken;
 
-      if (cookieValue || bearerValue) {
-        // 1. Set Cookie Header (Needs Signed Token preferably)
-        if (cookieValue) {
-          config.headers['Cookie'] = `better-auth.session_token=${cookieValue}`;
-        }
-
-        // 2. Set Bearer Header (Needs Unsigned Token)
-        if (bearerValue) {
-          config.headers.Authorization = `Bearer ${bearerValue}`;
-        }
-
-        console.log(`[DEBUG] Axios Headers: Cookie=${cookieValue ? 'YES (' + cookieValue.substring(0, 10) + '...)' : 'NO'}, Bearer=${bearerValue ? 'YES (' + bearerValue.substring(0, 10) + '...)' : 'NO'}`);
+      // Prioritize Bearer token to avoid CSRF issues with manual Cookies
+      if (bearerValue) {
+        config.headers.Authorization = `Bearer ${bearerValue}`;
+        console.log(`[DEBUG] Axios Headers: Bearer=YES (${bearerValue.substring(0, 10)}...)`);
+      } else if (cookieValue) {
+        // Fallback if we only have the cookie-intended token
+        config.headers.Authorization = `Bearer ${cookieValue}`;
+        console.log(`[DEBUG] Axios Headers: Bearer=YES (from cookie)`);
       } else {
         console.warn("[DEBUG] Axios Request: No valid auth tokens found in SecureStore");
       }

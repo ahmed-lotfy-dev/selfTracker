@@ -111,13 +111,23 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 })
 
 app.use("*", async (c, next) => {
+  const headers = c.req.raw.headers;
+  const authHeader = headers.get("Authorization");
+  const cookieHeader = headers.get("Cookie");
+
+  console.log(`[DEBUG_AUTH] Incoming Request: ${c.req.method} ${c.req.path}`);
+  console.log(`[DEBUG_AUTH] Headers - Auth: ${authHeader ? 'YES' : 'NO'}, Cookie: ${cookieHeader ? 'YES' : 'NO'}`);
+
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
 
   if (!session) {
+    console.warn(`[DEBUG_AUTH] Session is NULL for ${c.req.path}`);
     c.set("user", null)
     c.set("session", null)
     return next()
   }
+
+  console.log(`[DEBUG_AUTH] Session Valid. User ID: ${session.user.id}`);
 
   c.set("user", session.user)
   c.set("session", session.session)
