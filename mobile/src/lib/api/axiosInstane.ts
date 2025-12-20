@@ -26,23 +26,30 @@ axiosInstance.interceptors.request.use(
     // Attempt to get token from SecureStore for independent axios requests
     try {
       // Better Auth uses this key for the session token in SecureStore (when using expoClient)
-      const sessionToken = await SecureStore.getItemAsync("selftracker.better-auth.session_token");
+      // Retrieve tokens explicitly
+      const signedCookieToken = await SecureStore.getItemAsync("auth_cookie_token");
+      const unsignedBearerToken = await SecureStore.getItemAsync("auth_token_axios");
 
-      // Fallbacks if looking for manual tokens
-      const token = await SecureStore.getItemAsync("auth_token_axios");
-      const cookieToken = await SecureStore.getItemAsync("auth_cookie_token");
+      // Fallback: better-auth might have stored something
+      const fallbackToken = await SecureStore.getItemAsync("selftracker.better-auth.session_token");
 
-      const finalToken = sessionToken || cookieToken || token;
+      const cookieValue = signedCookieToken || fallbackToken;
+      const bearerValue = unsignedBearerToken || fallbackToken;
 
-      if (finalToken) {
-        // Correct cookie format for better-auth
-        config.headers['Cookie'] = `better-auth.session_token=${finalToken};`;
-        // Also add Bearer as backup if API supports it
-        config.headers.Authorization = `Bearer ${finalToken}`;
+      if (cookieValue || bearerValue) {
+        // 1. Set Cookie Header (Needs Signed Token preferably)
+        if (cookieValue) {
+          config.headers['Cookie'] = `better-auth.session_token=${cookieValue}`;
+        }
 
-        console.log(`[DEBUG] Axios Request attached headers - Token length: ${finalToken.length}`);
+        // 2. Set Bearer Header (Needs Unsigned Token)
+        if (bearerValue) {
+          config.headers.Authorization = `Bearer ${bearerValue}`;
+        }
+
+        console.log(`[DEBUG] Axios Headers: Cookie=${cookieValue ? 'YES (' + cookieValue.substring(0, 10) + '...)' : 'NO'}, Bearer=${bearerValue ? 'YES (' + bearerValue.substring(0, 10) + '...)' : 'NO'}`);
       } else {
-        console.warn("[DEBUG] Axios Request: No auth token found in SecureStore");
+        console.warn("[DEBUG] Axios Request: No valid auth tokens found in SecureStore");
       }
     } catch (error) {
       console.error("Error retrieving auth token for axios", error);
