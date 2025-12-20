@@ -16,7 +16,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "backgroundImage":"./assets/images/splash-screen.png"
+        "backgroundImage": "./assets/images/splash-screen.png"
       },
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
@@ -49,13 +49,18 @@
           "icon": "./assets/images/ic_launcher.png",
           "color": "#ffffff",
           "defaultChannel": "default",
-          "sounds": ["./assets/notification_sound.wav"],
+          "sounds": [
+            "./assets/notification_sound.wav"
+          ],
           "enableBackgroundRemoteNotifications": false
         }
       ],
-      ["expo-secure-store"],
+      [
+        "expo-secure-store"
+      ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

@@ -35,13 +35,11 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
-
 /android
 /ios
 /build
 /dist
 /node_modules
-google-services.json
 .apk
 docs
 *.apk

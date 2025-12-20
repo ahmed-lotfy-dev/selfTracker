@@ -1,3 +1,4 @@
+// Force cache validation
 module.exports = function (api) {
   api.cache(true)
   return {
@@ -16,6 +17,7 @@ module.exports = function (api) {
           },
         },
       ],
+      ["inline-import", { "extensions": [".sql"] }],
       "react-native-worklets/plugin",
     ],
   }
