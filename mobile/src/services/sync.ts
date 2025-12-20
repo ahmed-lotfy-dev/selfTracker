@@ -1,4 +1,4 @@
-import { db } from "../db/client";
+import { db, dbManager } from "../db/client";
 import {
   syncQueue, workoutLogs, weightLogs, tasks,
   workouts, projects, projectColumns, trainingSplits,
@@ -10,7 +10,15 @@ import axiosInstance from "../lib/api/axiosInstane";
 import { API_BASE_URL } from "../lib/api/config";
 import * as SecureStore from "expo-secure-store";
 
+// Helper to get user-specific sync keys
+const getUserSyncKey = (key: string): string => {
+  const userId = dbManager.getCurrentUserId();
+  if (!userId) throw new Error("No user logged in");
+  return `${key}_${userId}`;
+};
+
 const LAST_SYNCED_KEY = "last_synced_at";
+const INITIAL_SYNC_KEY = "initial_sync_done";
 
 type SyncAction = "INSERT" | "UPDATE" | "DELETE";
 type TableName =
@@ -129,7 +137,7 @@ const sanitizeRecord = (change: any) => {
 };
 
 export const pullChanges = async (): Promise<{ success: boolean; pulled: number }> => {
-  const lastSynced = await SecureStore.getItemAsync(LAST_SYNCED_KEY);
+  const lastSynced = await SecureStore.getItemAsync(getUserSyncKey(LAST_SYNCED_KEY));
   const since = lastSynced || new Date(0).toISOString();
 
   try {
@@ -175,7 +183,7 @@ export const pullChanges = async (): Promise<{ success: boolean; pulled: number 
         pulled++;
       }
 
-      await SecureStore.setItemAsync(LAST_SYNCED_KEY, serverTime || new Date().toISOString());
+      await SecureStore.setItemAsync(getUserSyncKey(LAST_SYNCED_KEY), serverTime || new Date().toISOString());
       return { success: true, pulled };
     }
   } catch (error) {
@@ -247,7 +255,7 @@ export const initialSync = async (): Promise<{ success: boolean; synced: number 
     await syncTable(wkList, workouts);
     await syncTable(tsList, timerSessions);
 
-    await SecureStore.setItemAsync(LAST_SYNCED_KEY, serverTime || new Date().toISOString());
+    await SecureStore.setItemAsync(getUserSyncKey(LAST_SYNCED_KEY), serverTime || new Date().toISOString());
     await SecureStore.setItemAsync(INITIAL_SYNC_DONE_KEY, "true");
     console.log(`Initial sync complete. Synced ${synced} records.`);
     return { success: true, synced };
@@ -281,7 +289,8 @@ export const resetAndSync = async () => {
 
     // Reset sync flags
     await SecureStore.deleteItemAsync(INITIAL_SYNC_DONE_KEY);
-    await SecureStore.deleteItemAsync(LAST_SYNCED_KEY);
+    await SecureStore.deleteItemAsync(getUserSyncKey(LAST_SYNCED_KEY));
+    await SecureStore.deleteItemAsync(getUserSyncKey(INITIAL_SYNC_KEY));
 
     console.log("Local wipe complete. Starting initial sync...");
     return await initialSync();

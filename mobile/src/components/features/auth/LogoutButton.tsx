@@ -20,6 +20,7 @@ export default function LogoutButton({ className }: logoutProps) {
     setError(null)
 
     try {
+      // Database cleanup is now handled automatically by useAuth hook
       await clearTokens()
       await logout()
     } catch (e: any) {
