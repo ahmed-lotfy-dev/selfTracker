@@ -16,14 +16,14 @@ export const priorityEnum = pgEnum("task_priority", ["low", "medium", "high"])
 
 // User Tasks Items
 export const tasks = pgTable("task_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
-  projectId: uuid("project_id").references(() => projects.id, {
+  projectId: text("project_id").references(() => projects.id, {
     onDelete: "cascade",
   }),
-  columnId: uuid("column_id").references(() => columns.id, {
+  columnId: text("column_id").references(() => columns.id, {
     onDelete: "set null",
   }),
   title: text("title").notNull(),

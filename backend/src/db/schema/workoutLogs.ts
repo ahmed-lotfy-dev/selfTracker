@@ -13,11 +13,11 @@ import { workouts } from "./workouts"
 
 // Workout Logs (Tracks performed sets, reps, weight)
 export const workoutLogs = pgTable("workout_logs", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
-  workoutId: uuid("workout_id")
+  workoutId: text("workout_id")
     .references(() => workouts.id, { onDelete: "cascade" })
     .notNull(),
   workoutName: text("workout_name").notNull(),

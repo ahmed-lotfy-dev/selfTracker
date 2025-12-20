@@ -13,13 +13,13 @@ import { workouts } from "./workouts"
 
 // Weight Logs Table
 export const weightLogs = pgTable("weight_logs", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   weight: numeric("weight", { precision: 5, scale: 2 }).notNull(),
-  energy: text("energy", { enum: ["Low", "Okay", "Good", "Great"] }).notNull(),
-  mood: text("mood", { enum: ["Low", "Medium", "High"] }).notNull(),
+  energy: text("energy", { enum: ["Low", "Okay", "Good", "Great"] }),
+  mood: text("mood", { enum: ["Low", "Medium", "High"] }),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

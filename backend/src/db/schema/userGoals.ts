@@ -12,7 +12,7 @@ import { users } from "./users"
 
 // User Goals
 export const userGoals = pgTable("user_goals", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
@@ -24,6 +24,7 @@ export const userGoals = pgTable("user_goals", {
   achieved: boolean("achieved").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const userGoalsRelations = relations(userGoals, ({ one }) => ({

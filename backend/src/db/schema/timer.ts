@@ -18,17 +18,19 @@ export const sessionTypeEnum = pgEnum("session_type", [
 ])
 
 export const timerSessions = pgTable("timer_sessions", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
-  taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }), // Optional link to a task
+  taskId: text("task_id").references(() => tasks.id, { onDelete: "set null" }), // Optional link to a task
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time"),
   duration: integer("duration"), // Duration in seconds
   type: sessionTypeEnum("type").default("focus"),
   completed: boolean("completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const timerSessionsRelations = relations(timerSessions, ({ one }) => ({

@@ -8,19 +8,23 @@ import {
   integer,
   uuid,
 } from "drizzle-orm/pg-core"
+import { users } from "./users"
 import { trainingSplits } from "./trainingSplits"
-import {workoutLogs} from "./workoutLogs"
-import {workoutExercises} from "./workoutExercises"
+import { workoutLogs } from "./workoutLogs"
+import { workoutExercises } from "./workoutExercises"
 
 // Workouts (Push Day, Pull Day, etc. - Shared Across Users)
 export const workouts = pgTable("workouts", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(), // e.g., "Push Day"
-  trainingSplitId: uuid("training_split_id")
+  trainingSplitId: text("training_split_id")
     .references(() => trainingSplits.id, { onDelete: "cascade" })
     .notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const workoutRelations = relations(workouts, ({ many, one }) => ({

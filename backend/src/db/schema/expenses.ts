@@ -12,7 +12,7 @@ import { users } from "./users"
 
 // Expenses Table
 export const expenses = pgTable("expenses", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
@@ -21,6 +21,7 @@ export const expenses = pgTable("expenses", {
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const expensesRelations = relations(expenses, ({ one }) => ({

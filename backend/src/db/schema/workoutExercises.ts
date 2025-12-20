@@ -13,11 +13,11 @@ import { exercises } from "./exercises"
 
 // Workout Exercises (Defines sets, reps, weight per exercise)
 export const workoutExercises = pgTable("workout_exercises", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  workoutId: uuid("workout_id")
+  id: text("id").primaryKey(),
+  workoutId: text("workout_id")
     .references(() => workouts.id, { onDelete: "cascade" })
     .notNull(),
-  exerciseId: uuid("exercise_id")
+  exerciseId: text("exercise_id")
     .references(() => exercises.id, { onDelete: "cascade" })
     .notNull(),
   sets: integer("sets").notNull(),
@@ -25,6 +25,7 @@ export const workoutExercises = pgTable("workout_exercises", {
   weight: numeric("weight", { precision: 5, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const workoutExerciseRelations = relations(workoutExercises, ({ one }) => ({

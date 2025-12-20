@@ -13,7 +13,7 @@ import { tasks } from "./tasks"
 
 // Projects Table
 export const projects = pgTable("projects", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
@@ -22,6 +22,7 @@ export const projects = pgTable("projects", {
   isArchived: boolean("is_archived").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -37,8 +38,8 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
 export const columnTypeEnum = pgEnum("column_type", ["todo", "doing", "done"])
 
 export const columns = pgTable("project_columns", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id")
+  id: text("id").primaryKey(),
+  projectId: text("project_id")
     .references(() => projects.id, { onDelete: "cascade" })
     .notNull(),
   name: text("name").notNull(),
@@ -46,6 +47,7 @@ export const columns = pgTable("project_columns", {
   type: columnTypeEnum("type").default("todo"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
 })
 
 export const columnsRelations = relations(columns, ({ one, many }) => ({
