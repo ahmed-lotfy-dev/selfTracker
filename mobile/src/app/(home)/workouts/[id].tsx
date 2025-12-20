@@ -15,13 +15,15 @@ import React from "react"
 import BackButton from "@/src/components/Buttons/BackButton"
 import { format } from "date-fns"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
-import { COLORS } from "@/src/constants/Colors"
+import { COLORS, useThemeColors } from "@/src/constants/Colors"
 import { MaterialIcons } from "@expo/vector-icons"
+import { safeParseDate } from "@/src/lib/utils/dateUtils"
 
 export default function WorkoutLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
   const { setSelectedWorkout } = useWorkoutActions()
+  const colors = useThemeColors()
 
   const {
     data: workoutLog,
@@ -49,33 +51,31 @@ export default function WorkoutLog() {
 
   if (isLoading) {
     return (
-        <View className="flex-1 justify-center items-center bg-gray-50">
-            <ActivitySpinner size="large" color={COLORS.primary} />
-        </View>
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivitySpinner size="large" color={colors.primary} />
+      </View>
     )
   }
 
   if (isError || !workoutLog) {
-      return (
-        <View className="flex-1 justify-center items-center bg-gray-50">
-            <Text className="text-red-500 font-medium">Error loading workout details.</Text>
-            <BackButton backTo="/workouts" className="mt-4" />
-        </View>
-      )
+    return (
+      <View className="flex-1 justify-center items-center bg-background">
+        <Text className="text-error font-medium">Error loading workout details.</Text>
+        <BackButton backTo="/workouts" className="mt-4" />
+      </View>
+    )
   }
 
-  const formattedDate = workoutLog.createdAt 
-    ? format(new Date(workoutLog.createdAt), "EEEE, MMMM dd, yyyy") 
-    : ""
+  const formattedDate = format(safeParseDate(workoutLog.createdAt), "EEEE, MMMM dd, yyyy")
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-background">
       <Stack.Screen
         options={{
-          headerShown: false, 
+          headerShown: false,
         }}
       />
-      
+
       {/* Custom Header Area */}
       <View className="pt-12 px-4 pb-4">
         <BackButton backTo="/workouts" />
@@ -83,54 +83,54 @@ export default function WorkoutLog() {
 
       <View className="px-6 mt-2">
         {/* Title Section */}
-        <Text className="text-4xl font-extrabold text-gray-900 leading-tight">
-            {workoutLog.workoutName}
+        <Text className="text-4xl font-extrabold text-text leading-tight">
+          {workoutLog.workoutName}
         </Text>
-        <Text className="text-base text-gray-500 font-medium mt-2 mb-8 uppercase tracking-wide">
-            {formattedDate}
+        <Text className="text-base text-placeholder font-medium mt-2 mb-8 uppercase tracking-wide">
+          {formattedDate}
         </Text>
 
         {/* Notes Card */}
-        <View className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <Text className="text-xs font-bold text-gray-400 tracking-widest mb-4">
-                NOTES
-            </Text>
-            <Text className="text-lg text-gray-800 leading-relaxed">
-                {workoutLog.notes || "No notes added for this workout."}
-            </Text>
+        <View className="bg-card rounded-3xl p-6 shadow-sm border border-border">
+          <Text className="text-xs font-bold text-placeholder tracking-widest mb-4">
+            NOTES
+          </Text>
+          <Text className="text-lg text-text leading-relaxed">
+            {workoutLog.notes || "No notes added for this workout."}
+          </Text>
         </View>
 
         {/* Actions */}
         <View className="flex-row items-center gap-4 mt-10">
-            {/* Edit Button */}
-            <Pressable 
-                className="flex-1 bg-indigo-50 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-indigo-100"
-                onPress={() => {
-                    setSelectedWorkout(workoutLog)
-                    router.push(`/workouts/edit`)
-                }}
-            >
-                <MaterialIcons name="edit" size={20} color={COLORS.primary} />
-                <Text className="text-indigo-700 font-bold text-base">Edit</Text>
-            </Pressable>
+          {/* Edit Button */}
+          <Pressable
+            className="flex-1 bg-primary/10 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-primary/20"
+            onPress={() => {
+              setSelectedWorkout(workoutLog)
+              router.push(`/workouts/edit`)
+            }}
+          >
+            <MaterialIcons name="edit" size={20} color={colors.primary} />
+            <Text className="text-primary font-bold text-base">Edit</Text>
+          </Pressable>
 
-            {/* Delete Button */}
-            <Pressable 
-                className="flex-1 bg-red-50 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-red-100"
-                onPress={triggerDelete}
-                disabled={deleteMutation.isPending}
-            >
-                {deleteMutation.isPending ? (
-                    <ActivitySpinner size="small" color={COLORS.error} />
-                ) : (
-                    <>
-                        <MaterialIcons name="delete-outline" size={20} color={COLORS.error} />
-                        <Text className="text-red-700 font-bold text-base">Delete</Text>
-                    </>
-                )}
-            </Pressable>
+          {/* Delete Button */}
+          <Pressable
+            className="flex-1 bg-error/10 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-error/20"
+            onPress={triggerDelete}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? (
+              <ActivitySpinner size="small" color={colors.error} />
+            ) : (
+              <>
+                <MaterialIcons name="delete-outline" size={20} color={colors.error} />
+                <Text className="text-error font-bold text-base">Delete</Text>
+              </>
+            )}
+          </Pressable>
         </View>
-        
+
         {deleteMutation.isError && (
           <Text className="text-red-500 mt-4 text-center">
             {deleteMutation.error?.message || "Could not delete workout."}
