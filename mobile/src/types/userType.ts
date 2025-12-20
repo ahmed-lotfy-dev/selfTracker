@@ -18,6 +18,7 @@ export const UserSchema = z.object({
   unitSystem: z.enum(["metric", "imperial"]).default("metric"),
   income: z.number().optional().nullable(), // Changed to number to match backend's userSchema
   currency: z.string().default("EGP"),
+  theme: z.enum(["light", "dark", "system"]).default("system"),
   dateOfBirth: z.string().optional().nullable(), // Added to match backend schema (date string)
 })
 
