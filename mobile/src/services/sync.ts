@@ -1,5 +1,9 @@
 import { db } from "../db/client";
-import { syncQueue, workoutLogs, weightLogs, tasks } from "../db/schema";
+import {
+  syncQueue, workoutLogs, weightLogs, tasks,
+  workouts, projects, projectColumns, trainingSplits,
+  exercises, workoutExercises, timerSessions, userGoals, expenses
+} from "../db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import axiosInstance from "../lib/api/axiosInstane";
@@ -9,14 +13,26 @@ import * as SecureStore from "expo-secure-store";
 const LAST_SYNCED_KEY = "last_synced_at";
 
 type SyncAction = "INSERT" | "UPDATE" | "DELETE";
-type TableName = "workout_logs" | "weight_logs" | "tasks";
+type TableName =
+  | "workout_logs"
+  | "weight_logs"
+  | "tasks"
+  | "workouts"
+  | "projects"
+  | "project_columns"
+  | "training_splits"
+  | "exercises"
+  | "workout_exercises"
+  | "timer_sessions"
+  | "user_goals"
+  | "expenses";
 
 interface SyncQueueItem {
   id: string;
   action: SyncAction;
   tableName: TableName;
   rowId: string;
-  data: unknown;
+  data: string; // SQLite stores it as string
   createdAt: Date;
 }
 
@@ -44,7 +60,7 @@ export const pushChanges = async (): Promise<{ success: boolean; pushed: number 
   }
 
   try {
-    const response = await axiosInstance.post(`${API_BASE_URL}/api/sync/push`, {
+    const response = await axiosInstance.post("/api/sync/push", {
       changes: queue.map((item) => ({
         ...item,
         data: typeof item.data === "string" ? JSON.parse(item.data) : item.data,
@@ -55,7 +71,20 @@ export const pushChanges = async (): Promise<{ success: boolean; pushed: number 
       const processedIds = queue.map((q) => q.id);
       await db.delete(syncQueue).where(inArray(syncQueue.id, processedIds));
 
-      const tableMap = { workout_logs: workoutLogs, weight_logs: weightLogs, tasks };
+      const tableMap: Record<TableName, any> = {
+        workout_logs: workoutLogs,
+        weight_logs: weightLogs,
+        tasks,
+        workouts,
+        projects,
+        project_columns: projectColumns,
+        training_splits: trainingSplits,
+        exercises,
+        workout_exercises: workoutExercises,
+        timer_sessions: timerSessions,
+        user_goals: userGoals,
+        expenses
+      };
       for (const item of queue) {
         const table = tableMap[item.tableName as keyof typeof tableMap];
         if (table && item.action !== "DELETE") {
@@ -72,12 +101,35 @@ export const pushChanges = async (): Promise<{ success: boolean; pushed: number 
   return { success: false, pushed: 0 };
 };
 
+const sanitizeRecord = (change: any) => {
+  const sanitized = { ...change };
+
+  // Convert all potential timestamp columns to Date objects for Drizzle SQLite
+  const dateFields = [
+    "updatedAt", "deletedAt", "createdAt", "dueDate",
+    "deadline", "startTime", "endTime"
+  ];
+
+  dateFields.forEach(field => {
+    if (sanitized[field] != null) {
+      sanitized[field] = new Date(sanitized[field]);
+    } else {
+      delete sanitized[field];
+    }
+  });
+
+  // Remove fields that shouldn't be in the SQLite DB directly
+  delete sanitized.tableName;
+  delete sanitized.syncStatus;
+  return sanitized;
+};
+
 export const pullChanges = async (): Promise<{ success: boolean; pulled: number }> => {
   const lastSynced = await SecureStore.getItemAsync(LAST_SYNCED_KEY);
   const since = lastSynced || new Date(0).toISOString();
 
   try {
-    const response = await axiosInstance.get(`${API_BASE_URL}/api/sync/pull`, {
+    const response = await axiosInstance.get("/api/sync/pull", {
       params: { since },
     });
 
@@ -86,19 +138,34 @@ export const pullChanges = async (): Promise<{ success: boolean; pulled: number 
       let pulled = 0;
 
       for (const change of changes || []) {
-        const tableMap = { workout_logs: workoutLogs, weight_logs: weightLogs, tasks };
+        const tableMap: Record<TableName, any> = {
+          workout_logs: workoutLogs,
+          weight_logs: weightLogs,
+          tasks,
+          workouts,
+          projects,
+          project_columns: projectColumns,
+          training_splits: trainingSplits,
+          exercises,
+          workout_exercises: workoutExercises,
+          timer_sessions: timerSessions,
+          user_goals: userGoals,
+          expenses
+        };
         const table = tableMap[change.tableName as keyof typeof tableMap];
 
         if (!table) continue;
 
-        if (change.deletedAt) {
-          await db.update(table).set({ deletedAt: new Date(change.deletedAt) }).where(eq(table.id, change.id));
+        const sanitized = sanitizeRecord(change);
+
+        if (sanitized.deletedAt) {
+          await db.update(table).set({ deletedAt: sanitized.deletedAt }).where(eq(table.id, sanitized.id));
         } else {
-          const existing = await db.select().from(table).where(eq(table.id, change.id)).limit(1);
+          const existing = await db.select().from(table).where(eq(table.id, sanitized.id)).limit(1);
           if (existing.length > 0) {
-            await db.update(table).set({ ...change, syncStatus: "synced" }).where(eq(table.id, change.id));
+            await db.update(table).set({ ...sanitized, syncStatus: "synced" }).where(eq(table.id, sanitized.id));
           } else {
-            await db.insert(table).values({ ...change, syncStatus: "synced" });
+            await db.insert(table).values({ ...sanitized, syncStatus: "synced" });
           }
         }
         pulled++;
@@ -139,61 +206,83 @@ export const initialSync = async (): Promise<{ success: boolean; synced: number 
   let synced = 0;
 
   try {
-    const [weightsRes, workoutsRes, tasksRes] = await Promise.all([
-      axiosInstance.get(`${API_BASE_URL}/api/weightLogs?limit=1000`),
-      axiosInstance.get(`${API_BASE_URL}/api/workoutLogs?limit=1000`),
-      axiosInstance.get(`${API_BASE_URL}/api/tasks`),
-    ]);
+    const response = await axiosInstance.get("/api/sync/all");
+    const {
+      weights, workoutLogs: wLogs, tasks: tList, projects: pList,
+      columns: cList, trainingSplits: sList, exercises: eList,
+      workoutExercises: weList, userGoals: gList, expenses: exList,
+      workouts: wkList, timerSessions: tsList,
+      serverTime
+    } = response.data;
 
-    const weights = weightsRes.data.logs || [];
-    for (const w of weights) {
-      await db.insert(weightLogs).values({
-        id: w.id,
-        userId: w.userId,
-        weight: w.weight,
-        mood: w.mood,
-        energy: w.energy,
-        notes: w.notes,
-        createdAt: w.createdAt,
-        syncStatus: "synced",
-      }).onConflictDoNothing();
-      synced++;
-    }
+    const syncTable = async (data: any[], table: any) => {
+      if (!data) return;
+      for (const item of data) {
+        const sanitized = sanitizeRecord(item);
+        await db.insert(table).values({
+          ...sanitized,
+          syncStatus: "synced",
+        }).onConflictDoUpdate({
+          target: table.id,
+          set: { ...sanitized, syncStatus: "synced" }
+        });
+        synced++;
+      }
+    };
 
-    const workouts = workoutsRes.data.logs || [];
-    for (const w of workouts) {
-      await db.insert(workoutLogs).values({
-        id: w.id,
-        userId: w.userId,
-        workoutId: w.workoutId,
-        workoutName: w.workoutName,
-        notes: w.notes,
-        createdAt: w.createdAt,
-        syncStatus: "synced",
-      }).onConflictDoNothing();
-      synced++;
-    }
+    await syncTable(weights, weightLogs);
+    await syncTable(wLogs, workoutLogs);
+    await syncTable(tList, tasks);
+    await syncTable(pList, projects);
+    await syncTable(cList, projectColumns);
+    await syncTable(sList, trainingSplits);
+    await syncTable(eList, exercises);
+    await syncTable(weList, workoutExercises);
+    await syncTable(gList, userGoals);
+    await syncTable(exList, expenses);
+    await syncTable(wkList, workouts);
+    await syncTable(tsList, timerSessions);
 
-    const taskList = tasksRes.data || [];
-    for (const t of taskList) {
-      await db.insert(tasks).values({
-        id: t.id,
-        userId: t.userId,
-        title: t.title,
-        completed: t.completed,
-        dueDate: t.dueDate,
-        category: t.category || "general",
-        createdAt: t.createdAt,
-        syncStatus: "synced",
-      }).onConflictDoNothing();
-      synced++;
-    }
-
+    await SecureStore.setItemAsync(LAST_SYNCED_KEY, serverTime || new Date().toISOString());
     await SecureStore.setItemAsync(INITIAL_SYNC_DONE_KEY, "true");
     console.log(`Initial sync complete. Synced ${synced} records.`);
     return { success: true, synced };
   } catch (error) {
     console.error("Initial sync failed:", error);
+    return { success: false, synced: 0 };
+  }
+};
+
+export const resetAndSync = async () => {
+  console.log("CRITICAL: Ensuring pending data is pushed before wipe...");
+
+  // Try to push changes first to avoid data loss
+  const pushRes = await pushChanges();
+  if (!pushRes.success) {
+    console.warn("Final push failed before reset. Unsynced changes will be lost.");
+  }
+
+  console.log("CRITICAL: Wiping local data for full resync...");
+
+  const tables = [
+    weightLogs, workoutLogs, tasks, projects, projectColumns,
+    trainingSplits, exercises, workoutExercises, timerSessions,
+    userGoals, expenses, workouts
+  ];
+
+  try {
+    for (const table of tables) {
+      await db.delete(table);
+    }
+
+    // Reset sync flags
+    await SecureStore.deleteItemAsync(INITIAL_SYNC_DONE_KEY);
+    await SecureStore.deleteItemAsync(LAST_SYNCED_KEY);
+
+    console.log("Local wipe complete. Starting initial sync...");
+    return await initialSync();
+  } catch (error) {
+    console.error("Reset and sync failed:", error);
     return { success: false, synced: 0 };
   }
 };
