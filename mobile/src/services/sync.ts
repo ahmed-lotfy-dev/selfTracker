@@ -104,18 +104,22 @@ export const pushChanges = async (): Promise<{ success: boolean; pushed: number 
 const sanitizeRecord = (change: any) => {
   const sanitized = { ...change };
 
-  // Convert all potential timestamp columns to Date objects for Drizzle SQLite
+  // Backend sends timestamps as integers (milliseconds since epoch)
+  // Our schema uses integer({ mode: "timestamp" }) which expects raw numbers
+  // DO NOT convert to Date objects - Drizzle handles that internally
+
+  // Just ensure null/undefined fields are removed
   const dateFields = [
     "updatedAt", "deletedAt", "createdAt", "dueDate",
     "deadline", "startTime", "endTime"
   ];
 
   dateFields.forEach(field => {
-    if (sanitized[field] != null) {
-      sanitized[field] = new Date(sanitized[field]);
-    } else {
+    if (sanitized[field] == null) {
       delete sanitized[field];
     }
+    // If the field exists and is a valid number or ISO string, keep it as-is
+    // Drizzle will handle the conversion based on the schema definition
   });
 
   // Remove fields that shouldn't be in the SQLite DB directly
