@@ -97,6 +97,7 @@ userRouter.patch("/:id", async (c) => {
     if ("unitSystem" in body) updatedFields.unitSystem = body.unitSystem
     if ("income" in body) updatedFields.income = body.income
     if ("currency" in body) updatedFields.currency = body.currency
+    if ("theme" in body) updatedFields.theme = body.theme
     if ("createdAt" in body) updatedFields.createdAt = new Date(body.createdAt)
     if ("updatedAt" in body) updatedFields.updatedAt = new Date(body.updatedAt)
 

@@ -38,6 +38,7 @@ export const users = pgTable("users", {
   ),
   income: numeric("income", { precision: 10, scale: 2 }),
   currency: text("currency").default("EGP"),
+  theme: text("theme", { enum: ["light", "dark", "system"] }).default("system"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 })
@@ -68,6 +69,7 @@ export const userSchema = z.object({
   unitSystem: z.enum(["metric", "imperial"]).default("metric"),
   income: z.number().optional(),
   currency: z.string().default("EGP"),
+  theme: z.enum(["light", "dark", "system"]).default("system"),
   createdAt: z.date(),
   updatedAt: z.date(),
 })
