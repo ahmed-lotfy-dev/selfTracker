@@ -23,7 +23,7 @@ import LogoutButton from "@/src/components/features/auth/LogoutButton"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { fetchGoals, createGoal, deleteGoal } from "@/src/lib/api/goalsApi"
 import { GoalType } from "@/src/types/goalType"
-import Animated, { FadeInDown } from "react-native-reanimated"
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from "react-native-reanimated"
 import { useThemeColors } from "@/src/constants/Colors"
 
 // UI Components
@@ -32,6 +32,7 @@ import { Section } from "@/src/components/ui/Section"
 import Row from "@/src/components/ui/Row"
 import Input from "@/src/components/ui/Input"
 import Card from "@/src/components/ui/Card"
+import { useEffect } from "react"
 
 export default function ProfileSettings() {
   const { user, refetch } = useAuth()
@@ -42,6 +43,30 @@ export default function ProfileSettings() {
   const colors = useThemeColors()
 
   const [isSyncing, setIsSyncing] = useState(false)
+
+  // Rotation animation
+  const rotation = useSharedValue(0)
+
+  useEffect(() => {
+    if (isSyncing) {
+      rotation.value = withRepeat(
+        withTiming(360, {
+          duration: 1000,
+          easing: Easing.linear,
+        }),
+        -1, // infinite
+        false
+      )
+    } else {
+      rotation.value = withTiming(0, { duration: 200 })
+    }
+  }, [isSyncing])
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${rotation.value}deg` }],
+    }
+  })
 
   // Form State
   const [name, setName] = useState(user?.name || "")
@@ -77,7 +102,7 @@ export default function ProfileSettings() {
       queryClient.invalidateQueries({ queryKey: ['userGoals'] })
       setShowAddGoal(false)
       setNewGoalTarget("")
-      Alert.alert("Success", "Goal added!")
+      showAlert("Success", "Goal added successfully!", () => { }, undefined, "Got it", undefined)
     }
   })
 
@@ -93,12 +118,33 @@ export default function ProfileSettings() {
     try {
       const result = await runSync()
       if (result.pullSuccess && result.pushSuccess) {
-        Alert.alert("Synced", `Pulled: ${result.pulled}, Pushed: ${result.pushed}`)
+        showAlert(
+          "Sync Complete",
+          `Successfully synced your data!\n\nPulled: ${result.pulled} records\nPushed: ${result.pushed} records`,
+          () => { },
+          undefined,
+          "Got it",
+          undefined
+        )
       } else {
-        Alert.alert("Sync Issue", "Some data might not have synced.")
+        showAlert(
+          "Sync Issue",
+          "Some data might not have synced. Please try again.",
+          () => { },
+          undefined,
+          "OK",
+          undefined
+        )
       }
     } catch (e) {
-      Alert.alert("Error", "Failed to sync.")
+      showAlert(
+        "Sync Failed",
+        "Failed to sync your data. Please check your connection.",
+        () => { },
+        undefined,
+        "OK",
+        undefined
+      )
     } finally {
       setIsSyncing(false)
     }
@@ -124,9 +170,9 @@ export default function ProfileSettings() {
       {
         onSuccess: () => {
           refetch()
-          Alert.alert("Saved", "Profile updated.")
+          showAlert("Saved", "Profile updated successfully!", () => { }, undefined, "Got it", undefined)
         },
-        onError: (e) => Alert.alert("Error", e.message),
+        onError: (e) => showAlert("Error", e.message, () => { }, undefined, "OK", undefined),
       }
     )
   }
@@ -140,7 +186,7 @@ export default function ProfileSettings() {
   const handleAddGoal = () => {
     if (!user?.id) return
     if (!newGoalTarget) {
-      Alert.alert("Error", "Please enter a target value")
+      showAlert("Error", "Please enter a target value", () => { }, undefined, "OK", undefined)
       return
     }
 
@@ -405,9 +451,12 @@ export default function ProfileSettings() {
                 disabled={isSyncing}
               >
                 <View className="flex-row items-center py-4 px-4 bg-card active:bg-inputBackground">
-                  <View className="w-8 items-center justify-center mr-3">
+                  <Animated.View
+                    className="w-8 items-center justify-center mr-3"
+                    style={animatedStyle}
+                  >
                     <Feather name="refresh-cw" size={20} color={isSyncing ? colors.primary : colors.placeholder} />
-                  </View>
+                  </Animated.View>
                   <View className="flex-1">
                     <Text className="text-base text-text font-medium">Sync Data</Text>
                     <Text className="text-xs text-placeholder">Push local changes to cloud</Text>
