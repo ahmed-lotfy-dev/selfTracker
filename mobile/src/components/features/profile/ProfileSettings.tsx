@@ -150,6 +150,53 @@ export default function ProfileSettings() {
     }
   }
 
+  const handleResetAndSync = async () => {
+    showAlert(
+      "Reset Local Data?",
+      "This will clear all local data and re-download everything from the cloud. Your cloud data is safe. This fixes corrupted local data.\n\nContinue?",
+      async () => {
+        setIsSyncing(true)
+        try {
+          const { resetAndSync } = await import("@/src/services/sync")
+          const result = await resetAndSync()
+          if (result.success) {
+            showAlert(
+              "Reset Complete",
+              `Successfully reset and synced ${result.synced} records from the cloud!`,
+              () => { },
+              undefined,
+              "Got it",
+              undefined
+            )
+          } else {
+            showAlert(
+              "Reset Failed",
+              "Failed to reset data. Please try again.",
+              () => { },
+              undefined,
+              "OK",
+              undefined
+            )
+          }
+        } catch (e) {
+          showAlert(
+            "Error",
+            "An error occurred during reset. Please try again.",
+            () => { },
+            undefined,
+            "OK",
+            undefined
+          )
+        } finally {
+          setIsSyncing(false)
+        }
+      },
+      () => { },
+      "Reset",
+      "Cancel"
+    )
+  }
+
   const handleSave = () => {
     if (!user?.id) return
 
@@ -466,6 +513,24 @@ export default function ProfileSettings() {
                   ) : (
                     <Feather name="chevron-right" size={20} color={colors.primary} />
                   )}
+                </View>
+              </Pressable>
+
+              {/* Reset & Resync Button */}
+              <Pressable
+                onPress={handleResetAndSync}
+                disabled={isSyncing}
+                className="border-t border-border"
+              >
+                <View className="flex-row items-center py-4 px-4 bg-card active:bg-inputBackground">
+                  <View className="w-8 items-center justify-center mr-3">
+                    <Feather name="database" size={20} color={colors.error} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-base text-error font-medium">Reset & Resync Data</Text>
+                    <Text className="text-xs text-placeholder">Fix corrupted local data</Text>
+                  </View>
+                  <Feather name="chevron-right" size={20} color={colors.error} />
                 </View>
               </Pressable>
             </Section>
