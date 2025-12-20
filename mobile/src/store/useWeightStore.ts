@@ -1,14 +1,14 @@
 import { create } from "zustand"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { persist, createJSONStorage } from "zustand/middleware"
-import { WeightType } from "@/src/types/weightLogType"
+import { WeightLogType } from "@/src/types/weightLogType"
+import { secureStorage } from "@/src/lib/storage"
 
 type WeightLogState = {
-  selectedWeight: WeightType | null
+  selectedWeight: WeightLogType | null
 }
 
 type WeightLogActions = {
-  setSelectedWeight: (log: WeightType | null) => void
+  setSelectedWeight: (log: WeightLogType | null) => void
 }
 
 type WeightLogStore = WeightLogState & WeightLogActions
@@ -17,12 +17,12 @@ export const useWeightLogStore = create<WeightLogStore>()(
   persist(
     (set) => ({
       selectedWeight: null,
-      setSelectedWeight: (log: WeightType | null) =>
+      setSelectedWeight: (log: WeightLogType | null) =>
         set({ selectedWeight: log }),
     }),
     {
       name: "selected-weight-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => secureStorage),
     }
   )
 )

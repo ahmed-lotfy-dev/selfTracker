@@ -1,7 +1,6 @@
-// store/useOnboardingStore.ts
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import { secureStorage } from "@/src/lib/storage"
 
 type State = {
   isOnboarding: boolean
@@ -20,7 +19,7 @@ export const useOnboardingStore = create<State>()(
     }),
     {
       name: "onboarding",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => secureStorage),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       },

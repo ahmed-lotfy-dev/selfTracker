@@ -14,6 +14,7 @@ import {
 import { Feather } from "@expo/vector-icons"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { useAuth } from "@/src/hooks/useAuth"
+import { useAuthStore } from "@/src/store/useAuthStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { User } from "@/src/types/userType"
 import { updateUser } from "@/src/lib/api/userApi"
@@ -206,7 +207,15 @@ export default function ProfileSettings() {
                 {['light', 'dark', 'system'].map((option) => (
                   <Pressable
                     key={option}
-                    onPress={() => isEditing && setTheme(option)}
+                    onPress={() => {
+                      if (isEditing) {
+                        setTheme(option);
+                        // Optimistic update for instant preview
+                        if (user) {
+                          useAuthStore.getState().setUser({ ...user, theme: option });
+                        }
+                      }
+                    }}
                     className={`px-3 py-1 rounded-md ${theme === option ? 'bg-white shadow-sm' : ''}`}
                   >
                     <Text className={`text-xs capitalize ${theme === option ? 'font-bold' : 'text-gray-500'}`}>{option}</Text>

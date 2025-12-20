@@ -1,14 +1,14 @@
 import { create } from "zustand"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { persist, createJSONStorage } from "zustand/middleware"
-import { WorkoutType } from "@/src/types/workoutLogType"
+import { WorkoutLogType } from "@/src/types/workoutLogType"
+import { secureStorage } from "@/src/lib/storage"
 
 type WorkoutLogState = {
-  selectedWorkout: WorkoutType | null
+  selectedWorkout: WorkoutLogType | null
 }
 
 type WorkoutLogActions = {
-  setSelectedWorkout: (log: WorkoutType | null) => void
+  setSelectedWorkout: (log: WorkoutLogType | null) => void
 }
 
 type WorkoutLogStore = WorkoutLogState & WorkoutLogActions
@@ -17,12 +17,12 @@ export const useWorkoutLogStore = create<WorkoutLogStore>()(
   persist(
     (set) => ({
       selectedWorkout: null,
-      setSelectedWorkout: (log: WorkoutType | null) =>
+      setSelectedWorkout: (log: WorkoutLogType | null) =>
         set({ selectedWorkout: log }),
     }),
     {
       name: "selected-workout-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => secureStorage),
     }
   )
 )

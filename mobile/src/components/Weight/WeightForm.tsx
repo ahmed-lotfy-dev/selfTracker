@@ -7,7 +7,9 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from "react-native"
+import { Feather } from "@expo/vector-icons"
 import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/src/components/DatePicker"
 import DateDisplay from "@/src/components/DateDisplay"
@@ -16,31 +18,27 @@ import { useRouter } from "expo-router"
 import { createWeight, updateWeight } from "@/src/lib/api/weightsApi"
 import { useSelectedWeight } from "@/src/store/useWeightStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
-import { z } from "zod"
 import { WeightLogSchema, WeightLogType } from "@/src/types/weightLogType"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useUser } from "@/src/store/useAuthStore"
 import { format } from "date-fns"
-import Header from "../Header"
-import { COLORS, useThemeColors } from "@/src/constants/Colors"
 
 export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
-  const colors = useThemeColors();
   const router = useRouter()
-  const { user } = useAuth()
+  const user = useUser()
   const selectedWeight = useSelectedWeight()
   const [showDate, setShowDate] = useState(false)
 
   // Form state
   const [weight, setWeight] = useState(
-    isEditing ? String(selectedWeight.weight) : ""
+    isEditing && selectedWeight ? String(selectedWeight.weight) : ""
   )
-  const [energy, setEnergy] = useState(isEditing ? selectedWeight.energy : "")
-  const [mood, setMood] = useState(isEditing ? selectedWeight.mood : "")
+  const [energy, setEnergy] = useState(isEditing && selectedWeight ? selectedWeight.energy || "Okay" : "Okay")
+  const [mood, setMood] = useState(isEditing && selectedWeight ? selectedWeight.mood || "Medium" : "Medium")
 
-  const [notes, setNotes] = useState(isEditing ? selectedWeight.notes : "")
+  const [notes, setNotes] = useState(isEditing && selectedWeight ? selectedWeight.notes || "" : "")
   const [createdAt, setCreatedAt] = useState(
-    isEditing
-      ? format(new Date(selectedWeight.createdAt || ""), "yyyy-MM-dd")
+    isEditing && selectedWeight
+      ? format(new Date(selectedWeight.createdAt || new Date()), "yyyy-MM-dd")
       : format(new Date(), "yyyy-MM-dd")
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -74,11 +72,11 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
     setIsSubmitting(true)
 
     const formData: WeightLogType = {
-      id: isEditing ? selectedWeight.id : undefined,
+      id: isEditing && selectedWeight ? selectedWeight.id : undefined,
       userId: user?.id || "",
       weight: Number(weight),
-      mood,
-      energy,
+      mood: mood as "Low" | "Medium" | "High",
+      energy: energy as "Low" | "Okay" | "Good" | "Great",
       notes,
       createdAt,
     }
@@ -99,116 +97,136 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
     } else {
       addMutation.mutate(formData)
     }
-
     setIsSubmitting(false)
   }
+
+  // Reusable Form Row Component
+  const FormSection = ({ title, children, error }: any) => (
+    <View className="mb-6">
+      <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">{title}</Text>
+      <View className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden px-4 py-2">
+        {children}
+      </View>
+      {error && <Text className="text-red-500 text-sm mt-1 ml-1">{error}</Text>}
+    </View>
+  )
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-gray-50"
     >
-      <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
-        <View>
-          <Text className={`my-3 font-bold text-[${colors.text}]`}>
-            Weight:
-          </Text>
-          <TextInput
-            className={`border text-lg h-12 justify-center pl-3 border-[${colors.border}] rounded-md mb-4 text-[${colors.text}]`}
-            keyboardType="numeric"
-            value={weight}
-            onChangeText={setWeight}
-            placeholder="Enter your weight"
-            placeholderTextColor={colors.inputText}
-          />
-        </View>
-        {errors.weight && (
-          <Text className="text-red-500 mt-2">{errors.weight}</Text>
-        )}
+      <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-        <View>
-          <Text className={`my-3 font-bold text-[${colors.text}]`}>Energy</Text>
-          <View
-            className={`border border-[${colors.border}] rounded-md mb-4 h-12 p-2 justify-center`}
-          >
-            <Picker
-              selectedValue={energy}
-              onValueChange={setEnergy}
-              style={{ color: colors.inputText }}
-            >
-              <Picker.Item label="Select your energy" value="" />
-              <Picker.Item label="Low" value="Low" />
-              <Picker.Item label="Okay" value="Okay" />
-              <Picker.Item label="Good" value="Good" />
-              <Picker.Item label="Great" value="Great" />
-            </Picker>
+        {/* Weight Input */}
+        <FormSection title="Measurements" error={errors.weight}>
+          <View className="flex-row items-center py-2">
+            <View className="w-10 h-10 bg-emerald-50 rounded-full items-center justify-center mr-3">
+              <Feather name="activity" size={20} color="#10b981" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-gray-500 text-xs">Current Weight</Text>
+              <View className="flex-row items-end">
+                <TextInput
+                  className="text-2xl font-bold text-gray-900 p-0 mr-1"
+                  keyboardType="numeric"
+                  value={weight}
+                  onChangeText={setWeight}
+                  placeholder="0.0"
+                  placeholderTextColor="#d1d5db"
+                />
+                <Text className="text-gray-400 font-medium mb-1.5">kg</Text>
+              </View>
+            </View>
           </View>
-        </View>
-        {errors.energy && (
-          <Text className="text-red-500 mt-2">{errors.energy}</Text>
-        )}
+        </FormSection>
 
-        <View>
-          <Text className={`my-3 font-bold text-[${colors.text}]`}>Mood</Text>
-          <View
-            className={`border border-[${colors.border}] rounded-md mb-4 h-12 p-2 justify-center`}
-          >
-            <Picker
-              selectedValue={mood}
-              onValueChange={setMood}
-              style={{ color: colors.inputText }}
-            >
-              <Picker.Item label="Select your mood" value="" />
-              <Picker.Item label="Low" value="Low" />
-              <Picker.Item label="Medium" value="Medium" />
-              <Picker.Item label="High" value="High" />
-            </Picker>
-          </View>
-        </View>
-        {errors.mood && (
-          <Text className="text-red-500 mt-2">{errors.mood}</Text>
-        )}
-
-        <View className="mb-2">
-          <Text className={`my-3 font-bold text-[${colors.text}]`}>
-            Weight In Date:
-          </Text>
-          <Pressable onPress={() => setShowDate(!showDate)}>
-            <DateDisplay date={createdAt} />
+        {/* Date Selection */}
+        <FormSection title="Date" error={errors.createdAt}>
+          <Pressable onPress={() => setShowDate(!showDate)} className="flex-row items-center py-3">
+            <View className="w-8 items-center justify-center mr-3">
+              <Feather name="calendar" size={20} color="#6b7280" />
+            </View>
+            <View className="flex-1">
+              <DateDisplay date={createdAt} />
+            </View>
           </Pressable>
           {showDate && (
-            <DatePicker
-              date={createdAt}
-              setDate={setCreatedAt}
-              showDate={showDate}
-              setShowDate={setShowDate}
-            />
+            <View className="mt-2">
+              <DatePicker
+                date={createdAt}
+                setDate={setCreatedAt}
+                showDate={showDate}
+                setShowDate={setShowDate}
+              />
+            </View>
           )}
-        </View>
+        </FormSection>
 
-        <View>
-          <Text className={`my-3 font-bold text-[${colors.text}]`}>Notes:</Text>
+        {/* How did it feel? */}
+        <FormSection title="Details">
+          {/* Mood Picker */}
+          <View className="py-2 border-b border-gray-100">
+            <Text className="text-gray-500 text-xs mb-1">Mood</Text>
+            <View className="-ml-3 -my-2">
+              <Picker
+                selectedValue={mood}
+                onValueChange={setMood}
+                dropdownIconColor="#6b7280"
+              >
+                <Picker.Item label="High" value="High" />
+                <Picker.Item label="Medium" value="Medium" />
+                <Picker.Item label="Low" value="Low" />
+              </Picker>
+            </View>
+          </View>
+
+          {/* Energy Picker */}
+          <View className="py-2 mt-1">
+            <Text className="text-gray-500 text-xs mb-1">Energy</Text>
+            <View className="-ml-3 -my-2">
+              <Picker
+                selectedValue={energy}
+                onValueChange={setEnergy}
+                dropdownIconColor="#6b7280"
+              >
+                <Picker.Item label="Great" value="Great" />
+                <Picker.Item label="Good" value="Good" />
+                <Picker.Item label="Okay" value="Okay" />
+                <Picker.Item label="Low" value="Low" />
+              </Picker>
+            </View>
+          </View>
+        </FormSection>
+
+        {/* Notes */}
+        <FormSection title="Notes">
           <TextInput
             value={notes}
             onChangeText={setNotes}
-            placeholder="Enter Weight In notes"
+            placeholder="Add any additional notes..."
             multiline
-            className={`border text-lg h-[100px] justify-center pl-3 border-[${colors.border}] rounded-md mb-4 text-start pt-3 text-[${colors.text}]`}
+            className="text-base text-gray-900 min-h-[80px] py-2"
             style={{ textAlignVertical: "top" }}
-            placeholderTextColor={colors.inputText}
+            placeholderTextColor="#9ca3af"
           />
-        </View>
+        </FormSection>
 
-      <Pressable
-        className={`${
-          !isSubmitting ? "bg-green-700" : "bg-green-400"
-        } rounded-md mt-4 p-3 items-center mb-16`}
-        onPress={handleSubmit}
-        disabled={isSubmitting}
-      >
-        <Text className="font-bold text-white">
-          {isSubmitting ? "Adding Weight..." : "Add Weight"}
-        </Text>
-      </Pressable>
+        {/* Submit Button */}
+        <Pressable
+          className={`rounded-2xl py-4 items-center mb-16 shadow-md shadow-emerald-200 active:bg-emerald-700 ${!isSubmitting ? "bg-emerald-600" : "bg-gray-400"}`}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="font-bold text-white text-lg">
+              {isEditing ? "Update Entry" : "Save Entry"}
+            </Text>
+          )}
+        </Pressable>
+
       </ScrollView>
     </KeyboardAvoidingView>
   )

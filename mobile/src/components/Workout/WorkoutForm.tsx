@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import {
   View,
   Text,
@@ -7,8 +7,9 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
-  Alert,
+  ActivityIndicator,
 } from "react-native"
+import { Feather } from "@expo/vector-icons"
 import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/src/components/DatePicker"
 import DateDisplay from "@/src/components/DateDisplay"
@@ -19,22 +20,23 @@ import { createWorkout, updateWorkout } from "@/src/lib/api/workoutsApi"
 import { useRouter } from "expo-router"
 import { useSelectedWorkout } from "@/src/store/useWokoutStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
-import { z } from "zod"
 import { WorkoutLogType, WorkoutLogSchema } from "@/src/types/workoutLogType"
 import { WorkoutType } from "@/src/types/workoutType"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useUser } from "@/src/store/useAuthStore"
 import { format } from "date-fns"
-import Header from "../Header"
 import { useThemeColors } from "@/src/constants/Colors"
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
-  const { user } = useAuth()
+  const user = useUser()
   const selectedWorkout = useSelectedWorkout()
   const colors = useThemeColors()
   const { data } = useQuery({
     queryKey: ["workouts"],
     queryFn: fetchAllWorkouts,
+    staleTime: 1000 * 60 * 60,
+    gcTime: Infinity,
+    retry: false,
   })
   const workouts = data?.workouts ?? []
 
@@ -48,8 +50,8 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     isEditing ? selectedWorkout?.notes || "" : ""
   )
   const [createdAt, setCreatedAt] = useState(
-    isEditing
-      ? format(new Date(selectedWorkout?.createdAt || ""), "yyyy-MM-dd")
+    isEditing && selectedWorkout?.createdAt
+      ? format(new Date(selectedWorkout.createdAt), "yyyy-MM-dd")
       : format(new Date(), "yyyy-MM-dd")
   )
 
@@ -103,101 +105,109 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
       return
     }
 
+    setIsSubmitting(true)
     if (isEditing && selectedWorkout) {
       updateMutation.mutate(formData)
     } else {
       addMutation.mutate(formData)
     }
+    // IsSubmitting handled by mutation hook or manually reset if needed, but router push happens
   }
+
+  // Reusable Form Row Component
+  const FormSection = ({ title, children, error }: any) => (
+    <View className="mb-6">
+      <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">{title}</Text>
+      <View className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden px-4 py-2">
+        {children}
+      </View>
+      {error && <Text className="text-red-500 text-sm mt-1 ml-1">{error}</Text>}
+    </View>
+  )
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-gray-50"
     >
       <ScrollView
-        style={{ flex: 1, paddingInline: 20, paddingBlock: 5 }}
+        className="flex-1 px-4 pt-4"
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Workout Picker */}
-        <Text className={`my-3 font-bold text-[${colors.text}]`}>
-          Workout Type:
-        </Text>
-        <View
-          className={`border-[1px] h-12 justify-center rounded-md p-1 border-[${colors.primary}]`}
-        >
-          <Picker
-            selectedValue={workoutId}
-            onValueChange={(val) => setWorkoutId(val)}
-            dropdownIconColor={colors.inputText}
-            selectionColor={"black"}
-            style={{ color: colors.inputText }}
-          >
-            <Picker.Item
-              label="Select a workout type"
-              value=""
-              style={{ color: colors.inputText }}
-              color="black"
-            />
-            {workouts.map((w: WorkoutType) => (
-              <Picker.Item key={w.id} label={w.name} value={w.id} />
-            ))}
-          </Picker>
-        </View>
-        {errors.workoutId && (
-          <Text className={`mt-2 text-[${colors.error}]`}>
-            {errors.workoutId}
-          </Text>
-        )}
 
-        {/* Date Picker */}
-        <Text className={`my-3 font-bold text-[${colors.text}]`}>
-          Workout Date:
-        </Text>
-        <Pressable onPress={() => setShowDate(!showDate)}>
-          <DateDisplay date={createdAt} />
-        </Pressable>
-        {showDate && (
-          <DatePicker
-            date={createdAt}
-            setDate={setCreatedAt}
-            showDate={showDate}
-            setShowDate={setShowDate}
-          />
-        )}
-        {errors.createdAt && (
-          <Text className={`mt-2 text-[${colors.error}]`}>
-            {errors.createdAt}
-          </Text>
-        )}
+        {/* Workout Type */}
+        <FormSection title="Activity" error={errors.workoutId}>
+          <View className="flex-row items-center py-2">
+            <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center mr-3">
+              <Feather name="layers" size={20} color="#3b82f6" />
+            </View>
+            <View className="flex-1 -my-2 -mr-3">
+              <Picker
+                selectedValue={workoutId}
+                onValueChange={(val) => setWorkoutId(val)}
+                dropdownIconColor="#6b7280"
+                style={{ color: '#111827' }} // Text color
+              >
+                <Picker.Item label="Select Workout Type" value="" />
+                {workouts.map((w: WorkoutType) => (
+                  <Picker.Item key={w.id} label={w.name} value={w.id} />
+                ))}
+              </Picker>
+            </View>
+          </View>
+        </FormSection>
+
+        {/* Date Selection */}
+        <FormSection title="Date" error={errors.createdAt}>
+          <Pressable onPress={() => setShowDate(!showDate)} className="flex-row items-center py-3">
+            <View className="w-8 items-center justify-center mr-3">
+              <Feather name="calendar" size={20} color="#6b7280" />
+            </View>
+            <View className="flex-1">
+              <DateDisplay date={createdAt} />
+            </View>
+          </Pressable>
+          {showDate && (
+            <View className="mt-2">
+              <DatePicker
+                date={createdAt}
+                setDate={setCreatedAt}
+                showDate={showDate}
+                setShowDate={setShowDate}
+              />
+            </View>
+          )}
+        </FormSection>
 
         {/* Notes */}
-        <Text className={`my-3 font-bold text-[${colors.text}]`}>Notes:</Text>
-        <TextInput
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Enter notes"
-          multiline
-          className={`border-[1px] text-lg h-[100px] pl-3 rounded-md mb-4 pt-3 border-[${colors.primary}] text-[${colors.inputText}]`}
-          style={{ textAlignVertical: "top" }}
-          placeholderTextColor={colors.inputText}
-        />
-        {errors.notes && (
-          <Text className={`mt-2 text-[${colors.error}]`}>{errors.notes}</Text>
-        )}
+        <FormSection title="Notes" error={errors.notes}>
+          <TextInput
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Details about your session..."
+            multiline
+            className="text-base text-gray-900 min-h-[100px] py-2"
+            style={{ textAlignVertical: "top" }}
+            placeholderTextColor="#9ca3af"
+          />
+        </FormSection>
 
-        {/* Submit */}
-
+        {/* Submit Button */}
         <Pressable
-          className={`${
-            !isSubmitting ? "bg-green-700" : "bg-green-400"
-          } rounded-md mt-4 p-3 items-center mb-16`}
+          className={`rounded-2xl py-4 items-center mb-16 shadow-md shadow-blue-200 active:bg-blue-700 ${!isSubmitting ? "bg-blue-600" : "bg-gray-400"}`}
           onPress={handleSubmit}
           disabled={isSubmitting}
         >
-          <Text className="font-bold text-white">
-            {isSubmitting ? "Adding Task..." : "Add Task"}
-          </Text>
+          {isSubmitting ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="font-bold text-white text-lg">
+              {isEditing ? "Update Workout" : "Log Workout"}
+            </Text>
+          )}
         </Pressable>
+
       </ScrollView>
     </KeyboardAvoidingView>
   )

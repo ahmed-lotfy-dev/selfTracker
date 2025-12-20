@@ -23,9 +23,19 @@ export const checkForUpdates = async () => {
   }
 }
 
+import { runSync } from "../services/sync"
+import NetInfo from "@react-native-community/netinfo"
+
 export function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== "web") {
     focusManager.setFocused(status === "active")
+    if (status === "active") {
+      NetInfo.fetch().then((state) => {
+        if (state.isConnected) {
+          runSync().catch((e) => console.log("Sync failed:", e))
+        }
+      }).catch(() => { })
+    }
   }
 }
 

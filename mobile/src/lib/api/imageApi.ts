@@ -1,5 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import axios from "axios"
+import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
 import { ImagePickerAsset } from "expo-image-picker"
 import { ImageManipulatorContext, ImageResult } from "expo-image-manipulator"

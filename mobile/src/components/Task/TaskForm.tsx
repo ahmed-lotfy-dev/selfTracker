@@ -8,14 +8,14 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema } from "@/src/types/taskType"
-import { useAuth } from "../../hooks/useAuth"
+import { useUser } from "@/src/store/useAuthStore"
 import { COLORS } from "../../constants/Colors"
 import { useAdd } from "../../hooks/useAdd"
 import { createTask } from "../../lib/api/tasksApi"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function TaskForm() {
-  const { user } = useAuth()
+  const user = useUser()
   const [title, setTitle] = useState("")
   const [titleError, setTitleError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -72,12 +72,11 @@ export default function TaskForm() {
           value={title}
           onChangeText={setTitle}
           onSubmitEditing={handleSubmit}
-          placeholderTextColor="#9ca3af" 
+          placeholderTextColor="#9ca3af"
         />
         <Pressable
-          className={`${
-            !isSubmitting ? "bg-emerald-600" : "bg-emerald-400"
-          } w-10 h-10 rounded-xl items-center justify-center shadow-sm shadow-emerald-200`}
+          className={`${!isSubmitting ? "bg-emerald-600" : "bg-emerald-400"
+            } w-10 h-10 rounded-xl items-center justify-center shadow-sm shadow-emerald-200`}
           onPress={handleSubmit}
           disabled={isSubmitting}
         >
