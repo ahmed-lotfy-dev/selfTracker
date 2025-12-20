@@ -1,7 +1,5 @@
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { openDatabaseSync, SQLiteDatabase } from "expo-sqlite";
-import migrations from "../../drizzle/migrations";
-import { migrate } from "drizzle-orm/expo-sqlite/migrator";
 
 /**
  * Database Manager for Per-User Database Isolation
@@ -43,9 +41,9 @@ class DatabaseManager {
     const expoDb = openDatabaseSync(dbPath);
     const db = drizzle(expoDb);
 
-    // Run migrations
-    console.log(`[DB Manager] Running migrations for user: ${userId}`);
-    await migrate(db, migrations);
+    // Note: Migrations are handled by useMigrations hook in the app component
+    // We don't run them here to avoid PostgreSQL syntax errors
+    console.log(`[DB Manager] Database ready for user: ${userId}`);
 
     // Store current database instance
     this.currentExpoDb = expoDb;
