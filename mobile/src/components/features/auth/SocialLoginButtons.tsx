@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { authClient } from '@/src/lib/auth-client';
-import { AUTH_SCHEME, getOAuthUrl } from '@/src/lib/api/config';
+import { AUTH_SCHEME } from '@/src/lib/api/config';
 import { useToast } from '@/src/hooks/useToast';
 import { useThemeColors } from '@/src/constants/Colors';
 import * as Linking from 'expo-linking';
@@ -23,15 +23,10 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
 
   const handleSocialLogin = async (provider: OAuthProvider) => {
     try {
-      // Manual Browser Launch to guarantee the browser opens
-      // This bypasses any silent failures in the authClient SDK
-      const authUrl = getOAuthUrl(provider);
-
-      console.log("[SocialAuth] Opening Browser URL:", authUrl);
-
-      await Linking.openURL(authUrl);
-
-
+      await authClient.signIn.social({
+        provider: provider,
+        callbackURL: Linking.createURL("auth", { scheme: AUTH_SCHEME }),
+      });
     } catch (error) {
       console.error(`Error during ${provider} OAuth:`, error);
       showToast(`Failed to sign in with ${provider}`, 'error');
