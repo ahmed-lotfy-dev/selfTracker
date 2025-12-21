@@ -8,6 +8,7 @@ import { queryClient } from '@/src/components/Provider/AppProviders';
 import { dbManager } from '@/src/db/client';
 import { initialSync } from '@/src/services/sync';
 import { useAuthActions } from '../store/useAuthStore';
+import * as SecureStore from 'expo-secure-store';
 
 /**
  * Custom hook to handle deep link authentication from social OAuth providers.
@@ -32,6 +33,8 @@ export function useDeepLinkHandler() {
 
     const handleDeepLink = async (event: { url: string }) => {
       const url = event.url;
+      // START DEBUG LOG
+      showToast('Processing login...', 'info');
 
       // Prevent duplicate processing
       if (isProcessingRef.current) {
@@ -65,14 +68,23 @@ export function useDeepLinkHandler() {
             return;
           }
           console.error('Deep link received but no token parameter found');
-          showToast('Authentication failed: No token received', 'error');
+          showToast('Login failed: Token missing', 'error');
           return;
         }
 
         isProcessingRef.current = true;
-        showToast('Verifying session...', 'success');
+        showToast('Verifying identity...', 'success');
 
         try {
+          // OPTIONAL: Manually save token to SecureStore to ensure persistence
+          // Better Auth Client should handle this, but explicit save guards against client config issues
+          try {
+            await SecureStore.setItemAsync("selftracker.better-auth.session_token", token);
+            await SecureStore.setItemAsync("selftracker.session_token", token); // Fallback
+          } catch (storageErr) {
+            console.warn('Failed to save session token manually', storageErr);
+          }
+
           // 1. Fetch the session using the token provided in the URL
           const session = await authClient.getSession({
             fetchOptions: {
@@ -83,13 +95,14 @@ export function useDeepLinkHandler() {
           });
 
           if (session.data?.user) {
-            console.log('[Auth] Session established manually via deep link');
+            showToast(`Welcome, ${session.data.user.name.split(' ')[0]}!`, 'success');
 
             // 2. Initialize DB immediately for this user
             try {
               await dbManager.initializeUserDatabase(session.data.user.id);
-            } catch (dbErr) {
+            } catch (dbErr: any) {
               console.error('[Auth] DB Init failed in deep link handler:', dbErr);
+              showToast(`DB Error: ${dbErr.message}`, 'error');
             }
 
             // 3. Set user in store (Critical for UI to unblock "Preparing...")
@@ -102,7 +115,6 @@ export function useDeepLinkHandler() {
             await queryClient.invalidateQueries({ queryKey: ['session'] });
             await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
 
-            showToast('Authentication successful!', 'success');
             router.replace('/(drawer)/(tabs)/home');
 
             // Trigger sync in background
@@ -110,25 +122,25 @@ export function useDeepLinkHandler() {
 
           } else {
             console.warn('[Auth] Session data missing despite valid token request');
-            showToast('Session verification failed', 'error');
+            showToast('Login verification failed', 'error');
             isProcessingRef.current = false;
             return;
           }
 
         } catch (error: any) {
           console.error('Failed to establish session:', error);
-          showToast('Session setup failed, please try again', 'error');
+          showToast(`Session error: ${error.message || 'Unknown'}`, 'error');
           isProcessingRef.current = false;
           return;
         }
 
         setTimeout(() => {
           isProcessingRef.current = false;
-        }, 2000);
+        }, 3000);
 
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error parsing deep link URL:', err);
-        showToast('Authentication failed: Invalid deep link', 'error');
+        showToast(`Link error: ${err.message}`, 'error');
         isProcessingRef.current = false;
       }
     };
