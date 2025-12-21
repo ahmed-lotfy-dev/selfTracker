@@ -3,7 +3,7 @@ import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
 import { db } from "@/src/db/client"
 import { weightLogs } from "@/src/db/schema"
-import { desc, eq, isNull, lt, sql } from "drizzle-orm"
+import { desc, eq, isNull, lt, sql, and, gte } from "drizzle-orm"
 import { createId } from "@paralleldrive/cuid2"
 import { addToSyncQueue, pushChanges } from "@/src/services/sync"
 import * as Network from "expo-network"
@@ -59,11 +59,16 @@ export async function fetchWeightLogsChart(months: number) {
 
   console.log("[DEBUG] Fetching weight logs since:", pastDate.getTime())
 
+  console.log("[DEBUG] Fetching weight logs since:", pastDate.getTime())
+
   const allLogs = await db
     .select()
     .from(weightLogs)
     .where(
-      sql`${weightLogs.deletedAt} IS NULL AND ${weightLogs.createdAt} >= ${pastDate.getTime()}`
+      and(
+        isNull(weightLogs.deletedAt),
+        gte(weightLogs.createdAt, pastDate)
+      )
     )
     .orderBy(desc(weightLogs.createdAt))
 
@@ -73,16 +78,26 @@ export async function fetchWeightLogsChart(months: number) {
 
   // Helper to get key based on aggregation
   const getKey = (date: Date) => {
+    const getLocalYMD = (d: Date) => {
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
     if (aggregation === 'daily') {
-      return date.toISOString().split('T')[0] // YYYY-MM-DD
+      return getLocalYMD(date) // YYYY-MM-DD (Local)
     } else if (aggregation === 'weekly') {
       const d = new Date(date)
       const day = d.getDay()
       const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust to Monday
       d.setDate(diff)
-      return d.toISOString().split('T')[0]
+      return getLocalYMD(d)
     } else {
-      return date.toISOString().slice(0, 7) // YYYY-MM
+      // Monthly: YYYY-MM (Local)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      return `${year}-${month}`
     }
   }
 

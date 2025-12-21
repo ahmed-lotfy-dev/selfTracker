@@ -26,8 +26,8 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
 
       // Explicitly generate the callback URL based on the current environment
       // This handles Expo Go (exp://), Dev Client (scheme://), and Production
-      // It typically generates something like exp://192.168.1.5:8081/--/auth or selftracker://auth
-      const callbackURL = Linking.createURL('/auth');
+      // It typically generates something like exp://192.168.1.5:8081/--/home or selftracker://home
+      const callbackURL = Linking.createURL('/home');
 
       console.log(`[DEBUG] Generated Callback URL: ${callbackURL}`);
 

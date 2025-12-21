@@ -3,7 +3,7 @@ import { API_BASE_URL } from "./config"
 import axiosInstance from "./axiosInstane"
 import { db } from "@/src/db/client"
 import { workoutLogs } from "@/src/db/schema"
-import { desc, eq, isNull, sql } from "drizzle-orm"
+import { desc, eq, isNull, sql, and, gte, lt } from "drizzle-orm"
 import { createId } from "@paralleldrive/cuid2"
 import { addToSyncQueue, pushChanges } from "@/src/services/sync"
 import * as Network from "expo-network"
@@ -35,7 +35,12 @@ export const fetchAllWorkoutLogs = async (
       query = db
         .select()
         .from(workoutLogs)
-        .where(sql`${workoutLogs.deletedAt} IS NULL AND ${workoutLogs.createdAt} < ${cursorTime}`)
+        .where(
+          and(
+            isNull(workoutLogs.deletedAt),
+            lt(workoutLogs.createdAt, new Date(cursorTime))
+          )
+        )
         .orderBy(desc(workoutLogs.createdAt))
         .limit(limit + 1)
     }
@@ -60,16 +65,19 @@ export async function fetchWorkoutLogsByMonth(year: number, month: number) {
     .select()
     .from(workoutLogs)
     .where(
-      sql`${workoutLogs.deletedAt} IS NULL 
-      AND ${workoutLogs.createdAt} >= ${startDate.getTime()} 
-      AND ${workoutLogs.createdAt} < ${endDate.getTime()}`
+      and(
+        isNull(workoutLogs.deletedAt),
+        gte(workoutLogs.createdAt, startDate),
+        lt(workoutLogs.createdAt, endDate)
+      )
     )
     .orderBy(desc(workoutLogs.createdAt))
 
   const grouped: Record<string, typeof logs> = {}
 
   logs.forEach((log) => {
-    const dateKey = new Date(log.createdAt).toISOString().split('T')[0]
+    const d = new Date(log.createdAt)
+    const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     if (!grouped[dateKey]) {
       grouped[dateKey] = []
     }
@@ -88,7 +96,10 @@ export async function fetchWorkoutLogsChart(month: number) {
     .select()
     .from(workoutLogs)
     .where(
-      sql`${workoutLogs.deletedAt} IS NULL AND ${workoutLogs.createdAt} >= ${pastDate.getTime()}`
+      and(
+        isNull(workoutLogs.deletedAt),
+        gte(workoutLogs.createdAt, pastDate)
+      )
     )
     .orderBy(desc(workoutLogs.createdAt))
 
@@ -137,7 +148,7 @@ export const createWorkout = async (workout: WorkoutLogType) => {
     workoutId: workout.workoutId,
     workoutName: workout.workoutName || "",
     notes: workout.notes || null,
-    createdAt: workout.createdAt || now.toISOString(),
+    createdAt: workout.createdAt ? new Date(workout.createdAt) : now,
     updatedAt: now,
     syncStatus: "pending" as const,
   }

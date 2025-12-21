@@ -36,20 +36,25 @@ class DatabaseManager {
     const dbPath = this.getUserDbPath(userId);
     console.log(`[DB Manager] Opening database: ${dbPath}`);
 
-    const expoDb = openDatabaseSync(dbPath);
+    try {
+      const expoDb = openDatabaseSync(dbPath);
 
-    await runMigrations(expoDb);
-    console.log(`[DB Manager] Migrations completed for user: ${userId}`);
+      runMigrations(expoDb);
+      console.log(`[DB Manager] Migrations completed for user: ${userId}`);
 
-    const db = drizzle(expoDb);
+      const db = drizzle(expoDb);
 
-    console.log(`[DB Manager] Database ready for user: ${userId}`);
+      console.log(`[DB Manager] Database ready for user: ${userId}`);
 
-    this.currentExpoDb = expoDb;
-    this.currentDb = db;
-    this.currentUserId = userId;
+      this.currentExpoDb = expoDb;
+      this.currentDb = db;
+      this.currentUserId = userId;
 
-    return db;
+      return db;
+    } catch (error: any) {
+      console.error(`[DB Manager] Failed to initialize database:`, error.message);
+      throw error;
+    }
   }
 
   /**

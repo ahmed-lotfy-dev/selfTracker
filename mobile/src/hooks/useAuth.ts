@@ -4,7 +4,7 @@ import { useAuthActions, useUser } from "../store/useAuthStore"
 import { clearAllUserData } from "@/src/lib/storage"
 import { queryClient } from "@/src/components/Provider/AppProviders"
 import { dbManager } from "@/src/db/client"
-import { initialSync } from "@/src/services/sync"
+import { initialSync, clearUserSyncState } from "@/src/services/sync"
 
 export const useAuth = () => {
   const { data: session, error, isPending, refetch } = authClient.useSession()
@@ -40,6 +40,8 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
+      await clearUserSyncState().catch(err => console.warn("Failed to clear sync state", err))
+
       dbManager.closeCurrentDatabase()
       console.log("[Auth] Database closed for current user")
 

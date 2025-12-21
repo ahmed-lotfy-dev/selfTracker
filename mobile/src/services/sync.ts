@@ -19,7 +19,16 @@ const getUserSyncKey = (key: string): string => {
 };
 
 const LAST_SYNCED_KEY = "last_synced_at";
-const INITIAL_SYNC_KEY = "initial_sync_done";
+const INITIAL_SYNC_DONE_KEY = "initial_sync_done";
+
+export const clearUserSyncState = async () => {
+  try {
+    await SecureStore.deleteItemAsync(getUserSyncKey(INITIAL_SYNC_DONE_KEY));
+    await SecureStore.deleteItemAsync(getUserSyncKey(LAST_SYNCED_KEY));
+  } catch (error) {
+    console.warn("Failed to clear sync state:", error);
+  }
+};
 
 type SyncAction = "INSERT" | "UPDATE" | "DELETE";
 type TableName =
@@ -45,12 +54,19 @@ interface SyncQueueItem {
   createdAt: Date;
 }
 
+const ensureDbReady = () => {
+  if (!dbManager.isInitialized()) {
+    throw new Error("Database not initialized - user must be logged in");
+  }
+};
+
 export const addToSyncQueue = async (
   action: SyncAction,
   tableName: TableName,
   rowId: string,
   data: unknown
 ) => {
+  ensureDbReady();
   await db.insert(syncQueue).values({
     id: createId(),
     action,
@@ -62,6 +78,10 @@ export const addToSyncQueue = async (
 };
 
 export const pushChanges = async (): Promise<{ success: boolean; pushed: number }> => {
+  if (!dbManager.isInitialized()) {
+    console.warn("[Sync] Skipping push - database not initialized");
+    return { success: false, pushed: 0 };
+  }
   const queue = await db.select().from(syncQueue).orderBy(syncQueue.createdAt);
 
   if (queue.length === 0) {
@@ -134,6 +154,10 @@ const sanitizeRecord = (change: any) => {
 };
 
 export const pullChanges = async (): Promise<{ success: boolean; pulled: number }> => {
+  if (!dbManager.isInitialized()) {
+    console.warn("[Sync] Skipping pull - database not initialized");
+    return { success: false, pulled: 0 };
+  }
   const lastSynced = await SecureStore.getItemAsync(getUserSyncKey(LAST_SYNCED_KEY));
   const since = lastSynced || new Date(0).toISOString();
 
@@ -202,10 +226,15 @@ export const runSync = async () => {
   };
 };
 
-const INITIAL_SYNC_DONE_KEY = "initial_sync_done";
+
 
 export const initialSync = async (): Promise<{ success: boolean; synced: number }> => {
-  const alreadySynced = await SecureStore.getItemAsync(INITIAL_SYNC_DONE_KEY);
+  if (!dbManager.isInitialized()) {
+    console.warn("[Sync] Skipping initial sync - database not initialized");
+    return { success: false, synced: 0 };
+  }
+
+  const alreadySynced = await SecureStore.getItemAsync(getUserSyncKey(INITIAL_SYNC_DONE_KEY));
   if (alreadySynced === "true") {
     console.log("Initial sync already done, skipping");
     return { success: true, synced: 0 };
@@ -253,7 +282,7 @@ export const initialSync = async (): Promise<{ success: boolean; synced: number 
     await syncTable(tsList, timerSessions);
 
     await SecureStore.setItemAsync(getUserSyncKey(LAST_SYNCED_KEY), serverTime || new Date().toISOString());
-    await SecureStore.setItemAsync(INITIAL_SYNC_DONE_KEY, "true");
+    await SecureStore.setItemAsync(getUserSyncKey(INITIAL_SYNC_DONE_KEY), "true");
     console.log(`Initial sync complete. Synced ${synced} records.`);
 
     queryClient.invalidateQueries({ queryKey: ['weightLogs'] });
@@ -272,6 +301,11 @@ export const initialSync = async (): Promise<{ success: boolean; synced: number 
 };
 
 export const resetAndSync = async () => {
+  if (!dbManager.isInitialized()) {
+    console.warn("[Sync] Cannot reset - database not initialized");
+    return { success: false, synced: 0 };
+  }
+
   console.log("CRITICAL: Ensuring pending data is pushed before wipe...");
 
   // Try to push changes first to avoid data loss
@@ -294,9 +328,7 @@ export const resetAndSync = async () => {
     }
 
     // Reset sync flags
-    await SecureStore.deleteItemAsync(INITIAL_SYNC_DONE_KEY);
-    await SecureStore.deleteItemAsync(getUserSyncKey(LAST_SYNCED_KEY));
-    await SecureStore.deleteItemAsync(getUserSyncKey(INITIAL_SYNC_KEY));
+    await clearUserSyncState();
 
     console.log("Local wipe complete. Starting initial sync...");
     return await initialSync();

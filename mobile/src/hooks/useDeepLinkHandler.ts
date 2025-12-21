@@ -5,6 +5,9 @@ import { useToast } from './useToast';
 import { authClient } from "../lib/auth-client"
 import { Platform } from "react-native"
 import { queryClient } from '@/src/components/Provider/AppProviders';
+import { dbManager } from '@/src/db/client';
+import { initialSync } from '@/src/services/sync';
+import { useAuthActions } from '../store/useAuthStore';
 
 /**
  * Custom hook to handle deep link authentication from social OAuth providers.
@@ -18,6 +21,7 @@ import { queryClient } from '@/src/components/Provider/AppProviders';
 export function useDeepLinkHandler() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { setUser } = useAuthActions();
   const isProcessingRef = useRef(false);
 
   useEffect(() => {
@@ -43,7 +47,7 @@ export function useDeepLinkHandler() {
         // Check if this is an auth callback
         const isAuthPath = parsedUrl.hostname === 'auth' || parsedUrl.path === 'auth';
         const isSocialSuccessPath = parsedUrl.path?.includes('social-success');
-        const isHomePath = parsedUrl.hostname === 'home' || parsedUrl.path === 'home'; // Handle potential redirects to home with params
+        const isHomePath = parsedUrl.hostname === 'home' || parsedUrl.path === 'home';
 
         if (!isAuthPath && !isSocialSuccessPath && !isHomePath) {
           console.log('Not an auth deep link, ignoring:', url);
@@ -62,8 +66,6 @@ export function useDeepLinkHandler() {
         }
 
         if (!token) {
-          // If we are on the 'home' path, we might just be opening the app. 
-          // If there's no token, we don't treat it as an auth attempt unless we were explicitly expecting one.
           if (isHomePath && !parsedUrl.queryParams?.token) {
             return;
           }
@@ -73,7 +75,6 @@ export function useDeepLinkHandler() {
         }
 
         isProcessingRef.current = true;
-
         console.log('Token extracted from deep link, establishing session...');
 
         try {
@@ -85,9 +86,19 @@ export function useDeepLinkHandler() {
             },
           });
 
-          if (session.data) {
-            console.log('[Auth] Session established successfully');
+          if (session.data?.user) {
+            console.log('[Auth] Session established for user:', session.data.user.id);
             queryClient.setQueryData(['session'], session.data);
+
+            // Initialize database for this user
+            await dbManager.initializeUserDatabase(session.data.user.id);
+            console.log('[Auth] Database initialized for user:', session.data.user.id);
+
+            // Update auth store
+            setUser(session.data.user);
+
+            // Start initial sync in background
+            initialSync().catch(err => console.warn('[Auth] Sync error:', err.message));
           } else {
             console.warn('[Auth] Session data missing, proceeding anyway');
           }
@@ -95,19 +106,16 @@ export function useDeepLinkHandler() {
         } catch (error: any) {
           console.error('Failed to establish session:', error);
           showToast('Session setup failed, please try again', 'error');
+          isProcessingRef.current = false;
+          return;
         }
 
-        // Invalidate React Query cache to refetch user data
         await queryClient.invalidateQueries({ queryKey: ['session'] });
         await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
 
         showToast('Authentication successful!', 'success');
-
-        // Small delay before navigation
-        await new Promise(resolve => setTimeout(resolve, 500));
-
         console.log('Redirecting to home page...');
-        router.replace('/(home)/home'); // Explicitly go to home tab
+        router.replace('/(home)/home');
 
         setTimeout(() => {
           isProcessingRef.current = false;
