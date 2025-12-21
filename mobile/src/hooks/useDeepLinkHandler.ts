@@ -24,7 +24,10 @@ export function useDeepLinkHandler() {
       const url = event.url;
       showToast('Processing login...', 'info');
 
+      console.log("[DeepLink] Received URL:", url)
+
       if (isProcessingRef.current) {
+        console.log("[DeepLink] Already processing, skipping.")
         return;
       }
 
