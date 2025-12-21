@@ -1,102 +1,84 @@
-import { Text, Pressable, View } from "react-native"
-import { Link, Route, useRouter } from "expo-router"
-import { deleteWeight } from "@/src/lib/api/weightsApi"
-import { useDelete } from "@/src/hooks/useDelete"
-import { useWeightLogStore } from "@/src/store/useWeightStore"
-import { MaterialIcons } from "@expo/vector-icons"
-import { COLORS, useThemeColors } from "@/src/constants/Colors"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
-import { WeightLogType } from "@/src/types/weightLogType"
+import { View, Text, Pressable } from "react-native"
 import React from "react"
+import { MaterialIcons } from "@expo/vector-icons"
+import { useThemeColors } from "@/src/constants/Colors"
+import { Swipeable } from "react-native-gesture-handler"
+import { useStore } from "@livestore/react"
+import { deleteWeightLogEvent } from "@/src/livestore/actions"
+import { useAlertStore } from "@/src/store/useAlertStore"
+import { useRouter } from "expo-router"
+import { useWeightActions } from "@/src/store/useWeightStore"
+import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { format } from "date-fns"
 
-import { safeParseDate } from "@/src/lib/utils/dateUtils"
-
-type WeightLogProps = {
-  item: WeightLogType
+interface WeightLogItemProps {
+  item: {
+    id: string
+    weight: string
+    mood?: string | null
+    energy?: string | null
+    notes?: string | null
+    createdAt: any
+  }
   path: string
 }
 
-export default function WeightLogItem({ item, path }: WeightLogProps) {
+export default function WeightLogItem({ item, path }: WeightLogItemProps) {
+  const colors = useThemeColors()
+  const { store } = useStore()
+  const { showAlert } = useAlertStore()
   const router = useRouter()
-  const { setSelectedWeight } = useWeightLogStore()
-  const themeColors = useThemeColors()
-  const { deleteMutation, triggerDelete } = useDelete({
-    mutationFn: () => deleteWeight(String(item?.id)),
-    confirmTitle: "Delete Weight",
-    confirmMessage: "Are you sure you want to delete this weight log?",
-    onSuccessInvalidate: [
-      { queryKey: ["weightLogs"] },
-      { queryKey: ["weightLogsCalendar"] },
-      { queryKey: ["userHomeData"] },
-    ],
-  })
+  const { setSelectedWeight } = useWeightActions()
+  const swipeableRef = React.useRef<Swipeable>(null)
 
-  // Format date parts safely
-  const dateObj = safeParseDate(item.createdAt)
-  const day = format(dateObj, "dd")
-  const month = format(dateObj, "MMM")
+  const handlePress = () => {
+    setSelectedWeight(item as any)
+    router.push(`${path}/${item.id}` as any)
+  }
 
-  return (
-    <View className="flex-row items-center my-2 px-4">
-      {/* Date Column */}
-      <View className="items-center w-12 mr-2">
-        <Text className="text-xl font-bold text-text">{day}</Text>
-        <Text className="text-xs font-semibold text-placeholder uppercase">{month}</Text>
-      </View>
+  const handleDelete = () => {
+    swipeableRef.current?.close()
+    showAlert(
+      "Delete Weight Log",
+      "Are you sure you want to delete this entry?",
+      () => store.commit(deleteWeightLogEvent(item.id)),
+      () => { },
+      "Delete",
+      "Cancel"
+    )
+  }
 
-      {/* Content Card */}
-      <Link href={`/weights/${item.id}`} asChild>
-        <Pressable
-          className="flex-1 bg-card p-4 rounded-2xl shadow-sm border border-border flex-row items-center justify-between"
-          style={{ elevation: 1 }} // Android shadow
-        >
-          <View className="flex-1 mr-3">
-            <View className="flex-row items-end gap-1">
-              <Text className="text-2xl font-bold text-text">{item.weight}</Text>
-              <Text className="text-sm font-medium text-placeholder mb-1">kg</Text>
-            </View>
-            <Text
-              className="text-xs text-placeholder mt-1"
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {item.notes || (item.mood ? `Mood: ${item.mood}` : "No details")}
-            </Text>
-          </View>
-
-          <View className="flex-row gap-2 items-center">
-            {/* Edit Button */}
-            <Pressable
-              className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/20 justify-center items-center active:bg-indigo-100"
-              onPress={(e: any) => {
-                e.stopPropagation()
-                setSelectedWeight(item)
-                router.push(`${path}/edit` as Route)
-              }}
-            >
-              <MaterialIcons name="edit" size={18} color="#6366f1" />
-            </Pressable>
-
-            {/* Delete Button */}
-            <Pressable
-              className="w-10 h-10 rounded-full bg-error/10 justify-center items-center active:bg-error/20"
-              onPress={(e: any) => {
-                e.stopPropagation()
-                triggerDelete()
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? (
-                <ActivitySpinner size="small" color={themeColors.error} />
-              ) : (
-                <MaterialIcons name="delete-outline" size={20} color={themeColors.error} />
-              )}
-            </Pressable>
-          </View>
-        </Pressable>
-      </Link>
+  const renderRightActions = () => (
+    <View className="flex-row items-center ml-2 h-[85%] pr-2">
+      <Pressable
+        onPress={handleDelete}
+        className="w-12 h-full bg-error rounded-2xl items-center justify-center"
+      >
+        <MaterialIcons name="delete-outline" size={24} color={colors.card} />
+      </Pressable>
     </View>
   )
-}
 
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      containerStyle={{ marginBottom: 12, marginHorizontal: 8 }}
+    >
+      <Pressable
+        onPress={handlePress}
+        className="bg-card rounded-2xl p-4 border border-border"
+      >
+        <View className="flex-row justify-between items-center">
+          <View>
+            <Text className="text-2xl font-bold text-text">{item.weight} kg</Text>
+            <Text className="text-sm text-placeholder mt-1">
+              {format(safeParseDate(item.createdAt), "MMM dd, yyyy")}
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color={colors.placeholder} />
+        </View>
+      </Pressable>
+    </Swipeable>
+  )
+}

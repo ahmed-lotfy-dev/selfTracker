@@ -1,60 +1,45 @@
-import { View, Text, RefreshControl } from "react-native"
-import { WeightLogType } from "@/src/types/weightLogType"
-import React from "react"
-import { useInfiniteQuery, useQuery, InfiniteData } from "@tanstack/react-query"
-import { fetchAllWeightLogs } from "@/src/lib/api/weightsApi"
-import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
+import { View, Text } from "react-native"
+import React, { useMemo } from "react"
+import { useQuery } from "@livestore/react"
+import { queryDb } from "@livestore/livestore"
+import { tables } from "@/src/livestore/schema"
 import WeightLogItem from "./WeightLogItem"
 import { FlashList } from "@shopify/flash-list"
 import { WeightChart } from "./WeightChart"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
 import { useThemeColors } from "@/src/constants/Colors"
 import { WeightStatsRow } from "./WeightStatsRow"
 
+const allWeightLogs$ = queryDb(
+  () => tables.weightLogs.where({ deletedAt: null }),
+  { label: 'allWeightLogs' }
+)
+
 export const WeightLogsList = () => {
-  const limit = 10
   const colors = useThemeColors()
+  const allLogs = useQuery(allWeightLogs$)
 
-  const { data: homeData } = useQuery({
-    queryKey: ["userHomeData"],
-    queryFn: fetchUserHomeInfo,
-  })
+  const sortedLogs = useMemo(() => {
+    return [...allLogs].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    })
+  }, [allLogs])
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    refetch,
-    isRefetching,
-    isError,
-  } = useInfiniteQuery<
-    { logs: WeightLogType[]; nextCursor: string | null },
-    Error,
-    InfiniteData<{ logs: WeightLogType[]; nextCursor: string | null }>,
-    string[],
-    string | null
-  >({
-    queryKey: ["weightLogs"],
-    queryFn: ({ pageParam }) => fetchAllWeightLogs(pageParam, limit),
-    getNextPageParam: (lastPage) => lastPage?.nextCursor ?? null,
-    initialPageParam: null,
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  })
-
-  const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
+  const latestWeight = sortedLogs[0]?.weight || null
+  const previousWeight = sortedLogs[1]?.weight || null
+  const weightChange = latestWeight && previousWeight
+    ? (parseFloat(latestWeight) - parseFloat(previousWeight)).toFixed(1)
+    : ""
 
   const ListHeader = (
     <View className="mb-2 px-2">
       <View className="">
         <WeightStatsRow
-          currentWeight={homeData?.latestWeight || null}
-          weightChange={homeData?.weightChange || ""}
-          bmi={homeData?.userBMI || null}
-          goalWeight={homeData?.goal?.goalWeight || null}
+          currentWeight={latestWeight ? parseFloat(latestWeight) : null}
+          weightChange={weightChange}
+          bmi={null}
+          goalWeight={null}
         />
       </View>
 
@@ -69,52 +54,21 @@ export const WeightLogsList = () => {
     </View>
   )
 
-  if (isLoading || !data) {
-    return (
-      <View className="flex-1 justify-center items-center p-4">
-        <ActivitySpinner size="large" color={colors.primary} />
-      </View>
-    )
-  }
-
-  if (isError) {
-    return (
-      <View className="flex-1 justify-center items-center p-4">
-        <Text className={`text-[${colors.error}] text-center`}>
-          Error loading data. Please try again later.
-        </Text>
-      </View>
-    )
-  }
   return (
     <View className="flex-1 bg-background">
       <FlashList
         ListHeaderComponent={ListHeader}
-        data={logs}
-        renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            tintColor={colors.text}
-          />
-        }
+        data={sortedLogs}
+        renderItem={({ item }) => <WeightLogItem item={item as any} path="/weights" />}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
-        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage()
-          }
-        }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <ActivitySpinner size="small" className="mx-4 my-4" />
-          ) : null
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          <View className="flex-1 justify-center items-center py-10">
+            <Text className="text-placeholder font-medium">No weight logs yet.</Text>
+          </View>
         }
       />
     </View>
   )
 }
-

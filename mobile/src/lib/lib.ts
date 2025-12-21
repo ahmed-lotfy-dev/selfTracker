@@ -1,6 +1,7 @@
 import * as Updates from "expo-updates"
 import { Alert, AppStateStatus, Platform } from "react-native"
 import { focusManager } from "@tanstack/react-query"
+import NetInfo from "@react-native-community/netinfo"
 
 export const checkForUpdates = async () => {
   try {
@@ -13,26 +14,15 @@ export const checkForUpdates = async () => {
     if (update.isAvailable) {
       await Updates.fetchUpdateAsync()
       await Updates.reloadAsync()
-    } else {
     }
   } catch (error) {
     console.error("Error checking for updates:", error)
   }
 }
 
-import { runSync } from "../services/sync"
-import NetInfo from "@react-native-community/netinfo"
-
 export function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== "web") {
     focusManager.setFocused(status === "active")
-    if (status === "active") {
-      NetInfo.fetch().then((state) => {
-        if (state.isConnected) {
-          runSync().catch((e) => console.log("Sync failed:", e))
-        }
-      }).catch(() => { })
-    }
   }
 }
 

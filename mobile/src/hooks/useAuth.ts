@@ -2,8 +2,6 @@ import { authClient } from "@/src/lib/auth-client"
 import { useAuthActions, useUser } from "../store/useAuthStore"
 import { clearAllUserData } from "@/src/lib/storage"
 import { queryClient } from "@/src/lib/react-query"
-import { dbManager } from "@/src/db/client"
-import { clearUserSyncState } from "@/src/services/sync"
 
 export const useAuth = () => {
   const { data: session, error, isPending, refetch } = authClient.useSession()
@@ -12,10 +10,6 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await clearUserSyncState().catch(err => console.warn("Failed to clear sync state", err))
-
-      dbManager.closeCurrentDatabase()
-
       await clearAllUserData()
       queryClient.removeQueries()
       await authClient.signOut()

@@ -1,69 +1,88 @@
-// TODO revert back to safe area view when they fix it expo SDK 53
-import { AuthInitializer } from "./AuthInitializer"
-
-import { ReactNode, useEffect } from "react"
+import { ReactNode, useEffect, useState } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
-
 import React from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-
 import { KeyboardProvider } from "react-native-keyboard-controller"
-
-import { Colors } from "@/src/constants/Colors"
-import { useColorScheme, View } from "react-native"
+import { useColorScheme, View, Text, Button, unstable_batchedUpdates as batchUpdates } from "react-native"
 import { ToastProvider } from "@/src/hooks/useToast"
-import { ElectricWrapper } from "./ElectricWrapper"
 import { useUser } from "@/src/store/useAuthStore"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Uniwind } from 'uniwind'
+import { queryClient } from "@/src/lib/react-query"
+import { getAccessToken } from "@/src/lib/storage"
+
+import { makePersistedAdapter } from '@livestore/adapter-expo'
+import { LiveStoreProvider } from '@livestore/react'
+import { makeCfSync } from '@livestore/sync-cf'
+import { schema } from '@/src/livestore/schema'
 
 interface AppProvidersProps {
   children: ReactNode
 }
 
-import { queryClient } from "@/src/lib/react-query"
-
-// QueryClient moved to separate file to avoid circular dependencies
 export { queryClient }
+
+const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
+
+const adapter = makePersistedAdapter({
+  sync: { backend: syncUrl ? makeCfSync({ url: syncUrl }) : undefined },
+})
 
 export function AppProviders({ children }: AppProvidersProps) {
   const systemScheme = useColorScheme()
   const user = useUser()
+  const [authToken, setAuthToken] = useState<string | null>(null)
 
   useEffect(() => {
-    // Only update theme if we have a user preference or default to system
-    // Uniwind handles "system", "dark", "light" strings correctly
     const desiredTheme = user?.theme ?? 'system'
     Uniwind.setTheme(desiredTheme)
   }, [user?.theme])
 
-  // We rely on Uniwind to handle the 'dark' variant propagation
-  // The systemScheme hook might still be useful for fallback colors if needed
-  // but for the most part, Uniwind + Tailwind classes handle it.
+  useEffect(() => {
+    getAccessToken().then((token: string | null) => setAuthToken(token))
+  }, [user?.id])
 
-  // However, SafeAreaView background color needs to be reactive.
-  // We can calculate the *expected* active theme to set the background color properly
   const activeTheme = (user?.theme === 'system' || !user?.theme)
     ? (systemScheme ?? 'light')
     : user?.theme
+
+  const storeId = user?.id ?? 'anonymous'
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <ElectricWrapper>
+          <LiveStoreProvider
+            schema={schema}
+            adapter={adapter}
+            storeId={storeId}
+            syncPayload={{ authToken: authToken ?? '' }}
+            renderLoading={(stage) => (
+              <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Loading ({stage.stage})...</Text>
+              </SafeAreaView>
+            )}
+            renderError={(error: any) => (
+              <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Error: {error.toString()}</Text>
+              </SafeAreaView>
+            )}
+            renderShutdown={() => (
+              <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>LiveStore Shutdown</Text>
+              </SafeAreaView>
+            )}
+            batchUpdates={batchUpdates}
+          >
             <KeyboardProvider>
               <SafeAreaView
                 edges={["top", "left", "right"]}
-                style={{
-                  flex: 1,
-                }}
+                style={{ flex: 1 }}
               >
                 {children}
-                <AuthInitializer />
               </SafeAreaView>
             </KeyboardProvider>
-          </ElectricWrapper>
+          </LiveStoreProvider>
         </ToastProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

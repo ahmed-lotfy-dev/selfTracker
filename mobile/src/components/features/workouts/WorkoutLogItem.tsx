@@ -1,107 +1,82 @@
-import { Text, Pressable, View } from "react-native"
-import { useRouter, Link } from "expo-router"
-import { deleteWorkout } from "@/src/lib/api/workoutsApi"
-import { useDelete } from "@/src/hooks/useDelete"
-import { WorkoutLogType } from "@/src/types/workoutLogType"
-import { useWorkoutActions } from "@/src/store/useWokoutStore"
+import { View, Text, Pressable } from "react-native"
 import React from "react"
-import { format } from "date-fns"
 import { MaterialIcons } from "@expo/vector-icons"
-import { COLORS, useThemeColors } from "@/src/constants/Colors"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
-
+import { useThemeColors } from "@/src/constants/Colors"
+import { Swipeable } from "react-native-gesture-handler"
+import { useStore } from "@livestore/react"
+import { deleteWorkoutLogEvent } from "@/src/livestore/actions"
+import { useAlertStore } from "@/src/store/useAlertStore"
+import { useRouter } from "expo-router"
+import { useWorkoutActions } from "@/src/store/useWokoutStore"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
+import { format } from "date-fns"
 
-type WorkoutLogProps = {
-  item: WorkoutLogType
+interface WorkoutLogItemProps {
+  item: {
+    id: string
+    workoutName: string
+    notes?: string | null
+    createdAt: any
+  }
   path: string
 }
 
-export default function WorkoutLogItem({ item, path }: WorkoutLogProps) {
+export default function WorkoutLogItem({ item, path }: WorkoutLogItemProps) {
+  const colors = useThemeColors()
+  const { store } = useStore()
+  const { showAlert } = useAlertStore()
   const router = useRouter()
   const { setSelectedWorkout } = useWorkoutActions()
-  const themeColors = useThemeColors()
+  const swipeableRef = React.useRef<Swipeable>(null)
 
-  const { deleteMutation, triggerDelete } = useDelete({
-    mutationFn: () => deleteWorkout(String(item.id)),
-    confirmTitle: "Delete Workout",
-    confirmMessage: "Are you sure you want to delete this workout?",
-    onSuccessInvalidate: [
-      { queryKey: ["workoutLogs"] },
-      { queryKey: ["workoutLogsCalendar"] },
-      { queryKey: ["userHomeData"] },
-    ],
-  })
+  const handlePress = () => {
+    setSelectedWorkout(item as any)
+    router.push(`${path}/${item.id}` as any)
+  }
 
-  // Format date parts safely
-  const dateObj = safeParseDate(item.createdAt)
-  const day = format(dateObj, "dd")
-  const month = format(dateObj, "MMM")
+  const handleDelete = () => {
+    swipeableRef.current?.close()
+    showAlert(
+      "Delete Workout Log",
+      "Are you sure you want to delete this entry?",
+      () => store.commit(deleteWorkoutLogEvent(item.id)),
+      () => { },
+      "Delete",
+      "Cancel"
+    )
+  }
+
+  const renderRightActions = () => (
+    <View className="flex-row items-center ml-2 h-[85%] pr-2">
+      <Pressable
+        onPress={handleDelete}
+        className="w-12 h-full bg-error rounded-2xl items-center justify-center"
+      >
+        <MaterialIcons name="delete-outline" size={24} color={colors.card} />
+      </Pressable>
+    </View>
+  )
 
   return (
-    <View className="flex-row items-center my-2 px-2">
-      {/* Date Column */}
-      <View className="items-center w-12 mr-2">
-        <Text className="text-xl font-bold text-text">{day}</Text>
-        <Text className="text-xs font-semibold text-placeholder uppercase">{month}</Text>
-      </View>
-
-      {/* Content Card */}
-      <Link href={`/workouts/${item.id}`} asChild>
-        <Pressable
-          className="flex-1 bg-card p-3 rounded-2xl shadow-sm border border-border flex-row items-center justify-between"
-          style={{ elevation: 1 }}
-        >
-          <View className="flex-1 mr-3">
-            <Text
-              className="text-lg font-bold text-text"
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {item.workoutName}
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      containerStyle={{ marginBottom: 12, marginHorizontal: 8 }}
+    >
+      <Pressable
+        onPress={handlePress}
+        className="bg-card rounded-2xl p-4 border border-border"
+      >
+        <View className="flex-row justify-between items-center">
+          <View>
+            <Text className="text-lg font-bold text-text">{item.workoutName}</Text>
+            <Text className="text-sm text-placeholder mt-1">
+              {format(safeParseDate(item.createdAt), "MMM dd, yyyy")}
             </Text>
-            {item.notes ? (
-              <Text
-                className="text-xs text-placeholder mt-1"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {item.notes}
-              </Text>
-            ) : null}
           </View>
-
-          <View className="flex-row gap-2 items-center">
-            {/* Edit Button */}
-            <Pressable
-              className="w-10 h-10 rounded-full bg-primary/10 justify-center items-center active:bg-primary/20"
-              onPress={(e: any) => {
-                e.stopPropagation()
-                setSelectedWorkout(item)
-                router.push(`/workouts/edit`)
-              }}
-            >
-              <MaterialIcons name="edit" size={18} color={themeColors.primary} />
-            </Pressable>
-
-            {/* Delete Button */}
-            <Pressable
-              className="w-10 h-10 rounded-full bg-error/10 justify-center items-center active:bg-error/20"
-              onPress={(e: any) => {
-                e.stopPropagation()
-                triggerDelete()
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? (
-                <ActivitySpinner size="small" color={themeColors.error} />
-              ) : (
-                <MaterialIcons name="delete-outline" size={20} color={themeColors.error} />
-              )}
-            </Pressable>
-          </View>
-        </Pressable>
-      </Link>
-    </View>
+          <MaterialIcons name="chevron-right" size={24} color={colors.placeholder} />
+        </View>
+      </Pressable>
+    </Swipeable>
   )
 }

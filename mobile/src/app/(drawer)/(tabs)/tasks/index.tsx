@@ -1,59 +1,35 @@
-import React from "react"
-import { useQuery } from "@tanstack/react-query"
-import { FlatList, RefreshControl, Text, View } from "react-native"
+import React, { useMemo } from "react"
+import { FlatList, Text, View } from "react-native"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import TaskForm from "@/src/components/features/tasks/TaskForm"
 import TaskListItem from "@/src/components/features/tasks/TaskListItem"
-import { COLORS } from "@/src/constants/Colors"
-import { fetchAllTasks } from "@/src/lib/api/tasksApi"
-import { TaskType } from "@/src/types/taskType"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
+import { useQuery } from "@livestore/react"
+import { queryDb } from "@livestore/livestore"
+import { tables } from "@/src/livestore/schema"
 import TaskProgress from "@/src/components/features/tasks/TaskProgress"
 
+const allTasks$ = queryDb(
+  () => tables.tasks.where({ deletedAt: null }),
+  { label: 'allTasks' }
+)
+
 export default function TaskScreen() {
-  const {
-    data: tasks,
-    refetch,
-    isRefetching,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: () => fetchAllTasks(),
-  })
+  const tasks = useQuery(allTasks$)
 
-  if (isLoading || !tasks) {
-    return (
-      <View className="flex-1 bg-background justify-center items-center">
-        <ActivitySpinner size="large" color={COLORS.primary} />
-      </View>
-    )
-  }
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      return Number(a.completed) - Number(b.completed)
+    })
+  }, [tasks])
 
-  if (isError) {
-    return (
-      <View className="flex-1 justify-center items-center px-4 bg-background">
-        <Text className="text-error text-center">
-          Error loading tasks. Please try again later.
-        </Text>
-      </View>
-    )
-  }
-
-  // Sort: Incomplete first, then completed.
-  const sortedTasks = tasks.sort((a: TaskType, b: TaskType) => {
-    return Number(a.completed) - Number(b.completed)
-  })
-
-  // ListHeader with Progress and Form
   const ListHeader = (
     <View className="">
       <Header
         title="Tasks"
         rightAction={<DrawerToggleButton />}
       />
-      <TaskProgress tasks={tasks} />
+      <TaskProgress tasks={tasks as any} />
       <TaskForm />
       <Text className="text-lg font-bold text-text mx-2 my-3">Your List</Text>
     </View>
@@ -64,9 +40,6 @@ export default function TaskScreen() {
       <FlatList
         data={sortedTasks}
         keyExtractor={(item) => item?.id.toString()}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={COLORS.primary} />
-        }
         contentContainerStyle={{ paddingBottom: 100 }}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={
@@ -76,9 +49,9 @@ export default function TaskScreen() {
             </Text>
           </View>
         }
-        renderItem={({ item }: { item: TaskType }) => (
+        renderItem={({ item }) => (
           <View className="px-2">
-            <TaskListItem task={item} />
+            <TaskListItem task={item as any} />
           </View>
         )}
         showsVerticalScrollIndicator={false}

@@ -1,105 +1,86 @@
-import { View, Text, RefreshControl, } from "react-native"
-import React from "react"
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { View, Text } from "react-native"
+import React, { useMemo } from "react"
+import { useQuery } from "@livestore/react"
+import { queryDb } from "@livestore/livestore"
+import { tables } from "@/src/livestore/schema"
 import WorkoutLogItem from "./WorkoutLogItem"
 import { FlashList } from "@shopify/flash-list"
-import { COLORS } from "@/src/constants/Colors"
-import { fetchAllWorkoutLogs } from "@/src/lib/api/workoutsApi"
 import { WorkoutChart } from "./WorkoutChart"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
+import { useThemeColors } from "@/src/constants/Colors"
+import Header from "@/src/components/Header"
+import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
+
+const allWorkoutLogs$ = queryDb(
+  () => tables.workoutLogs.where({ deletedAt: null }),
+  { label: 'allWorkoutLogs' }
+)
 
 interface WorkoutLogsListProps {
   headerElement?: React.ReactNode
 }
 
 export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
-  const limit = 10
+  const colors = useThemeColors()
+  const allLogs = useQuery(allWorkoutLogs$)
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    refetch,
-    isRefetching,
-    isError,
-    error,
-  } = useInfiniteQuery({
-    queryKey: ["workoutLogs"],
-    queryFn: ({ pageParam }) => fetchAllWorkoutLogs(pageParam, limit),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: null as string | null,
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  })
+  const sortedLogs = useMemo(() => {
+    return [...allLogs].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    })
+  }, [allLogs])
 
-  const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
+  const weeklyCount = useMemo(() => {
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    return sortedLogs.filter(log => log.createdAt && new Date(log.createdAt) > weekAgo).length
+  }, [sortedLogs])
+
+  const monthlyCount = useMemo(() => {
+    const monthAgo = new Date()
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+    return sortedLogs.filter(log => log.createdAt && new Date(log.createdAt) > monthAgo).length
+  }, [sortedLogs])
 
   const ListHeader = (
-    <View className="mb-4">
+    <View className="mb-2">
       {headerElement}
-      <View className="px-2 mt-2">
-        <Text className="text-lg font-semibold text-text mb-3">Progress Chart</Text>
+      <View className="flex-row justify-around bg-card rounded-2xl mx-2 p-4 border border-border">
+        <View className="items-center">
+          <Text className="text-2xl font-bold text-primary">{weeklyCount}</Text>
+          <Text className="text-sm text-placeholder">This Week</Text>
+        </View>
+        <View className="items-center">
+          <Text className="text-2xl font-bold text-secondary">{monthlyCount}</Text>
+          <Text className="text-sm text-placeholder">This Month</Text>
+        </View>
+      </View>
+
+      <View className="mt-6 px-2">
+        <Text className="text-lg font-semibold text-text mb-3">Workout Types</Text>
         <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden pb-4">
           <WorkoutChart />
         </View>
       </View>
 
-      <Text className="text-lg font-semibold text-text mt-6 px-4 mb-2">History</Text>
+      <Text className="text-lg font-semibold text-text mt-6 px-4 mb-2">Recent Workouts</Text>
     </View>
   )
-
-
-  if (isLoading || !data) {
-    return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <ActivitySpinner size="large" color={COLORS.primary} />
-      </View>
-    )
-  }
-
-  if (isError) {
-    return (
-      <View className="p-2 bg-background flex-1">
-        <Text className="text-error">
-          Failed to load workouts. Please try again.
-        </Text>
-        <Text className="text-error">{error?.message}</Text>
-      </View>
-    )
-  }
-
 
   return (
     <View className="flex-1 bg-background">
       <FlashList
         ListHeaderComponent={ListHeader}
-        data={logs}
-        renderItem={({ item }) => (
-          <WorkoutLogItem item={item} path="/weights" />
-        )}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            tintColor={COLORS.primary}
-          />
-        }
+        data={sortedLogs}
+        renderItem={({ item }) => <WorkoutLogItem item={item as any} path="/workouts" />}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
-        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage()
-          }
-        }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <ActivitySpinner size="small" className="mx-4 my-4" />
-          ) : null
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          <View className="flex-1 justify-center items-center py-10">
+            <Text className="text-placeholder font-medium">No workout logs yet.</Text>
+          </View>
         }
       />
     </View>

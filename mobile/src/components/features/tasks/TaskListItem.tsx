@@ -1,13 +1,12 @@
 import { View, Text, Pressable, TextInput } from "react-native"
 import { TaskType } from "@/src/types/taskType"
-import { useDelete } from "@/src/hooks/useDelete"
-import { deleteTask, updateTask } from "@/src/lib/api/tasksApi"
-import { useUpdate } from "@/src/hooks/useUpdate"
 import React, { useState, useRef } from "react"
 import { MaterialIcons, Ionicons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
 import { Swipeable } from "react-native-gesture-handler"
+import { useStore } from "@livestore/react"
+import { deleteTaskEvent, updateTaskEvent, completeTaskEvent, uncompleteTaskEvent } from "@/src/livestore/actions"
+import { useAlertStore } from "@/src/store/useAlertStore"
 
 interface TaskListItemProps {
   task: TaskType
@@ -19,26 +18,16 @@ export default function TaskListItem({ task }: TaskListItemProps) {
   const inputRef = useRef<TextInput>(null)
   const swipeableRef = useRef<Swipeable>(null)
   const colors = useThemeColors()
-
-  const { deleteMutation, triggerDelete } = useDelete({
-    mutationFn: () => deleteTask(String(task.id)),
-    onSuccessInvalidate: [{ queryKey: ["tasks"] }, { queryKey: ["userHomeData"] }],
-    confirmTitle: "Delete Task",
-    confirmMessage: "Are you sure you want to delete this task?",
-  })
-
-  const { updateMutation } = useUpdate({
-    mutationFn: (data: { id: string; completed?: boolean; title?: string }) =>
-      updateTask({ ...task, ...data }),
-    onSuccessInvalidate: [
-      { queryKey: ["tasks"] },
-      { queryKey: ["userHomeData"] },
-    ],
-  })
+  const { store } = useStore()
+  const { showAlert } = useAlertStore()
 
   const toggleTask = () => {
     if (!isEditing) {
-      updateMutation.mutate({ id: task.id, completed: !task.completed })
+      if (task.completed) {
+        store.commit(uncompleteTaskEvent(task.id))
+      } else {
+        store.commit(completeTaskEvent(task.id))
+      }
     }
   }
 
@@ -52,7 +41,7 @@ export default function TaskListItem({ task }: TaskListItemProps) {
   const saveEdit = () => {
     const trimmed = editedTitle.trim()
     if (trimmed && trimmed !== task.title) {
-      updateMutation.mutate({ id: task.id, title: trimmed })
+      store.commit(updateTaskEvent(task.id, { title: trimmed }))
     }
     setIsEditing(false)
   }
@@ -64,7 +53,14 @@ export default function TaskListItem({ task }: TaskListItemProps) {
 
   const handleDelete = () => {
     swipeableRef.current?.close()
-    triggerDelete()
+    showAlert(
+      "Delete Task",
+      "Are you sure you want to delete this task?",
+      () => store.commit(deleteTaskEvent(task.id)),
+      () => { },
+      "Delete",
+      "Cancel"
+    )
   }
 
   const renderRightActions = () => {
@@ -80,11 +76,7 @@ export default function TaskListItem({ task }: TaskListItemProps) {
           onPress={handleDelete}
           className="w-12 h-full bg-error rounded-r-2xl items-center justify-center"
         >
-          {deleteMutation.isPending ? (
-            <ActivitySpinner size="small" color={colors.card} />
-          ) : (
-            <MaterialIcons name="delete-outline" size={24} color={colors.card} />
-          )}
+          <MaterialIcons name="delete-outline" size={24} color={colors.card} />
         </Pressable>
       </View>
     )
@@ -101,7 +93,6 @@ export default function TaskListItem({ task }: TaskListItemProps) {
           }`}
         onPress={toggleTask}
       >
-        {/* Custom Checkbox */}
         <Pressable
           onPress={(e) => {
             e.stopPropagation()
@@ -113,7 +104,6 @@ export default function TaskListItem({ task }: TaskListItemProps) {
           {task.completed && <Ionicons name="checkmark" size={16} color={colors.card} />}
         </Pressable>
 
-        {/* Content */}
         <View className="flex-1 mr-2">
           {isEditing ? (
             <View>

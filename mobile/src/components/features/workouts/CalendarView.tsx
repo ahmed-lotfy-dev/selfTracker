@@ -1,7 +1,6 @@
-import { COLORS, useThemeColors } from "@/src/constants/Colors"
-import { fetchWorkoutLogsByMonth } from "@/src/lib/api/workoutsApi"
-import { useQuery } from "@tanstack/react-query"
-import React, { useState } from "react"
+import { useThemeColors } from "@/src/constants/Colors"
+import { useQuery } from "@livestore/react"
+import React, { useState, useMemo } from "react"
 import { View, Text, Pressable } from "react-native"
 import { Calendar, DateData } from "react-native-calendars"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
@@ -9,19 +8,24 @@ import { FlashList } from "@shopify/flash-list"
 import WorkoutLogItem from "./WorkoutLogItem"
 import { format } from "date-fns"
 import { MaterialIcons } from "@expo/vector-icons"
-import { SyncStatus } from "@/src/db/schema"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
+import { queryDb } from "@livestore/livestore"
+import { tables } from "@/src/livestore/schema"
+
+const allWorkoutLogs$ = queryDb(
+  () => tables.workoutLogs.where({ deletedAt: null }),
+  { label: 'allWorkoutLogsCalendar' }
+)
 
 type WorkoutLog = {
   id: string
-  userId: string
+  userId: string | null
   workoutId: string
   workoutName: string
   notes: string | null
-  createdAt: any // Change to any to be safe with mixed formats
+  createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  syncStatus: SyncStatus | null
 }
 
 type WorkoutLogMap = Record<string, WorkoutLog[]>
@@ -36,16 +40,26 @@ const CalendarView = ({ headerElement }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"))
   const colors = useThemeColors()
 
-  const {
-    data = {},
-    isLoading,
-    error,
-  } = useQuery<WorkoutLogMap>({
-    queryKey: ["workoutLogsCalendar", selectedYear, selectedMonth],
-    queryFn: () => fetchWorkoutLogsByMonth(selectedYear, selectedMonth),
-  })
+  const allLogs = useQuery(allWorkoutLogs$)
 
-  // Custom Day Component to show workout name
+  const data = useMemo(() => {
+    const grouped: WorkoutLogMap = {}
+
+    allLogs.forEach((log) => {
+      if (!log.createdAt) return
+      const d = new Date(log.createdAt)
+      if (d.getFullYear() !== selectedYear || d.getMonth() + 1 !== selectedMonth) return
+
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = []
+      }
+      grouped[dateKey].push(log as WorkoutLog)
+    })
+
+    return grouped
+  }, [allLogs, selectedYear, selectedMonth])
+
   const DayComponent = ({ date, state }: { date?: DateData; state?: string }) => {
     if (!date) return <View />
     const dateStr = date.dateString
@@ -54,7 +68,6 @@ const CalendarView = ({ headerElement }: CalendarViewProps) => {
     const isToday = dateStr === format(new Date(), "yyyy-MM-dd")
     const hasWorkout = logs.length > 0
 
-    // Get first workout name if exists
     const workoutName = hasWorkout ? logs[0].workoutName : null
 
     return (
@@ -73,7 +86,6 @@ const CalendarView = ({ headerElement }: CalendarViewProps) => {
           {date.day}
         </Text>
 
-        {/* Workout Name Indicator */}
         {workoutName && (
           <View className="px-0.5 overflow-hidden w-full items-center">
             <Text
@@ -113,7 +125,7 @@ const CalendarView = ({ headerElement }: CalendarViewProps) => {
             />
           )}
           theme={{
-            calendarBackground: 'transparent', // Use container background
+            calendarBackground: 'transparent',
             textSectionTitleColor: colors.text,
             textDayHeaderFontWeight: '600',
             textMonthFontWeight: '900',
@@ -130,28 +142,6 @@ const CalendarView = ({ headerElement }: CalendarViewProps) => {
       </View>
     </View>
   )
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 bg-background">
-        {headerElement}
-        <View className="flex-1 justify-center items-center">
-          <ActivitySpinner size="large" color={colors.primary} />
-        </View>
-      </View>
-    )
-  }
-
-  if (error) {
-    return (
-      <View className="flex-1 bg-background">
-        {headerElement}
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-error">Error loading calendar data.</Text>
-        </View>
-      </View>
-    )
-  }
 
   return (
     <View className="flex-1 bg-background">

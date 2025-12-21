@@ -1,117 +1,69 @@
-import { View, Text, Dimensions } from "react-native"
-import React, { useState } from "react"
+import React, { useMemo } from "react"
+import { View, Text } from "react-native"
+import { useQuery } from "@livestore/react"
+import { queryDb } from "@livestore/livestore"
+import { tables } from "@/src/livestore/schema"
 import { BarChart } from "react-native-chart-kit"
-import { useQuery } from "@tanstack/react-query"
-import { fetchWorkoutLogsChart } from "@/src/lib/api/workoutsApi"
-import { COLORS, useThemeColors } from "@/src/constants/Colors"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
+import { Dimensions } from "react-native"
+import { useThemeColors } from "@/src/constants/Colors"
 
-const SCREEN_WIDTH = Dimensions.get("window").width
-const CHART_HEIGHT = 280
+const allWorkoutLogs$ = queryDb(
+  () => tables.workoutLogs.where({ deletedAt: null }),
+  { label: 'workoutLogsChart' }
+)
 
-export const WorkoutChart = () => {
-  const [month, setMonth] = useState(3)
+export function WorkoutChart() {
   const colors = useThemeColors()
+  const allLogs = useQuery(allWorkoutLogs$)
+  const screenWidth = Dimensions.get("window").width - 48
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["workoutLogsChartData", month],
-    queryFn: () => fetchWorkoutLogsChart(month),
-    staleTime: 1000 * 60 * 5,
-  })
+  const chartData = useMemo(() => {
+    const typeMap = new Map<string, number>()
 
-  const ranges = [
-    { label: "1M", value: 1 },
-    { label: "3M", value: 3 },
-    { label: "6M", value: 6 },
-    { label: "1Y", value: 12 },
-  ]
+    allLogs.forEach(log => {
+      const name = log.workoutName?.trim() || "Unknown"
+      typeMap.set(name, (typeMap.get(name) || 0) + 1)
+    })
 
-  if (isLoading || !data) {
+    const sortedEntries = Array.from(typeMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+
+    if (sortedEntries.length === 0) {
+      return { labels: [], datasets: [{ data: [0] }] }
+    }
+
+    return {
+      labels: sortedEntries.map(e => e[0].substring(0, 8)),
+      datasets: [{ data: sortedEntries.map(e => e[1]) }]
+    }
+  }, [allLogs])
+
+  if (chartData.labels.length === 0) {
     return (
-      <View
-        className="justify-center items-center p-4 bg-card"
-        style={{ height: CHART_HEIGHT }}
-      >
-        <ActivitySpinner size="large" color={colors.primary} />
+      <View className="h-[200px] items-center justify-center">
+        <Text className="text-placeholder">No data to display</Text>
       </View>
     )
   }
-
-  if (isError) {
-    return (
-      <View
-        className="justify-center items-center p-4 bg-card"
-        style={{ height: CHART_HEIGHT }}
-      >
-        <Text className="text-error text-center">
-          Error loading chart.
-        </Text>
-      </View>
-    )
-  }
-
-  const noChartData =
-    !data ||
-    !data.labels?.length ||
-    !data.datasets?.[0]?.data?.length ||
-    data.datasets[0].data.every(
-      (val: any) => typeof val !== "number" || isNaN(val)
-    )
 
   return (
-    <View className="bg-card">
-      {/* Time Stats Header */}
-      <View className="flex-row justify-between items-center px-4 pt-4 pb-2">
-        <Text className="font-bold text-text">Frequency</Text>
-        <View className="flex-row gap-2">
-          {ranges.map((r) => (
-            <Text
-              key={r.value}
-              onPress={() => setMonth(r.value)}
-              className={`text-xs font-bold px-2 py-1 rounded-full overflow-hidden ${month === r.value ? 'bg-primary/20 text-primary' : 'text-placeholder'}`}
-            >
-              {r.label}
-            </Text>
-          ))}
-        </View>
-      </View>
-
-      {noChartData ? (
-        <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
-          <Text className="text-placeholder text-center px-6">
-            No workouts found for this period.
-          </Text>
-        </View>
-      ) : (
-        <BarChart
-          data={data}
-          width={SCREEN_WIDTH - 32}
-          height={220}
-          yAxisLabel=""
-          yAxisSuffix=""
-          chartConfig={{
-            backgroundColor: colors.card,
-            backgroundGradientFrom: colors.card,
-            backgroundGradientTo: colors.card,
-            decimalPlaces: 0,
-            color: (opacity = 1) => colors.primary, // Use theme primary color
-            labelColor: (opacity = 1) => colors.text, // Use theme text color
-            propsForBackgroundLines: {
-              strokeDasharray: "5",
-              stroke: colors.border // Use theme border color
-            }
-          }}
-          style={{
-            marginTop: 10,
-            borderRadius: 16
-          }}
-          fromZero={true}
-          showBarTops={false}
-          showValuesOnTopOfBars={true}
-          segments={4}
-        />
-      )}
-    </View>
+    <BarChart
+      data={chartData}
+      width={screenWidth}
+      height={200}
+      yAxisLabel=""
+      yAxisSuffix=""
+      chartConfig={{
+        backgroundColor: colors.card,
+        backgroundGradientFrom: colors.card,
+        backgroundGradientTo: colors.card,
+        decimalPlaces: 0,
+        color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+        labelColor: () => colors.placeholder,
+        barPercentage: 0.6,
+      }}
+      style={{ marginLeft: -16, borderRadius: 16 }}
+    />
   )
 }
-

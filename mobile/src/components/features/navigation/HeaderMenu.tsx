@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Modal, TouchableWithoutFeedback, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Modal, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthActions } from '@/src/store/useAuthStore';
 import { useToast } from '@/src/hooks/useToast';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/src/constants/Colors';
 import { authClient } from '@/src/lib/auth-client';
-import { dbManager } from '@/src/db/client';
 import { clearAllUserData } from '@/src/lib/storage';
 import { queryClient } from '@/src/lib/react-query';
-import { clearUserSyncState } from '@/src/services/sync';
 
 export default function HeaderMenu() {
   const [visible, setVisible] = useState(false);
@@ -24,8 +22,6 @@ export default function HeaderMenu() {
   const handleSignOut = async () => {
     closeMenu();
     try {
-      await clearUserSyncState();
-      dbManager.closeCurrentDatabase();
       await clearAllUserData();
       queryClient.removeQueries();
       await authClient.signOut();

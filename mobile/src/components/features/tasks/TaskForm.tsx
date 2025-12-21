@@ -9,9 +9,8 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema } from "@/src/types/taskType"
 import { useUser } from "@/src/store/useAuthStore"
-import { COLORS } from "@/src/constants/Colors"
-import { useAdd } from "@/src/hooks/useAdd"
-import { createTask } from "@/src/lib/api/tasksApi"
+import { useStore } from "@livestore/react"
+import { createTaskEvent } from "@/src/livestore/actions"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function TaskForm() {
@@ -19,17 +18,7 @@ export default function TaskForm() {
   const [title, setTitle] = useState("")
   const [titleError, setTitleError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const { addMutation } = useAdd({
-    mutationFn: createTask,
-    onSuccessInvalidate: [
-      { queryKey: ["tasks"] },
-      { queryKey: ["userHomeData"] },
-    ],
-    onSuccessCallback() {
-    },
-    onErrorMessage: "Failed to Add Task Log.",
-  })
+  const { store } = useStore()
 
   const handleSubmit = () => {
     const result = TaskSchema.shape.title.safeParse(title.trim())
@@ -42,21 +31,10 @@ export default function TaskForm() {
     setTitleError("")
     setIsSubmitting(true)
 
-    const task: any = {
-      userId: user?.id || "",
-      title: title.trim(),
-      category: "general",
-    }
+    store.commit(createTaskEvent(user?.id || "", title.trim(), "general"))
 
-    addMutation.mutate(task, {
-      onSuccess: () => {
-        setTitle("")
-        setIsSubmitting(false)
-      },
-      onError: () => {
-        setIsSubmitting(false)
-      },
-    })
+    setTitle("")
+    setIsSubmitting(false)
   }
 
   return (

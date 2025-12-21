@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import {
   View,
   Text,
@@ -12,40 +12,46 @@ import { Feather } from "@expo/vector-icons"
 import { Picker } from "@react-native-picker/picker"
 import DatePicker from "@/src/components/DatePicker"
 import DateDisplay from "@/src/components/DateDisplay"
-import { useQuery } from "@tanstack/react-query"
-import { fetchAllWorkouts } from "@/src/lib/api/workouts"
-import { useAdd } from "@/src/hooks/useAdd"
-import { createWorkout, updateWorkout } from "@/src/lib/api/workoutsApi"
 import { useRouter } from "expo-router"
 import { useSelectedWorkout } from "@/src/store/useWokoutStore"
-import { useUpdate } from "@/src/hooks/useUpdate"
-import { WorkoutLogType, WorkoutLogSchema } from "@/src/types/workoutLogType"
-import { WorkoutType } from "@/src/types/workoutType"
+import { WorkoutLogSchema } from "@/src/types/workoutLogType"
 import { useUser } from "@/src/store/useAuthStore"
 import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
+import { useStore, useQuery } from "@livestore/react"
+import { queryDb } from "@livestore/livestore"
+import { tables } from "@/src/livestore/schema"
+import { createWorkoutLogEvent, updateWorkoutLogEvent } from "@/src/livestore/actions"
 
-// UI Components
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
+
+const allWorkouts$ = queryDb(
+  () => tables.workouts.where({ deletedAt: null }),
+  { label: 'workoutTypes' }
+)
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
   const user = useUser()
   const selectedWorkout = useSelectedWorkout()
   const colors = useThemeColors()
-  const { data } = useQuery({
-    queryKey: ["workouts"],
-    queryFn: fetchAllWorkouts,
-    staleTime: 1000 * 60 * 60,
-    gcTime: Infinity,
-    retry: false,
-  })
-  const workouts = data?.workouts ?? []
+  const { store } = useStore()
+  const allWorkouts = useQuery(allWorkouts$)
 
-  const selectedYear = new Date().getFullYear()
-  const selectedMonth = new Date().getMonth() + 1
+  const defaultWorkouts = useMemo(() => {
+    if (allWorkouts.length > 0) return allWorkouts
+    return [
+      { id: 'push', name: 'Push Day' },
+      { id: 'pull', name: 'Pull Day' },
+      { id: 'legs', name: 'Leg Day' },
+      { id: 'upper', name: 'Upper Body' },
+      { id: 'lower', name: 'Lower Body' },
+      { id: 'cardio', name: 'Cardio' },
+      { id: 'full', name: 'Full Body' },
+    ]
+  }, [allWorkouts])
 
   const [workoutId, setWorkoutId] = useState(
     isEditing ? selectedWorkout?.workoutId || "" : ""
@@ -62,34 +68,10 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showDate, setShowDate] = useState(false)
 
-  const { addMutation } = useAdd({
-    mutationFn: (workout: WorkoutLogType) => createWorkout(workout),
-    onSuccessInvalidate: [
-      { queryKey: ["workoutLogs"] },
-      { queryKey: ["workoutLogsCalendar", selectedMonth, selectedYear] },
-      { queryKey: ["userHomeData"] },
-    ],
-    onSuccessCallback: () => router.push("/workouts"),
-    onErrorMessage: "Failed to Add Workout Log.",
-  })
-
-  const { updateMutation } = useUpdate({
-    mutationFn: (workout: WorkoutLogType) => updateWorkout(workout),
-    onSuccessInvalidate: [
-      { queryKey: ["workoutLogs"] },
-      { queryKey: ["workoutLogsCalendar", selectedMonth, selectedYear] },
-      { queryKey: ["userHomeData"] },
-    ],
-    onSuccessCallback: () => router.push("/workouts"),
-    onErrorMessage: "Failed to Update Workout Log.",
-  })
-
   const handleSubmit = () => {
-    const workoutName =
-      workouts.find((w: WorkoutType) => w.id === workoutId)?.name || ""
+    const workoutName = defaultWorkouts.find((w) => w.id === workoutId)?.name || ""
 
-    const formData: WorkoutLogType = {
-      id: isEditing ? selectedWorkout?.id : undefined,
+    const formData = {
       userId: user?.id,
       workoutId,
       workoutName,
@@ -110,10 +92,16 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
 
     setIsSubmitting(true)
     if (isEditing && selectedWorkout) {
-      updateMutation.mutate(formData)
+      store.commit(updateWorkoutLogEvent(selectedWorkout.id!, notes))
     } else {
-      addMutation.mutate(formData)
+      store.commit(createWorkoutLogEvent(
+        user?.id || "",
+        workoutId,
+        workoutName,
+        { notes, createdAt: new Date(createdAt) }
+      ))
     }
+    router.push("/workouts")
   }
 
   return (
@@ -127,7 +115,6 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
         showsVerticalScrollIndicator={false}
       >
 
-        {/* Workout Type */}
         <Section title="Activity" error={errors.workoutId}>
           <View className="flex-row items-center py-2 px-4">
             <View className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full items-center justify-center mr-3">
@@ -142,7 +129,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
                 itemStyle={{ color: colors.text }}
               >
                 <Picker.Item label="Select Workout Type" value="" />
-                {workouts.map((w: WorkoutType) => (
+                {defaultWorkouts.map((w) => (
                   <Picker.Item key={w.id} label={w.name} value={w.id} />
                 ))}
               </Picker>
@@ -150,7 +137,6 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           </View>
         </Section>
 
-        {/* Date Selection */}
         <Section title="Date" error={errors.createdAt}>
           <Pressable onPress={() => setShowDate(!showDate)} className="flex-row items-center py-3 px-4">
             <View className="w-8 items-center justify-center mr-3">
@@ -172,7 +158,6 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           )}
         </Section>
 
-        {/* Notes */}
         <Section title="Notes" error={errors.notes}>
           <TextInput
             value={notes}
@@ -185,7 +170,6 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           />
         </Section>
 
-        {/* Submit Button */}
         <Button
           onPress={handleSubmit}
           loading={isSubmitting}

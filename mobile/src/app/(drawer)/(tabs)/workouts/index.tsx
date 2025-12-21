@@ -1,14 +1,13 @@
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import {
   View,
   Text,
   Pressable,
   LayoutAnimation,
-  Platform,
-  UIManager,
 } from "react-native"
-import { useQuery } from "@tanstack/react-query"
-import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
+import { useQuery } from "@livestore/react"
+import { queryDb } from "@livestore/livestore"
+import { tables } from "@/src/livestore/schema"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import CalendarView from "@/src/components/features/workouts/CalendarView"
@@ -21,13 +20,31 @@ const VIEW_TYPES = {
   CALENDAR: "calendar",
 }
 
+const allWorkoutLogs$ = queryDb(
+  () => tables.workoutLogs.where({ deletedAt: null }),
+  { label: 'workoutsScreenLogs' }
+)
+
 export default function WorkoutScreen() {
   const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST)
+  const workoutLogs = useQuery(allWorkoutLogs$)
 
-  const { data: homeData } = useQuery({
-    queryKey: ["userHomeData"],
-    queryFn: fetchUserHomeInfo,
-  })
+  const stats = useMemo(() => {
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    const monthAgo = new Date()
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+
+    const weeklyWorkouts = workoutLogs.filter(
+      log => log.createdAt && new Date(log.createdAt) > weekAgo
+    ).length
+
+    const monthlyWorkouts = workoutLogs.filter(
+      log => log.createdAt && new Date(log.createdAt) > monthAgo
+    ).length
+
+    return { weeklyWorkouts, monthlyWorkouts, totalWorkouts: workoutLogs.length }
+  }, [workoutLogs])
 
   const toggleView = (view: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -57,9 +74,9 @@ export default function WorkoutScreen() {
     <View>
       <View className="mb-2">
         <WorkoutStatsRow
-          weeklyWorkouts={homeData?.weeklyWorkout || 0}
-          monthlyWorkouts={homeData?.monthlyWorkout || 0}
-          totalWorkouts={homeData?.stats?.totalWorkouts || 0}
+          weeklyWorkouts={stats.weeklyWorkouts}
+          monthlyWorkouts={stats.monthlyWorkouts}
+          totalWorkouts={stats.totalWorkouts}
         />
       </View>
       <ViewSelector />
@@ -90,4 +107,3 @@ export default function WorkoutScreen() {
     </View>
   )
 }
-

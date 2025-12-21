@@ -1,29 +1,68 @@
-import { View, Text, ScrollView, RefreshControl } from "react-native"
-import React from "react"
-import { Stack } from "expo-router"
+import { View, Text, ScrollView } from "react-native"
+import React, { useMemo } from "react"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
-import { useQuery } from "@tanstack/react-query"
-import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
 import { TasksChart } from "@/src/components/features/home/TasksChart"
 import UserProfile from "@/src/components/features/profile/UserProfile"
 import ActionButtons from "@/src/components/features/home/ActionButtons"
 import { StatsRow } from "@/src/components/features/home/StatsRow"
 import Header from "@/src/components/Header"
-
 import { useUser } from "@/src/store/useAuthStore"
 import { ActivityIndicator } from "react-native"
+import { useQuery } from "@livestore/react"
+import { queryDb } from "@livestore/livestore"
+import { tables } from "@/src/livestore/schema"
+
+const allWorkoutLogs$ = queryDb(
+  () => tables.workoutLogs.where({ deletedAt: null }),
+  { label: 'homeWorkoutLogs' }
+)
+
+const allWeightLogs$ = queryDb(
+  () => tables.weightLogs.where({ deletedAt: null }),
+  { label: 'homeWeightLogs' }
+)
+
+const allTasks$ = queryDb(
+  () => tables.tasks.where({ deletedAt: null }),
+  { label: 'homeTasks' }
+)
 
 export default function HomeScreen() {
   const user = useUser()
-  const { data, refetch, isRefetching } = useQuery({
-    queryKey: ["userHomeData"],
-    queryFn: fetchUserHomeInfo,
-    // only fetch when we have a valid initialized user from the store
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5,
-  })
+  const workoutLogs = useQuery(allWorkoutLogs$)
+  const weightLogs = useQuery(allWeightLogs$)
+  const tasks = useQuery(allTasks$)
 
-  // If we have a session but no user yet, it means DB is initializing
+  const stats = useMemo(() => {
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    const monthAgo = new Date()
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+
+    const weeklyWorkouts = workoutLogs.filter(
+      log => log.createdAt && new Date(log.createdAt) > weekAgo
+    ).length
+
+    const monthlyWorkouts = workoutLogs.filter(
+      log => log.createdAt && new Date(log.createdAt) > monthAgo
+    ).length
+
+    const sortedWeights = [...weightLogs]
+      .filter(w => w.createdAt)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+
+    const latestWeight = sortedWeights[0]?.weight
+    const previousWeight = sortedWeights[1]?.weight
+    const weightChange = latestWeight && previousWeight
+      ? (parseFloat(latestWeight) - parseFloat(previousWeight)).toFixed(1)
+      : ""
+
+    const pendingTasks = tasks.filter(t => !t.completed).length
+    const completedTasks = tasks.filter(t => t.completed).length
+
+    return { weeklyWorkouts, monthlyWorkouts, weightChange, pendingTasks, completedTasks }
+  }, [workoutLogs, weightLogs, tasks])
+
   if (!user) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
@@ -42,9 +81,6 @@ export default function HomeScreen() {
       <ScrollView
         className="flex-1 px-2"
         contentContainerStyle={{ paddingBottom: 150 }}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-        }
       >
         <UserProfile homeScreen className="" />
 
@@ -71,9 +107,9 @@ export default function HomeScreen() {
             Insights
           </Text>
           <StatsRow
-            weeklyWorkouts={data?.weeklyWorkout || 0}
-            monthlyWorkouts={data?.monthlyWorkout || 0}
-            weightChange={data?.weightChange || ""}
+            weeklyWorkouts={stats.weeklyWorkouts}
+            monthlyWorkouts={stats.monthlyWorkouts}
+            weightChange={stats.weightChange}
             bmi={null}
             goalWeight={null}
           />
@@ -81,8 +117,8 @@ export default function HomeScreen() {
 
         <View className="mt-4">
           <TasksChart
-            pendingTasks={data?.pendingTasks || 0}
-            completedTasks={data?.completedTasks || 0}
+            pendingTasks={stats.pendingTasks}
+            completedTasks={stats.completedTasks}
           />
         </View>
       </ScrollView>

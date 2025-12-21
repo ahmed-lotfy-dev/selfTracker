@@ -1,3 +1,4 @@
+import "@/src/polyfills/crypto"
 import React, { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import { Slot, Redirect, Stack, useRouter } from "expo-router"
