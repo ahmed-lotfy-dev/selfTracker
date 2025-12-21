@@ -57,10 +57,8 @@ function RootLayout() {
       registerForPushNotificationsAsync().then(setExpoPushToken)
       const cleanup = setUpNotificationListeners({
         onReceive: (notification) => {
-          console.log("Notification received in foreground:", notification)
         },
         onResponse: (response) => {
-          console.log("User tapped notification:", response)
         },
       })
       return cleanup
@@ -98,7 +96,7 @@ function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(home)" />
+          <Stack.Screen name="(drawer)" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="+not-found" />
         </Stack>
