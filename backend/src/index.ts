@@ -76,19 +76,22 @@ app.use("*", async (c, next) => {
   const authHeader = headers.get("Authorization");
   const cookieHeader = headers.get("Cookie");
 
-  console.log(`[DEBUG_AUTH] Incoming Request: ${c.req.method} ${c.req.path}`);
-  console.log(`[DEBUG_AUTH] Headers - Auth: ${authHeader ? 'YES' : 'NO'}, Cookie: ${cookieHeader ? 'YES' : 'NO'}`);
+  const truncatedAuth = authHeader ? `${authHeader.substring(0, 15)}...` : 'NONE'
+
+  console.log(`[DEBUG_AUTH] Request: ${c.req.method} ${c.req.path} | Auth: ${truncatedAuth} | Cookie: ${cookieHeader ? 'YES' : 'NO'}`);
 
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
 
   if (!session) {
-    console.warn(`[DEBUG_AUTH] Session is NULL for ${c.req.path}`);
+    if (c.req.path !== '/' && !c.req.path.startsWith('/api/auth')) {
+      console.warn(`[DEBUG_AUTH] No session found for ${c.req.path}`);
+    }
     c.set("user", null)
     c.set("session", null)
     return next()
   }
 
-  console.log(`[DEBUG_AUTH] Session Valid. User ID: ${session.user.id}`);
+  console.log(`[DEBUG_AUTH] Session Active: ${session.user.id}`);
 
   c.set("user", session.user)
   c.set("session", session.session)
@@ -116,6 +119,22 @@ app.route("/api/image", uploadRouter)
 app.route("/api/sync", syncRouter)
 
 app.route("/api/livestore", livestoreSyncRouter)
+
+// Explicit WebSocket upgrade route for Bun
+app.get("/api/livestore/sync", async (c) => {
+  // @ts-ignore - Bun-specific global
+  const server = globalThis.server || (c.env as any).server;
+
+  if (c.req.header("upgrade") === "websocket") {
+    console.log("[LiveStore] Upgrading WebSocket connection...");
+    // @ts-ignore
+    const upgraded = Bun.upgrade(c.req.raw);
+    if (upgraded) {
+      return undefined; // Bun handles it from here
+    }
+  }
+  return c.text("Expected WebSocket upgrade", 400);
+})
 
 
 app.get("/", async (c) => {

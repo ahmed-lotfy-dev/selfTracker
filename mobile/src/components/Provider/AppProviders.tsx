@@ -27,15 +27,19 @@ export { queryClient }
 const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
 
 export function AppProviders({ children }: AppProvidersProps) {
-  const systemScheme = useColorScheme()
   const hasHydrated = useHasHydrated()
   const [session, setSession] = useState<any>(null)
   const [isSessionLoading, setIsSessionLoading] = useState(true)
 
   useEffect(() => {
     if (hasHydrated) {
+      console.log("[Auth] Zustand hydrated. Validating session...")
       authClient.getSession()
-        .then(({ data }: { data: any }) => setSession(data))
+        .then(({ data }) => {
+          console.log("[Auth] Session check complete:", data ? `User ${data.user.id}` : "NO SESSION")
+          setSession(data)
+        })
+        .catch(err => console.error("[Auth] getSession Exception:", err))
         .finally(() => setIsSessionLoading(false))
     }
   }, [hasHydrated])
@@ -45,11 +49,12 @@ export function AppProviders({ children }: AppProvidersProps) {
     Uniwind.setTheme(desiredTheme)
   }, [session?.user?.theme])
 
-  const storeId = session?.user?.id ?? 'anonymous'
+  const storeId = session?.user?.id
   const authToken = session?.session?.token
 
   const adapter = useMemo(() => {
-    console.log(`[LiveStore] initializing adapter for store: ${storeId}`)
+    const finalStoreId = storeId ?? 'anonymous'
+    console.log(`[LiveStore] Creating adapter for store: ${finalStoreId}`)
     return makePersistedAdapter({
       sync: { backend: syncUrl ? makeWsSync({ url: syncUrl }) : undefined },
     })
@@ -57,63 +62,54 @@ export function AppProviders({ children }: AppProvidersProps) {
 
   const isLoading = !hasHydrated || isSessionLoading
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
+        <ActivityIndicator size="large" color="#10B981" />
+        <Text style={{ marginTop: 12, color: '#6B7280' }}>Preparing Experience...</Text>
+      </SafeAreaView>
+    )
+  }
+
+  const finalStoreId = storeId ?? 'anonymous'
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          {isLoading ? (
-            <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
-              <ActivityIndicator size="large" color="#10B981" />
-              <Text style={{ marginTop: 12, color: '#6B7280' }}>Loading user session...</Text>
-            </SafeAreaView>
-          ) : (
-            <LiveStoreProvider
-              key={storeId}
-              schema={schema}
-              adapter={adapter}
-              storeId={storeId}
-              syncPayload={{ authToken: authToken ?? '' }}
-
-              renderLoading={(stage) => (
-                <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
-                  <ActivityIndicator size="large" color="#10B981" />
-                  <Text style={{ marginTop: 12, color: '#6B7280' }}>Initializing LiveStore ({stage.stage})...</Text>
+          <LiveStoreProvider
+            key={finalStoreId}
+            schema={schema}
+            adapter={adapter}
+            storeId={finalStoreId}
+            syncPayload={{ authToken: authToken ?? '' }}
+            renderLoading={(stage) => (
+              <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
+                <ActivityIndicator size="large" color="#10B981" />
+                <Text style={{ marginTop: 12, color: '#6B7280' }}>LiveStore: {stage.stage}...</Text>
+              </SafeAreaView>
+            )}
+            renderError={(error: any) => {
+              console.error("[LiveStore] Error:", error)
+              return (
+                <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+                  <Feather name="alert-triangle" size={48} color="#EF4444" />
+                  <Text style={{ marginTop: 16, fontSize: 18, fontWeight: 'bold' }}>Sync Error</Text>
+                  <Text style={{ marginTop: 8, color: '#6B7280', textAlign: 'center' }}>{error.message || error.toString()}</Text>
                 </SafeAreaView>
-              )}
-              renderError={(error: any) => {
-                console.error("[LiveStore] Critical Error:", error)
-                return (
-                  <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-                    <Feather name="alert-triangle" size={48} color="#EF4444" />
-                    <Text style={{ marginTop: 16, fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>Sync Error</Text>
-                    <Text style={{ marginTop: 8, color: '#6B7280', textAlign: 'center' }}>
-                      {error.message || error.toString()}
-                    </Text>
-                    <View style={{ marginTop: 24 }}>
-                      <Button title="Retry Initial Sync" onPress={() => { /* Reloading would be better */ }} />
-                    </View>
-                  </SafeAreaView>
-                )
-              }}
-              renderShutdown={() => (
-                <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text>LiveStore Shutdown</Text>
-                </SafeAreaView>
-              )}
-              batchUpdates={batchUpdates}
-            >
-              <KeyboardProvider>
-                <SafeAreaView
-                  edges={["top", "left", "right"]}
-                  style={{ flex: 1 }}
-                >
-                  {children}
-                </SafeAreaView>
-              </KeyboardProvider>
-            </LiveStoreProvider>
-          )}
+              )
+            }}
+            batchUpdates={batchUpdates}
+          >
+            <KeyboardProvider>
+              <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
+                {children}
+              </SafeAreaView>
+            </KeyboardProvider>
+          </LiveStoreProvider>
         </ToastProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   )
 }
+
