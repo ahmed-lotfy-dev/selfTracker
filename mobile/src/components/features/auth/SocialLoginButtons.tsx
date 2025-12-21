@@ -22,21 +22,14 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
 
   const handleSocialLogin = async (provider: OAuthProvider) => {
     try {
-      console.log(`Initiating ${provider} OAuth flow...`);
+      const callbackURL = Linking.createURL('/(drawer)/(tabs)/home');
 
-      // Explicitly generate the callback URL based on the current environment
-      // This handles Expo Go (exp://), Dev Client (scheme://), and Production
-      // It typically generates something like exp://192.168.1.5:8081/--/home or selftracker://home
-      const callbackURL = Linking.createURL('/home');
-
-      console.log(`[DEBUG] Generated Callback URL: ${callbackURL}`);
 
       await authClient.signIn.social({
         provider,
-        callbackURL, // Pass the absolute URL
+        callbackURL,
       });
 
-      console.log(`${provider} OAuth initiated`);
 
     } catch (error) {
       console.error(`Error during ${provider} OAuth:`, error);

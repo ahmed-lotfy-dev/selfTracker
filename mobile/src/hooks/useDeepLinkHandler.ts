@@ -35,22 +35,18 @@ export function useDeepLinkHandler() {
 
       // Prevent duplicate processing
       if (isProcessingRef.current) {
-        console.log('Already processing auth event, skipping...');
         return;
       }
 
       try {
         // Parse the deep link URL
         const parsedUrl = Linking.parse(url);
-        console.log('[DEBUG] Deep Link Parsing:', JSON.stringify(parsedUrl, null, 2));
 
         // Check if this is an auth callback
-        const isAuthPath = parsedUrl.hostname === 'auth' || parsedUrl.path === 'auth';
-        const isSocialSuccessPath = parsedUrl.path?.includes('social-success');
+        // Check if this is an auth callback (home)
         const isHomePath = parsedUrl.hostname === 'home' || parsedUrl.path === 'home';
 
-        if (!isAuthPath && !isSocialSuccessPath && !isHomePath) {
-          console.log('Not an auth deep link, ignoring:', url);
+        if (!isHomePath) {
           return;
         }
 
@@ -75,7 +71,6 @@ export function useDeepLinkHandler() {
         }
 
         isProcessingRef.current = true;
-        console.log('Token extracted from deep link, establishing session...');
 
         try {
           const session = await authClient.getSession({
@@ -87,18 +82,12 @@ export function useDeepLinkHandler() {
           });
 
           if (session.data?.user) {
-            console.log('[Auth] Session established for user:', session.data.user.id);
+            // Optimistically set session data to unblock UI
             queryClient.setQueryData(['session'], session.data);
 
-            // Initialize database for this user
-            await dbManager.initializeUserDatabase(session.data.user.id);
-            console.log('[Auth] Database initialized for user:', session.data.user.id);
+            // Note: We do NOT wait for DB init here anymore to reduce lag.
+            // valid user session will trigger useAuth's effect to init DB in background.
 
-            // Update auth store
-            setUser(session.data.user);
-
-            // Start initial sync in background
-            initialSync().catch(err => console.warn('[Auth] Sync error:', err.message));
           } else {
             console.warn('[Auth] Session data missing, proceeding anyway');
           }
@@ -114,8 +103,7 @@ export function useDeepLinkHandler() {
         await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
 
         showToast('Authentication successful!', 'success');
-        console.log('Redirecting to home page...');
-        router.replace('/(home)/home');
+        router.replace('/(drawer)/(tabs)/home');
 
         setTimeout(() => {
           isProcessingRef.current = false;
@@ -134,7 +122,6 @@ export function useDeepLinkHandler() {
     // Check if app was opened with a deep link
     Linking.getInitialURL().then((url) => {
       if (url) {
-        console.log('App opened with initial URL:', url);
         handleDeepLink({ url });
       }
     });

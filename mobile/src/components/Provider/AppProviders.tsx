@@ -1,4 +1,6 @@
 // TODO revert back to safe area view when they fix it expo SDK 53
+import { AuthInitializer } from "./AuthInitializer"
+
 import { ReactNode, useEffect } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
 
@@ -69,6 +71,7 @@ export function AppProviders({ children }: AppProvidersProps) {
                 }}
               >
                 {children}
+                <AuthInitializer />
               </SafeAreaView>
             </KeyboardProvider>
           </ElectricWrapper>
