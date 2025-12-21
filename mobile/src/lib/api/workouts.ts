@@ -4,10 +4,8 @@ import { API_BASE_URL } from "./config"
 import axiosInstance from "./axiosInstane"
 
 export const fetchAllWorkouts = async () => {
-  console.log("fetchAllWorkouts called")
   try {
     const response = await axiosInstance.get(`${API_BASE_URL}/api/workouts`)
-    console.log("API response:", response.data)
     const workoutList = response.data.workouts || []
 
     for (const w of workoutList) {
@@ -29,9 +27,7 @@ export const fetchAllWorkouts = async () => {
 
     return response.data
   } catch (error) {
-    console.log("fetchAllWorkouts error, falling back to local:", error)
     const localWorkouts = await db.select().from(workouts)
-    console.log("Local workouts:", localWorkouts)
     return { workouts: localWorkouts }
   }
 }

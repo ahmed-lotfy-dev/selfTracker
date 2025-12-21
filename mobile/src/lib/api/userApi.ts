@@ -1,9 +1,11 @@
 import { WeightLogType } from "@/src/types/weightLogType"
+import { User } from "@/src/types/userType"
 import { API_BASE_URL } from "./config"
 import axios from "axios"
 import axiosInstance from "./axiosInstane"
 import { db } from "@/src/db/client"
-import { weightLogs, workoutLogs, tasks } from "@/src/db/schema"
+import { weightLogs, workoutLogs, tasks, userGoals } from "@/src/db/schema"
+import { authClient } from "@/src/lib/auth-client"
 import { desc, eq, isNull, sql } from "drizzle-orm"
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns"
 
@@ -58,6 +60,27 @@ export const fetchUserHomeInfo = async () => {
     }
   }
 
+  const session = await authClient.getSession()
+  const user = session?.data?.user as unknown as User | undefined
+
+  // Calculate BMI
+  let userBMI = null
+  if (latestWeight && user?.height) {
+    // Assuming height is in cm and weight in kg
+    const heightInMeters = user.height / 100
+    userBMI = parseFloat((latestWeight / (heightInMeters * heightInMeters)).toFixed(1))
+  } else {
+  }
+
+  // Fetch Goal
+  const goals = await db.select().from(userGoals).where(isNull(userGoals.deletedAt))
+
+  const weightGoalRecord = goals.find(g => ['loseWeight', 'gainWeight'].includes(g.goalType))
+  const goal = weightGoalRecord ? {
+    goalWeight: parseFloat(weightGoalRecord.targetValue),
+    targetDate: weightGoalRecord.deadline
+  } : null
+
   const streak = calculateStreak(allWorkouts.map(w => new Date(w.createdAt)))
 
   const activeDays = new Set(
@@ -72,6 +95,8 @@ export const fetchUserHomeInfo = async () => {
     allTasks: allTasksCount,
     latestWeight,
     weightChange,
+    userBMI,
+    goal,
     stats: {
       totalWorkouts: allWorkouts.length,
       activeDays,
@@ -111,7 +136,7 @@ function calculateStreak(dates: Date[]): number {
   return streak
 }
 
-import { User } from "@/src/types/userType"
+
 
 export const updateUser = async ({
   id,

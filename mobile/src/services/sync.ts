@@ -236,54 +236,79 @@ export const initialSync = async (): Promise<{ success: boolean; synced: number 
 
   const alreadySynced = await SecureStore.getItemAsync(getUserSyncKey(INITIAL_SYNC_DONE_KEY));
   if (alreadySynced === "true") {
-    console.log("Initial sync already done, skipping");
     return { success: true, synced: 0 };
   }
 
-  console.log("Starting initial data sync...");
   let synced = 0;
 
   try {
-    const response = await axiosInstance.get("/api/sync/all");
+    interface SyncData {
+      weights: any[];
+      workoutLogs: any[];
+      tasks: any[];
+      projects: any[];
+      columns: any[];
+      trainingSplits: any[];
+      exercises: any[];
+      workoutExercises: any[];
+      userGoals: any[];
+      expenses: any[];
+      workouts: any[];
+      timerSessions: any[];
+      serverTime: string;
+    }
+
+    console.time("SYNC_FETCH");
+    const response = await axiosInstance.get<SyncData>("/api/sync/all");
+    console.timeEnd("SYNC_FETCH");
+
     const {
       weights, workoutLogs: wLogs, tasks: tList, projects: pList,
       columns: cList, trainingSplits: sList, exercises: eList,
       workoutExercises: weList, userGoals: gList, expenses: exList,
-      workouts: wkList, timerSessions: tsList,
-      serverTime
+      workouts: wkList, timerSessions: tsList, serverTime
     } = response.data;
 
-    const syncTable = async (data: any[], table: any) => {
-      if (!data) return;
-      for (const item of data) {
-        const sanitized = sanitizeRecord(item);
-        await db.insert(table).values({
-          ...sanitized,
-          syncStatus: "synced",
-        }).onConflictDoUpdate({
-          target: table.id,
-          set: { ...sanitized, syncStatus: "synced" }
-        });
-        synced++;
-      }
-    };
+    const startInsert = Date.now();
 
-    await syncTable(weights, weightLogs);
-    await syncTable(wLogs, workoutLogs);
-    await syncTable(tList, tasks);
-    await syncTable(pList, projects);
-    await syncTable(cList, projectColumns);
-    await syncTable(sList, trainingSplits);
-    await syncTable(eList, exercises);
-    await syncTable(weList, workoutExercises);
-    await syncTable(gList, userGoals);
-    await syncTable(exList, expenses);
-    await syncTable(wkList, workouts);
-    await syncTable(tsList, timerSessions);
+    // Use transaction for significant performance boost
+    await db.transaction(async (tx) => {
+      const syncTable = async (data: any[], table: any) => {
+        if (!data || data.length === 0) return;
+
+        // Batch insert preparation if possible, or just loop within transaction
+        // Loop within transaction is much faster than loop outside
+        for (const item of data) {
+          const sanitized = sanitizeRecord(item);
+          await tx.insert(table).values({
+            ...sanitized,
+            syncStatus: "synced",
+          }).onConflictDoUpdate({
+            target: table.id,
+            set: { ...sanitized, syncStatus: "synced" }
+          });
+          synced++;
+        }
+      };
+
+      await syncTable(weights, weightLogs);
+      await syncTable(wLogs, workoutLogs);
+      await syncTable(tList, tasks);
+      await syncTable(pList, projects);
+      await syncTable(cList, projectColumns);
+      await syncTable(sList, trainingSplits);
+      await syncTable(eList, exercises);
+      await syncTable(weList, workoutExercises);
+      await syncTable(gList, userGoals);
+      await syncTable(exList, expenses);
+      await syncTable(wkList, workouts);
+      await syncTable(tsList, timerSessions);
+    });
+
+    const endInsert = Date.now();
 
     await SecureStore.setItemAsync(getUserSyncKey(LAST_SYNCED_KEY), serverTime || new Date().toISOString());
     await SecureStore.setItemAsync(getUserSyncKey(INITIAL_SYNC_DONE_KEY), "true");
-    console.log(`Initial sync complete. Synced ${synced} records.`);
 
     queryClient.invalidateQueries({ queryKey: ['weightLogs'] });
     queryClient.invalidateQueries({ queryKey: ['workoutLogs'] });
@@ -306,7 +331,6 @@ export const resetAndSync = async () => {
     return { success: false, synced: 0 };
   }
 
-  console.log("CRITICAL: Ensuring pending data is pushed before wipe...");
 
   // Try to push changes first to avoid data loss
   const pushRes = await pushChanges();
@@ -314,7 +338,6 @@ export const resetAndSync = async () => {
     console.warn("Final push failed before reset. Unsynced changes will be lost.");
   }
 
-  console.log("CRITICAL: Wiping local data for full resync...");
 
   const tables = [
     weightLogs, workoutLogs, tasks, projects, projectColumns,
@@ -330,7 +353,6 @@ export const resetAndSync = async () => {
     // Reset sync flags
     await clearUserSyncState();
 
-    console.log("Local wipe complete. Starting initial sync...");
     return await initialSync();
   } catch (error) {
     console.error("Reset and sync failed:", error);

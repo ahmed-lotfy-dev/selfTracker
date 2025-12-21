@@ -55,7 +55,6 @@ export const createTask = async (task: TaskType) => {
 }
 
 export const updateTask = async (task: Partial<TaskType> & { id: string }) => {
-  console.log("updateTask called with:", task)
   if (!task.id) throw new Error("Task ID required")
 
   try {
@@ -84,13 +83,11 @@ export const updateTask = async (task: Partial<TaskType> & { id: string }) => {
       updatedAt: new Date(), // Re-instantiate to be sure
     }
 
-    console.log("[DEBUG] Executing db.update with sanitized data")
 
     await db.update(tasks)
       .set(finalUpdateData)
       .where(eq(tasks.id, task.id))
 
-    console.log("[DEBUG] Task updated in local DB, adding to sync queue...")
 
     await addToSyncQueue("UPDATE", "tasks", task.id, {
       ...task,
@@ -100,7 +97,6 @@ export const updateTask = async (task: Partial<TaskType> & { id: string }) => {
       createdAt: typeof task.createdAt === 'object' ? (task.createdAt as any).toISOString() : task.createdAt
     })
 
-    console.log("[DEBUG] Added to sync queue successfully")
     silentSync()
 
     return { ...task, ...finalUpdateData }

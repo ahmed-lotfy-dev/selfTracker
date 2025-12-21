@@ -34,17 +34,16 @@ class DatabaseManager {
     }
 
     const dbPath = this.getUserDbPath(userId);
-    console.log(`[DB Manager] Opening database: ${dbPath}`);
+    console.time("DB_INIT");
 
     try {
       const expoDb = openDatabaseSync(dbPath);
 
       runMigrations(expoDb);
-      console.log(`[DB Manager] Migrations completed for user: ${userId}`);
 
       const db = drizzle(expoDb);
 
-      console.log(`[DB Manager] Database ready for user: ${userId}`);
+      console.timeEnd("DB_INIT");
 
       this.currentExpoDb = expoDb;
       this.currentDb = db;
@@ -80,7 +79,6 @@ class DatabaseManager {
    */
   closeCurrentDatabase(): void {
     if (this.currentExpoDb) {
-      console.log(`[DB Manager] Closing database for user: ${this.currentUserId}`);
       this.currentExpoDb.closeSync();
       this.currentExpoDb = null;
       this.currentDb = null;

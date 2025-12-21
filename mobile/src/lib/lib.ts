@@ -5,18 +5,15 @@ import { focusManager } from "@tanstack/react-query"
 export const checkForUpdates = async () => {
   try {
     if (__DEV__) {
-      console.log("Skipping update check in development mode.")
       return
     }
 
     const update = await Updates.checkForUpdateAsync()
 
     if (update.isAvailable) {
-      console.log("New update available! Downloading...")
       await Updates.fetchUpdateAsync()
       await Updates.reloadAsync()
     } else {
-      console.log("App is up to date.")
     }
   } catch (error) {
     console.error("Error checking for updates:", error)

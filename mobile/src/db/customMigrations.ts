@@ -19,7 +19,6 @@ export function runMigrations(db: SQLiteDatabase): void {
         )
       `);
     } catch (e: any) {
-      console.log("[Migrations] Migration table may already exist:", e.message);
     }
 
     let appliedMigrations: { hash: string }[] = [];
@@ -34,7 +33,6 @@ export function runMigrations(db: SQLiteDatabase): void {
 
     for (const entry of journal.entries) {
       if (!appliedHashes.has(entry.tag)) {
-        console.log(`[Migrations] Applying migration: ${entry.tag}`);
 
         const migrationKey = `m${entry.idx.toString().padStart(4, "0")}`;
         const sql = migrations[migrationKey as keyof typeof migrations];
@@ -42,10 +40,8 @@ export function runMigrations(db: SQLiteDatabase): void {
         if (sql) {
           try {
             db.execSync(sql);
-            console.log(`[Migrations] ✓ Applied ${entry.tag}`);
           } catch (migrationError: any) {
             if (migrationError?.message?.includes("already exists")) {
-              console.log(`[Migrations] ⚠ Tables already exist, marking ${entry.tag} as applied`);
             } else {
               console.error(`[Migrations] Failed to apply ${entry.tag}:`, migrationError.message);
               continue;
@@ -58,13 +54,11 @@ export function runMigrations(db: SQLiteDatabase): void {
               [entry.tag, Date.now()]
             );
           } catch {
-            console.log(`[Migrations] Could not mark ${entry.tag} as applied`);
           }
         }
       }
     }
 
-    console.log("[Migrations] All migrations up to date");
   } catch (error: any) {
     console.error("[Migrations] Error running migrations:", error.message);
   }

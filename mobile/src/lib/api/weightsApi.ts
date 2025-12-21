@@ -57,9 +57,7 @@ export async function fetchWeightLogsChart(months: number) {
   const pastDate = new Date(now)
   pastDate.setMonth(now.getMonth() - months)
 
-  console.log("[DEBUG] Fetching weight logs since:", pastDate.getTime())
 
-  console.log("[DEBUG] Fetching weight logs since:", pastDate.getTime())
 
   const allLogs = await db
     .select()
@@ -154,7 +152,6 @@ export const fetchSingleWeightLog = async (weightId: string) => {
 }
 
 export const createWeight = async (weight: WeightLogType) => {
-  console.log("createWeight called with:", weight)
   const id = createId()
   const now = new Date()
 
@@ -172,7 +169,6 @@ export const createWeight = async (weight: WeightLogType) => {
 
   try {
     await db.insert(weightLogs).values(newLog)
-    console.log("Weight inserted to local DB:", newLog.id)
     await addToSyncQueue("INSERT", "weight_logs", id, newLog)
     silentSync()
     return newLog
