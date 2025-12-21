@@ -42,7 +42,6 @@ export function useDeepLinkHandler() {
         // Parse the deep link URL
         const parsedUrl = Linking.parse(url);
 
-        // Check if this is an auth callback
         // Check if this is an auth callback (home)
         const isHomePath = parsedUrl.hostname === 'home' || parsedUrl.path === 'home';
 
@@ -71,8 +70,10 @@ export function useDeepLinkHandler() {
         }
 
         isProcessingRef.current = true;
+        showToast('Verifying session...', 'success');
 
         try {
+          // 1. Fetch the session using the token provided in the URL
           const session = await authClient.getSession({
             fetchOptions: {
               headers: {
@@ -82,14 +83,36 @@ export function useDeepLinkHandler() {
           });
 
           if (session.data?.user) {
-            // Optimistically set session data to unblock UI
+            console.log('[Auth] Session established manually via deep link');
+
+            // 2. Initialize DB immediately for this user
+            try {
+              await dbManager.initializeUserDatabase(session.data.user.id);
+            } catch (dbErr) {
+              console.error('[Auth] DB Init failed in deep link handler:', dbErr);
+            }
+
+            // 3. Set user in store (Critical for UI to unblock "Preparing...")
+            setUser(session.data.user);
+
+            // 4. Update generic query cache
             queryClient.setQueryData(['session'], session.data);
 
-            // Note: We do NOT wait for DB init here anymore to reduce lag.
-            // valid user session will trigger useAuth's effect to init DB in background.
+            // 5. Invalidate to ensure freshness
+            await queryClient.invalidateQueries({ queryKey: ['session'] });
+            await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
+
+            showToast('Authentication successful!', 'success');
+            router.replace('/(drawer)/(tabs)/home');
+
+            // Trigger sync in background
+            initialSync().catch(err => console.warn('Background sync failed:', err));
 
           } else {
-            console.warn('[Auth] Session data missing, proceeding anyway');
+            console.warn('[Auth] Session data missing despite valid token request');
+            showToast('Session verification failed', 'error');
+            isProcessingRef.current = false;
+            return;
           }
 
         } catch (error: any) {
@@ -98,12 +121,6 @@ export function useDeepLinkHandler() {
           isProcessingRef.current = false;
           return;
         }
-
-        await queryClient.invalidateQueries({ queryKey: ['session'] });
-        await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
-
-        showToast('Authentication successful!', 'success');
-        router.replace('/(drawer)/(tabs)/home');
 
         setTimeout(() => {
           isProcessingRef.current = false;
@@ -130,5 +147,5 @@ export function useDeepLinkHandler() {
     return () => {
       subscription.remove();
     };
-  }, [router, showToast]);
+  }, [router, showToast, setUser]);
 }

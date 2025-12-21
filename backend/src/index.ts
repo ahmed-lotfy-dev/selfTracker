@@ -56,50 +56,10 @@ app.get("/api/social-success", async (c) => {
 
   console.log('OAuth callback:', { platform, hasToken: !!token });
 
-  // Desktop: return HTML that redirects to deep link and closes tab
+  // Desktop/Mobile: Direct redirect (302) to the deep link
+  // This is faster and requires no user interaction compared to the HTML/JS approach
   if (platform === 'desktop' || platform === 'mobile') {
-    return c.html(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Authentication Successful</title>
-        <style>
-          body {
-            font-family: system-ui, -apple-system, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background: #f8f9fa;
-          }
-          .message {
-            text-align: center;
-            padding: 2rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-          }
-        </style>
-      </head>
-      <body>
-        <div class="message">
-          <h2>✅ Authentication Successful</h2>
-          <p>Returning to app...</p>
-        </div>
-        <script>
-          window.location.href = 'selftracker://auth?token=${token || ''}';
-          setTimeout(() => {
-            window.close();
-            setTimeout(() => {
-              document.querySelector('.message').innerHTML = 
-                '<h2>✅ Success!</h2><p>You can close this tab now.</p>';
-            }, 500);
-          }, 1000);
-        </script>
-      </body>
-      </html>
-    `);
+    return c.redirect(`selftracker://auth?token=${token || ''}`, 302);
   }
 
   // Web: redirect to dashboard
