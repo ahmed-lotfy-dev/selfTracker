@@ -46,10 +46,15 @@ export function useDeepLinkHandler() {
         // Parse the deep link URL
         const parsedUrl = Linking.parse(url);
 
-        // Check if this is an auth callback (home)
-        const isHomePath = parsedUrl.hostname === 'home' || parsedUrl.path === 'home';
+        // Check if this is an auth callback (home or auth)
+        // Backend now redirects to selftracker://auth
+        const isAuthPath = parsedUrl.hostname === 'auth' || parsedUrl.path === 'auth';
 
-        if (!isHomePath) {
+        if (!isAuthPath) {
+          // DEBUG: Toast if path doesn't match, to see what we received
+          if (parsedUrl.hostname || parsedUrl.path) {
+            showToast(`Ignored path: ${parsedUrl.hostname || parsedUrl.path}`, 'info');
+          }
           return;
         }
 
@@ -65,7 +70,7 @@ export function useDeepLinkHandler() {
         }
 
         if (!token) {
-          if (isHomePath && !parsedUrl.queryParams?.token) {
+          if (isAuthPath && !parsedUrl.queryParams?.token) {
             return;
           }
           console.error('Deep link received but no token parameter found');
