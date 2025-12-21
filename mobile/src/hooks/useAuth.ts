@@ -18,13 +18,13 @@ export const useAuth = () => {
   const [manualToken, setManualToken] = useState<string | null>(null)
   const [isManualCheckDone, setIsManualCheckDone] = useState(false)
 
-  // Fetch Manual Token on Mount
+  // Fetch Manual Token on Mount AND when User changes (e.g. after Social Login deep link)
   useEffect(() => {
     getAccessToken().then(token => {
       setManualToken(token)
       setIsManualCheckDone(true)
     })
-  }, [])
+  }, [user]) // Re-run when user changes
 
   // Debug Logging
   useEffect(() => {
@@ -67,8 +67,7 @@ export const useAuth = () => {
     storeId,           // Used for LiveStore identity
 
     // Auth Status
-    // Relaxed check to prevent sign-in loop while debugging token
-    isAuthenticated: !!finalUser,
+    isAuthenticated: !!finalUser && !!finalToken, // Strict check restored
     isLoading,
     isResolved: !isLoading && !!finalUser, // Helper
 

@@ -59,6 +59,7 @@ export function useDeepLinkHandler() {
         try {
           await SecureStore.setItemAsync("selftracker.better-auth.session_token", token);
           await SecureStore.setItemAsync("selftracker.session_token", token);
+          await SecureStore.setItemAsync("accessToken", token); // Match sign-in.tsx behavior
         } catch (storageErr) {
           console.warn('Failed to save session token manually', storageErr);
         }
