@@ -26,6 +26,14 @@ export const useAuth = () => {
     })
   }, [])
 
+  // Debug Logging
+  useEffect(() => {
+    if (sessionData || manualToken) {
+      console.log("[useAuth] Session Data:", JSON.stringify(sessionData, null, 2))
+      console.log("[useAuth] Manual Token:", manualToken)
+    }
+  }, [sessionData, manualToken])
+
   // 4. Sync Theme
   useEffect(() => {
     const theme = (sessionData?.user as any)?.theme ?? (user as any)?.theme ?? 'system'
@@ -59,7 +67,8 @@ export const useAuth = () => {
     storeId,           // Used for LiveStore identity
 
     // Auth Status
-    isAuthenticated: !!finalUser && !!finalToken,
+    // Relaxed check to prevent sign-in loop while debugging token
+    isAuthenticated: !!finalUser,
     isLoading,
     isResolved: !isLoading && !!finalUser, // Helper
 
