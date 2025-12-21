@@ -7,7 +7,7 @@ import { Platform } from "react-native"
 import { queryClient } from "@/src/lib/react-query";
 import { dbManager } from '@/src/db/client';
 import { initialSync } from '@/src/services/sync';
-import { useAuthActions } from '../store/useAuthStore';
+import { useAuthActions, useHasHydrated } from '../store/useAuthStore';
 import * as SecureStore from 'expo-secure-store';
 
 /**
@@ -23,11 +23,12 @@ export function useDeepLinkHandler() {
   const router = useRouter();
   const { showToast } = useToast();
   const { setUser } = useAuthActions();
+  const hasHydrated = useHasHydrated();
   const isProcessingRef = useRef(false);
 
   useEffect(() => {
-    // Skip in web environment
-    if (Platform.OS === 'web') {
+    // Skip in web environment or if store not hydrated yet
+    if (Platform.OS === 'web' || !hasHydrated) {
       return;
     }
 
@@ -159,5 +160,5 @@ export function useDeepLinkHandler() {
     return () => {
       subscription.remove();
     };
-  }, [router, showToast, setUser]);
+  }, [router, showToast, setUser, hasHydrated]);
 }
