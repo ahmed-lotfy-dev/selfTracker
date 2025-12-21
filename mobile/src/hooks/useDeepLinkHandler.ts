@@ -5,8 +5,6 @@ import { useToast } from './useToast';
 import { authClient } from "../lib/auth-client"
 import { Platform } from "react-native"
 import { queryClient } from "@/src/lib/react-query";
-import { dbManager } from '@/src/db/client';
-import { initialSync } from '@/src/services/sync';
 import { useAuthActions, useHasHydrated } from '../store/useAuthStore';
 import * as SecureStore from 'expo-secure-store';
 
@@ -32,9 +30,6 @@ export function useDeepLinkHandler() {
 
       try {
         const parsedUrl = Linking.parse(url);
-
-        // DEBUG: Show what URL we received
-        showToast(`Path: ${parsedUrl.hostname || parsedUrl.path || 'none'}`, 'info');
 
         const isAuthPath = parsedUrl.hostname === 'home' || parsedUrl.path === 'home' ||
           parsedUrl.hostname === 'auth' || parsedUrl.path === 'auth';
@@ -79,25 +74,13 @@ export function useDeepLinkHandler() {
         if (session.data?.user) {
           showToast(`Welcome, ${session.data.user.name.split(' ')[0]}!`, 'success');
 
-          // 1. Set user in store FIRST (Critical for UI to unblock "Preparing...")
           setUser(session.data.user);
 
-          // 2. Update query cache
           queryClient.setQueryData(['session'], session.data);
           await queryClient.invalidateQueries({ queryKey: ['session'] });
           await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
 
-          // 3. Navigate to home immediately
           router.replace('/(drawer)/(tabs)/home');
-
-          // 4. Initialize DB in background (don't block navigation)
-          dbManager.initializeUserDatabase(session.data.user.id)
-            .then(() => {
-              initialSync().catch(err => console.warn('Background sync failed:', err));
-            })
-            .catch((dbErr: any) => {
-              console.error('[Auth] DB Init failed:', dbErr);
-            });
 
         } else {
           showToast('Login verification failed', 'error');
