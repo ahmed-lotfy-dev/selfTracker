@@ -51,10 +51,7 @@ export function useDeepLinkHandler() {
         const isAuthPath = parsedUrl.hostname === 'auth' || parsedUrl.path === 'auth';
 
         if (!isAuthPath) {
-          // DEBUG: Toast if path doesn't match, to see what we received
-          if (parsedUrl.hostname || parsedUrl.path) {
-            showToast(`Ignored path: ${parsedUrl.hostname || parsedUrl.path}`, 'info');
-          }
+          // Silently ignore non-auth deep links (e.g., navigation links)
           return;
         }
 

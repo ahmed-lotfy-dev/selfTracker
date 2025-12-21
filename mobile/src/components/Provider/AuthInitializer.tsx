@@ -3,14 +3,12 @@ import { authClient } from "@/src/lib/auth-client";
 import { useAuthActions, useUser } from "@/src/store/useAuthStore";
 import { dbManager } from "@/src/db/client";
 import { initialSync } from "@/src/services/sync";
-import { useToast } from "@/src/hooks/useToast";
 
 export function AuthInitializer() {
   const { data: session } = authClient.useSession();
   const user = useUser(); // Get persisted user
   const { setUser } = useAuthActions();
   const isInitializedRef = useRef<string | null>(null);
-  const { showToast } = useToast();
 
   useEffect(() => {
     const initializeUserDatabase = async () => {
@@ -43,7 +41,6 @@ export function AuthInitializer() {
           });
         } catch (error: any) {
           console.error("[Auth] Failed to initialize user database:", error);
-          showToast(`DB Init Failed: ${error.message}`, 'error');
           // Reset ref if initialization completely fails so we can try again
           isInitializedRef.current = null;
         }
