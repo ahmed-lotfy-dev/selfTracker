@@ -1,17 +1,14 @@
-import { ReactNode, useEffect, useState, useMemo } from "react"
+import { ReactNode, useMemo } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
 import React from "react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { KeyboardProvider } from "react-native-keyboard-controller"
-import { useColorScheme, View, Text, Button, ActivityIndicator, unstable_batchedUpdates as batchUpdates } from "react-native"
+import { Text, ActivityIndicator, unstable_batchedUpdates as batchUpdates } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { ToastProvider } from "@/src/hooks/useToast"
-import { useUser, useHasHydrated } from "@/src/store/useAuthStore"
+import { useAuth } from "@/src/hooks/useAuth"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
-import { Uniwind } from 'uniwind'
 import { queryClient } from "@/src/lib/react-query"
-import { getAccessToken, secureStorage } from "@/src/lib/storage"
-import { authClient } from "@/src/lib/auth-client"
 
 import { makePersistedAdapter } from '@livestore/adapter-expo'
 import { LiveStoreProvider } from '@livestore/react'
@@ -27,40 +24,8 @@ export { queryClient }
 const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
 
 export function AppProviders({ children }: AppProvidersProps) {
-  const user = useUser()
-  const hasHydrated = useHasHydrated()
-  const [session, setSession] = useState<any>(null)
-  const [manualToken, setManualToken] = useState<string | null>(null)
-  const [isSessionLoading, setIsSessionLoading] = useState(true)
-
-  useEffect(() => {
-    if (hasHydrated) {
-      console.log("[Auth] Zustand hydrated. Validating session...")
-
-      // Fetch both better-auth session and manual token
-      Promise.all([
-        authClient.getSession(),
-        getAccessToken()
-      ]).then(([{ data }, token]) => {
-        console.log("[Auth] Check complete:", data ? `User ${data.user.id}` : "NO SESSION", token ? "(Has manual token)" : "(No manual token)")
-        setSession(data)
-        setManualToken(token)
-      })
-        .catch(err => console.error("[Auth] Initialization Exception:", err))
-        .finally(() => setIsSessionLoading(false))
-    }
-  }, [hasHydrated])
-
-  useEffect(() => {
-    const desiredTheme = session?.user?.theme ?? user?.theme ?? 'system'
-    Uniwind.setTheme(desiredTheme)
-  }, [session?.user?.theme, user?.theme])
-
-  // Logic for identity: Preferred is session user ID, then Zustand user ID, finally anonymous
-  const storeId = session?.user?.id ?? user?.id ?? 'anonymous'
-
-  // Logic for token: Preferred is session token, then manual accessToken
-  const authToken = session?.session?.token ?? manualToken ?? ''
+  // Theme logic is now inside the hook
+  const { storeId, token, isLoading } = useAuth()
 
   const adapter = useMemo(() => {
     const finalStoreId = storeId ?? 'anonymous'
@@ -69,8 +34,6 @@ export function AppProviders({ children }: AppProvidersProps) {
       sync: { backend: syncUrl ? makeWsSync({ url: syncUrl }) : undefined },
     })
   }, [storeId])
-
-  const isLoading = !hasHydrated || isSessionLoading
 
   if (isLoading) {
     return (
@@ -92,7 +55,7 @@ export function AppProviders({ children }: AppProvidersProps) {
             schema={schema}
             adapter={adapter}
             storeId={finalStoreId}
-            syncPayload={{ authToken: authToken ?? '' }}
+            syncPayload={{ authToken: token ?? '' }}
             renderLoading={(stage) => (
               <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
                 <ActivityIndicator size="large" color="#10B981" />
