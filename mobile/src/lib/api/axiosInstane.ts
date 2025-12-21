@@ -11,9 +11,13 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    const cookies = authClient.getCookie()
-    if (cookies) {
-      config.headers.Cookie = cookies
+    // Better Auth Expo plugin stores the session token in SecureStore
+    // getSession() will retrieve the current session including the token
+    const { data: session } = await authClient.getSession()
+    const token = session?.session?.token
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },

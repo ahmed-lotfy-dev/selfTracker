@@ -2,6 +2,8 @@ import { Hono } from "hono"
 import { db } from "../db"
 import { livestoreEvents, tasks, userGoals, weightLogs, workoutLogs } from "../db/schema"
 import { and, eq, gt, sql } from "drizzle-orm"
+import { auth } from "../../lib/auth"
+
 import type { ServerWebSocket } from "bun"
 
 const livestoreRouter = new Hono()
@@ -207,7 +209,22 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     if (rpcRequest._tag !== "Request") return
 
     const { tag, payload, id } = rpcRequest
-    const storeId = payload?.storeId
+
+    // session verification
+    let storeId = payload?.storeId
+    const authToken = payload?.authToken
+
+    if (authToken) {
+      const session = await auth.api.getSession({
+        headers: new Headers({ Authorization: `Bearer ${authToken}` })
+      })
+      if (session) {
+        console.log(`[LiveStore] WS Auth Success: ${session.user.id}`)
+        storeId = session.user.id
+      } else {
+        console.warn(`[LiveStore] WS Auth Fail: Invalid token for store ${storeId}`)
+      }
+    }
 
     if (tag === "SyncWsRpc.Push") {
       await pushEventsToDb(payload.batch, storeId)
