@@ -35,4 +35,4 @@ lerna-debug.log*
 
 # Ignored large files and secrets
 *.apk
-google-services.json
+# google-services.json
