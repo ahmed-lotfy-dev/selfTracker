@@ -29,7 +29,7 @@ export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
     queryKey: ["workoutLogs"],
     queryFn: ({ pageParam }) => fetchAllWorkoutLogs(pageParam, limit),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: null,
+    initialPageParam: null as string | null,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnReconnect: false,
