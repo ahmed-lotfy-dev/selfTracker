@@ -13,6 +13,7 @@ import uploadRouter from "./routes/image.js"
 import projectsRouter from "./routes/projects.js"
 import timerRouter from "./routes/timer.js"
 import syncRouter from "./routes/sync.js"
+import livestoreSyncRouter from "./routes/livestore-sync.js"
 import { auth } from "../lib/auth.js"
 
 const app = new Hono<{
@@ -114,6 +115,9 @@ app.route("/api/image", uploadRouter)
 
 app.route("/api/sync", syncRouter)
 
+app.route("/api/livestore", livestoreSyncRouter)
+
+
 app.get("/", async (c) => {
   return c.json({ message: "Hello world" })
 })
@@ -142,4 +146,18 @@ export default {
   hostname: "0.0.0.0",
   fetch: app.fetch,
   idleTimeout: 250,
+  websocket: {
+    message(ws: any, message: any) {
+      const { websocket: wsHandler } = require("./routes/livestore-sync.js")
+      wsHandler.message(ws, message)
+    },
+    open(ws: any) {
+      const { websocket: wsHandler } = require("./routes/livestore-sync.js")
+      wsHandler.open(ws)
+    },
+    close(ws: any) {
+      const { websocket: wsHandler } = require("./routes/livestore-sync.js")
+      wsHandler.close(ws)
+    },
+  },
 }
