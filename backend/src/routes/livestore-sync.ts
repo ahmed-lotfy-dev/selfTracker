@@ -6,12 +6,13 @@ import type { ServerWebSocket } from "bun"
 
 const livestoreRouter = new Hono()
 
-livestoreRouter.post("/push", async (c) => {
+livestoreRouter.post("/SyncHttpRpc.Push", async (c) => {
   const user = c.get("user" as any)
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
   try {
-    const { batch, storeId } = await c.req.json()
+    const body = await c.req.json()
+    const { batch, storeId } = body
     // Verify storeId belongs to user
     if (storeId !== user.id) return c.json({ message: "Unauthorized" }, 401)
 
@@ -23,21 +24,32 @@ livestoreRouter.post("/push", async (c) => {
   }
 })
 
-livestoreRouter.post("/pull", async (c) => {
+livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
   const user = c.get("user" as any)
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
   try {
-    const { checkpoint, storeId } = await c.req.json()
+    const body = await c.req.json()
+    const storeId = body.storeId
+    const checkpoint = body.cursor?.eventSequenceNumber || 0
+
     // Verify storeId belongs to user
     if (storeId !== user.id) return c.json({ message: "Unauthorized" }, 401)
 
     const events = await fetchEvents(checkpoint, storeId)
-    return c.json({ type: "pull-response", events })
+    return c.json({
+      type: "pull-response",
+      events,
+      backendId: "bun-hono-backend" // LiveStore needs a stable backend registry ID
+    })
   } catch (error) {
     console.error("[LiveStore] HTTP Pull error:", error)
     return c.json({ message: "Failed to fetch events" }, 500)
   }
+})
+
+livestoreRouter.post("/SyncHttpRpc.Ping", async (c) => {
+  return c.json({ type: "pong" })
 })
 
 livestoreRouter.post("/sync-existing", async (c) => {
@@ -189,43 +201,42 @@ export const websocket = {
 
 async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
   try {
-    const message = JSON.parse(data)
+    const rpcRequest = JSON.parse(data)
+    const { method, payload, id } = rpcRequest
 
-    if (message.type === "auth") {
-      const authToken = message.authToken
-      const storeId = message.storeId
+    // LiveStore uses a generic auth mechanism; for now we trust the payload/storeId
+    // In a production app, we'd verify the authToken in the payload here.
+    const storeId = payload?.storeId
 
-      if (!authToken) {
-        ws.send(JSON.stringify({ type: "error", message: "No auth token" }))
-        ws.close()
-        return
-      }
+    if (method === "SyncWsRpc.Push") {
+      await pushEventsToDb(payload.batch, storeId)
+      ws.send(JSON.stringify({
+        id,
+        _tag: "ResponseChunkEncoded",
+        payload: { type: "push-ack", count: payload.batch.length }
+      }))
+    } else if (method === "SyncWsRpc.Pull") {
+      const checkpoint = payload.cursor?.eventSequenceNumber || 0
+      const events = await fetchEvents(checkpoint, storeId)
 
-      // Store metadata on the websocket
-      ; (ws as any).storeId = storeId
-        ; (ws as any).authToken = authToken
+      ws.send(JSON.stringify({
+        id,
+        _tag: "ResponseChunkEncoded",
+        payload: {
+          type: "pull-response",
+          events,
+          backendId: "bun-hono-backend"
+        }
+      }))
 
-      ws.send(JSON.stringify({ type: "auth-success" }))
-      return
-    }
-
-    const storeId = (ws as any).storeId
-
-    if (message.type === "push") {
-      await pushEventsToDb(message.batch, storeId)
-      ws.send(JSON.stringify({ type: "push-ack", count: message.batch.length }))
-    } else if (message.type === "pull") {
-      const events = await fetchEvents(message.checkpoint, storeId)
-      ws.send(JSON.stringify({ type: "pull-response", events }))
+      // Close the stream chunk (LiveStore expects streams)
+      ws.send(JSON.stringify({ id, _tag: "ResponseClose" }))
     }
   } catch (error) {
-    console.error("[LiveStore] Error:", error)
-    ws.send(JSON.stringify({
-      type: "error",
-      message: error instanceof Error ? error.message : "Unknown error"
-    }))
+    console.error("[LiveStore] WS Error:", error)
   }
 }
+
 
 async function pushEventsToDb(batch: LiveStoreEvent[], storeId: string) {
   for (const event of batch) {

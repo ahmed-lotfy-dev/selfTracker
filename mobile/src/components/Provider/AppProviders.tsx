@@ -14,7 +14,7 @@ import { getAccessToken } from "@/src/lib/storage"
 
 import { makePersistedAdapter } from '@livestore/adapter-expo'
 import { LiveStoreProvider } from '@livestore/react'
-import { makeCfSync } from '@livestore/sync-cf'
+import { makeWsSync } from '@livestore/sync-cf/client'
 import { schema } from '@/src/livestore/schema'
 
 interface AppProvidersProps {
@@ -44,7 +44,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   const adapter = useMemo(() => {
     console.log(`[LiveStore] initializing adapter for store: ${storeId}`)
     return makePersistedAdapter({
-      sync: { backend: syncUrl ? makeCfSync({ url: syncUrl }) : undefined },
+      sync: { backend: syncUrl ? makeWsSync({ url: syncUrl }) : undefined },
     })
   }, [storeId]) // Re-init adapter only when store identity changes
 

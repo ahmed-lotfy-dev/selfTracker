@@ -13,7 +13,7 @@ import uploadRouter from "./routes/image.js"
 import projectsRouter from "./routes/projects.js"
 import timerRouter from "./routes/timer.js"
 import syncRouter from "./routes/sync.js"
-import livestoreSyncRouter from "./routes/livestore-sync.js"
+import livestoreSyncRouter, { websocket as livestoreWS } from "./routes/livestore-sync.js"
 import { auth } from "../lib/auth.js"
 
 const app = new Hono<{
@@ -148,16 +148,13 @@ export default {
   idleTimeout: 250,
   websocket: {
     message(ws: any, message: any) {
-      const { websocket: wsHandler } = require("./routes/livestore-sync.js")
-      wsHandler.message(ws, message)
+      livestoreWS.message(ws, message)
     },
     open(ws: any) {
-      const { websocket: wsHandler } = require("./routes/livestore-sync.js")
-      wsHandler.open(ws)
+      livestoreWS.open(ws)
     },
     close(ws: any) {
-      const { websocket: wsHandler } = require("./routes/livestore-sync.js")
-      wsHandler.close(ws)
+      livestoreWS.close(ws)
     },
   },
 }
