@@ -22,6 +22,7 @@ export function useDeepLinkHandler() {
 
     const handleDeepLink = async (event: { url: string }) => {
       const url = event.url;
+      console.log("[DeepLink] RAW URL RECEIVED:", url); // Critical debug log
       showToast('Processing login...', 'info');
 
       console.log("[DeepLink] Received URL:", url)

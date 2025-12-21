@@ -7,6 +7,8 @@ import { sendEmail } from "./email"
 import { bearer } from "better-auth/plugins/bearer"
 import { emailOTP } from "better-auth/plugins"
 
+
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -96,9 +98,15 @@ export const auth = betterAuth({
   ],
   trustedOrigins: [
     "selftracker://",
+    "exp+selftracker://",
+    "selftracker",
+    "exp+selftracker",
     "http://192.168.1.5:8081",
     "exp://192.168.1.5:8081",
+    "http://10.0.2.2:8000",
+    "exp://10.0.2.2:8081",
     "http://localhost:1420",
-    "http://localhost:5173",
+    "http://192.168.1.5:8000",
+    "http://192.168.1.5:8081",
   ],
 })

@@ -27,7 +27,7 @@ const app = new Hono<{
 app.use(loggerMiddleware)
 
 app.use(
-  "*",
+  "/api/auth/*", // or replace with "*" to enable cors for all routes
   cors({
     origin: [
       "http://192.168.1.5:8081",
@@ -40,63 +40,18 @@ app.use(
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
     credentials: true,
-  })
-)
+  }),
+);
 
-app.get("/api/social-success", async (c) => {
-  // This endpoint is now only used for DESKTOP OAuth
-  // Mobile uses Better Auth Expo plugin's automatic callback handling
+// MAIN AUTH ROUTE (Double Star Wildcard for deep paths)
+// MAIN AUTH ROUTE (Robust Wildcard matching)
+app.all("/api/auth/:path*", (c) => {
+  return auth.handler(c.req.raw);
+});
 
-  // Get session to extract token
-  const session = await auth.api.getSession({
-    headers: c.req.raw.headers
-  });
-
-  const token = session?.session.token;
-  const platform = c.req.query('platform') || 'web';
-
-  console.log('OAuth callback:', { platform, hasToken: !!token });
-
-  // Desktop/Mobile: Direct redirect (302) to the deep link
-  // This is faster and requires no user interaction compared to the HTML/JS approach
-  if (platform === 'desktop' || platform === 'mobile') {
-    return c.redirect(`selftracker://auth?token=${token || ''}`, 302);
-  }
-
-  // Web: redirect to dashboard
-  return c.redirect('/', 302);
-})
-
-app.on(["POST", "GET"], "/api/auth/*", (c) => {
-  return auth.handler(c.req.raw)
-})
-
-app.use("*", async (c, next) => {
-  const headers = c.req.raw.headers;
-  const authHeader = headers.get("Authorization");
-  const cookieHeader = headers.get("Cookie");
-
-  const truncatedAuth = authHeader ? `${authHeader.substring(0, 15)}...` : 'NONE'
-
-  console.log(`[DEBUG_AUTH] Request: ${c.req.method} ${c.req.path} | Auth: ${truncatedAuth} | Cookie: ${cookieHeader ? 'YES' : 'NO'}`);
-
-  const session = await auth.api.getSession({ headers: c.req.raw.headers })
-
-  if (!session) {
-    if (c.req.path !== '/' && !c.req.path.startsWith('/api/auth')) {
-      console.warn(`[DEBUG_AUTH] No session found for ${c.req.path}`);
-    }
-    c.set("user", null)
-    c.set("session", null)
-    return next()
-  }
-
-  console.log(`[DEBUG_AUTH] Session Active: ${session.user.id}`);
-
-  c.set("user", session.user)
-  c.set("session", session.session)
-  return next()
-})
+app.all("/api/auth/*", (c) => {
+  return auth.handler(c.req.raw);
+});
 
 app.route("/api/users", userRouter)
 
