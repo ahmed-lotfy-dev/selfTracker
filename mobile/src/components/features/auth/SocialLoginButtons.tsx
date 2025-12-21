@@ -22,7 +22,8 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
 
   const handleSocialLogin = async (provider: OAuthProvider) => {
     try {
-      const callbackURL = Linking.createURL('/(drawer)/(tabs)/home');
+      // Use 'auth' to match our deep link handler
+      const callbackURL = Linking.createURL('auth');
 
 
       await authClient.signIn.social({
