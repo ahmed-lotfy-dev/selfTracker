@@ -1,7 +1,6 @@
 import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
-import { ImagePickerAsset } from "expo-image-picker"
-import { ImageManipulatorContext, ImageResult } from "expo-image-manipulator"
+import { ImageResult } from "expo-image-manipulator"
 
 export const uploadImage = async (
   image: ImageResult,
@@ -16,7 +15,7 @@ export const uploadImage = async (
 
     const imageData = `data:${imageType};base64,${base64Image}`
 
-    const response = await axios.post(`${API_BASE_URL}/api/image/upload`, {
+    const response = await axiosInstance.post(`${API_BASE_URL}/api/image/upload`, {
       image: imageData,
     })
     return response.data
@@ -30,8 +29,9 @@ export const uploadImage = async (
 }
 
 export const deleteImage = async (imageLink: string) => {
-  const response = await axios.post(`${API_BASE_URL}/api/image/delete`, {
+  const response = await axiosInstance.post(`${API_BASE_URL}/api/image/delete`, {
     imageLink,
   })
   return response.data
 }
+
