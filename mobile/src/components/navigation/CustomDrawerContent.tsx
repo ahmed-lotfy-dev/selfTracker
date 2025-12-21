@@ -108,7 +108,7 @@ export default function CustomDrawerContent(props: any) {
               className="flex-row items-center justify-center bg-card border border-border p-4 rounded-2xl active:opacity-80"
             >
               <MaterialIcons name="logout" size={20} color={colors.error} />
-              <Text className={`ml-2 font-semibold text-[${colors.error}]`}>Sign Out</Text>
+              <Text className="ml-2 font-semibold" style={{ color: colors.error }}>Sign Out</Text>
             </Pressable>
             <Text className="text-center text-[10px] text-placeholder mt-4">
               v1.0.0 • SelfTracker
