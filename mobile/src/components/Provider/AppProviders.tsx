@@ -27,30 +27,40 @@ export { queryClient }
 const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
 
 export function AppProviders({ children }: AppProvidersProps) {
+  const user = useUser()
   const hasHydrated = useHasHydrated()
   const [session, setSession] = useState<any>(null)
+  const [manualToken, setManualToken] = useState<string | null>(null)
   const [isSessionLoading, setIsSessionLoading] = useState(true)
 
   useEffect(() => {
     if (hasHydrated) {
       console.log("[Auth] Zustand hydrated. Validating session...")
-      authClient.getSession()
-        .then(({ data }) => {
-          console.log("[Auth] Session check complete:", data ? `User ${data.user.id}` : "NO SESSION")
-          setSession(data)
-        })
-        .catch(err => console.error("[Auth] getSession Exception:", err))
+
+      // Fetch both better-auth session and manual token
+      Promise.all([
+        authClient.getSession(),
+        getAccessToken()
+      ]).then(([{ data }, token]) => {
+        console.log("[Auth] Check complete:", data ? `User ${data.user.id}` : "NO SESSION", token ? "(Has manual token)" : "(No manual token)")
+        setSession(data)
+        setManualToken(token)
+      })
+        .catch(err => console.error("[Auth] Initialization Exception:", err))
         .finally(() => setIsSessionLoading(false))
     }
   }, [hasHydrated])
 
   useEffect(() => {
-    const desiredTheme = session?.user?.theme ?? 'system'
+    const desiredTheme = session?.user?.theme ?? user?.theme ?? 'system'
     Uniwind.setTheme(desiredTheme)
-  }, [session?.user?.theme])
+  }, [session?.user?.theme, user?.theme])
 
-  const storeId = session?.user?.id
-  const authToken = session?.session?.token
+  // Logic for identity: Preferred is session user ID, then Zustand user ID, finally anonymous
+  const storeId = session?.user?.id ?? user?.id ?? 'anonymous'
+
+  // Logic for token: Preferred is session token, then manual accessToken
+  const authToken = session?.session?.token ?? manualToken ?? ''
 
   const adapter = useMemo(() => {
     const finalStoreId = storeId ?? 'anonymous'
