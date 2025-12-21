@@ -1,6 +1,7 @@
 import { View, Text, RefreshControl } from "react-native"
+import { WeightLogType } from "@/src/types/weightLogType"
 import React from "react"
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useQuery, InfiniteData } from "@tanstack/react-query"
 import { fetchAllWeightLogs } from "@/src/lib/api/weightsApi"
 import { fetchUserHomeInfo } from "@/src/lib/api/userApi"
 import WeightLogItem from "./WeightLogItem"
@@ -28,7 +29,13 @@ export const WeightLogsList = () => {
     refetch,
     isRefetching,
     isError,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<
+    { logs: WeightLogType[]; nextCursor: string | null },
+    Error,
+    InfiniteData<{ logs: WeightLogType[]; nextCursor: string | null }>,
+    string[],
+    string | null
+  >({
     queryKey: ["weightLogs"],
     queryFn: ({ pageParam }) => fetchAllWeightLogs(pageParam, limit),
     getNextPageParam: (lastPage) => lastPage?.nextCursor ?? null,
@@ -41,9 +48,8 @@ export const WeightLogsList = () => {
   const logs = data?.pages.flatMap((page) => page.logs || []) ?? []
 
   const ListHeader = (
-    <View className="mb-4 px-2">
+    <View className="mb-2 px-2">
       <View className="">
-        <Text className="text-lg font-semibold text-text mb-2">Overview</Text>
         <WeightStatsRow
           currentWeight={homeData?.latestWeight || null}
           weightChange={homeData?.weightChange || ""}
