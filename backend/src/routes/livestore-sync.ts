@@ -247,28 +247,23 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
       const events = await fetchEvents(checkpoint, storeId)
 
-      ws.send(JSON.stringify({
-        _tag: "Chunk",
-        payload: {
-          batch: events.map(e => ({
-            eventEncoded: e.eventData,
-            metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
-          })),
-          pageInfo: {
-            hasMore: false,
-            cursor: { _tag: "None" }
-          },
-          backendId: "selftracker-v1"
+      const responsePayload = {
+        batch: events.map(e => ({
+          eventEncoded: e.eventData,
+          metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
+        })),
+        pageInfo: {
+          hasMore: false,
+          cursor: { _tag: "None" }
         },
-        id: String(id),
-        requestId: String(id)
-      }))
+        backendId: "selftracker-v1"
+      }
 
       ws.send(JSON.stringify({
-        _tag: "Exit",
-        payload: { _tag: "Success", value: void 0 },
-        id: String(id),
-        requestId: String(id)
+        _tag: "Response",
+        payload: { _tag: "Success", value: responsePayload },
+        id: String(id), // Cast to string to be safe
+        requestId: String(id) // Defensive field
       }))
     }
   } catch (error) {
