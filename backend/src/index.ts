@@ -120,22 +120,6 @@ app.route("/api/sync", syncRouter)
 
 app.route("/api/livestore", livestoreSyncRouter)
 
-// Explicit WebSocket upgrade route for Bun
-app.get("/api/livestore/sync", async (c) => {
-  // @ts-ignore - Bun-specific global
-  const server = globalThis.server || (c.env as any).server;
-
-  if (c.req.header("upgrade") === "websocket") {
-    console.log("[LiveStore] Upgrading WebSocket connection...");
-    // @ts-ignore
-    const upgraded = Bun.upgrade(c.req.raw);
-    if (upgraded) {
-      return undefined; // Bun handles it from here
-    }
-  }
-  return c.text("Expected WebSocket upgrade", 400);
-})
-
 
 app.get("/", async (c) => {
   return c.json({ message: "Hello world" })
@@ -163,7 +147,17 @@ app.onError((err, c) => {
 export default {
   port: process.env.PORT || 8000,
   hostname: "0.0.0.0",
-  fetch: app.fetch,
+  fetch(req: Request, server: any) {
+    // Only upgrade if it's the specific sync path and a WS request
+    const url = new URL(req.url);
+    if (url.pathname === "/api/livestore/sync" && req.headers.get("upgrade") === "websocket") {
+      console.log("[LiveStore] Upgrading WebSocket connection on /api/livestore/sync...");
+      if (server.upgrade(req)) {
+        return; // Bun handles it
+      }
+    }
+    return app.fetch(req, server);
+  },
   idleTimeout: 250,
   websocket: {
     message(ws: any, message: any) {
