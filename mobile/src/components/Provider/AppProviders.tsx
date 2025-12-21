@@ -1,9 +1,10 @@
-import { ReactNode, useEffect, useState } from "react"
+import { ReactNode, useEffect, useState, useMemo } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
 import React from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { KeyboardProvider } from "react-native-keyboard-controller"
-import { useColorScheme, View, Text, Button, unstable_batchedUpdates as batchUpdates } from "react-native"
+import { useColorScheme, View, Text, Button, ActivityIndicator, unstable_batchedUpdates as batchUpdates } from "react-native"
+import { Feather } from "@expo/vector-icons"
 import { ToastProvider } from "@/src/hooks/useToast"
 import { useUser } from "@/src/store/useAuthStore"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
@@ -24,10 +25,6 @@ export { queryClient }
 
 const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
 
-const adapter = makePersistedAdapter({
-  sync: { backend: syncUrl ? makeCfSync({ url: syncUrl }) : undefined },
-})
-
 export function AppProviders({ children }: AppProvidersProps) {
   const systemScheme = useColorScheme()
   const user = useUser()
@@ -42,11 +39,18 @@ export function AppProviders({ children }: AppProvidersProps) {
     getAccessToken().then((token: string | null) => setAuthToken(token))
   }, [user?.id])
 
+  const storeId = user?.id ?? 'anonymous'
+
+  const adapter = useMemo(() => {
+    console.log(`[LiveStore] initializing adapter for store: ${storeId}`)
+    return makePersistedAdapter({
+      sync: { backend: syncUrl ? makeCfSync({ url: syncUrl }) : undefined },
+    })
+  }, [storeId]) // Re-init adapter only when store identity changes
+
   const activeTheme = (user?.theme === 'system' || !user?.theme)
     ? (systemScheme ?? 'light')
     : user?.theme
-
-  const storeId = user?.id ?? 'anonymous'
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -58,15 +62,26 @@ export function AppProviders({ children }: AppProvidersProps) {
             storeId={storeId}
             syncPayload={{ authToken: authToken ?? '' }}
             renderLoading={(stage) => (
-              <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Loading ({stage.stage})...</Text>
+              <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
+                <ActivityIndicator size="large" color="#10B981" />
+                <Text style={{ marginTop: 12, color: '#6B7280' }}>Initializing LiveStore ({stage.stage})...</Text>
               </SafeAreaView>
             )}
-            renderError={(error: any) => (
-              <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Error: {error.toString()}</Text>
-              </SafeAreaView>
-            )}
+            renderError={(error: any) => {
+              console.error("[LiveStore] Critical Error:", error)
+              return (
+                <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+                  <Feather name="alert-triangle" size={48} color="#EF4444" />
+                  <Text style={{ marginTop: 16, fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>Sync Error</Text>
+                  <Text style={{ marginTop: 8, color: '#6B7280', textAlign: 'center' }}>
+                    {error.message || error.toString()}
+                  </Text>
+                  <View style={{ marginTop: 24 }}>
+                    <Button title="Retry Initial Sync" onPress={() => { /* Reloading would be better */ }} />
+                  </View>
+                </SafeAreaView>
+              )
+            }}
             renderShutdown={() => (
               <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Text>LiveStore Shutdown</Text>
