@@ -22,7 +22,10 @@ export function useDeepLinkHandler() {
 
     const handleDeepLink = async (event: { url: string }) => {
       const url = event.url;
-      console.log("[DeepLink] RAW URL RECEIVED:", url); // Critical debug log
+      console.log("[DeepLink] RAW URL RECEIVED:", url);
+      // DEBUG: Alert the raw URL to confirm reception in Prod
+      alert(`Debug: Received Link!\n${url}`);
+
       showToast('Processing login...', 'info');
 
       console.log("[DeepLink] Received URL:", url)
@@ -43,6 +46,10 @@ export function useDeepLinkHandler() {
         }
 
         let token = parsedUrl.queryParams?.token as string | undefined;
+        // Also check for session_token
+        if (!token) {
+          token = parsedUrl.queryParams?.session_token as string | undefined;
+        }
 
         if (!token && parsedUrl.queryParams?.cookie) {
           const cookieParam = parsedUrl.queryParams.cookie as string;
@@ -53,6 +60,8 @@ export function useDeepLinkHandler() {
         }
 
         if (!token) {
+          // Use alert for visibility in prod
+          alert(`Login failed: No token found in URL.\nURL: ${url}`);
           showToast('Login failed: No token', 'error');
           return;
         }
@@ -77,6 +86,8 @@ export function useDeepLinkHandler() {
         });
 
         if (session.data?.user) {
+          // Explicitly clear any previous alerts and notify success
+          // alert(`Welcome ${session.data.user.name}! Redirecting...`);
           showToast(`Welcome, ${session.data.user.name.split(' ')[0]}!`, 'success');
 
           setUser(session.data.user);
@@ -100,6 +111,7 @@ export function useDeepLinkHandler() {
       } catch (err: any) {
         console.error('Deep link error:', err);
         showToast(`Error: ${err.message}`, 'error');
+        alert(`Deep link error: ${err.message}`);
         isProcessingRef.current = false;
       }
     };
