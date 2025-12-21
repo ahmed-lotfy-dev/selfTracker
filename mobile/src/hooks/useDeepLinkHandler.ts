@@ -79,20 +79,25 @@ export function useDeepLinkHandler() {
         if (session.data?.user) {
           showToast(`Welcome, ${session.data.user.name.split(' ')[0]}!`, 'success');
 
-          try {
-            await dbManager.initializeUserDatabase(session.data.user.id);
-          } catch (dbErr: any) {
-            console.error('[Auth] DB Init failed:', dbErr);
-            showToast(`DB Error: ${dbErr.message}`, 'error');
-          }
-
+          // 1. Set user in store FIRST (Critical for UI to unblock "Preparing...")
           setUser(session.data.user);
+
+          // 2. Update query cache
           queryClient.setQueryData(['session'], session.data);
           await queryClient.invalidateQueries({ queryKey: ['session'] });
           await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
 
+          // 3. Navigate to home immediately
           router.replace('/(drawer)/(tabs)/home');
-          initialSync().catch(err => console.warn('Background sync failed:', err));
+
+          // 4. Initialize DB in background (don't block navigation)
+          dbManager.initializeUserDatabase(session.data.user.id)
+            .then(() => {
+              initialSync().catch(err => console.warn('Background sync failed:', err));
+            })
+            .catch((dbErr: any) => {
+              console.error('[Auth] DB Init failed:', dbErr);
+            });
 
         } else {
           showToast('Login verification failed', 'error');
