@@ -220,6 +220,28 @@ userRouter.patch("/onboarding", async (c) => {
   }
 })
 
+userRouter.get("/:id/goals", async (c) => {
+  const user = c.get("user" as any)
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401)
+  }
+
+  const userId = c.req.param("id")
+
+  try {
+    const goals = await db
+      .select()
+      .from(userGoals)
+      .where(eq(userGoals.userId, userId))
+      .orderBy(desc(userGoals.createdAt))
+
+    return c.json({ goals })
+  } catch (error) {
+    console.error("Error fetching goals:", error)
+    return c.json({ message: "Internal server error" }, 500)
+  }
+})
+
 userRouter.post("/goals", async (c) => {
   const user = c.get("user" as any)
   if (!user) {
@@ -258,6 +280,7 @@ userRouter.post("/goals", async (c) => {
     const [newGoal] = await db
       .insert(userGoals)
       .values({
+        id: crypto.randomUUID(),
         userId: user.id,
         goalType,
         targetValue,
