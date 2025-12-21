@@ -26,24 +26,28 @@ export const useAuth = () => {
     })
   }, [user]) // Re-run when user changes
 
+  // Derived State
+  const finalUser = sessionData?.user ?? user ?? null
+  const finalToken = sessionData?.session?.token ?? manualToken ?? null
+  const storeId = finalUser?.id ?? 'anonymous'
+
   // Debug Logging
   useEffect(() => {
-    if (sessionData || manualToken) {
-      console.log("[useAuth] Session Data:", JSON.stringify(sessionData, null, 2))
-      console.log("[useAuth] Manual Token:", manualToken)
-    }
-  }, [sessionData, manualToken])
+    // Log state changes to debug "disappearing user"
+    console.log(`[useAuth] State Update: 
+      SessionUser: ${sessionData?.user?.id}
+      ZustandUser: ${user?.id}
+      ManualToken: ${manualToken ? 'Yes' : 'No'}
+      IsAuthenticated: ${!!finalUser && !!finalToken}
+      StoreId: ${storeId}
+    `)
+  }, [sessionData, user, manualToken, finalUser, finalToken, storeId])
 
   // 4. Sync Theme
   useEffect(() => {
     const theme = (sessionData?.user as any)?.theme ?? (user as any)?.theme ?? 'system'
     Uniwind.setTheme(theme)
   }, [(sessionData?.user as any)?.theme, (user as any)?.theme])
-
-  // Derived State
-  const finalUser = sessionData?.user ?? user ?? null
-  const finalToken = sessionData?.session?.token ?? manualToken ?? null
-  const storeId = finalUser?.id ?? 'anonymous'
 
   // Loading Logic
   // We wait for: Zustand Hydration AND (Session Fetch OR Error) AND Manual Token Check
