@@ -202,40 +202,61 @@ export const websocket = {
 async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
   try {
     const rpcRequest = JSON.parse(data)
-    const { method, payload, id } = rpcRequest
 
-    // LiveStore uses a generic auth mechanism; for now we trust the payload/storeId
-    // In a production app, we'd verify the authToken in the payload here.
+    // Effect RPC sends messages with _tag: "Request"
+    if (rpcRequest._tag !== "Request") return
+
+    const { tag, payload, id } = rpcRequest
     const storeId = payload?.storeId
 
-    if (method === "SyncWsRpc.Push") {
+    if (tag === "SyncWsRpc.Push") {
       await pushEventsToDb(payload.batch, storeId)
+
+      // Send the success chunk
       ws.send(JSON.stringify({
-        id,
-        _tag: "ResponseChunkEncoded",
-        payload: { type: "push-ack", count: payload.batch.length }
+        requestId: id,
+        _tag: "Chunk",
+        values: [{ type: "push-ack", count: payload.batch.length }]
       }))
-    } else if (method === "SyncWsRpc.Pull") {
+
+      // Close the RPC call
+      ws.send(JSON.stringify({
+        requestId: id,
+        _tag: "Exit",
+        exit: {
+          _tag: "Success",
+          value: { type: "push-ack", count: payload.batch.length }
+        }
+      }))
+    } else if (tag === "SyncWsRpc.Pull") {
       const checkpoint = payload.cursor?.eventSequenceNumber || 0
       const events = await fetchEvents(checkpoint, storeId)
 
+      const pullResponse = {
+        type: "pull-response",
+        events,
+        backendId: "bun-hono-backend"
+      }
+
+      // Send the data
       ws.send(JSON.stringify({
-        id,
-        _tag: "ResponseChunkEncoded",
-        payload: {
-          type: "pull-response",
-          events,
-          backendId: "bun-hono-backend"
-        }
+        requestId: id,
+        _tag: "Chunk",
+        values: [pullResponse]
       }))
 
-      // Close the stream chunk (LiveStore expects streams)
-      ws.send(JSON.stringify({ id, _tag: "ResponseClose" }))
+      // Close the stream 
+      ws.send(JSON.stringify({
+        requestId: id,
+        _tag: "Exit",
+        exit: { _tag: "Success", value: pullResponse }
+      }))
     }
   } catch (error) {
     console.error("[LiveStore] WS Error:", error)
   }
 }
+
 
 
 async function pushEventsToDb(batch: LiveStoreEvent[], storeId: string) {
