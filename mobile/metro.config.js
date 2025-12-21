@@ -1,5 +1,6 @@
 const { getDefaultConfig } = require("expo/metro-config");
 const { withUniwindConfig } = require("uniwind/metro");
+const { addLiveStoreDevtoolsMiddleware } = require("@livestore/devtools-expo");
 
 const config = getDefaultConfig(__dirname);
 
@@ -9,5 +10,7 @@ const FinalConfig = withUniwindConfig(config, {
 });
 
 FinalConfig.resolver.sourceExts.push("sql", "cjs", "mjs");
+
+addLiveStoreDevtoolsMiddleware(FinalConfig, { schemaPath: "./src/livestore/schema.ts" });
 
 module.exports = FinalConfig;
