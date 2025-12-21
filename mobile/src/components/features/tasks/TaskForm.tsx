@@ -27,7 +27,6 @@ export default function TaskForm() {
       { queryKey: ["userHomeData"] },
     ],
     onSuccessCallback() {
-      console.log("Task added successfully")
     },
     onErrorMessage: "Failed to Add Task Log.",
   })
@@ -65,7 +64,7 @@ export default function TaskForm() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       className="w-full"
     >
-      <View className="flex-row items-center bg-card rounded-2xl p-2 shadow-sm border border-border mb-2">
+      <View className="flex-row items-center bg-card rounded-2xl p-2 mx-1 my-1 shadow-sm border border-border">
         <TextInput
           className="flex-1 ml-3 text-base text-text"
           placeholder="What needs to be done?"

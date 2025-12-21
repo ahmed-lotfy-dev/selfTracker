@@ -14,7 +14,7 @@ export default function TaskProgress({ tasks }: TaskProgressProps) {
   const progress = total === 0 ? 0 : (completed / total) * 100
 
   return (
-    <View className="flex-row items-center justify-between bg-card border border-border rounded-3xl p-5 mb-6 shadow-sm">
+    <View className="flex-row items-center justify-between bg-card border border-border rounded-3xl mx-1 my-3 px-4 py-4 shadow-sm">
       <View>
         <Text className="text-text font-bold text-xl mb-1">Today's Progress</Text>
         <Text className="text-gray-500 dark:text-gray-400 font-medium text-sm">

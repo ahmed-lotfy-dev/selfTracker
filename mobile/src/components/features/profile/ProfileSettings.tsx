@@ -5,7 +5,9 @@ import {
   ScrollView,
   Pressable,
   Platform,
+  Image,
 } from "react-native"
+import * as ImagePicker from "expo-image-picker"
 import { Feather } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import DateTimePicker from "@react-native-community/datetimepicker"
@@ -20,6 +22,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { fetchGoals, createGoal, deleteGoal } from "@/src/lib/api/goalsApi"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useThemeColors } from "@/src/constants/Colors"
+import { useProfileImage } from "@/src/hooks/useProfileImage"
 
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
@@ -41,6 +44,7 @@ export default function ProfileSettings() {
   const [unitSystem, setUnitSystem] = useState(user?.unitSystem || "metric")
   const [theme, setTheme] = useState(user?.theme || "system")
   const [currency, setCurrency] = useState(user?.currency || "EGP")
+  const { pickAndUploadImage, isUploading: isImageUploading } = useProfileImage()
 
   const [gender, setGender] = useState(user?.gender || "male")
   const [income, setIncome] = useState(user?.income?.toString() || "")
@@ -81,6 +85,7 @@ export default function ProfileSettings() {
 
     const updatedFields: Partial<User> = {
       name,
+      // image is handled separately by useProfileImage hook
       weight: weight ? parseFloat(weight) : null,
       height: height ? parseFloat(height) : null,
       unitSystem,
@@ -124,7 +129,7 @@ export default function ProfileSettings() {
   }
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-background px-2">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
         {/* Header Profile Card */}
         <Animated.View entering={FadeInDown.delay(100).duration(600).springify()}>
@@ -132,14 +137,27 @@ export default function ProfileSettings() {
             colors={['#064E3B', '#10B981']} // Emerald 900 -> Emerald 500
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            className="pt-12 pb-8 items-center rounded-b-[40px] shadow-lg mb-8"
+            className="pt-12 pb-6 items-center rounded-b-[40px] shadow-lg mb-8"
           >
             {/* ... content ... */}
-            <View className="h-28 w-28 bg-white/20 rounded-full items-center justify-center mb-4 border-4 border-white/30 backdrop-blur-md shadow-xl">
-              <Text className="text-4xl font-bold text-white shadow-sm">
-                {user?.name?.charAt(0).toUpperCase() || "U"}
-              </Text>
-            </View>
+            <Pressable onPress={() => pickAndUploadImage()} className="relative mb-4" disabled={isImageUploading}>
+              <View className="h-28 w-28 bg-white/20 rounded-full items-center justify-center border-4 border-white/30 backdrop-blur-md shadow-xl overflow-hidden">
+                {isImageUploading ? (
+                  <View className="flex-1 items-center justify-center bg-black/20 w-full h-full">
+                    <Feather name="loader" size={24} color="white" className="animate-spin" />
+                  </View>
+                ) : user?.image ? (
+                  <Image source={{ uri: user.image }} className="h-full w-full" resizeMode="cover" />
+                ) : (
+                  <Text className="text-4xl font-bold text-white shadow-sm">
+                    {user?.name?.charAt(0).toUpperCase() || "U"}
+                  </Text>
+                )}
+              </View>
+              <View className="absolute bottom-0 right-0 bg-secondary p-2 rounded-full border-2 border-white shadow-sm">
+                <Feather name="camera" size={16} color="white" />
+              </View>
+            </Pressable>
             <Input
               value={name}
               onChangeText={setName}
@@ -153,7 +171,7 @@ export default function ProfileSettings() {
         </Animated.View>
 
         {/* Content */}
-        <View className="px-4">
+        <View>
 
           {/* Section: Physical Stats */}
           <Animated.View entering={FadeInDown.delay(200).duration(500)}>

@@ -80,7 +80,6 @@ export const createBackup = async (): Promise<{ success: boolean; filePath?: str
     await file.write(JSON.stringify(backup, null, 2))
 
     const totalRecords = Object.values(backup.data).reduce((sum, arr) => sum + arr.length, 0)
-    console.log(`[Backup] Created backup with ${totalRecords} records`)
 
     if (Sharing && await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(file.uri, {
@@ -152,7 +151,6 @@ export const restoreBackup = async (): Promise<{ success: boolean; restored: num
     await restoreTable(backup.data.userGoals || [], userGoals)
     await restoreTable(backup.data.expenses || [], expenses)
 
-    console.log(`[Backup] Restored ${restored} records from backup`)
 
     return { success: true, restored }
   } catch (error: any) {

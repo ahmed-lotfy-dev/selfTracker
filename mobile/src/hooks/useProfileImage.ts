@@ -1,30 +1,28 @@
-import React from "react"
-import { useAuth } from "@/src/hooks/useAuth"
-import { deleteImage, uploadImage } from "@/src/lib/api/imageApi"
-import { updateUser } from "@/src/lib/api/userApi"
+
 import { useState } from "react"
-import { View, Text, Pressable, Button } from "react-native"
+import { useAuth } from "@/src/hooks/useAuth"
+import { useAuthActions } from "@/src/store/useAuthStore"
+import { useUpdate } from "@/src/hooks/useUpdate"
+import { updateUser } from "@/src/lib/api/userApi"
+import { deleteImage, uploadImage } from "@/src/lib/api/imageApi"
 import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
-import { useUpdate } from "@/src/hooks/useUpdate"
-import { useAuthActions } from "@/src/store/useAuthStore"
-import Foundation from "@expo/vector-icons/Foundation"
 
-export default function UploadImageBtn({ className }: { className?: string }) {
+export function useProfileImage() {
   const { user, refetch } = useAuth()
   const { setUser } = useAuthActions()
-  const [imageFile, setImageFile] =
-    useState<ImagePicker.ImagePickerAsset | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const { updateMutation } = useUpdate({
     mutationFn: updateUser,
     onSuccessInvalidate: [{ queryKey: ["userData"] }],
   })
 
-  const pickImageAndUpload = async () => {
+  const pickAndUploadImage = async (onSuccess?: () => void) => {
     try {
+      // 1. Pick Image
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -35,9 +33,10 @@ export default function UploadImageBtn({ className }: { className?: string }) {
         return
       }
 
+      setIsUploading(true)
       const selectedImage = result.assets[0]
-      setImageFile(selectedImage)
 
+      // 2. Compress/Optimize
       const optimizedImage = await ImageManipulator.manipulateAsync(
         selectedImage.uri,
         [{ resize: { width: 350 } }],
@@ -48,37 +47,47 @@ export default function UploadImageBtn({ className }: { className?: string }) {
         }
       )
 
+      // 3. Delete old image if exists
       if (user?.image) {
         await deleteImage(user.image)
       }
 
-      const { imageUrl } = await uploadImage(
+      // 4. Upload new image
+      const uploadResult = await uploadImage(
         optimizedImage,
-        imageFile?.fileName ?? "",
-        imageFile?.mimeType ?? ""
+        selectedImage.fileName ?? "profile.jpg",
+        selectedImage.mimeType ?? "image/jpeg"
       )
 
+      const imageUrl = uploadResult.imageUrl;
+
+      if (!imageUrl) {
+        throw new Error("Upload failed: No URL returned")
+      }
+
+      // 5. Update user profile
       updateMutation.mutate(
         { id: user?.id, image: imageUrl },
         {
           onSuccess: () => {
             refetch()
             setUser({ ...user, image: imageUrl })
+            setIsUploading(false)
+            if (onSuccess) onSuccess()
           },
+          onError: () => {
+            setIsUploading(false)
+          }
         }
       )
     } catch (error) {
-      console.error("Error during image selection or upload:", error)
+      console.error("Error in profile image upload flow:", error)
+      setIsUploading(false)
     }
   }
 
-  return (
-    <View
-      className={`flex-row justify-center items-center bg-gray-300  ${className}`}
-    >
-      <Pressable onPress={pickImageAndUpload}>
-        <Foundation name="camera" size={30} color="lightslategray" />
-      </Pressable>
-    </View>
-  )
+  return {
+    pickAndUploadImage,
+    isUploading,
+  }
 }

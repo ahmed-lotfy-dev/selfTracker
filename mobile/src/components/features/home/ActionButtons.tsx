@@ -18,7 +18,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   return (
     <Pressable
       onPress={onPress}
-      className="flex-1 items-center justify-center p-3 rounded-xl shadow-sm mx-2 my-2 bg-card border border-border"
+      className="flex-1 items-center justify-center p-3 rounded-xl shadow-sm mr-3 my-2 bg-card border border-border"
     >
       <MaterialCommunityIcons
         name={
@@ -37,7 +37,7 @@ export default function ActionButtons() {
   const router = useRouter()
 
   return (
-    <View className="flex-row flex-wrap justify-center">
+    <View className="flex-row flex-wrap justify-start items-center">
       <ActionButton
         icon="plus-circle"
         label="Weight"

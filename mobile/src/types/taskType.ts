@@ -5,9 +5,9 @@ export const TaskSchema = z.object({
   userId: z.string(),
   title: z.string().min(1, "Title is required"),
   completed: z.boolean(),
-  dueDate: z.string().datetime().nullable(),
+  dueDate: z.date().nullable(),
   category: z.string(),
-  createdAt: z.string().datetime(),
+  createdAt: z.date(),
 })
 
 export type TaskType = z.infer<typeof TaskSchema>

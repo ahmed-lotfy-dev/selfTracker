@@ -8,8 +8,6 @@ export default function CatchAll() {
   const pathname = usePathname()
 
   useEffect(() => {
-    console.log("[404 DEBUG] Route hit:", pathname)
-    console.log("[404 DEBUG] Params:", JSON.stringify(params, null, 2))
   }, [pathname, params])
 
   return (

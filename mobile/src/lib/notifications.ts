@@ -7,11 +7,9 @@ export async function registerForPushNotificationsAsync(): Promise<
 > {
   // Skip if web or Expo Go
   if (Platform.OS === "web") {
-    console.log("Skipping notifications setup on web.")
     return
   }
   if (Constants.appOwnership === "expo") {
-    console.log("Skipping notifications setup in Expo Go.")
     return
   }
   if (!Device.isDevice) {
