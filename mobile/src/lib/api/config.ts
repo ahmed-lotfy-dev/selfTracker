@@ -1,6 +1,6 @@
 import * as Linking from "expo-linking"
 
-export const API_BASE_URL = "https://selftracker.ahmedlotfy.site"
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL
 
 /**
  * Constructs the OAuth authorization URL for a given provider.
