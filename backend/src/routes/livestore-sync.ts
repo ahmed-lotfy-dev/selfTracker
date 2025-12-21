@@ -240,7 +240,8 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       ws.send(JSON.stringify({
         _tag: "Response",
         payload: { _tag: "Success", value: {} },
-        id: id // Keep original type to be safe, logs showed clean connection
+        id: String(id), // Cast to string to be safe
+        requestId: String(id) // Defensive: legacy LiveStore/Effect might use this
       }))
     } else if (tag === "SyncWsRpc.Pull") {
       const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
@@ -259,13 +260,15 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
           },
           backendId: "selftracker-v1"
         },
-        id: id
+        id: String(id),
+        requestId: String(id)
       }))
 
       ws.send(JSON.stringify({
         _tag: "Exit",
         payload: { _tag: "Success", value: void 0 },
-        id: id
+        id: String(id),
+        requestId: String(id)
       }))
     }
   } catch (error) {
