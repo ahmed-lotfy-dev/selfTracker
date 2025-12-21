@@ -11,7 +11,7 @@ type AppInitState = {
 export function useAppInitialization(): AppInitState {
   const { isOnboarding, hasHydrated: onboardingHydrated } = useOnboardingStore()
   const { user, hasHydrated: authHydrated } = useAuthStore()
-  const { isLoading: isAuthLoading } = useAuth()
+  const { isLoading: isAuthLoading, isAuthenticated } = useAuth()
 
   const [targetRoute, setTargetRoute] = useState<string | null>(null)
 
@@ -26,14 +26,17 @@ export function useAppInitialization(): AppInitState {
 
     if (isOnboarding) {
       route = "/onboarding"
-    } else if (!user) {
+    } else if (!isAuthenticated) {
       route = "/sign-in"
-    } else if (!user.emailVerified) {
+    } else if (user && !user.emailVerified) {
+      // Note: We check user existence here because isAuthenticated is true, 
+      // so user must be derived from useAuth or store, but we need the object to check verified status.
+      // Ideally we should get user from useAuth too, but store user is fine for property check.
       route = "/(auth)/verify-email"
     }
 
     setTargetRoute(route)
-  }, [onboardingHydrated, authHydrated, isAuthLoading, isOnboarding, user])
+  }, [onboardingHydrated, authHydrated, isAuthLoading, isOnboarding, isAuthenticated, user])
 
   return {
     isReady: targetRoute !== null,

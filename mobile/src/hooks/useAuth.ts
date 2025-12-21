@@ -59,7 +59,7 @@ export const useAuth = () => {
     storeId,           // Used for LiveStore identity
 
     // Auth Status
-    isAuthenticated: !!finalUser,
+    isAuthenticated: !!finalUser && !!finalToken,
     isLoading,
     isResolved: !isLoading && !!finalUser, // Helper
 

@@ -210,6 +210,14 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
     const { tag, payload, id } = rpcRequest
 
+    console.log(`[LiveStore] WS Request: ${tag} | ID: ${id} (${typeof id})`)
+
+    // Guard against missing ID (notifications don't need response, but requests do)
+    if (id === undefined || id === null) {
+      console.warn("[LiveStore] WS Warning: Received request without ID", tag)
+      return
+    }
+
     // session verification
     let storeId = payload?.storeId
     const authToken = payload?.authToken
@@ -219,7 +227,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         headers: new Headers({ Authorization: `Bearer ${authToken}` })
       })
       if (session) {
-        console.log(`[LiveStore] WS Auth Success: ${session.user.id}`)
+        // console.log(`[LiveStore] WS Auth Success: ${session.user.id}`)
         storeId = session.user.id
       } else {
         console.warn(`[LiveStore] WS Auth Fail: Invalid token for store ${storeId}`)
@@ -232,7 +240,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       ws.send(JSON.stringify({
         _tag: "Response",
         payload: { _tag: "Success", value: {} },
-        id
+        id: id // Keep original type to be safe, logs showed clean connection
       }))
     } else if (tag === "SyncWsRpc.Pull") {
       const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
@@ -251,13 +259,13 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
           },
           backendId: "selftracker-v1"
         },
-        id
+        id: id
       }))
 
       ws.send(JSON.stringify({
         _tag: "Exit",
         payload: { _tag: "Success", value: void 0 },
-        id
+        id: id
       }))
     }
   } catch (error) {
