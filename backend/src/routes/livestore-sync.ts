@@ -229,44 +229,35 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     if (tag === "SyncWsRpc.Push") {
       await pushEventsToDb(payload.batch, storeId)
 
-      // Send the success chunk
       ws.send(JSON.stringify({
-        requestId: id,
-        _tag: "Chunk",
-        values: [{ type: "push-ack", count: payload.batch.length }]
-      }))
-
-      // Close the RPC call
-      ws.send(JSON.stringify({
-        requestId: id,
-        _tag: "Exit",
-        exit: {
-          _tag: "Success",
-          value: { type: "push-ack", count: payload.batch.length }
-        }
+        _tag: "Response",
+        payload: { _tag: "Success", value: {} },
+        id
       }))
     } else if (tag === "SyncWsRpc.Pull") {
-      const checkpoint = payload.cursor?.eventSequenceNumber || 0
+      const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
       const events = await fetchEvents(checkpoint, storeId)
 
-      const pullResponse = {
-        type: "pull-response",
-        events,
-        backendId: "bun-hono-backend"
-      }
-
-      // Send the data
       ws.send(JSON.stringify({
-        requestId: id,
         _tag: "Chunk",
-        values: [pullResponse]
+        payload: {
+          batch: events.map(e => ({
+            eventEncoded: e.eventData,
+            metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
+          })),
+          pageInfo: {
+            hasMore: false,
+            cursor: { _tag: "None" }
+          },
+          backendId: "selftracker-v1"
+        },
+        id
       }))
 
-      // Close the stream 
       ws.send(JSON.stringify({
-        requestId: id,
         _tag: "Exit",
-        exit: { _tag: "Success", value: pullResponse }
+        payload: { _tag: "Success", value: void 0 },
+        id
       }))
     }
   } catch (error) {
