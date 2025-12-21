@@ -21,21 +21,10 @@ interface AppProvidersProps {
   children: ReactNode
 }
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      gcTime: 1000 * 60 * 60 * 24,
-      staleTime: 1000 * 60 * 5,
-      networkMode: "offlineFirst",
-      retry: false,
-      refetchOnReconnect: true,
-    },
-    mutations: {
-      networkMode: "offlineFirst",
-      retry: false,
-    },
-  },
-})
+import { queryClient } from "@/src/lib/react-query"
+
+// QueryClient moved to separate file to avoid circular dependencies
+export { queryClient }
 
 export function AppProviders({ children }: AppProvidersProps) {
   const systemScheme = useColorScheme()

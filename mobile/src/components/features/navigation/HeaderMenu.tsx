@@ -8,7 +8,7 @@ import { useThemeColors } from '@/src/constants/Colors';
 import { authClient } from '@/src/lib/auth-client';
 import { dbManager } from '@/src/db/client';
 import { clearAllUserData } from '@/src/lib/storage';
-import { queryClient } from '@/src/components/Provider/AppProviders';
+import { queryClient } from '@/src/lib/react-query';
 import { clearUserSyncState } from '@/src/services/sync';
 
 export default function HeaderMenu() {

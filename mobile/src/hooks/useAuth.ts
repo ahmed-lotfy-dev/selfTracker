@@ -1,7 +1,7 @@
 import { authClient } from "@/src/lib/auth-client"
 import { useAuthActions, useUser } from "../store/useAuthStore"
 import { clearAllUserData } from "@/src/lib/storage"
-import { queryClient } from "@/src/components/Provider/AppProviders"
+import { queryClient } from "@/src/lib/react-query"
 import { dbManager } from "@/src/db/client"
 import { clearUserSyncState } from "@/src/services/sync"
 

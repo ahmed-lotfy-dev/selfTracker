@@ -4,7 +4,7 @@ import { useRouter } from "expo-router"
 import { useToast } from './useToast';
 import { authClient } from "../lib/auth-client"
 import { Platform } from "react-native"
-import { queryClient } from '@/src/components/Provider/AppProviders';
+import { queryClient } from "@/src/lib/react-query";
 import { dbManager } from '@/src/db/client';
 import { initialSync } from '@/src/services/sync';
 import { useAuthActions } from '../store/useAuthStore';

@@ -9,7 +9,7 @@ import { createId } from "@paralleldrive/cuid2";
 import axiosInstance from "../lib/api/axiosInstane";
 import { API_BASE_URL } from "../lib/api/config";
 import * as SecureStore from "expo-secure-store";
-import { queryClient } from "@/src/components/Provider/AppProviders";
+import { queryClient } from "../lib/react-query";
 
 // Helper to get user-specific sync keys
 const getUserSyncKey = (key: string): string => {
