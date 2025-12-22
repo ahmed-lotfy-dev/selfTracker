@@ -42,10 +42,9 @@ export const useAuthStore = create<AuthStore>()(
       loginWithToken: async (token: string) => {
         try {
           console.log('[AUTH_STORE] loginWithToken called with token:', token?.substring(0, 10) + '...')
-          // Save to SecureStore
-          await SecureStore.setItemAsync("selftracker.better-auth.session_token", token);
+          // Save to SecureStore - Use consistent keys
           await SecureStore.setItemAsync("selftracker.session_token", token);
-          console.log('[AUTH_STORE] Token saved to SecureStore')
+          console.log('[AUTH_STORE] Token saved to SecureStore (key: selftracker.session_token)')
 
           // Verify Session
           console.log('[AUTH_STORE] Fetching session from:', `${API_BASE_URL}/api/auth/get-session`)
@@ -101,16 +100,20 @@ export const useAuthStore = create<AuthStore>()(
       partialize: (state) => ({ user: state.user }), // Only persist user, not token
       onRehydrateStorage: () => async (state) => {
         if (!state) return
-
-        // Mark as hydrated
-        state.setHasHydrated(true)
+        console.log('[AUTH_STORE] Rehydrating storage...')
 
         // Load token from SecureStore after hydration
         try {
-          const storedToken = await SecureStore.getItemAsync("selftracker.better-auth.session_token")
+          // Check both variants just in case
+          let storedToken = await SecureStore.getItemAsync("selftracker.session_token")
+          if (!storedToken) {
+            storedToken = await SecureStore.getItemAsync("selftracker.better-auth.session_token")
+          }
+
+          console.log('[AUTH_STORE] Stored token found?', !!storedToken)
 
           if (storedToken && state.user) {
-            // We have both user and token from storage
+            console.log('[AUTH_STORE] Rehydrating with user and token')
             state.setToken(storedToken)
             state.setIsLoading(false)
 
@@ -118,14 +121,18 @@ export const useAuthStore = create<AuthStore>()(
             const theme = state.user?.theme ?? 'system'
             Uniwind.setTheme(theme)
           } else {
-            // No valid auth state
+            console.log('[AUTH_STORE] Rehydration complete, no valid session found (user:', !!state.user, 'token:', !!storedToken, ')')
             state.setIsLoading(false)
           }
         } catch (error) {
-          console.error("Token load failed:", error)
+          console.error("[AUTH_STORE] Token rehydration failed:", error)
           state.setToken(null)
           state.setIsLoading(false)
         }
+
+        // Mark as hydrated
+        state.setHasHydrated(true)
+        console.log('[AUTH_STORE] Storage hydration complete')
       },
     }
   )

@@ -11,6 +11,8 @@ const FinalConfig = withUniwindConfig(config, {
 
 FinalConfig.resolver.sourceExts.push("sql", "cjs", "mjs");
 
+FinalConfig.resolver.unstable_enablePackageExports = true;
+
 addLiveStoreDevtoolsMiddleware(FinalConfig, { schemaPath: "./src/livestore/schema.ts" });
 
 module.exports = FinalConfig;

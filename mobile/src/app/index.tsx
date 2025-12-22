@@ -4,16 +4,19 @@ import { useAppInitialization } from "../hooks/useAppInitialization"
 import { useOnboardingStore } from "@/src/features/onboarding/useOnboardingStore"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { LoadingScreen } from "../components/LoadingScreen"
+import * as Linking from 'expo-linking'
 
 export default function Index() {
+  const url = Linking.useURL()
   const { isReady } = useAppInitialization()
   const { isOnboarding } = useOnboardingStore()
   const { isAuthenticated, user, token } = useAuth()
 
   console.log('[INDEX] isReady:', isReady)
+  console.log('[INDEX] Incoming URL:', url)
   console.log('[INDEX] isOnboarding:', isOnboarding)
   console.log('[INDEX] isAuthenticated:', isAuthenticated)
-  console.log('[INDEX] token:', token)  // ← Check if token is null
+  console.log('[INDEX] token:', token)
   console.log('[INDEX] user:', user)
   console.log('[INDEX] user?.emailVerified:', user?.emailVerified)
 

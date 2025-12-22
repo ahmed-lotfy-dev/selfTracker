@@ -3,13 +3,7 @@ import { expoClient } from "@better-auth/expo/client"
 import { oneTapClient } from "better-auth/client/plugins"
 import { API_BASE_URL, AUTH_SCHEME } from "./api/config"
 import { emailOTPClient } from "better-auth/client/plugins"
-import * as SecureStore from "expo-secure-store"
-
-const betterAuthStorage = {
-  getItem: async (key: string) => await SecureStore.getItemAsync(key),
-  setItem: async (key: string, value: string) => await SecureStore.setItemAsync(key, value),
-  removeItem: async (key: string) => await SecureStore.deleteItemAsync(key),
-};
+import * as SecureStore from "expo-secure-store";
 
 export const authClient = createAuthClient({
   baseURL: API_BASE_URL,
@@ -17,7 +11,7 @@ export const authClient = createAuthClient({
     expoClient({
       scheme: AUTH_SCHEME,
       storagePrefix: "selftracker",
-      storage: betterAuthStorage as any,
+      storage: SecureStore,
     }),
     emailOTPClient(),
   ],

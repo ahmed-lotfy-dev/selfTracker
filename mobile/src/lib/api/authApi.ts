@@ -1,7 +1,6 @@
 import axios from "axios"
-import axiosInstance from "./axiosInstane"
 import { API_BASE_URL } from "./config"
-import { authClient } from "../auth-client"
+import { authClient } from "@/src/lib/auth-client"
 
 export const signIn = async (email: string, password: string) => {
   const response = await authClient.signIn.email({ email, password })
