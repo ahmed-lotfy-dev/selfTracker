@@ -101,15 +101,20 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
     const pullEvents = events.map(e => {
       const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
       const processedData = sanitizeData(data)
+
+      let ts = Number(e.timestamp)
+      if (ts > 0 && ts < 100000000000) ts *= 1000
+
       return {
         event: {
+          id: e.eventId,
           name: e.eventType,
           args: processedData,
           seqNum: Number(e.id),
           clientId: "backend",
           sessionId: "static"
         },
-        metadata: { _tag: "Some", value: { createdAt: Number(e.timestamp) } }
+        metadata: { _tag: "Some", value: { createdAt: ts } }
       }
     })
 
@@ -358,16 +363,20 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
             console.log(`[LiveStore] WS Pull Batch[0]: type=${e.eventType} id=${e.id}`)
           }
 
+          let ts = Number(e.timestamp)
+          if (ts > 0 && ts < 100000000000) ts *= 1000
+
           // Use name/args format for LiveStore v0.4 protocol compatibility
           return {
             event: {
+              id: e.eventId,
               name: e.eventType,
               args: processedData,
               seqNum: Number(e.id),
               clientId: "backend",
               sessionId: "static"
             },
-            metadata: { _tag: "Some", value: { createdAt: Number(e.timestamp) } }
+            metadata: { _tag: "Some", value: { createdAt: ts } }
           }
         }),
         pageInfo: {
