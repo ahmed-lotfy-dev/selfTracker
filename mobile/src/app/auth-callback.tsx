@@ -21,21 +21,15 @@ export default function AuthCallback() {
       // Fallback: Check cookie param for session_token
       if (!token && params.cookie) {
         const cookieString = Array.isArray(params.cookie) ? params.cookie[0] : params.cookie;
-        console.log("[AuthCallback] Parsing cookie:", cookieString);
-
         const match = cookieString.match(/__Secure-better-auth\.session_token=([^;]+)/);
         if (match && match[1]) {
           token = match[1].trim();
-          console.log("[AuthCallback] Extracted token from cookie:", token.substring(0, 20) + "...");
         }
       }
 
       if (!token) {
-        console.log("[AuthCallback] No token - returning early");
         return;
       }
-
-      console.log("[AuthCallback] Token validated, proceeding to save and verify...");
 
       try {
         // 2. Save Token Manually
@@ -51,7 +45,6 @@ export default function AuthCallback() {
           credentials: 'include'
         });
 
-        console.log("[AuthCallback] Backend response status:", response.status);
         const responseText = await response.text();
 
         if (!response.ok) {
@@ -64,9 +57,6 @@ export default function AuthCallback() {
         } catch (e) {
           throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
         }
-
-        console.log("[AuthCallback] Backend returned user:", data?.user?.id || "NO USER");
-        console.log("[AuthCallback] Full response keys:", Object.keys(data || {}));
 
         if (data?.user) {
           // 4. Update State & Redirect

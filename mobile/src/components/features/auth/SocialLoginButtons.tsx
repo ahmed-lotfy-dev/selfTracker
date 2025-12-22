@@ -24,7 +24,6 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
   const handleSocialLogin = async (provider: OAuthProvider) => {
     try {
       const callbackURL = Linking.createURL("auth-callback", { scheme: AUTH_SCHEME });
-      console.log("[SocialLogin] Generated callbackURL:", callbackURL);
 
       await authClient.signIn.social({
         provider: provider,

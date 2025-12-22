@@ -194,10 +194,10 @@ export const websocket = {
     handleWebSocketMessage(ws, message.toString())
   },
   open(ws: ServerWebSocket) {
-    console.log("[LiveStore] WebSocket connection opened")
+    // ws.data = { storeId: null }
   },
   close(ws: ServerWebSocket) {
-    console.log("[LiveStore] WebSocket connection closed")
+    // close cleanup
   },
 }
 
@@ -209,8 +209,6 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     if (rpcRequest._tag !== "Request") return
 
     const { tag, payload, id } = rpcRequest
-
-    console.log(`[LiveStore] WS Request: ${tag} | ID: ${id} (${typeof id})`)
 
     // Guard against missing ID (notifications don't need response, but requests do)
     if (id === undefined || id === null) {
