@@ -12,15 +12,19 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     const token = c.req.query('token');
     const headers = new Headers(c.req.raw.headers);
     if (token) {
+      console.log("[AuthMiddleware] Token from query:", token.substring(0, 10) + "...")
       headers.set('Authorization', `Bearer ${token}`);
+    } else {
+      console.log("[AuthMiddleware] No token in query")
     }
 
     const session = await auth.api.getSession({ headers });
+    if (!session) console.log("[AuthMiddleware] Session lookup failed")
 
     if (session?.user) {
       c.set("user", session.user);
       c.set("session", session.session);
-    }
+    } else { console.log("[AuthMiddleware] No user in session") }
   } catch (error) {
     console.error("[AuthMiddleware] Error validating session:", error);
   }

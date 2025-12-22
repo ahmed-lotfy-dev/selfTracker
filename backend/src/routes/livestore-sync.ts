@@ -199,7 +199,7 @@ livestoreRouter.post("/sync-existing", async (c) => {
         eventData: {
           id: w.id,
           userId: storeId,
-          weight: String(eventData.weight),
+          weight: String(w.weight),
           mood: w.mood,
           energy: w.energy,
           notes: w.notes,
