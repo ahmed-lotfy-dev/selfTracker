@@ -199,7 +199,7 @@ livestoreRouter.post("/sync-existing", async (c) => {
         eventData: {
           id: w.id,
           userId: storeId,
-          weight: w.weight,
+          weight: String(eventData.weight),
           mood: w.mood,
           energy: w.energy,
           notes: w.notes,
@@ -269,13 +269,42 @@ interface LiveStoreEvent {
   timestamp: number
 }
 
+// Hono Route for WebSocket Upgrade (uses Auth Middleware)
+livestoreRouter.get("/sync", async (c) => {
+  if (c.req.header("upgrade") !== "websocket") {
+    return c.json({ message: "Expected Upgrade: websocket" }, 426)
+  }
+
+  const user = c.get("user" as any)
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401)
+  }
+
+  // Bun.Server instance is passed in c.env
+  const server = c.env as any
+
+  const success = server.upgrade(c.req.raw, {
+    data: {
+      storeId: user.id
+    }
+  })
+
+  if (success) {
+    return undefined // Bun handles the response
+  }
+  return c.json({ message: "Upgrade Failed" }, 500)
+})
+
 // Bun WebSocket handler
 export const websocket = {
   message(ws: ServerWebSocket, message: string | Buffer) {
     handleWebSocketMessage(ws, message.toString())
   },
   open(ws: ServerWebSocket) {
-    // ws.data = { storeId: null }
+    const data = ws.data as any
+    if (data?.storeId) {
+      console.log(`[LiveStore] WS Connected (Authenticated) for Store: ${data.storeId}`)
+    }
   },
   close(ws: ServerWebSocket) {
     // close cleanup
@@ -312,26 +341,19 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     // session verification
     let storeId = payload?.storeId
     const innerPayload = payload?.payload
-    // THE FIX: The token and cursor are nested at payload.payload
-    const authToken = innerPayload?.authToken ?? payload?.authToken
     const cursorField = innerPayload?.cursor ?? payload?.cursor
 
-    if (authToken) {
-      // Try multiple auth methods: Bearer (since plugin enabled) + Cookies
-      const headers = new Headers()
-      headers.set('Authorization', `Bearer ${authToken}`)
-      headers.set('Cookie', `__Secure-better-auth.session_token=${authToken}; better-auth.session_token=${authToken}`)
-
-      const session = await auth.api.getSession({ headers })
-
-      if (session?.user) {
-        console.log(`[LiveStore] WS Auth Success for user: ${session.user.id}`)
-        storeId = session.user.id
-      } else {
-        console.log(`[LiveStore] WS Auth Failed for token: ${authToken.substring(0, 10)}...`)
+    // MIDDLEWARE AUTH ENFORCEMENT
+    // We strictly use the storeId attached during handshake authentication via c.get('user')
+    const wsData = ws.data as any
+    if (wsData?.storeId) {
+      if (storeId !== wsData.storeId && storeId !== 'anonymous') {
+        console.warn(`[LiveStore] Warning: Client requested store ${storeId} but is auth as ${wsData.storeId}. Forcing Correct Store.`)
       }
+      storeId = wsData.storeId
     } else {
-      console.log(`[LiveStore] WS No AuthToken provided in payload`)
+      console.warn(`[LiveStore] WS Warning: Unauthenticated connection attempt`)
+      return
     }
 
     if (tag === "SyncWsRpc.Push") {

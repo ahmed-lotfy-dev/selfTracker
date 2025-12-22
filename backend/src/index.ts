@@ -106,20 +106,7 @@ app.onError((err, c) => {
 export default {
   port: process.env.PORT || 8000,
   hostname: "0.0.0.0",
-  fetch(req: Request, server: any) {
-    // Only upgrade if it's the specific sync path and a WS request
-    const url = new URL(req.url);
-    if (url.pathname === "/api/livestore/sync" && req.headers.get("upgrade") === "websocket") {
-      console.log(`[LiveStore] Attempting WS Upgrade for ${url.pathname}...`);
-      if (server.upgrade(req)) {
-        console.log(`[LiveStore] WS Upgrade SUCCESSFUL for ${url.pathname}`);
-        return;
-      } else {
-        console.warn(`[LiveStore] WS Upgrade FAILED for ${url.pathname}`);
-      }
-    }
-    return app.fetch(req, server);
-  },
+  fetch: app.fetch,
   idleTimeout: 250,
   websocket: {
     message(ws: any, message: any) {

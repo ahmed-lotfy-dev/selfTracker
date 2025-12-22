@@ -8,7 +8,14 @@ import { auth } from "../../lib/auth.js";
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
   try {
     // Use better-auth's session() method which handles both Cookie and Bearer
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    // For WebSockets, we also accept 'token' query param and inject it as Bearer
+    const token = c.req.query('token');
+    const headers = new Headers(c.req.raw.headers);
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    const session = await auth.api.getSession({ headers });
 
     if (session?.user) {
       c.set("user", session.user);
