@@ -27,7 +27,7 @@ const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
 export function AppProviders({ children }: AppProvidersProps) {
   const { storeId, token, isLoading } = useAuth()
   const hasHydrated = useHasHydrated()
-  const [isRepairMode, setRepairMode] = useState(false)
+  const [isRepairMode, setRepairMode] = useState(true) // Force reset on first load
 
   const adapter = useMemo(() => {
     // Only log essential lifecycle events

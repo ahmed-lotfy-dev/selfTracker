@@ -48,8 +48,10 @@ export default function AuthCallback() {
           await queryClient.invalidateQueries({ queryKey: ['weights'] });
           await queryClient.invalidateQueries({ queryKey: ['workouts'] });
 
-          // Navigate home
-          router.replace("/(drawer)/(tabs)/home");
+          // Navigate home - use setTimeout to ensure navigation is ready
+          setTimeout(() => {
+            router.replace("/(drawer)/(tabs)/home" as any);
+          }, 100);
         } else {
           throw new Error("Failed to verify session token");
         }
@@ -57,7 +59,9 @@ export default function AuthCallback() {
       } catch (err: any) {
         console.error("[AuthCallback] Login failed:", err.message);
         showToast(`Login Failed: ${err.message}`, "error");
-        router.replace("/(auth)/sign-in");
+        setTimeout(() => {
+          router.replace("/(auth)/sign-in" as any);
+        }, 100);
       }
     };
 
