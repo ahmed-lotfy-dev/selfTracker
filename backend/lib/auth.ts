@@ -99,14 +99,17 @@ export const auth = betterAuth({
   trustedOrigins: [
     "selftracker://",
     "exp+selftracker://",
-    "selftracker",
-    "exp+selftracker",
-    "http://192.168.1.5:8081",
     "exp://192.168.1.5:8081",
-    "http://10.0.2.2:8000",
-    "exp://10.0.2.2:8081",
-    "http://localhost:1420",
-    "http://192.168.1.5:8000",
-    "http://192.168.1.5:8081",
+    "exp://192.168.1.5:8081/--/auth",
+    "exp://192.168.1.5:8081/--/auth?token=", // Just in case query params matter for origin matching (unlikely but safe)
+    process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.5:8000",
+    // Development mode - Expo's exp:// scheme with local IP ranges
+    ...(process.env.NODE_ENV === "development" ? [
+      "exp://*/*",                 // Trust all Expo development URLs
+      "exp://10.0.0.*:*/*",        // Trust 10.0.0.x IP range
+      "exp://192.168.*.*:*/*",     // Trust 192.168.x.x IP range
+      "exp://172.*.*.*:*/*",       // Trust 172.x.x.x IP range
+      "exp://localhost:*/*"        // Trust localhost
+    ] : [])
   ],
 })

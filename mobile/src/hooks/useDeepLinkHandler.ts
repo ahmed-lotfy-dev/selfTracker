@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import * as Linking from "expo-linking"
+import * as ExpoLinking from "expo-linking"
+import { Linking, Platform } from "react-native"
 import { useRouter } from "expo-router"
 import { useToast } from './useToast';
 import { authClient } from "../lib/auth-client"
-import { Platform } from "react-native"
 import { queryClient } from "@/src/lib/react-query";
 import { useAuthActions, useHasHydrated } from '../store/useAuthStore';
 import * as SecureStore from 'expo-secure-store';
@@ -22,37 +22,45 @@ export function useDeepLinkHandler() {
 
     const handleDeepLink = async (event: { url: string }) => {
       const url = event.url;
-      console.log("[DeepLink] RAW URL RECEIVED:", url);
-      // DEBUG: Alert the raw URL to confirm reception in Prod
-      alert(`Debug: Received Link!\n${url}`);
-
-      showToast('Processing login...', 'info');
-
-      console.log("[DeepLink] Received URL:", url)
+      console.log("[DeepLink NATIVE] RAW URL RECEIVED:", url);
 
       if (isProcessingRef.current) {
-        console.log("[DeepLink] Already processing, skipping.")
         return;
       }
 
       try {
-        const parsedUrl = Linking.parse(url);
+        const parsedUrl = ExpoLinking.parse(url);
+        const params = parsedUrl.queryParams || {};
 
-        const isAuthPath = parsedUrl.hostname === 'home' || parsedUrl.path === 'home' ||
-          parsedUrl.hostname === 'auth' || parsedUrl.path === 'auth';
+        // Check for nested 'url' parameter (common in Expo Go/Dev Client)
+        if (params.url) {
+          try {
+            const nestedUrl = params.url as string;
+            const parsedNested = ExpoLinking.parse(nestedUrl);
+            const nestedParams = parsedNested.queryParams || {};
 
-        if (!isAuthPath) {
-          return;
+            // Merge nested params into main params
+            Object.assign(params, nestedParams);
+          } catch (e) {
+            console.warn("[DeepLink] Failed to parse nested URL", e);
+          }
         }
 
-        let token = parsedUrl.queryParams?.token as string | undefined;
+        let token = params.token as string | undefined;
         // Also check for session_token
         if (!token) {
-          token = parsedUrl.queryParams?.session_token as string | undefined;
+          try {
+            token = params.session_token as string | undefined;
+          } catch (e) {
+            // ignore error
+          }
         }
 
-        if (!token && parsedUrl.queryParams?.cookie) {
-          const cookieParam = parsedUrl.queryParams.cookie as string;
+        if (!token && params.cookie) {
+          const cookieRaw = params.cookie;
+          const cookieParam = Array.isArray(cookieRaw) ? cookieRaw[0] : cookieRaw;
+
+          // Try matching standard token
           const match = cookieParam.match(/session_token=([^;]+)/);
           if (match && match[1]) {
             token = decodeURIComponent(match[1]);
@@ -60,9 +68,8 @@ export function useDeepLinkHandler() {
         }
 
         if (!token) {
-          // Use alert for visibility in prod
-          alert(`Login failed: No token found in URL.\nURL: ${url}`);
-          showToast('Login failed: No token', 'error');
+          // Silently ignore generic deep links (like app launch) that don't have tokens
+          console.log(`[DeepLink] No token found in URL: ${url} -> Ignoring.`);
           return;
         }
 
@@ -72,7 +79,7 @@ export function useDeepLinkHandler() {
         try {
           await SecureStore.setItemAsync("selftracker.better-auth.session_token", token);
           await SecureStore.setItemAsync("selftracker.session_token", token);
-          await SecureStore.setItemAsync("accessToken", token); // Match sign-in.tsx behavior
+          await SecureStore.setItemAsync("accessToken", token);
         } catch (storageErr) {
           console.warn('Failed to save session token manually', storageErr);
         }
@@ -86,10 +93,7 @@ export function useDeepLinkHandler() {
         });
 
         if (session.data?.user) {
-          // Explicitly clear any previous alerts and notify success
-          // alert(`Welcome ${session.data.user.name}! Redirecting...`);
           showToast(`Welcome, ${session.data.user.name.split(' ')[0]}!`, 'success');
-
           setUser(session.data.user);
 
           queryClient.setQueryData(['session'], session.data);
@@ -111,7 +115,6 @@ export function useDeepLinkHandler() {
       } catch (err: any) {
         console.error('Deep link error:', err);
         showToast(`Error: ${err.message}`, 'error');
-        alert(`Deep link error: ${err.message}`);
         isProcessingRef.current = false;
       }
     };
