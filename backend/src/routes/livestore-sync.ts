@@ -83,7 +83,7 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
       const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
       const processedData = sanitizeData(data)
       return {
-        eventEncoded: { _tag: e.eventType, ...processedData },
+        event: { _tag: e.eventType, ...processedData },
         metadata: { _tag: "Some", value: { createdAt: new Date(Number(e.timestamp)).toISOString() } }
       }
     })
@@ -322,11 +322,10 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
           if (idx === 0) {
             console.log(`[LiveStore] WS Processed Sample[0]: type=${e.eventType} data=${JSON.stringify(processedData).substring(0, 150)}...`)
-            console.log(`[LiveStore] Metadata: Some (createdAt: ${new Date(Number(e.timestamp)).toISOString()})`)
           }
 
           return {
-            eventEncoded: { _tag: e.eventType, ...processedData },
+            event: { _tag: e.eventType, ...processedData },
             metadata: { _tag: "Some", value: { createdAt: new Date(Number(e.timestamp)).toISOString() } }
           }
         }),
@@ -347,6 +346,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         traceId: traceId
       })
       console.log(`[LiveStore] Sending Pull response - ID: ${id}, Events: ${events.length}`)
+      console.log(`[LiveStore] Response Snippet: ${response.substring(0, 300)}...`)
       ws.send(response)
     }
   } catch (error) {
