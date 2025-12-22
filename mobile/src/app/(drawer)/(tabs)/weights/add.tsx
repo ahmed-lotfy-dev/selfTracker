@@ -3,7 +3,6 @@ import WeightForm from "@/src/components/features/weight/WeightForm"
 import { useRouter } from "expo-router"
 import { useQueryClient } from "@tanstack/react-query"
 import React from "react"
-import BackButton from "@/src/components/Buttons/BackButton"
 import Header from "@/src/components/Header"
 
 export default function AddWeight() {

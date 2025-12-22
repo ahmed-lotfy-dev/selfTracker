@@ -32,22 +32,24 @@ function sanitizeData(obj: any): any {
     // Schema compliance: these must be ISO dates for Event schema
     if (["createdAt", "updatedAt", "deletedAt", "dueDate", "deadline", "startTime", "endTime"].includes(key)) {
       try {
+        let ts = 0
         if (typeof val === "number" || typeof val === "bigint") {
-          newObj[key] = new Date(Number(val)).toISOString()
-          continue
-        }
-        if (typeof val === "string") {
+          ts = Number(val)
+        } else if (typeof val === "string") {
           const parsed = Date.parse(val)
           if (!isNaN(parsed)) {
-            newObj[key] = new Date(parsed).toISOString()
-            continue
+            ts = parsed
+          } else {
+            const numericVal = Number(val)
+            if (!isNaN(numericVal)) ts = numericVal
           }
-          // Fallback for numeric strings
-          const numericVal = Number(val)
-          if (!isNaN(numericVal)) {
-            newObj[key] = new Date(numericVal).toISOString()
-            continue
-          }
+        }
+
+        if (ts > 0) {
+          // Timestamp healer: if it looks like seconds (less than year 2000 in ms), multiply by 1000
+          if (ts < 100000000000) ts *= 1000
+          newObj[key] = new Date(ts).toISOString()
+          continue
         }
       } catch (e) {
         console.warn(`[LiveStore] Date sanitation failed for ${key}=${val}`)
@@ -377,13 +379,15 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         backendId: "selftracker-v1"
       }
 
-      const response = JSON.stringify({
+      const responseObj: any = {
         _tag: "Response",
         payload: { _tag: "Success", value: responsePayload },
         id: id,
-        requestId: id,
-        traceId: traceId
-      })
+        requestId: id
+      }
+      if (traceId) responseObj.traceId = traceId
+
+      const response = JSON.stringify(responseObj)
       console.log(`[LiveStore] Sending Pull response - ID: ${id}, Events: ${events.length}`)
       console.log(`[LiveStore] Response Snippet: ${response.substring(0, 400)}...`)
       ws.send(response)

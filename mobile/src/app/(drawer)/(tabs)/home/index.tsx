@@ -34,7 +34,10 @@ export default function HomeScreen() {
   const tasks = useQuery(allTasks$)
 
   React.useEffect(() => {
-    console.log(`[HomeScreen] Data Status - Workouts: ${workoutLogs.length}, Weights: ${weightLogs.length}, Tasks: ${tasks.length}`)
+    console.log(`[HomeScreen] DATA STATUS - Workouts: ${workoutLogs.length}, Weights: ${weightLogs.length}, Tasks: ${tasks.length}`)
+    if (workoutLogs.length > 0) console.log(`[HomeScreen] Sample Workout: ${JSON.stringify(workoutLogs[0]).substring(0, 100)}`)
+    if (weightLogs.length > 0) console.log(`[HomeScreen] Sample Weight: ${JSON.stringify(weightLogs[0]).substring(0, 100)}`)
+    if (tasks.length > 0) console.log(`[HomeScreen] Sample Task: ${JSON.stringify(tasks[0]).substring(0, 100)}`)
   }, [workoutLogs.length, weightLogs.length, tasks.length])
 
   const stats = useMemo(() => {

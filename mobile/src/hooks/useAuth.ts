@@ -40,8 +40,9 @@ export const useAuth = () => {
   }, [(sessionData?.user as any)?.theme, (user as any)?.theme])
 
   // Loading Logic
-  // Wait for: Hydration AND (Session Fetch OR Error) AND initial token load
-  const isLoading = !hasHydrated || isSessionPending || !isManualCheckDone
+  // Wait for: Hydration AND initial token load
+  // ONLY wait for isSessionPending if we don't have a user/token yet to prevent flickering during refetches
+  const isLoading = !hasHydrated || !isManualCheckDone || (isSessionPending && !finalUser && !finalToken)
 
   const logout = async () => {
     try {
