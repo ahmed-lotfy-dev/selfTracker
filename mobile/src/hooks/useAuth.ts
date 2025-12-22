@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { authClient } from "@/src/lib/auth-client"
-import { useAuthActions, useUser, useHasHydrated } from "../store/useAuthStore"
+import { useAuthActions, useUser, useToken, useHasHydrated } from "../store/useAuthStore"
 import { getAccessToken, clearAllUserData } from "@/src/lib/storage"
 import { queryClient } from "@/src/lib/react-query"
 import { Uniwind } from 'uniwind'
@@ -11,24 +11,26 @@ export const useAuth = () => {
 
   // 2. Zustand State
   const user = useUser()
+  const token = useToken()
   const hasHydrated = useHasHydrated()
-  const { setUser } = useAuthActions()
+  const { setUser, setToken } = useAuthActions()
 
-  // 3. Manual Token State (Fallback)
-  const [manualToken, setManualToken] = useState<string | null>(null)
+  // 3. Manual Token Flow (Stability ensure)
   const [isManualCheckDone, setIsManualCheckDone] = useState(false)
 
-  // Fetch Manual Token on Mount AND when User changes (e.g. after Social Login deep link)
+  // Sync token from SecureStore to Zustand on mount or when user changes
   useEffect(() => {
-    getAccessToken().then(token => {
-      setManualToken(token)
+    getAccessToken().then(storedToken => {
+      if (storedToken && storedToken !== token) {
+        setToken(storedToken)
+      }
       setIsManualCheckDone(true)
     })
-  }, [user]) // Re-run when user changes
+  }, [user]) // Re-run when user changes to catch social login redirect
 
   // Derived State
   const finalUser = sessionData?.user ?? user ?? null
-  const finalToken = sessionData?.session?.token ?? manualToken ?? null
+  const finalToken = sessionData?.session?.token ?? token ?? null
   const storeId = finalUser?.id ?? 'anonymous'
 
   // 4. Sync Theme
@@ -38,7 +40,7 @@ export const useAuth = () => {
   }, [(sessionData?.user as any)?.theme, (user as any)?.theme])
 
   // Loading Logic
-  // We wait for: Zustand Hydration AND (Session Fetch OR Error) AND Manual Token Check
+  // Wait for: Hydration AND (Session Fetch OR Error) AND initial token load
   const isLoading = !hasHydrated || isSessionPending || !isManualCheckDone
 
   const logout = async () => {
@@ -48,7 +50,7 @@ export const useAuth = () => {
       await authClient.signOut()
     } finally {
       setUser(null)
-      setManualToken(null)
+      setToken(null)
       refetch()
     }
   }
@@ -59,7 +61,7 @@ export const useAuth = () => {
     storeId,           // Used for LiveStore identity
 
     // Auth Status
-    isAuthenticated: !!finalUser && !!finalToken, // Strict check restored
+    isAuthenticated: !!finalUser && !!finalToken, // Strict check
     isLoading,
     isResolved: !isLoading && !!finalUser, // Helper
 

@@ -13,7 +13,6 @@ axiosInstance.interceptors.request.use(
   async (config) => {
     // Get token from SecureStore (faster than authClient.getSession())
     const token = await getAccessToken();
-    console.log("[Axios] Token from SecureStore:", token ? `${token.substring(0, 15)}...` : "NO TOKEN");
 
     if (token) {
       // Send as both Bearer (for non-better-auth endpoints) and Cookie (for better-auth)

@@ -221,20 +221,19 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     // session verification
     let storeId = payload?.storeId
     const authToken = payload?.authToken
-    console.log(`[LiveStore] WS Payload - storeId: ${storeId}, authToken: ${authToken ? 'YES' : 'NO'}`)
+    // Only log if it's the initial connection or if actually provided
+    if (tag === "SyncWsRpc.Pull" && payload?.cursor?._tag === "None") {
+      console.log(`[LiveStore] WS Connection Auth - storeId: ${storeId}, authToken: ${authToken ? 'PROVIDED' : 'MISSING'}`)
+    }
 
     if (authToken) {
       const session = await auth.api.getSession({
         headers: new Headers({ Cookie: `__Secure-better-auth.session_token=${authToken}` })
       })
       if (session?.user) {
-        console.log(`[LiveStore] WS Auth Success: ${session.user.id}`)
+        // console.log(`[LiveStore] WS Auth Success: ${session.user.id}`)
         storeId = session.user.id
-      } else {
-        console.warn(`[LiveStore] WS Auth Fail: Invalid token for store ${storeId}`)
       }
-    } else {
-      console.warn(`[LiveStore] WS No authToken provided, using storeId: ${storeId}`)
     }
 
     if (tag === "SyncWsRpc.Push") {
@@ -252,7 +251,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
       const responsePayload = {
         batch: events.map(e => ({
-          eventEncoded: e.eventData,
+          eventEncoded: { _tag: e.eventType, ...e.eventData },
           metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
         })),
         pageInfo: {
