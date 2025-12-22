@@ -25,9 +25,13 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
       if (log) log.info({
         msg: "[AuthMiddleware] Session not found",
         path: c.req.path,
+        fullUrl: c.req.url,
         hasTokenInQuery: !!token,
         authHeader: headers.get('Authorization')?.substring(0, 15),
-        cookieHeader: headers.get('Cookie')?.substring(0, 40)
+        cookieHeader: headers.get('Cookie')?.substring(0, 40),
+        host: headers.get('host'),
+        forwardedProto: headers.get('x-forwarded-proto'),
+        forwardedHost: headers.get('x-forwarded-host')
       });
       return c.json({ error: "Unauthorized" }, 401);
     }
