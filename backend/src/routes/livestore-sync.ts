@@ -107,12 +107,13 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
       let ts = Number(e.timestamp)
       if (ts > 0 && ts < 100000000000) ts *= 1000
 
+      // Protocol v0.4 compatibility
       return {
         event: {
           id: e.eventId,
           name: e.eventType,
           args: processedData,
-          seqNum: Number(e.id),
+          seqNum: Number(e.id), // Using serial ID as seqNum for consistent order
           clientId: "backend",
           sessionId: "static"
         },
@@ -122,7 +123,9 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
 
     return c.json({
       type: "pull-response",
-      events: pullEvents,
+      events: pullEvents, // used by some versions
+      batch: pullEvents,  // used by others
+      cursor: { _tag: "Some", value: { eventSequenceNumber: pullEvents.length > 0 ? pullEvents[pullEvents.length - 1].event.seqNum : checkpoint } },
       backendId: "selftracker-v1"
     })
   } catch (error) {
@@ -383,26 +386,19 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       }
 
       const responsePayload = {
-        batch: events.map((e, idx) => {
+        events: events.map((e, idx) => {
           const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
           const processedData = sanitizeData(data)
 
-          if (idx === 0) {
-            console.log(`[LiveStore] WS Pull Batch[0]: type=${e.eventType} id=${e.id}`)
-          }
-
           let ts = Number(e.timestamp)
-          // DB timestamp is milliseconds (from Date.now()).
-          // If it looks like seconds (< 100 billion), multiply by 1000 to get ms.
           if (ts > 0 && ts < 100000000000) ts *= 1000
 
-          // Use name/args format for LiveStore v0.4 protocol compatibility
           return {
             event: {
               id: e.eventId,
               name: e.eventType,
               args: processedData,
-              seqNum: Number(e.seqNum), // STRICT SEQUENCE NUMBER FROM DB
+              seqNum: Number(e.id), // Use the primary key 'id' as the sequence number
               clientId: "backend",
               sessionId: "static"
             },
@@ -412,23 +408,28 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         pageInfo: {
           hasMore: events.length >= 50,
           cursor: events.length > 0
-            ? { _tag: "Some", value: { eventSequenceNumber: Number(events[events.length - 1].seqNum) } }
+            ? { _tag: "Some", value: { eventSequenceNumber: Number(events[events.length - 1].id) } }
             : { _tag: "None" }
         },
         backendId: "selftracker-v1"
       }
 
+      // Protocol dual-compatibility: some clients expect 'batch', others expect 'events'
+      const finalPayload = {
+        ...responsePayload,
+        batch: (responsePayload as any).events
+      }
+
       const responseObj: any = {
         _tag: "Response",
-        payload: { _tag: "Success", value: responsePayload },
+        payload: { _tag: "Success", value: finalPayload },
         id: id,
         requestId: id
       }
       if (traceId) responseObj.traceId = traceId
 
       const response = JSON.stringify(responseObj)
-      console.log(`[LiveStore] Sending Pull response - ID: ${id}, Events: ${events.length}`)
-      console.log(`[LiveStore] Response Snippet: ${response.substring(0, 400)}...`)
+      console.log(`[LiveStore] Sending Pull response - ID: ${id}, Events: ${events.length}, LastSeq: ${events.length > 0 ? events[events.length - 1].id : checkpoint}`)
       ws.send(response)
     }
   } catch (error) {
@@ -455,6 +456,8 @@ async function pushEventsToDb(batch: any[], storeId: string) {
     const timestamp = eventArgs.createdAt ? Date.parse(eventArgs.createdAt) : Date.now()
 
     // 1. Store the event for LiveStore sync
+    // We strictly use the seqNum provided by the client if available, 
+    // but the backend 'id' remains the source of truth for Pull operations.
     await db.insert(livestoreEvents).values({
       storeId,
       eventId,
@@ -607,10 +610,10 @@ async function fetchEvents(checkpoint: number, storeId: string) {
     .where(
       and(
         eq(livestoreEvents.storeId, storeId),
-        gt(livestoreEvents.seqNum, checkpoint || 0)
+        gt(livestoreEvents.id, checkpoint || 0) // Use serial 'id' as the absolute sequence authority
       )
     )
-    .orderBy(livestoreEvents.seqNum)
+    .orderBy(livestoreEvents.id)
     .limit(50)
 }
 

@@ -45,6 +45,14 @@ export function AppProviders({ children }: AppProvidersProps) {
   // If no token, we just don't pass a backend to the adapter
   const authenticatedUrl = (token && syncUrl) ? `${syncUrl}?token=${token}` : undefined
 
+  useEffect(() => {
+    if (authenticatedUrl) {
+      console.log(`[LiveStore] Sync initialized with URL: ${authenticatedUrl.split('?')[0]}?token=${token?.substring(0, 5)}...`)
+    } else {
+      console.log("[LiveStore] Sync disabled (no token or syncUrl)")
+    }
+  }, [authenticatedUrl, token])
+
   const adapter = useMemo(() => {
     if (isRepairMode) console.log("[LiveStore] Initializing adapter in REPAIR MODE (resetPersistence: true)")
 
@@ -66,14 +74,20 @@ export function AppProviders({ children }: AppProvidersProps) {
             storeId={finalStoreId}
             syncPayload={{ authToken: token ?? '' }}
             batchUpdates={batchUpdates}
-            renderLoading={(stage) => <LoadingIndicator message={`LiveStore: ${stage.stage}...`} />}
-            renderError={(error) => (
-              <SyncErrorView
-                error={error}
-                isRepairing={isRepairMode}
-                onRepair={() => setRepairMode(true)}
-              />
-            )}
+            renderLoading={(stage) => {
+              console.log(`[LiveStore] Stage: ${stage.stage}...`)
+              return <LoadingIndicator message={`LiveStore: ${stage.stage}...`} />
+            }}
+            renderError={(error) => {
+              console.error(`[LiveStore] Sync Error:`, error)
+              return (
+                <SyncErrorView
+                  error={error}
+                  isRepairing={isRepairMode}
+                  onRepair={() => setRepairMode(true)}
+                />
+              )
+            }}
           >
             <KeyboardProvider>
               <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>

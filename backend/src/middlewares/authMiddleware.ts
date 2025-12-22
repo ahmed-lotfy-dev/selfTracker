@@ -11,6 +11,7 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     const headers = new Headers(c.req.raw.headers);
 
     if (token) {
+      // console.log(`[AuthMiddleware] Token found in query: ${token.substring(0, 5)}...`);
       // Inject token into headers for WebSocket authentication
       headers.set('Authorization', `Bearer ${token}`);
       // Fallback: also set as cookies as better-auth may prefer this in some configurations
@@ -21,7 +22,13 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     const log = c.get("logger");
 
     if (!session) {
-      if (log) log.info({ msg: "[AuthMiddleware] Session not found", path: c.req.path });
+      if (log) log.info({
+        msg: "[AuthMiddleware] Session not found",
+        path: c.req.path,
+        hasTokenInQuery: !!token,
+        authHeader: headers.get('Authorization')?.substring(0, 15),
+        cookieHeader: headers.get('Cookie')?.substring(0, 40)
+      });
       return c.json({ error: "Unauthorized" }, 401);
     }
 
