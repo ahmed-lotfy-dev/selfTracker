@@ -384,7 +384,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
           }
         }),
         pageInfo: {
-          hasMore: events.length >= 1000,
+          hasMore: events.length >= 50,
           cursor: events.length > 0
             ? { _tag: "Some", value: { eventSequenceNumber: events[events.length - 1].id } }
             : { _tag: "None" }
