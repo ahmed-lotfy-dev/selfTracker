@@ -10,7 +10,7 @@ import { queryClient } from '@/src/lib/react-query';
 export default function AuthCallback() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { setUser } = useAuthActions();
+  const { setUser, setToken } = useAuthActions();
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -61,6 +61,7 @@ export default function AuthCallback() {
         if (data?.user) {
           // 4. Update State & Redirect
           setUser(data.user);
+          setToken(token); // CRITICAL: Update Zustand so AppProviders sees it
           showToast(`Welcome back, ${data.user.name.split(" ")[0]}!`, "success");
 
           // Invalidate queries to trigger data refetch
