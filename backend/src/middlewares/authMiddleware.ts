@@ -10,15 +10,16 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     const token = c.req.query('token');
     const headers = new Headers(c.req.raw.headers);
 
+    let session;
     if (token) {
-      // console.log(`[AuthMiddleware] Token found in query: ${token.substring(0, 5)}...`);
-      // Inject token into headers for WebSocket authentication
+      // For WebSocket/Query-token based requests, we MUST use custom headers
       headers.set('Authorization', `Bearer ${token}`);
-      // Fallback: also set as cookies as better-auth may prefer this in some configurations
       headers.set('Cookie', `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`);
+      session = await auth.api.getSession({ headers });
+    } else {
+      // For standard HTTP requests (Axios), passing the raw Headers is more robust 
+      session = await auth.api.getSession({ headers: c.req.raw.headers });
     }
-
-    const session = await auth.api.getSession({ headers });
     const log = c.get("logger");
 
     if (!session) {

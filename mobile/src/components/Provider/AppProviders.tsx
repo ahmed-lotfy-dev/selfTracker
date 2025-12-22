@@ -18,6 +18,7 @@ import { ToastProvider } from "@/src/hooks/useToast"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useHasHydrated } from "@/src/features/auth/useAuthStore";
 import { schema } from '@/src/livestore/schema'
+import * as SQLite from 'expo-sqlite'
 
 export { queryClient }
 
@@ -31,6 +32,22 @@ export function AppProviders({ children }: AppProvidersProps) {
   const { storeId, token, isLoading } = useAuth()
   const hasHydrated = useHasHydrated()
   const [isRepairMode, setRepairMode] = useState(false)
+
+  useEffect(() => {
+    if (storeId) {
+      console.log(`[LiveStore] Active Store ID: ${storeId}`);
+    }
+  }, [storeId])
+
+  useEffect(() => {
+    if (isRepairMode && storeId) {
+      console.log(`[LiveStore] Manual wipe initiated for store: ${storeId}`);
+      // LiveStore usually uses this naming convention for Expo
+      SQLite.deleteDatabaseAsync(`livestore_${storeId}.db`)
+        .then(() => console.log("[LiveStore] Database file deleted successfully"))
+        .catch(err => console.error("[LiveStore] Failed to manually delete database file:", err));
+    }
+  }, [isRepairMode, storeId])
 
   // 1. Storage Hydration
   if (!hasHydrated) return <LoadingIndicator message="Initializing..." />
@@ -78,13 +95,18 @@ export function AppProviders({ children }: AppProvidersProps) {
               console.log(`[LiveStore] Stage: ${stage.stage}...`)
               return <LoadingIndicator message={`LiveStore: ${stage.stage}...`} />
             }}
-            renderError={(error) => {
-              console.error(`[LiveStore] Sync Error:`, error)
+            renderError={(error: any) => {
+              const errorMsg = error?.message || error?.toString() || "Unknown Error";
+              console.error(`[LiveStore] Sync Error (isRepairMode=${isRepairMode}):`, errorMsg)
+
               return (
                 <SyncErrorView
                   error={error}
                   isRepairing={isRepairMode}
-                  onRepair={() => setRepairMode(true)}
+                  onRepair={() => {
+                    console.log("[LiveStore] Manual repair requested by user");
+                    setRepairMode(true);
+                  }}
                 />
               )
             }}

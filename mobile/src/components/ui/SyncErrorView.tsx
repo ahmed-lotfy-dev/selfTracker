@@ -24,9 +24,11 @@ export const SyncErrorView = ({ error, isRepairing, onRepair }: SyncErrorViewPro
 
   useEffect(() => {
     if (isCorruption && !isRepairing) {
-      console.log("[LiveStore] Database corruption detected. Auto-repairing...")
-      const timer = setTimeout(onRepair, 0)
+      console.log("[LiveStore] Database corruption detected. Auto-repairing in 2 seconds...")
+      const timer = setTimeout(onRepair, 2000) // Delay a bit to let previous state settle
       return () => clearTimeout(timer)
+    } else if (isCorruption && isRepairing) {
+      console.error("[LiveStore] CRITICAL: Auto-repair failed. Database still inaccessible.")
     }
   }, [isCorruption, isRepairing, onRepair])
 
@@ -60,11 +62,16 @@ export const SyncErrorView = ({ error, isRepairing, onRepair }: SyncErrorViewPro
         Sync Error
       </Text>
       <Text
-        className="mt-3 text-sm text-center"
+        className="mt-3 text-sm text-center px-4"
         style={{ color: colors.placeholder }}
       >
         {msg}
       </Text>
+      {isRepairing && (
+        <Text className="mt-2 text-xs italic opacity-50 text-center px-6">
+          Persistence reset was requested, but initialization still failed. This might require a cold restart or app data wipe.
+        </Text>
+      )}
 
       <Pressable
         onPress={onRepair}
