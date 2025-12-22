@@ -26,6 +26,10 @@ const app = new Hono<{
 
 app.use(loggerMiddleware)
 
+// Auth middleware for all API routes (except /api/auth/*)
+import { authMiddleware } from "./middlewares/authMiddleware.js"
+app.use("/api/*", authMiddleware)
+
 app.use(
   "/api/auth/*", // or replace with "*" to enable cors for all routes
   cors({

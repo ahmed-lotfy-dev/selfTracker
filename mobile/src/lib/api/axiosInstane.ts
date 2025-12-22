@@ -1,7 +1,6 @@
 import axios from "axios"
 import { router } from 'expo-router';
 import { API_BASE_URL } from "./config"
-import { authClient } from "../auth-client"
 import { getAccessToken } from "../storage"
 
 const axiosInstance = axios.create({
@@ -12,17 +11,9 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    // 1. Try Better Auth session
-    const { data: session } = await authClient.getSession()
-    let token = session?.session?.token
-
-    // 2. Fallback to manually stored accessToken
-    if (!token) {
-      const manualToken = await getAccessToken()
-      if (manualToken) {
-        token = manualToken
-      }
-    }
+    // Get token from SecureStore (faster than authClient.getSession())
+    const token = await getAccessToken();
+    console.log("[Axios] Token from SecureStore:", token ? `${token.substring(0, 15)}...` : "NO TOKEN");
 
     if (token) {
       // Send as both Bearer (for non-better-auth endpoints) and Cookie (for better-auth)
