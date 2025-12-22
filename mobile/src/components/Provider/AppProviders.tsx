@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import React from "react"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { KeyboardProvider } from "react-native-keyboard-controller"
-import { Text, ActivityIndicator, unstable_batchedUpdates as batchUpdates } from "react-native"
+import { Text, ActivityIndicator, View, unstable_batchedUpdates as batchUpdates } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { ToastProvider } from "@/src/hooks/useToast"
 import { useAuth } from "@/src/hooks/useAuth"
@@ -14,6 +14,7 @@ import { makePersistedAdapter } from '@livestore/adapter-expo'
 import { LiveStoreProvider } from '@livestore/react'
 import { makeWsSync } from '@livestore/sync-cf/client'
 import { schema } from '@/src/livestore/schema'
+import { useHasHydrated } from "@/src/store/useAuthStore"
 
 interface AppProvidersProps {
   children: ReactNode
@@ -26,19 +27,32 @@ const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
 export function AppProviders({ children }: AppProvidersProps) {
   // Theme logic is now inside the hook
   const { storeId, token, isLoading } = useAuth()
+  const hasHydrated = useHasHydrated()
 
   const adapter = useMemo(() => {
-    console.log(`[LiveStore] RE-CREATING ADAPTER - Store: ${storeId}, Token: ${token ? 'PRESENT' : 'MISSING'}`)
+    console.log(`[LiveStore] Creating Adapter (Stable Instance) - syncUrl: ${syncUrl}`)
     return makePersistedAdapter({
       sync: { backend: syncUrl ? makeWsSync({ url: syncUrl }) : undefined },
     })
-  }, [storeId, token])
+  }, [])
 
   useEffect(() => {
     console.log(`[LiveStore] useAuth state changed - storeId: ${storeId}, token: ${token ? 'YES' : 'NO'}, isLoading: ${isLoading}`)
   }, [storeId, token, isLoading])
 
-  if (isLoading) {
+  if (!hasHydrated) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
+        <ActivityIndicator size="large" color="#10B981" />
+        <Text style={{ marginTop: 12, color: '#6B7280' }}>Initializing...</Text>
+      </SafeAreaView>
+    )
+  }
+
+  const finalStoreId = storeId ?? 'anonymous'
+  const isAuthLoading = isLoading && finalStoreId === 'anonymous'
+
+  if (isAuthLoading) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
         <ActivityIndicator size="large" color="#10B981" />
@@ -47,15 +61,12 @@ export function AppProviders({ children }: AppProvidersProps) {
     )
   }
 
-  const finalStoreId = storeId ?? 'anonymous'
-  console.log(`[LiveStore] Provider initialized - Store: ${finalStoreId}, Token: ${token ? 'YES' : 'NO'}`)
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <LiveStoreProvider
-            key={`${finalStoreId}-${token ? 'auth' : 'noauth'}`}
+            key={finalStoreId}
             schema={schema}
             adapter={adapter}
             storeId={finalStoreId}
@@ -80,6 +91,12 @@ export function AppProviders({ children }: AppProvidersProps) {
           >
             <KeyboardProvider>
               <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
+                {/* Secondary loading overlay if session is pending but we HAVE a storeId already */}
+                {isLoading && (
+                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="small" color="#10B981" />
+                  </View>
+                )}
                 {children}
               </SafeAreaView>
             </KeyboardProvider>

@@ -366,6 +366,8 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
           }
 
           let ts = Number(e.timestamp)
+          // DB timestamp is milliseconds (from Date.now()).
+          // If it looks like seconds (< 100 billion), multiply by 1000 to get ms.
           if (ts > 0 && ts < 100000000000) ts *= 1000
 
           // Use name/args format for LiveStore v0.4 protocol compatibility
@@ -374,7 +376,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
               id: e.eventId,
               name: e.eventType,
               args: processedData,
-              seqNum: Number(e.id),
+              seqNum: Number(e.seqNum), // STRICT SEQUENCE NUMBER FROM DB
               clientId: "backend",
               sessionId: "static"
             },
@@ -433,6 +435,7 @@ async function pushEventsToDb(batch: any[], storeId: string) {
       eventType: eventName,
       eventData: eventArgs,
       timestamp,
+      seqNum: seqNum || 0,
     }).onConflictDoNothing()
 
     // 2. Materialize the event into our legacy tables (Source of Truth)
@@ -572,16 +575,17 @@ async function fetchEvents(checkpoint: number, storeId: string) {
       eventType: livestoreEvents.eventType,
       eventData: livestoreEvents.eventData,
       timestamp: livestoreEvents.timestamp,
+      seqNum: livestoreEvents.seqNum,
     })
     .from(livestoreEvents)
     .where(
       and(
         eq(livestoreEvents.storeId, storeId),
-        gt(livestoreEvents.id, checkpoint || 0)
+        gt(livestoreEvents.seqNum, checkpoint || 0)
       )
     )
-    .orderBy(livestoreEvents.id)
-    .limit(1000)
+    .orderBy(livestoreEvents.seqNum)
+    .limit(50)
 }
 
 // handlePush and handlePull were replaced by helper functions above

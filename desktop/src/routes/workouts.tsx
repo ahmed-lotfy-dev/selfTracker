@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getWorkoutLogs } from "@/services/api/workouts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dumbbell, Calendar } from "lucide-react";
+import { formatLocal } from "@/lib/dateUtils";
 
 export default function WorkoutsPage() {
   const { data, isLoading } = useQuery({
@@ -50,7 +51,7 @@ export default function WorkoutsPage() {
                   <CardTitle className="text-base">{log.workoutName || "Workout"}</CardTitle>
                   <CardDescription className="flex items-center gap-1 text-xs">
                     <Calendar className="h-3 w-3" />
-                    {new Date(log.createdAt).toLocaleDateString()}
+                    {formatLocal(log.createdAt)}
                   </CardDescription>
                 </div>
               </div>

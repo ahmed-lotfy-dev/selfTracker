@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getWeightLogs } from "@/services/api/weight";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scale } from "lucide-react";
+import { formatLocal } from "@/lib/dateUtils";
 
 export default function WeightPage() {
   const { data, isLoading } = useQuery({
@@ -61,7 +62,7 @@ export default function WeightPage() {
                 </div>
               </div>
               <div className="text-sm text-muted-foreground">
-                {new Date(log.createdAt).toLocaleDateString()}
+                {formatLocal(log.createdAt)}
               </div>
             </CardContent>
           </Card>

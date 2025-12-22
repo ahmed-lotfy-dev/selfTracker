@@ -3,45 +3,10 @@
   "dialect": "postgresql",
   "entries": [
     {
-      "idx": 0,
+      "idx": 6,
       "version": "7",
-      "when": 1745758500911,
-      "tag": "0000_damp_corsair",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1766227132992,
-      "tag": "0001_even_cable",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1766234508058,
-      "tag": "0002_superb_omega_flight",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1766250794870,
-      "tag": "0003_purple_maelstrom",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1766251023852,
-      "tag": "0004_tan_spectrum",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1766326256171,
-      "tag": "0005_outstanding_black_knight",
+      "when": 1766404241226,
+      "tag": "0006_luxuriant_prowler",
       "breakpoints": true
     }
   ]

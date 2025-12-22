@@ -272,12 +272,29 @@ const materializers = State.SQLite.materializers(events, {
       return []
     }
   },
-  'v1.WorkoutLogUpdated': ({ id, notes, updatedAt }) =>
-    tables.workoutLogs.update({ notes, updatedAt: new Date(updatedAt) }).where({ id }),
-  'v1.WorkoutLogDeleted': ({ id, deletedAt }) =>
-    tables.workoutLogs.update({ deletedAt: new Date(deletedAt) }).where({ id }),
+  'v1.WorkoutLogUpdated': (params) => {
+    console.log(`[Materializer] v1.WorkoutLogUpdated called for ${params.id}`)
+    try {
+      const { id, notes, updatedAt } = params
+      return tables.workoutLogs.update({ notes, updatedAt: new Date(updatedAt) }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (WorkoutLogUpdated):`, e)
+      return []
+    }
+  },
+  'v1.WorkoutLogDeleted': (params) => {
+    console.log(`[Materializer] v1.WorkoutLogDeleted called for ${params.id}`)
+    try {
+      const { id, deletedAt } = params
+      return tables.workoutLogs.update({ deletedAt: new Date(deletedAt) }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (WorkoutLogDeleted):`, e)
+      return []
+    }
+  },
 
   'v1.WeightLogCreated': (params) => {
+    console.log(`[Materializer] v1.WeightLogCreated called for ${params.id}`)
     try {
       const { id, userId, weight, mood, energy, notes, createdAt } = params
       console.log(`[LiveStore] Materializing WeightLogCreated: ${id} (${weight}kg)`)
@@ -295,15 +312,30 @@ const materializers = State.SQLite.materializers(events, {
       return []
     }
   },
-  'v1.WeightLogUpdated': ({ id, weight, mood, energy, notes, updatedAt }) =>
-    tables.weightLogs.update({
-      weight, mood, energy, notes,
-      updatedAt: new Date(updatedAt)
-    }).where({ id }),
-  'v1.WeightLogDeleted': ({ id, deletedAt }) =>
-    tables.weightLogs.update({ deletedAt: new Date(deletedAt) }).where({ id }),
+  'v1.WeightLogUpdated': (params) => {
+    try {
+      const { id, weight, mood, energy, notes, updatedAt } = params
+      return tables.weightLogs.update({
+        weight, mood, energy, notes,
+        updatedAt: new Date(updatedAt)
+      }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (WeightLogUpdated):`, e)
+      return []
+    }
+  },
+  'v1.WeightLogDeleted': (params) => {
+    try {
+      const { id, deletedAt } = params
+      return tables.weightLogs.update({ deletedAt: new Date(deletedAt) }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (WeightLogDeleted):`, e)
+      return []
+    }
+  },
 
   'v1.TaskCreated': (params) => {
+    console.log(`[Materializer] v1.TaskCreated called for ${params.id}`)
     try {
       const { id, userId, title, category, description, dueDate, priority, createdAt } = params
       console.log(`[LiveStore] Materializing TaskCreated: ${id} (${title})`)
@@ -325,21 +357,53 @@ const materializers = State.SQLite.materializers(events, {
       return []
     }
   },
-  'v1.TaskUpdated': ({ id, title, description, dueDate, priority, updatedAt }) =>
-    tables.tasks.update({
-      title, description,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
-      priority,
-      updatedAt: new Date(updatedAt)
-    }).where({ id }),
-  'v1.TaskCompleted': ({ id, updatedAt }) =>
-    tables.tasks.update({ completed: true, updatedAt: new Date(updatedAt) }).where({ id }),
-  'v1.TaskUncompleted': ({ id, updatedAt }) =>
-    tables.tasks.update({ completed: false, updatedAt: new Date(updatedAt) }).where({ id }),
-  'v1.TaskDeleted': ({ id, deletedAt }) =>
-    tables.tasks.update({ deletedAt: new Date(deletedAt) }).where({ id }),
+  'v1.TaskUpdated': (params) => {
+    console.log(`[Materializer] v1.TaskUpdated called for ${params.id}`)
+    try {
+      const { id, title, description, dueDate, priority, updatedAt } = params
+      return tables.tasks.update({
+        title, description,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        priority,
+        updatedAt: new Date(updatedAt)
+      }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (TaskUpdated):`, e)
+      return []
+    }
+  },
+  'v1.TaskCompleted': (params) => {
+    console.log(`[Materializer] v1.TaskCompleted called for ${params.id}`)
+    try {
+      const { id, updatedAt } = params
+      return tables.tasks.update({ completed: true, updatedAt: new Date(updatedAt) }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (TaskCompleted):`, e)
+      return []
+    }
+  },
+  'v1.TaskUncompleted': (params) => {
+    try {
+      const { id, updatedAt } = params
+      return tables.tasks.update({ completed: false, updatedAt: new Date(updatedAt) }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (TaskUncompleted):`, e)
+      return []
+    }
+  },
+  'v1.TaskDeleted': (params) => {
+    console.log(`[Materializer] v1.TaskDeleted called for ${params.id}`)
+    try {
+      const { id, deletedAt } = params
+      return tables.tasks.update({ deletedAt: new Date(deletedAt) }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (TaskDeleted):`, e)
+      return []
+    }
+  },
 
   'v1.GoalCreated': (params) => {
+    console.log(`[Materializer] v1.GoalCreated called for ${params.id}`)
     try {
       const { id, userId, goalType, targetValue, deadline, createdAt } = params
       console.log(`[LiveStore] Materializing GoalCreated: ${id}`)
@@ -359,15 +423,30 @@ const materializers = State.SQLite.materializers(events, {
       return []
     }
   },
-  'v1.GoalUpdated': ({ id, targetValue, deadline, achieved, updatedAt }) =>
-    tables.userGoals.update({
-      targetValue,
-      deadline: deadline ? new Date(deadline) : undefined,
-      achieved,
-      updatedAt: new Date(updatedAt)
-    }).where({ id }),
-  'v1.GoalDeleted': ({ id, deletedAt }) =>
-    tables.userGoals.update({ deletedAt: new Date(deletedAt) }).where({ id }),
+  'v1.GoalUpdated': (params) => {
+    console.log(`[Materializer] v1.GoalUpdated called for ${params.id}`)
+    try {
+      const { id, targetValue, deadline, achieved, updatedAt } = params
+      return tables.userGoals.update({
+        targetValue,
+        deadline: deadline ? new Date(deadline) : undefined,
+        achieved,
+        updatedAt: new Date(updatedAt)
+      }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (GoalUpdated):`, e)
+      return []
+    }
+  },
+  'v1.GoalDeleted': (params) => {
+    try {
+      const { id, deletedAt } = params
+      return tables.userGoals.update({ deletedAt: new Date(deletedAt) }).where({ id })
+    } catch (e) {
+      console.error(`[LiveStore] Materializer Error (GoalDeleted):`, e)
+      return []
+    }
+  },
 })
 
 const state = State.SQLite.makeState({ tables, materializers })

@@ -10,9 +10,11 @@ export const livestoreEvents = pgTable(
     eventData: jsonb("event_data").notNull(),
     timestamp: bigint("timestamp", { mode: "number" }).notNull(),
     createdAt: timestamp("created_at").defaultNow(),
+    seqNum: bigint("seq_num", { mode: "number" }),
   },
   (table) => ({
     storeTimestampIdx: index("idx_livestore_store_timestamp").on(table.storeId, table.timestamp),
     eventIdIdx: index("idx_livestore_event_id").on(table.eventId),
+    storeSeqNumIdx: index("idx_livestore_store_seq_num").on(table.storeId, table.seqNum),
   })
 )
