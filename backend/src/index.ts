@@ -110,9 +110,12 @@ export default {
     // Only upgrade if it's the specific sync path and a WS request
     const url = new URL(req.url);
     if (url.pathname === "/api/livestore/sync" && req.headers.get("upgrade") === "websocket") {
-      console.log("[LiveStore] Upgrading WebSocket connection on /api/livestore/sync...");
+      console.log(`[LiveStore] Attempting WS Upgrade for ${url.pathname}...`);
       if (server.upgrade(req)) {
-        return; // Bun handles it
+        console.log(`[LiveStore] WS Upgrade SUCCESSFUL for ${url.pathname}`);
+        return;
+      } else {
+        console.warn(`[LiveStore] WS Upgrade FAILED for ${url.pathname}`);
       }
     }
     return app.fetch(req, server);
