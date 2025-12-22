@@ -5,14 +5,14 @@ import { and, eq, gt, sql } from "drizzle-orm"
 import { auth } from "../../lib/auth"
 
 function sanitizeData(obj: any): any {
-  if (obj === null) return undefined
+  if (obj === null || obj === undefined) return undefined
   if (typeof obj !== "object") return obj
   if (Array.isArray(obj)) return obj.map(sanitizeData)
 
   const newObj: any = {}
   for (const key in obj) {
     let val = obj[key]
-    if (val === null) {
+    if (val === null || val === undefined) {
       newObj[key] = undefined
       continue
     }
@@ -25,15 +25,32 @@ function sanitizeData(obj: any): any {
 
     // Schema compliance: these must be numbers
     if (["sets", "reps", "order", "duration"].includes(key)) {
-      newObj[key] = Number(val)
+      newObj[key] = isNaN(Number(val)) ? 0 : Number(val)
       continue
     }
 
     // Schema compliance: these must be ISO dates for Event schema
     if (["createdAt", "updatedAt", "deletedAt", "dueDate", "deadline", "startTime", "endTime"].includes(key)) {
-      if (typeof val === "number" || typeof val === "bigint" || (typeof val === "string" && !isNaN(Date.parse(val)))) {
-        newObj[key] = new Date(Number(val)).toISOString()
-        continue
+      try {
+        if (typeof val === "number" || typeof val === "bigint") {
+          newObj[key] = new Date(Number(val)).toISOString()
+          continue
+        }
+        if (typeof val === "string") {
+          const parsed = Date.parse(val)
+          if (!isNaN(parsed)) {
+            newObj[key] = new Date(parsed).toISOString()
+            continue
+          }
+          // Fallback for numeric strings
+          const numericVal = Number(val)
+          if (!isNaN(numericVal)) {
+            newObj[key] = new Date(numericVal).toISOString()
+            continue
+          }
+        }
+      } catch (e) {
+        console.warn(`[LiveStore] Date sanitation failed for ${key}=${val}`)
       }
     }
 
@@ -83,7 +100,13 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
       const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
       const processedData = sanitizeData(data)
       return {
-        event: { _tag: e.eventType, ...processedData },
+        event: {
+          name: e.eventType,
+          args: processedData,
+          seqNum: Number(e.id),
+          clientId: "backend",
+          sessionId: "static"
+        },
         metadata: { _tag: "Some", value: { createdAt: new Date(Number(e.timestamp)).toISOString() } }
       }
     })
@@ -373,31 +396,31 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
 async function pushEventsToDb(batch: any[], storeId: string) {
   for (const item of batch) {
-    // LiveStore Push payload: { event: { _tag: string, ...data }, eventId: string, timestamp: number }
-    const event = item.event
-    const eventId = item.eventId
-    const timestamp = item.timestamp
+    // LiveStore v0.4 Push payload: { name: string, args: object, seqNum: number, clientId: string, sessionId: string }
+    const eventName = item.name
+    const eventArgs = item.args
+    const seqNum = item.seqNum
+    const clientId = item.clientId
 
-    if (!event || !eventId) {
-      console.warn("[LiveStore] WS Warning: Push item missing event or eventId", item)
+    if (!eventName || !eventArgs) {
+      console.warn("[LiveStore] WS Warning: Push item missing name or args", item)
       continue
     }
 
-    const eventType = event._tag
-    const eventData = { ...event }
-    delete eventData._tag // Clean data for storage
+    const eventId = item.eventId || `${clientId || 'unknown'}:${seqNum || Date.now()}`
+    const timestamp = eventArgs.createdAt ? Date.parse(eventArgs.createdAt) : Date.now()
 
     // 1. Store the event for LiveStore sync
     await db.insert(livestoreEvents).values({
       storeId,
       eventId,
-      eventType,
-      eventData,
+      eventType: eventName,
+      eventData: eventArgs,
       timestamp,
     }).onConflictDoNothing()
 
     // 2. Materialize the event into our legacy tables (Source of Truth)
-    await materializeEvent({ eventId, eventType, eventData, timestamp, storeId }, storeId)
+    await materializeEvent({ eventId, eventType: eventName, eventData: eventArgs, timestamp, storeId }, storeId)
   }
 }
 
@@ -451,7 +474,7 @@ async function materializeEvent(event: LiveStoreEvent, storeId: string) {
         await db.insert(weightLogs).values({
           id: eventData.id,
           userId: storeId,
-          weight: eventData.weight,
+          weight: String(eventData.weight),
           mood: eventData.mood,
           energy: eventData.energy,
           notes: eventData.notes,
@@ -461,7 +484,7 @@ async function materializeEvent(event: LiveStoreEvent, storeId: string) {
         break
       case "v1.WeightLogUpdated":
         await db.update(weightLogs).set({
-          weight: eventData.weight,
+          weight: String(eventData.weight),
           mood: eventData.mood,
           energy: eventData.energy,
           notes: eventData.notes,
@@ -498,7 +521,7 @@ async function materializeEvent(event: LiveStoreEvent, storeId: string) {
           id: eventData.id,
           userId: storeId,
           goalType: eventData.goalType,
-          targetValue: eventData.targetValue,
+          targetValue: String(eventData.targetValue),
           deadline: eventData.deadline ? new Date(eventData.deadline) : null,
           createdAt: eventData.createdAt ? new Date(eventData.createdAt) : new Date(),
           updatedAt: new Date(),
@@ -506,7 +529,7 @@ async function materializeEvent(event: LiveStoreEvent, storeId: string) {
         break
       case "v1.GoalUpdated":
         await db.update(userGoals).set({
-          targetValue: eventData.targetValue,
+          targetValue: String(eventData.targetValue),
           deadline: eventData.deadline ? new Date(eventData.deadline) : undefined,
           achieved: eventData.achieved,
           updatedAt: new Date(eventData.updatedAt || Date.now()),
