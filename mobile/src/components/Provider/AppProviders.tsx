@@ -28,12 +28,10 @@ export function AppProviders({ children }: AppProvidersProps) {
   const { storeId, token, isLoading } = useAuth()
 
   const adapter = useMemo(() => {
-    const finalStoreId = storeId ?? 'anonymous'
-    console.log(`[LiveStore] Creating adapter for store: ${finalStoreId}`)
     return makePersistedAdapter({
       sync: { backend: syncUrl ? makeWsSync({ url: syncUrl }) : undefined },
     })
-  }, [storeId])
+  }, [storeId, token])
 
   if (isLoading) {
     return (
@@ -51,7 +49,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <LiveStoreProvider
-            key={finalStoreId}
+            key={`${finalStoreId}-${token ? 'auth' : 'noauth'}`}
             schema={schema}
             adapter={adapter}
             storeId={finalStoreId}

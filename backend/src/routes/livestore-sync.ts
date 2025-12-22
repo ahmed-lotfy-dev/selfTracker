@@ -221,17 +221,12 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     // session verification
     let storeId = payload?.storeId
     const authToken = payload?.authToken
-    // Only log if it's the initial connection or if actually provided
-    if (tag === "SyncWsRpc.Pull" && payload?.cursor?._tag === "None") {
-      console.log(`[LiveStore] WS Connection Auth - storeId: ${storeId}, authToken: ${authToken ? 'PROVIDED' : 'MISSING'}`)
-    }
 
     if (authToken) {
       const session = await auth.api.getSession({
         headers: new Headers({ Cookie: `__Secure-better-auth.session_token=${authToken}` })
       })
       if (session?.user) {
-        // console.log(`[LiveStore] WS Auth Success: ${session.user.id}`)
         storeId = session.user.id
       }
     }
@@ -251,11 +246,10 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
       const responsePayload = {
         batch: events.map(e => {
-          // Explicitly cast eventData as object to avoid spread issues
           const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
           return {
             eventEncoded: { _tag: e.eventType, ...data },
-            metadata: { _tag: "None" }
+            metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
           }
         }),
         pageInfo: {
@@ -266,8 +260,6 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         },
         backendId: "selftracker-v1"
       }
-
-      console.log(`[LiveStore] SyncWsRpc.Pull: Returned ${events.length} events for store ${storeId}`)
 
       ws.send(JSON.stringify({
         _tag: "Response",
