@@ -253,22 +253,28 @@ export const events = {
 }
 
 const materializers = State.SQLite.materializers(events, {
-  'v1.WorkoutLogCreated': ({ id, userId, workoutId, workoutName, notes, createdAt }) =>
-    tables.workoutLogs.insert({ id, userId, workoutId, workoutName, notes, createdAt }),
+  'v1.WorkoutLogCreated': ({ id, userId, workoutId, workoutName, notes, createdAt }) => {
+    console.log(`[LiveStore] Materializing WorkoutLogCreated: ${id}`)
+    return tables.workoutLogs.insert({ id, userId, workoutId, workoutName, notes, createdAt })
+  },
   'v1.WorkoutLogUpdated': ({ id, notes, updatedAt }) =>
     tables.workoutLogs.update({ notes, updatedAt }).where({ id }),
   'v1.WorkoutLogDeleted': ({ id, deletedAt }) =>
     tables.workoutLogs.update({ deletedAt }).where({ id }),
 
-  'v1.WeightLogCreated': ({ id, userId, weight, mood, energy, notes, createdAt }) =>
-    tables.weightLogs.insert({ id, userId, weight, mood, energy, notes, createdAt }),
+  'v1.WeightLogCreated': ({ id, userId, weight, mood, energy, notes, createdAt }) => {
+    console.log(`[LiveStore] Materializing WeightLogCreated: ${id} (${weight}kg)`)
+    return tables.weightLogs.insert({ id, userId, weight, mood, energy, notes, createdAt })
+  },
   'v1.WeightLogUpdated': ({ id, weight, mood, energy, notes, updatedAt }) =>
     tables.weightLogs.update({ weight, mood, energy, notes, updatedAt }).where({ id }),
   'v1.WeightLogDeleted': ({ id, deletedAt }) =>
     tables.weightLogs.update({ deletedAt }).where({ id }),
 
-  'v1.TaskCreated': ({ id, userId, title, category, description, dueDate, priority, createdAt }) =>
-    tables.tasks.insert({ id, userId, title, category, description, dueDate, priority, completed: false, createdAt }),
+  'v1.TaskCreated': ({ id, userId, title, category, description, dueDate, priority, createdAt }) => {
+    console.log(`[LiveStore] Materializing TaskCreated: ${id} (${title})`)
+    return tables.tasks.insert({ id, userId, title, category, description, dueDate, priority, completed: false, createdAt })
+  },
   'v1.TaskUpdated': ({ id, title, description, dueDate, priority, updatedAt }) =>
     tables.tasks.update({ title, description, dueDate, priority, updatedAt }).where({ id }),
   'v1.TaskCompleted': ({ id, updatedAt }) =>

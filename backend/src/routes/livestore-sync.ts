@@ -242,6 +242,10 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
       const events = await fetchEvents(checkpoint, storeId)
 
+      if (events.length > 0) {
+        console.log(`[LiveStore] Pull for ${storeId} at ${checkpoint} returned ${events.length} events`)
+      }
+
       const responsePayload = {
         batch: events.map(e => {
           const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData

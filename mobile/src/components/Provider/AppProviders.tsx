@@ -43,6 +43,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   }
 
   const finalStoreId = storeId ?? 'anonymous'
+  console.log(`[LiveStore] Provider initialized - Store: ${finalStoreId}, Token: ${token ? 'YES' : 'NO'}`)
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
