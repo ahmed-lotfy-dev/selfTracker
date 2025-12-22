@@ -43,7 +43,7 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
     return c.json({
       type: "pull-response",
       events,
-      backendId: "selftracker-v1" // Match the backend ID
+      backendId: "selftracker-v1"
     })
   } catch (error) {
     console.error("[LiveStore] HTTP Pull error:", error)
@@ -230,8 +230,10 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
     // session verification
     let storeId = payload?.storeId
-    // THE FIX: The token is at payload.payload.authToken (seen in logs)
-    const authToken = payload?.payload?.authToken ?? payload?.authToken
+    const innerPayload = payload?.payload
+    // THE FIX: The token and cursor are nested at payload.payload
+    const authToken = innerPayload?.authToken ?? payload?.authToken
+    const cursorField = innerPayload?.cursor ?? payload?.cursor
 
     if (authToken) {
       const session = await auth.api.getSession({
@@ -257,11 +259,14 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         requestId: id
       }))
     } else if (tag === "SyncWsRpc.Pull") {
-      const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
+      const checkpoint = cursorField?._tag === "Some" ? cursorField.value.eventSequenceNumber : 0
       const events = await fetchEvents(checkpoint, storeId)
 
       if (events.length > 0) {
         console.log(`[LiveStore] Pull for ${storeId} at ${checkpoint} returned ${events.length} events`)
+        const sample = events[0]
+        const sampleData = typeof sample.eventData === "string" ? JSON.parse(sample.eventData) : sample.eventData
+        console.log(`[LiveStore] Sample Event[0]: type=${sample.eventType} data=${JSON.stringify(sampleData).substring(0, 100)}...`)
       }
 
       const responsePayload = {
