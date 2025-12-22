@@ -14,6 +14,8 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     if (token) {
       console.log("[AuthMiddleware] Token from query:", token.substring(0, 10) + "...")
       headers.set('Authorization', `Bearer ${token}`);
+      // Fallback: Also set as cookies because better-auth might be picky about Bearer in some configs
+      headers.set('Cookie', `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`);
     } else {
       console.log("[AuthMiddleware] No token in query")
     }
