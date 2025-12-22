@@ -36,6 +36,8 @@ app.use(
     origin: [
       "http://192.168.1.5:8081",
       "exp://192.168.1.5:8081",
+      "selftracker://",
+      "exp+selftracker://",
       "http://localhost:1420", // Tauri
       "http://localhost:5173", // Vite local
     ],
@@ -50,6 +52,7 @@ app.use(
 // MAIN AUTH ROUTE (Double Star Wildcard for deep paths)
 // MAIN AUTH ROUTE (Robust Wildcard matching)
 app.all("/api/auth/:path*", (c) => {
+  console.log(`[AUTH_BACKEND] Request Path: ${c.req.path}, URL: ${c.req.url}`);
   return auth.handler(c.req.raw);
 });
 

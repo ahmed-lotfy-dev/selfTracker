@@ -63,6 +63,7 @@ export const useAuthStore = create<AuthStore>()(
           console.log('[AUTH_STORE] Has user?', !!data?.user)
 
           if (data?.user) {
+            console.log('[AUTH_STORE] Setting user state:', JSON.stringify(data.user))
             set({ user: data.user, token, isLoading: false })
 
             // Sync theme

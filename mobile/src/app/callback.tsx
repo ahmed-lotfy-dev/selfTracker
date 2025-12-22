@@ -42,22 +42,24 @@ export default function AuthCallback() {
       }
 
       try {
-        console.log('[AUTH CALLBACK] Calling loginWithToken...');
+        console.log('[AUTH CALLBACK] Calling loginWithToken with token hash:', token.substring(0, 10) + '...');
         // Use centralized store action - ONE SOURCE OF TRUTH
         const success = await loginWithToken(token);
         console.log('[AUTH CALLBACK] loginWithToken result:', success);
 
         if (success) {
-          const user = useAuthStore.getState().user;
-          console.log('[AUTH CALLBACK] User from store:', user);
-          showToast(`Welcome back, ${user?.name?.split(" ")[0]}!`, "success");
+          const updatedUser = useAuthStore.getState().user;
+          console.log('[AUTH CALLBACK] User from store after login:', JSON.stringify(updatedUser));
+          showToast(`Welcome back, ${updatedUser?.name?.split(" ")[0]}!`, "success");
 
           // Invalidate queries to trigger data refetch
+          console.log('[AUTH CALLBACK] Invalidating queries...');
           await queryClient.invalidateQueries({ queryKey: ['session'] });
           await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
           await queryClient.invalidateQueries({ queryKey: ['tasks'] });
           await queryClient.invalidateQueries({ queryKey: ['weights'] });
           await queryClient.invalidateQueries({ queryKey: ['workouts'] });
+          console.log('[AUTH CALLBACK] Queries invalidated.');
         } else {
           console.error('[AUTH CALLBACK] loginWithToken returned false');
           throw new Error("Failed to verify session token");

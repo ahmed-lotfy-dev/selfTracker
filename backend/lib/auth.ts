@@ -10,6 +10,7 @@ import { emailOTP } from "better-auth/plugins"
 
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL || "https://selftracker.ahmedlotfy.site",
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
@@ -98,18 +99,13 @@ export const auth = betterAuth({
   ],
   trustedOrigins: [
     "selftracker://",
+    "selftracker://callback",
     "exp+selftracker://",
+    "exp+selftracker://callback",
     "exp://192.168.1.5:8081",
     "exp://192.168.1.5:8081/--/auth",
-    "exp://192.168.1.5:8081/--/auth?token=", // Just in case query params matter for origin matching (unlikely but safe)
-    process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.5:8000",
-    // Development mode - Expo's exp:// scheme with local IP ranges
-    ...(process.env.NODE_ENV === "development" ? [
-      "exp://*/*",                 // Trust all Expo development URLs
-      "exp://10.0.0.*:*/*",        // Trust 10.0.0.x IP range
-      "exp://192.168.*.*:*/*",     // Trust 192.168.x.x IP range
-      "exp://172.*.*.*:*/*",       // Trust 172.x.x.x IP range
-      "exp://localhost:*/*"        // Trust localhost
-    ] : [])
+    "https://selftracker.ahmedlotfy.site",
+    "http://localhost:8000",
+    "http://localhost:8081",
   ],
 })

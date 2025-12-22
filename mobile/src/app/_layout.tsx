@@ -1,7 +1,7 @@
 import "@/src/polyfills/crypto"
 import React, { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
-import { Slot, Redirect, Stack, useRouter } from "expo-router"
+import { Slot, Redirect, Stack } from "expo-router"
 import { checkForUpdates, onAppStateChange } from "@/src/lib/lib"
 import { useOnlineManager } from "@/src/hooks/useOnlineManager"
 import { useAppState } from "@/src/hooks/useAppState"
@@ -18,10 +18,7 @@ import { PortalHost } from "@rn-primitives/portal"
 import { Platform, StatusBar, useColorScheme } from "react-native"
 import {
   FontAwesome5,
-  FontAwesome6,
   Ionicons,
-  MaterialCommunityIcons,
-  MaterialIcons,
 } from "@expo/vector-icons"
 import { Colors } from "../constants/Colors"
 import CustomAlert from "@/src/components/ui/CustomAlert"
@@ -77,9 +74,6 @@ function RootLayout() {
 
   const themeColors = Colors[colorScheme ?? "light"]
 
-  const isEmailVerified = user?.emailVerified ?? false
-  const canAccessApp = isAuthenticated && isEmailVerified
-
   return (
     <AppProviders>
       <StatusBar
@@ -90,10 +84,8 @@ function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(auth)" />
-        <Stack.Screen name="auth-callback" />
-        <Stack.Protected guard={canAccessApp}>
-          <Stack.Screen name="(drawer)" />
-        </Stack.Protected>
+        <Stack.Screen name="callback" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="(drawer)" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <PortalHost />
