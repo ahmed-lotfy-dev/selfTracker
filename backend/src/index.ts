@@ -15,6 +15,7 @@ import timerRouter from "./routes/timer.js"
 import syncRouter from "./routes/sync.js"
 import livestoreSyncRouter, { websocket as livestoreWS } from "./routes/livestore-sync.js"
 import { auth } from "../lib/auth.js"
+import { authMiddleware } from "./middlewares/authMiddleware.js"
 
 const app = new Hono<{
   Variables: {
@@ -27,7 +28,6 @@ const app = new Hono<{
 app.use(loggerMiddleware)
 
 // Auth middleware for all API routes (except /api/auth/*)
-import { authMiddleware } from "./middlewares/authMiddleware.js"
 app.use("/api/*", authMiddleware)
 
 app.use(
