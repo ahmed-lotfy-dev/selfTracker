@@ -246,6 +246,9 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         requestId: String(id) // Defensive: legacy LiveStore/Effect might use this
       }))
     } else if (tag === "SyncWsRpc.Pull") {
+      const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
+      const events = await fetchEvents(checkpoint, storeId)
+
       const responsePayload = {
         batch: events.map(e => {
           // Explicitly cast eventData as object to avoid spread issues
@@ -256,8 +259,10 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
           }
         }),
         pageInfo: {
-          hasMore: false,
-          cursor: { _tag: "None" }
+          hasMore: events.length >= 1000,
+          cursor: events.length > 0
+            ? { _tag: "Some", value: { eventSequenceNumber: events[events.length - 1].id } }
+            : { _tag: "None" }
         },
         backendId: "selftracker-v1"
       }
