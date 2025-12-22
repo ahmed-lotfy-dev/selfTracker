@@ -4,6 +4,17 @@ import { livestoreEvents, tasks, userGoals, weightLogs, workoutLogs } from "../d
 import { and, eq, gt, sql } from "drizzle-orm"
 import { auth } from "../../lib/auth"
 
+function sanitizeData(obj: any): any {
+  if (obj === null) return undefined
+  if (typeof obj !== "object") return obj
+  if (Array.isArray(obj)) return obj.map(sanitizeData)
+  const newObj: any = {}
+  for (const key in obj) {
+    newObj[key] = sanitizeData(obj[key])
+  }
+  return newObj
+}
+
 import type { ServerWebSocket } from "bun"
 
 const livestoreRouter = new Hono()
@@ -274,8 +285,10 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         batch: events.map(e => {
           const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
 
+          // THE FIX: Clean data of nulls (convert to undefined) to satisfy Schema.optional
+          const processedData = sanitizeData(data)
+
           // Ensure dates are ISO strings for LiveStore Schema.Date
-          const processedData = { ...data }
           if (typeof processedData.createdAt === 'number') processedData.createdAt = new Date(processedData.createdAt).toISOString()
           if (typeof processedData.updatedAt === 'number') processedData.updatedAt = new Date(processedData.updatedAt).toISOString()
           if (typeof processedData.dueDate === 'number') processedData.dueDate = new Date(processedData.dueDate).toISOString()
@@ -293,7 +306,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
             ? { _tag: "Some", value: { eventSequenceNumber: events[events.length - 1].id } }
             : { _tag: "None" }
         },
-        backendId: "anonymous"
+        backendId: "selftracker-v1"
       }
 
       const response = JSON.stringify({
