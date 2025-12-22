@@ -18,7 +18,7 @@ import { WorkoutLogSchema } from "@/src/types/workoutLogType"
 import { useUser } from "@/src/store/useAuthStore"
 import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
-import { safeParseDate } from "@/src/lib/utils/dateUtils"
+import { formatLocal, formatUTC, safeParseDate } from "@/src/lib/utils/dateUtils"
 import { useStore, useQuery } from "@livestore/react"
 import { queryDb } from "@livestore/livestore"
 import { tables } from "@/src/livestore/schema"
@@ -60,8 +60,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     isEditing ? selectedWorkout?.notes || "" : ""
   )
   const [createdAt, setCreatedAt] = useState(() => {
-    const rawDate = isEditing && selectedWorkout?.createdAt ? selectedWorkout.createdAt : new Date()
-    return format(safeParseDate(rawDate), "yyyy-MM-dd")
+    return formatUTC(isEditing && selectedWorkout?.createdAt ? selectedWorkout.createdAt : new Date())
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -98,7 +97,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
         user?.id || "",
         workoutId,
         workoutName,
-        { notes, createdAt: new Date(createdAt) }
+        { notes, createdAt: formatUTC(createdAt) }
       ))
     }
     router.push("/workouts")

@@ -8,6 +8,7 @@ import {
 import { useQuery } from "@livestore/react"
 import { queryDb } from "@livestore/livestore"
 import { tables } from "@/src/livestore/schema"
+import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import CalendarView from "@/src/components/features/workouts/CalendarView"
@@ -36,11 +37,11 @@ export default function WorkoutScreen() {
     monthAgo.setMonth(monthAgo.getMonth() - 1)
 
     const weeklyWorkouts = workoutLogs.filter(
-      log => log.createdAt && new Date(log.createdAt) > weekAgo
+      log => log.createdAt && safeParseDate(log.createdAt) > weekAgo
     ).length
 
     const monthlyWorkouts = workoutLogs.filter(
-      log => log.createdAt && new Date(log.createdAt) > monthAgo
+      log => log.createdAt && safeParseDate(log.createdAt) > monthAgo
     ).length
 
     return { weeklyWorkouts, monthlyWorkouts, totalWorkouts: workoutLogs.length }

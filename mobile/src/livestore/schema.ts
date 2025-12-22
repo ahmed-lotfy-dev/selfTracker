@@ -191,62 +191,62 @@ export const tables = {
 export const events = {
   workoutLogCreated: Events.synced({
     name: 'v1.WorkoutLogCreated',
-    schema: Schema.Struct({ id: Schema.String, userId: Schema.String, workoutId: Schema.String, workoutName: Schema.String, notes: Schema.optional(Schema.String), createdAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, userId: Schema.String, workoutId: Schema.String, workoutName: Schema.String, notes: Schema.optional(Schema.String), createdAt: Schema.String }),
   }),
   workoutLogUpdated: Events.synced({
     name: 'v1.WorkoutLogUpdated',
-    schema: Schema.Struct({ id: Schema.String, notes: Schema.optional(Schema.String), updatedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, notes: Schema.optional(Schema.String), updatedAt: Schema.String }),
   }),
   workoutLogDeleted: Events.synced({
     name: 'v1.WorkoutLogDeleted',
-    schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.String }),
   }),
 
   weightLogCreated: Events.synced({
     name: 'v1.WeightLogCreated',
-    schema: Schema.Struct({ id: Schema.String, userId: Schema.String, weight: Schema.String, mood: Schema.optional(Schema.String), energy: Schema.optional(Schema.String), notes: Schema.optional(Schema.String), createdAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, userId: Schema.String, weight: Schema.String, mood: Schema.optional(Schema.String), energy: Schema.optional(Schema.String), notes: Schema.optional(Schema.String), createdAt: Schema.String }),
   }),
   weightLogUpdated: Events.synced({
     name: 'v1.WeightLogUpdated',
-    schema: Schema.Struct({ id: Schema.String, weight: Schema.optional(Schema.String), mood: Schema.optional(Schema.String), energy: Schema.optional(Schema.String), notes: Schema.optional(Schema.String), updatedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, weight: Schema.optional(Schema.String), mood: Schema.optional(Schema.String), energy: Schema.optional(Schema.String), notes: Schema.optional(Schema.String), updatedAt: Schema.String }),
   }),
   weightLogDeleted: Events.synced({
     name: 'v1.WeightLogDeleted',
-    schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.String }),
   }),
 
   taskCreated: Events.synced({
     name: 'v1.TaskCreated',
-    schema: Schema.Struct({ id: Schema.String, userId: Schema.String, title: Schema.String, category: Schema.String, description: Schema.optional(Schema.String), dueDate: Schema.optional(Schema.Date), priority: Schema.optional(Schema.String), createdAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, userId: Schema.String, title: Schema.String, category: Schema.String, description: Schema.optional(Schema.String), dueDate: Schema.optional(Schema.String), priority: Schema.optional(Schema.String), createdAt: Schema.String }),
   }),
   taskUpdated: Events.synced({
     name: 'v1.TaskUpdated',
-    schema: Schema.Struct({ id: Schema.String, title: Schema.optional(Schema.String), description: Schema.optional(Schema.String), dueDate: Schema.optional(Schema.Date), priority: Schema.optional(Schema.String), updatedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, title: Schema.optional(Schema.String), description: Schema.optional(Schema.String), dueDate: Schema.optional(Schema.String), priority: Schema.optional(Schema.String), updatedAt: Schema.String }),
   }),
   taskCompleted: Events.synced({
     name: 'v1.TaskCompleted',
-    schema: Schema.Struct({ id: Schema.String, updatedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, updatedAt: Schema.String }),
   }),
   taskUncompleted: Events.synced({
     name: 'v1.TaskUncompleted',
-    schema: Schema.Struct({ id: Schema.String, updatedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, updatedAt: Schema.String }),
   }),
   taskDeleted: Events.synced({
     name: 'v1.TaskDeleted',
-    schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.String }),
   }),
 
   goalCreated: Events.synced({
     name: 'v1.GoalCreated',
-    schema: Schema.Struct({ id: Schema.String, userId: Schema.String, goalType: Schema.String, targetValue: Schema.String, deadline: Schema.optional(Schema.Date), createdAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, userId: Schema.String, goalType: Schema.String, targetValue: Schema.String, deadline: Schema.optional(Schema.String), createdAt: Schema.String }),
   }),
   goalUpdated: Events.synced({
     name: 'v1.GoalUpdated',
-    schema: Schema.Struct({ id: Schema.String, targetValue: Schema.optional(Schema.String), deadline: Schema.optional(Schema.Date), achieved: Schema.optional(Schema.Boolean), updatedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, targetValue: Schema.optional(Schema.String), deadline: Schema.optional(Schema.String), achieved: Schema.optional(Schema.Boolean), updatedAt: Schema.String }),
   }),
   goalDeleted: Events.synced({
     name: 'v1.GoalDeleted',
-    schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
+    schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.String }),
   }),
 
   uiStateSet: tables.uiState.set,

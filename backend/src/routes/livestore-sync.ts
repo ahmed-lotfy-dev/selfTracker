@@ -48,11 +48,13 @@ function sanitizeData(obj: any): any {
         if (ts > 0) {
           // Timestamp healer: if it looks like seconds (less than year 2000 in ms), multiply by 1000
           if (ts < 100000000000) ts *= 1000
+
+          // STRICT UTC: toISOString() always returns UTC with 'Z'
           newObj[key] = new Date(ts).toISOString()
           continue
         }
       } catch (e) {
-        console.warn(`[LiveStore] Date sanitation failed for ${key}=${val}`)
+        // Fallback or ignore
       }
     }
 

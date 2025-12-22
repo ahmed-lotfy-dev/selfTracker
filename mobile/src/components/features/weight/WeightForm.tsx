@@ -18,7 +18,7 @@ import { WeightLogSchema } from "@/src/types/weightLogType"
 import { useUser } from "@/src/store/useAuthStore"
 import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
-import { safeParseDate } from "@/src/lib/utils/dateUtils"
+import { formatLocal, formatUTC, safeParseDate } from "@/src/lib/utils/dateUtils"
 import { useStore } from "@livestore/react"
 import { createWeightLogEvent, updateWeightLogEvent } from "@/src/livestore/actions"
 
@@ -41,8 +41,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
 
   const [notes, setNotes] = useState(isEditing && selectedWeight ? selectedWeight.notes || "" : "")
   const [createdAt, setCreatedAt] = useState(() => {
-    const rawDate = isEditing && selectedWeight ? selectedWeight.createdAt : new Date()
-    return format(safeParseDate(rawDate), "yyyy-MM-dd")
+    return formatUTC(isEditing && selectedWeight ? selectedWeight.createdAt : new Date())
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -81,7 +80,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
       store.commit(createWeightLogEvent(
         user?.id || "",
         String(weight),
-        { mood, energy, notes, createdAt: new Date(createdAt) }
+        { mood, energy, notes, createdAt: formatUTC(createdAt) }
       ))
     }
 

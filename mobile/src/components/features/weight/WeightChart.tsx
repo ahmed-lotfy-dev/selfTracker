@@ -6,6 +6,7 @@ import { tables } from "@/src/livestore/schema"
 import { LineChart } from "react-native-chart-kit"
 import { Dimensions } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
+import { safeParseDate, formatLocal } from "@/src/lib/utils/dateUtils"
 
 const allWeightLogs$ = queryDb(
   () => tables.weightLogs.where({ deletedAt: null }),
@@ -20,7 +21,7 @@ export function WeightChart() {
   const chartData = useMemo(() => {
     const sortedLogs = [...allLogs]
       .filter(log => log.createdAt)
-      .sort((a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime())
+      .sort((a, b) => safeParseDate(a.createdAt).getTime() - safeParseDate(b.createdAt).getTime())
       .slice(-10)
 
     if (sortedLogs.length === 0) {
@@ -28,8 +29,7 @@ export function WeightChart() {
     }
 
     const labels = sortedLogs.map((log) => {
-      const d = new Date(log.createdAt!)
-      return `${d.getMonth() + 1}/${d.getDate()}`
+      return formatLocal(log.createdAt!, "M/d")
     })
 
     const data = sortedLogs.map((log) => parseFloat(log.weight) || 0)

@@ -11,6 +11,7 @@ import { ActivityIndicator } from "react-native"
 import { useQuery } from "@livestore/react"
 import { queryDb } from "@livestore/livestore"
 import { tables } from "@/src/livestore/schema"
+import { safeParseDate } from "@/src/lib/utils/dateUtils"
 
 const allWorkoutLogs$ = queryDb(
   () => tables.workoutLogs,
@@ -47,16 +48,16 @@ export default function HomeScreen() {
     monthAgo.setMonth(monthAgo.getMonth() - 1)
 
     const weeklyWorkouts = workoutLogs.filter(
-      log => log.createdAt && new Date(log.createdAt) > weekAgo
+      log => log.createdAt && safeParseDate(log.createdAt) > weekAgo
     ).length
 
     const monthlyWorkouts = workoutLogs.filter(
-      log => log.createdAt && new Date(log.createdAt) > monthAgo
+      log => log.createdAt && safeParseDate(log.createdAt) > monthAgo
     ).length
 
     const sortedWeights = [...weightLogs]
       .filter(w => w.createdAt)
-      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+      .sort((a, b) => safeParseDate(b.createdAt).getTime() - safeParseDate(a.createdAt).getTime())
 
     const latestWeight = sortedWeights[0]?.weight
     const previousWeight = sortedWeights[1]?.weight

@@ -4,6 +4,7 @@ import { useQuery } from "@livestore/react"
 import { queryDb } from "@livestore/livestore"
 import { tables } from "@/src/livestore/schema"
 import WeightLogItem from "./WeightLogItem"
+import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { FlashList } from "@shopify/flash-list"
 import { WeightChart } from "./WeightChart"
 import { useThemeColors } from "@/src/constants/Colors"
@@ -20,8 +21,8 @@ export const WeightLogsList = () => {
 
   const sortedLogs = useMemo(() => {
     return [...allLogs].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      const dateA = safeParseDate(a.createdAt).getTime()
+      const dateB = safeParseDate(b.createdAt).getTime()
       return dateB - dateA
     })
   }, [allLogs])
