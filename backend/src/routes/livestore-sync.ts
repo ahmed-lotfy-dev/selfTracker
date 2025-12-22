@@ -224,10 +224,10 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
     if (authToken) {
       const session = await auth.api.getSession({
-        headers: new Headers({ Authorization: `Bearer ${authToken}` })
+        headers: new Headers({ Cookie: `__Secure-better-auth.session_token=${authToken}` })
       })
-      if (session) {
-        // console.log(`[LiveStore] WS Auth Success: ${session.user.id}`)
+      if (session?.user) {
+        console.log(`[LiveStore] WS Auth Success: ${session.user.id}`)
         storeId = session.user.id
       } else {
         console.warn(`[LiveStore] WS Auth Fail: Invalid token for store ${storeId}`)
