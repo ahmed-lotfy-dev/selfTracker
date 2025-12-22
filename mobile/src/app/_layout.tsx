@@ -90,6 +90,7 @@ function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="auth-callback" />
         <Stack.Protected guard={canAccessApp}>
           <Stack.Screen name="(drawer)" />
         </Stack.Protected>

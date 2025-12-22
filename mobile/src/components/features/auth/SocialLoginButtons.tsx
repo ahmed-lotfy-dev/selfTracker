@@ -25,10 +25,18 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
     try {
       const callbackURL = Linking.createURL("auth-callback", { scheme: AUTH_SCHEME });
 
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`[SOCIAL LOGIN] Starting ${provider} login`);
+      console.log('[SOCIAL LOGIN] Callback URL:', callbackURL);
+      console.log('[SOCIAL LOGIN] AUTH_SCHEME:', AUTH_SCHEME);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
       await authClient.signIn.social({
         provider: provider,
         callbackURL: callbackURL,
       });
+
+      console.log(`[SOCIAL LOGIN] ${provider} signIn.social completed`);
     } catch (error) {
       console.error(`Error during ${provider} OAuth:`, error);
       showToast(`Failed to sign in with ${provider}`, 'error');
@@ -39,7 +47,10 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
     <View className={`gap-3 ${className || ''}`}>
       {/* Google Sign In */}
       <Pressable
-        onPress={() => handleSocialLogin('google')}
+        onPress={() => {
+          console.log('[BUTTON TEST] Google button pressed!');
+          handleSocialLogin('google');
+        }}
         className="flex-row items-center justify-center border border-border rounded-2xl px-4 py-4 bg-card active:bg-gray-50/50 dark:active:bg-emerald-900/10 shadow-sm"
       >
         <AntDesign name="google" size={20} color={colors.socialGoogle} />

@@ -12,6 +12,11 @@ export default function AuthCallback() {
   const { showToast } = useToast();
   const { isAuthenticated, user } = useAuth();
 
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('[AUTH CALLBACK] Component mounted!');
+  console.log('[AUTH CALLBACK] All URL params:', JSON.stringify(params));
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
   useEffect(() => {
     const handleAuth = async () => {
       // 1. Extract Token
@@ -27,19 +32,24 @@ export default function AuthCallback() {
       }
 
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('[AUTH CALLBACK] All params:', params);
       console.log('[AUTH CALLBACK] Token from backend:', token);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       if (!token) {
+        console.warn('[AUTH CALLBACK] No token found in params!');
         return;
       }
 
       try {
+        console.log('[AUTH CALLBACK] Calling loginWithToken...');
         // Use centralized store action - ONE SOURCE OF TRUTH
         const success = await loginWithToken(token);
+        console.log('[AUTH CALLBACK] loginWithToken result:', success);
 
         if (success) {
           const user = useAuthStore.getState().user;
+          console.log('[AUTH CALLBACK] User from store:', user);
           showToast(`Welcome back, ${user?.name?.split(" ")[0]}!`, "success");
 
           // Invalidate queries to trigger data refetch
@@ -49,6 +59,7 @@ export default function AuthCallback() {
           await queryClient.invalidateQueries({ queryKey: ['weights'] });
           await queryClient.invalidateQueries({ queryKey: ['workouts'] });
         } else {
+          console.error('[AUTH CALLBACK] loginWithToken returned false');
           throw new Error("Failed to verify session token");
         }
 

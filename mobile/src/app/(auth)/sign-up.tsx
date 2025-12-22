@@ -6,7 +6,7 @@ import {
   Platform,
 } from "react-native"
 import { Link, useRouter, Redirect } from "expo-router"
-import { useAuthStore, useAuth, useAuthActions } from "@/src/features/auth/useAuthStore"
+import { useAuthStore, useAuth } from "@/src/features/auth/useAuthStore"
 import { signUp } from "@/src/lib/api/authApi"
 import * as SecureStore from "expo-secure-store"
 import { signUpSchema } from "@/src/types/userType"
@@ -17,7 +17,6 @@ import Button from "@/src/components/ui/Button"
 
 export default function SignUp() {
   const router = useRouter()
-  const { loginWithToken } = useAuthActions()
   const { isAuthenticated, user } = useAuth()
 
   const [name, setName] = useState("")
