@@ -39,10 +39,11 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
     if (storeId !== user.id) return c.json({ message: "Unauthorized" }, 401)
 
     const events = await fetchEvents(checkpoint, storeId)
+    console.log(`[LiveStore] HTTP Pull for ${storeId} at ${checkpoint} returned ${events.length} events`)
     return c.json({
       type: "pull-response",
       events,
-      backendId: "bun-hono-backend" // LiveStore needs a stable backend registry ID
+      backendId: "selftracker-v1" // Match the backend ID
     })
   } catch (error) {
     console.error("[LiveStore] HTTP Pull error:", error)
@@ -224,7 +225,8 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
     // session verification
     let storeId = payload?.storeId
-    const authToken = payload?.authToken
+    // THE FIX: The token is at payload.payload.authToken (seen in logs)
+    const authToken = payload?.payload?.authToken ?? payload?.authToken
 
     if (authToken) {
       const session = await auth.api.getSession({
@@ -246,8 +248,8 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       ws.send(JSON.stringify({
         _tag: "Response",
         payload: { _tag: "Success", value: {} },
-        id: String(id), // Cast to string to be safe
-        requestId: String(id) // Defensive: legacy LiveStore/Effect might use this
+        id: id,
+        requestId: id
       }))
     } else if (tag === "SyncWsRpc.Pull") {
       const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
@@ -277,8 +279,8 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       ws.send(JSON.stringify({
         _tag: "Response",
         payload: { _tag: "Success", value: responsePayload },
-        id: String(id), // Cast to string to be safe
-        requestId: String(id) // Defensive field
+        id: id,
+        requestId: id
       }))
     }
   } catch (error) {
