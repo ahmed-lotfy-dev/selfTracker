@@ -4,11 +4,13 @@ import { secureStorage } from "@/src/lib/storage"
 
 type AuthState = {
   user: any | null
+  token: string | null
   hasHydrated: boolean
 }
 
 type AuthActions = {
   setUser: (user: any) => void
+  setToken: (token: string | null) => void
   setHasHydrated: (hydrated: boolean) => void
 }
 
@@ -19,8 +21,10 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       // ... state
       user: null,
+      token: null,
       hasHydrated: false,
       setUser: (user) => set({ user }),
+      setToken: (token) => set({ token }),
       setHasHydrated: (hydrated) => set({ hasHydrated: hydrated }),
     }),
     {
@@ -34,9 +38,11 @@ export const useAuthStore = create<AuthStore>()(
 )
 
 export const useUser = () => useAuthStore((state) => state.user)
+export const useToken = () => useAuthStore((state) => state.token)
 export const useHasHydrated = () => useAuthStore((state) => state.hasHydrated)
 
 export const useAuthActions = () => {
   const setUser = useAuthStore((state) => state.setUser)
-  return { setUser }
+  const setToken = useAuthStore((state) => state.setToken)
+  return { setUser, setToken }
 }

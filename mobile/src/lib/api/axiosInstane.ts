@@ -31,9 +31,6 @@ axiosInstance.interceptors.response.use(
     return response
   },
   async (error) => {
-    if (error.response?.status === 401) {
-      console.warn("Axios 401 intercepted from:", error.config.url)
-    }
     return Promise.reject(error)
   }
 )
