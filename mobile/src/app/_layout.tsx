@@ -24,20 +24,10 @@ import {
   MaterialIcons,
 } from "@expo/vector-icons"
 import { Colors } from "../constants/Colors"
-import { useDeepLinkHandler } from "@/src/hooks/useDeepLinkHandler"
 import CustomAlert from "@/src/components/ui/CustomAlert"
 import Toast from "@/src/components/ui/Toast"
 
 SplashScreen.preventAutoHideAsync()
-
-/**
- * Wrapper component to initialize hooks that need provider context.
- * This component is rendered inside AppProviders so hooks have access to providers.
- */
-function DeepLinkWrapper({ children }: { children: React.ReactNode }) {
-  useDeepLinkHandler()
-  return <>{children}</>
-}
 
 function RootLayout() {
   useOnlineManager()
@@ -67,8 +57,6 @@ function RootLayout() {
     return () => { } // Return an empty cleanup function for web
   }, [])
 
-
-
   useEffect(() => {
     const prepareApp = async () => {
       if (loaded && !appIsReady) {
@@ -89,22 +77,20 @@ function RootLayout() {
 
   return (
     <AppProviders>
-      <DeepLinkWrapper>
-        <StatusBar
-          barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
-          backgroundColor={themeColors.background}
-        />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(drawer)" />
-          <Stack.Screen name="onboarding" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <PortalHost />
-        <CustomAlert />
-        <Toast />
-      </DeepLinkWrapper>
+      <StatusBar
+        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        backgroundColor={themeColors.background}
+      />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(drawer)" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <PortalHost />
+      <CustomAlert />
+      <Toast />
     </AppProviders>
   )
 }
