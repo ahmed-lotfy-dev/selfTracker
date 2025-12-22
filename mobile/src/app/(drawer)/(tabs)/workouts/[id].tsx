@@ -6,12 +6,12 @@ import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
 import { MaterialIcons } from "@expo/vector-icons"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
-import { useWorkoutActions } from "@/src/store/useWokoutStore"
+import { useWorkoutActions } from "@/src/features/workouts/useWorkoutStore"
 import { useStore, useQuery } from "@livestore/react"
 import { queryDb } from "@livestore/livestore"
 import { tables } from "@/src/livestore/schema"
 import { deleteWorkoutLogEvent } from "@/src/livestore/actions"
-import { useAlertStore } from "@/src/store/useAlertStore"
+import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
 const allWorkoutLogs$ = queryDb(
   () => tables.workoutLogs.where({ deletedAt: null }),

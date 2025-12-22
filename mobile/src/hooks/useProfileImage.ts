@@ -1,7 +1,7 @@
 
 import { useState } from "react"
 import { useAuth } from "@/src/hooks/useAuth"
-import { useAuthActions } from "@/src/store/useAuthStore"
+import { useAuthActions } from "@/src/features/auth/useAuthStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { updateUser } from "@/src/lib/api/userApi"
 import { deleteImage, uploadImage } from "@/src/lib/api/imageApi"

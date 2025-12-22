@@ -6,7 +6,7 @@ import {
   Platform,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
-import { useAuthActions } from "@/src/store/useAuthStore"
+import { useAuthActions } from "@/src/features/auth/useAuthStore"
 import { signUp } from "@/src/lib/api/authApi"
 import { signUpSchema } from "@/src/types/userType"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"

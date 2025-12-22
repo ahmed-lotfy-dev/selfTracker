@@ -7,12 +7,12 @@ import BackButton from "@/src/components/Buttons/BackButton"
 import { format } from "date-fns"
 import { MaterialIcons } from "@expo/vector-icons"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
-import { useWeightLogStore } from "@/src/store/useWeightStore"
+import { useWeightLogStore } from "@/src/features/weight/useWeightStore"
 import { useStore, useQuery } from "@livestore/react"
 import { queryDb } from "@livestore/livestore"
 import { tables } from "@/src/livestore/schema"
 import { deleteWeightLogEvent } from "@/src/livestore/actions"
-import { useAlertStore } from "@/src/store/useAlertStore"
+import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
 const allWeightLogs$ = queryDb(
   () => tables.weightLogs.where({ deletedAt: null }),

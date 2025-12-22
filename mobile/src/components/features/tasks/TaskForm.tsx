@@ -8,7 +8,7 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema } from "@/src/types/taskType"
-import { useUser } from "@/src/store/useAuthStore"
+import { useUser } from "@/src/features/auth/useAuthStore"
 import { useStore } from "@livestore/react"
 import { createTaskEvent } from "@/src/livestore/actions"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"

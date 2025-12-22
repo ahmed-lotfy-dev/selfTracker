@@ -7,7 +7,7 @@ import { View, Text, Pressable, Button } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
 import { useUpdate } from "@/src/hooks/useUpdate"
-import { useAuthActions } from "@/src/store/useAuthStore"
+import { useAuthActions } from "@/src/features/auth/useAuthStore"
 import Foundation from "@expo/vector-icons/Foundation"
 
 export default function UploadImageBtn({ className }: { className?: string }) {

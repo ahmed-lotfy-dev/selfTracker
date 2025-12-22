@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Modal, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthActions } from '@/src/store/useAuthStore';
+import { useAuthActions } from '@/src/features/auth/useAuthStore';
 import { useToast } from '@/src/hooks/useToast';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/src/constants/Colors';

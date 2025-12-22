@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import { useOnboardingStore } from "@/src/features/onboarding/useOnboardingStore"
 import { useAuthStore } from "@/src/features/auth/useAuthStore"
-import { useAuth } from "./useAuth"
 
 type AppInitState = {
   isReady: boolean
@@ -10,19 +9,20 @@ type AppInitState = {
 
 export function useAppInitialization(): AppInitState {
   const { isOnboarding, hasHydrated: onboardingHydrated } = useOnboardingStore()
-  const { user, hasHydrated: authHydrated } = useAuthStore()
-  const { isLoading: isAuthLoading, isAuthenticated } = useAuth()
+  const { user, token: authToken, hasHydrated: authHydrated } = useAuthStore()
 
   const [targetRoute, setTargetRoute] = useState<string | null>(null)
 
   useEffect(() => {
-    // Wait for all stores to rehydrate and initial auth check to complete
-    if (!onboardingHydrated || !authHydrated || isAuthLoading) {
+    // Wait for stores to rehydrate
+    if (!onboardingHydrated || !authHydrated) {
       return
     }
 
     // Determine the target route based on state priority
     let route = "/home"
+
+    const isAuthenticated = !!user && !!authToken
 
     if (isOnboarding) {
       route = "/onboarding"
@@ -33,7 +33,7 @@ export function useAppInitialization(): AppInitState {
     }
 
     setTargetRoute(route)
-  }, [onboardingHydrated, authHydrated, isAuthLoading, isOnboarding, isAuthenticated, user])
+  }, [onboardingHydrated, authHydrated, isOnboarding, user, authToken])
 
   return {
     isReady: targetRoute !== null,

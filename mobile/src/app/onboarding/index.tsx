@@ -18,7 +18,7 @@ import Animated, {
   interpolateColor,
   FadeInDown,
 } from "react-native-reanimated"
-import { useOnboardingStore } from "@/src/store/useOnboardingStore"
+import { useOnboardingStore } from "@/src/features/onboarding/useOnboardingStore"
 import { useThemeColors } from "@/src/constants/Colors"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"

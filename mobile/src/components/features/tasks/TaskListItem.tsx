@@ -6,7 +6,7 @@ import { useThemeColors } from "@/src/constants/Colors"
 import { Swipeable } from "react-native-gesture-handler"
 import { useStore } from "@livestore/react"
 import { deleteTaskEvent, updateTaskEvent, completeTaskEvent, uncompleteTaskEvent } from "@/src/livestore/actions"
-import { useAlertStore } from "@/src/store/useAlertStore"
+import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
 interface TaskListItemProps {
   task: TaskType

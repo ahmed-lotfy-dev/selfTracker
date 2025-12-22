@@ -4,7 +4,7 @@ import { Feather } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { Section } from "@/src/components/ui/Section"
 import axiosInstance from "@/src/lib/api/axiosInstane"
-import { useAlertStore } from "@/src/store/useAlertStore"
+import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
 export default function SyncSection() {
   const colors = useThemeColors()

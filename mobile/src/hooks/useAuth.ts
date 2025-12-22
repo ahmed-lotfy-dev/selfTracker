@@ -1,73 +1,40 @@
-import { useState, useEffect } from "react"
-import { authClient } from "@/src/lib/auth-client"
+import { useEffect } from "react"
 import { useAuthActions, useUser, useToken, useHasHydrated } from "@/src/features/auth/useAuthStore"
-import { getAccessToken, clearAllUserData } from "@/src/lib/storage"
+import { clearAllUserData } from "@/src/lib/storage"
 import { queryClient } from "@/src/lib/react-query"
 import { Uniwind } from 'uniwind'
 
 export const useAuth = () => {
-  // 1. Better Auth Hook
-  const { data: sessionData, isPending: isSessionPending, error, refetch } = authClient.useSession()
-
-  // 2. Zustand State
+  // Single source of truth: Zustand store
   const user = useUser()
   const token = useToken()
   const hasHydrated = useHasHydrated()
-  const { setUser, setToken } = useAuthActions()
+  const { logout: storeLogout } = useAuthActions()
 
-  // 3. Manual Token Flow (Stability ensure)
-  const [isManualCheckDone, setIsManualCheckDone] = useState(false)
-
-  // Sync token from SecureStore to Zustand on mount or when user changes
+  // Sync Theme
   useEffect(() => {
-    getAccessToken().then(storedToken => {
-      if (storedToken && storedToken !== token) {
-        setToken(storedToken)
-      }
-      setIsManualCheckDone(true)
-    })
-  }, [user]) // Re-run when user changes to catch social login redirect
-
-  // Derived State
-  const finalUser = sessionData?.user ?? user ?? null
-  const finalToken = sessionData?.session?.token ?? token ?? null
-  const storeId = finalUser?.id ?? 'anonymous'
-
-  // 4. Sync Theme
-  useEffect(() => {
-    const theme = (sessionData?.user as any)?.theme ?? (user as any)?.theme ?? 'system'
+    const theme = (user as any)?.theme ?? 'system'
     Uniwind.setTheme(theme)
-  }, [(sessionData?.user as any)?.theme, (user as any)?.theme])
+  }, [(user as any)?.theme])
 
-  // Loading Logic
-  // Wait for: Hydration AND initial token load
-  // ONLY wait for isSessionPending if we don't have a user/token yet to prevent flickering during refetches
-  const isLoading = !hasHydrated || !isManualCheckDone || (isSessionPending && !finalUser && !finalToken)
+  // Simplified loading: only wait for hydration
+  const isLoading = !hasHydrated
 
   const logout = async () => {
-    try {
-      await clearAllUserData()
-      queryClient.removeQueries()
-      await authClient.signOut()
-    } finally {
-      setUser(null)
-      setToken(null)
-      refetch()
-    }
+    await clearAllUserData()
+    queryClient.removeQueries()
+    storeLogout()
   }
 
   return {
-    user: finalUser,
-    token: finalToken, // Used for LiveStore and headers
-    storeId,           // Used for LiveStore identity
+    user,
+    token,
+    storeId: user?.id ?? 'anonymous',
 
     // Auth Status
-    isAuthenticated: !!finalUser && !!finalToken, // Strict check
+    isAuthenticated: !!user && !!token,
     isLoading,
-    isResolved: !isLoading && !!finalUser, // Helper
 
-    error,
-    refetch,
     logout,
   }
 }

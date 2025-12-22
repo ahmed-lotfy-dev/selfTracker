@@ -5,7 +5,7 @@ import {
   Platform,
 } from "react-native"
 import { Link, useRouter } from "expo-router"
-import { useAuthActions } from "@/src/store/useAuthStore"
+import { useAuthActions } from "@/src/features/auth/useAuthStore"
 import { signIn } from "@/src/lib/api/authApi"
 import { setAccessToken } from "@/src/lib/storage"
 import { signInSchema } from "@/src/types/userType"
