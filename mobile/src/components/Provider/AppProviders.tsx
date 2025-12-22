@@ -12,7 +12,7 @@ import { makeWsSync } from '@livestore/sync-cf/client'
 
 import { queryClient } from "@/src/lib/react-query"
 import { ToastProvider } from "@/src/hooks/useToast"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useHasHydrated } from "@/src/features/auth/useAuthStore";
 import { schema } from '@/src/livestore/schema'
 
@@ -27,7 +27,7 @@ const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
 export function AppProviders({ children }: AppProvidersProps) {
   const { storeId, token, isLoading } = useAuth()
   const hasHydrated = useHasHydrated()
-  const [isRepairMode, setRepairMode] = useState(true) // Force reset on first load
+  const [isRepairMode, setRepairMode] = useState(false)
 
   const adapter = useMemo(() => {
     // Only log essential lifecycle events

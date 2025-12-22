@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, Redirect } from 'expo-router';
 import { useAuthActions, useAuthStore } from '@/src/features/auth/useAuthStore';
 import { useToast } from '@/src/hooks/useToast';
 import { queryClient } from '@/src/lib/react-query';
+import { useAuth } from '@/src/features/auth/useAuthStore';
 
 export default function AuthCallback() {
-  const router = useRouter();
   const params = useLocalSearchParams();
-  const { setUser, setToken, loginWithToken } = useAuthActions();
+  const { loginWithToken } = useAuthActions();
   const { showToast } = useToast();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     const handleAuth = async () => {
@@ -47,11 +48,6 @@ export default function AuthCallback() {
           await queryClient.invalidateQueries({ queryKey: ['tasks'] });
           await queryClient.invalidateQueries({ queryKey: ['weights'] });
           await queryClient.invalidateQueries({ queryKey: ['workouts'] });
-
-          // Navigate home - use setTimeout to ensure navigation is ready
-          setTimeout(() => {
-            router.replace("/(drawer)/(tabs)/home" as any);
-          }, 100);
         } else {
           throw new Error("Failed to verify session token");
         }
@@ -59,14 +55,21 @@ export default function AuthCallback() {
       } catch (err: any) {
         console.error("[AuthCallback] Login failed:", err.message);
         showToast(`Login Failed: ${err.message}`, "error");
-        setTimeout(() => {
-          router.replace("/(auth)/sign-in" as any);
-        }, 100);
       }
     };
 
     handleAuth();
   }, [params]);
+
+  // Redirect to home if authenticated and verified
+  if (isAuthenticated && user?.emailVerified) {
+    return <Redirect href="/home" />
+  }
+
+  // Redirect to verify-email if authenticated but not verified
+  if (isAuthenticated && !user?.emailVerified) {
+    return <Redirect href="/verify-email" />
+  }
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>

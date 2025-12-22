@@ -1,5 +1,5 @@
 import React from "react"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useAuth } from "@/src/features/auth/useAuthStore"
 import { deleteImage, uploadImage } from "@/src/lib/api/imageApi"
 import { updateUser } from "@/src/lib/api/userApi"
 import { useState } from "react"

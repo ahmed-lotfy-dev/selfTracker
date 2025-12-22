@@ -1,7 +1,7 @@
 import { View, Text, Image } from "react-native"
 import React from "react"
 import UploadImageBtn from "./UploadImageBtn"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useAuth } from "@/src/features/auth/useAuthStore"
 import { Ionicons } from "@expo/vector-icons"
 
 interface UserImageProps {

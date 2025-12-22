@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import React from "react"
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer"
 import { useRouter, usePathname } from "expo-router"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useAuth } from "@/src/features/auth/useAuthStore"
 import { Ionicons, MaterialIcons, FontAwesome5, Feather } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 
@@ -14,14 +14,14 @@ export default function CustomDrawerContent(props: any) {
   const colors = useThemeColors()
 
   const menuItems = [
-    { label: "Home", icon: "home", route: "/(drawer)/(tabs)/home", type: "feather" },
-    { label: "Weights", icon: "weight", route: "/(drawer)/(tabs)/weights", type: "font-awesome-5" },
-    { label: "Workouts", icon: "dumbbell", route: "/(drawer)/(tabs)/workouts", type: "font-awesome-5" },
-    { label: "Tasks", icon: "check-square", route: "/(drawer)/(tabs)/tasks", type: "feather" },
+    { label: "Home", icon: "home", route: "/home", type: "feather" },
+    { label: "Weights", icon: "weight", route: "/weights", type: "font-awesome-5" },
+    { label: "Workouts", icon: "dumbbell", route: "/workouts", type: "font-awesome-5" },
+    { label: "Tasks", icon: "check-square", route: "/tasks", type: "feather" },
     { label: "Projects", icon: "folder", route: "/projects", type: "feather", pending: true },
     { label: "Finances", icon: "dollar-sign", route: "/finances", type: "feather", pending: true },
     { label: "Focus Timer", icon: "clock", route: "/focus", type: "feather", pending: true },
-    { label: "Profile", icon: "user", route: "/(drawer)/(tabs)/profile", type: "feather" },
+    { label: "Profile", icon: "user", route: "/profile", type: "feather" },
   ]
 
   return (

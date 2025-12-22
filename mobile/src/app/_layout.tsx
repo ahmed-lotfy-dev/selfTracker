@@ -26,12 +26,14 @@ import {
 import { Colors } from "../constants/Colors"
 import CustomAlert from "@/src/components/ui/CustomAlert"
 import Toast from "@/src/components/ui/Toast"
+import { useAuth } from "@/src/features/auth/useAuthStore"
 
 SplashScreen.preventAutoHideAsync()
 
 function RootLayout() {
   useOnlineManager()
   useAppState(onAppStateChange)
+  const { user, isAuthenticated, isLoading } = useAuth()
 
   const [expoPushToken, setExpoPushToken] = useState<string | undefined>()
   const [appIsReady, setAppIsReady] = useState(false)
@@ -75,6 +77,9 @@ function RootLayout() {
 
   const themeColors = Colors[colorScheme ?? "light"]
 
+  const isEmailVerified = user?.emailVerified ?? false
+  const canAccessApp = isAuthenticated && isEmailVerified
+
   return (
     <AppProviders>
       <StatusBar
@@ -83,9 +88,11 @@ function RootLayout() {
       />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(drawer)" />
         <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Protected guard={canAccessApp}>
+          <Stack.Screen name="(drawer)" />
+        </Stack.Protected>
         <Stack.Screen name="+not-found" />
       </Stack>
       <PortalHost />

@@ -5,9 +5,10 @@ import {
   Pressable,
   Platform,
 } from "react-native"
-import { Link, useRouter } from "expo-router"
-import { useAuthActions } from "@/src/features/auth/useAuthStore"
+import { Link, useRouter, Redirect } from "expo-router"
+import { useAuthStore, useAuth, useAuthActions } from "@/src/features/auth/useAuthStore"
 import { signUp } from "@/src/lib/api/authApi"
+import * as SecureStore from "expo-secure-store"
 import { signUpSchema } from "@/src/types/userType"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 import { SocialLoginButtons } from "@/src/components/features/auth/SocialLoginButtons"
@@ -16,7 +17,8 @@ import Button from "@/src/components/ui/Button"
 
 export default function SignUp() {
   const router = useRouter()
-  const { setUser } = useAuthActions()
+  const { loginWithToken } = useAuthActions()
+  const { isAuthenticated, user } = useAuth()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -51,15 +53,36 @@ export default function SignUp() {
 
       if (response.error) {
         setFormError(response.error.message || "Signup failed")
-      } else if (response.data) {
-        setUser(response.data.token)
-        router.replace("/(auth)/verify-email")
+        return
+      }
+
+      // Success case: We already have user and token from the API!
+      if (response.data?.token && response.data?.user) {
+        // Save token to SecureStore
+        await SecureStore.setItemAsync("selftracker.better-auth.session_token", response.data.token)
+        await SecureStore.setItemAsync("selftracker.session_token", response.data.token)
+
+        // Update store with user and token
+        const { setUser, setToken, setIsLoading } = useAuthStore.getState()
+        setUser(response.data.user)
+        setToken(response.data.token)
+        setIsLoading(false)
       }
     } catch (err) {
       setFormError("An unexpected error occurred.")
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Redirect to verify-email if authenticated but not verified (after signup)
+  if (isAuthenticated && !user?.emailVerified) {
+    return <Redirect href="/verify-email" />
+  }
+
+  // Redirect to home if already fully authenticated
+  if (isAuthenticated && user?.emailVerified) {
+    return <Redirect href="/home" />
   }
 
   return (

@@ -1,8 +1,7 @@
 import React, { useState } from "react"
 import { View, Text } from "react-native"
 import { useRouter } from "expo-router"
-import { clearTokens } from "@/src/lib/storage"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useAuthActions } from "@/src/features/auth/useAuthStore"
 import Button from "@/src/components/ui/Button"
 
 type logoutProps = {
@@ -10,7 +9,7 @@ type logoutProps = {
 }
 
 export default function LogoutButton({ className }: logoutProps) {
-  const { logout } = useAuth()
+  const { logout } = useAuthActions()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,14 +19,12 @@ export default function LogoutButton({ className }: logoutProps) {
     setError(null)
 
     try {
-      // Database cleanup is now handled automatically by useAuth hook
-      await clearTokens()
       await logout()
     } catch (e: any) {
       setError(e.message)
     } finally {
       setIsLoading(false)
-      router.replace("/(auth)/sign-in")
+      router.replace("/sign-in")
     }
   }
 

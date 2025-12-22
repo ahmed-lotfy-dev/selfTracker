@@ -1,26 +1,23 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { View, Text, Pressable, Platform } from "react-native"
-import { useRouter } from "expo-router"
+import { Redirect } from "expo-router"
 import { resendVerificationEmail, verifyEmailOTP } from "@/src/lib/api/authApi"
 import { COLORS } from "@/src/constants/Colors"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useAuth } from "@/src/features/auth/useAuthStore"
 import OTPInput from "@/src/components/ui/OTPInput"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function VerifyEmail() {
-  const router = useRouter()
   const [otp, setOtp] = useState("")
   const [otpError, setOtpError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  3
-  const { user, isAuthenticated, error, isLoading, refetch } = useAuth()
+  const { user, isAuthenticated, isLoading } = useAuth()
 
-  useEffect(() => {
-    if (isAuthenticated && user?.emailVerified) {
-      requestAnimationFrame(() => router.replace("/"))
-    }
-  }, [isAuthenticated, user?.emailVerified])
+  // Redirect to home if email is verified
+  if (isAuthenticated && user?.emailVerified) {
+    return <Redirect href="/home" />
+  }
 
   const handleVerifyOTP = async () => {
     setOtpError("")
@@ -34,10 +31,6 @@ export default function VerifyEmail() {
       const response = await verifyEmailOTP(user?.email || "", otp)
       if (!response) {
         setOtpError("Invalid verification code")
-      } else {
-        // Refresh auth state to get updated user
-        await refetch()
-        requestAnimationFrame(() => router.replace("/home"))
       }
     } catch (err) {
       setOtpError("Invalid verification code")
@@ -91,7 +84,6 @@ export default function VerifyEmail() {
       {isLoading && (
         <Text className="mt-4 text-placeholder">Checking verification status...</Text>
       )}
-      {error && <Text className="text-error mt-4">{error.message}</Text>}
     </KeyboardAvoidingView>
   )
 }

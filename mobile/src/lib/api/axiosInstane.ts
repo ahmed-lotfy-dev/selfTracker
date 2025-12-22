@@ -1,7 +1,7 @@
 import axios from "axios"
 import { router } from 'expo-router';
 import { API_BASE_URL } from "./config"
-import { getAccessToken } from "../storage"
+import * as SecureStore from "expo-secure-store"
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -12,7 +12,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   async (config) => {
     // Get token from SecureStore (faster than authClient.getSession())
-    const token = await getAccessToken();
+    const token = await SecureStore.getItemAsync("selftracker.better-auth.session_token");
 
     if (token) {
       // Send as both Bearer (for non-better-auth endpoints) and Cookie (for better-auth)

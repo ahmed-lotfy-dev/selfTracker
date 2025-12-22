@@ -1,6 +1,6 @@
 
 import { useState } from "react"
-import { useAuth } from "@/src/hooks/useAuth"
+import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useAuthActions } from "@/src/features/auth/useAuthStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { updateUser } from "@/src/lib/api/userApi"

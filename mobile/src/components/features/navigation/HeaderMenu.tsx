@@ -28,7 +28,7 @@ export default function HeaderMenu() {
 
       setUser(null);
       showToast('Signed out successfully', 'success');
-      router.replace('/(auth)/login');
+      router.replace('/sign-in');
     } catch (error) {
       console.error('Sign out error:', error);
       showToast('Failed to sign out', 'error');

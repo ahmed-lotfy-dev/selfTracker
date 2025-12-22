@@ -41,17 +41,17 @@ export default function ActionButtons() {
       <ActionButton
         icon="plus-circle"
         label="Weight"
-        onPress={() => router.push("/(home)/weights/add")}
+        onPress={() => router.push("/weights/add")}
       />
       <ActionButton
         icon="plus-circle"
         label="Workout"
-        onPress={() => router.push("/(home)/workouts/add")}
+        onPress={() => router.push("/workouts/add")}
       />
       <ActionButton
         icon="plus-circle"
         label="Task"
-        onPress={() => router.push("/(home)/tasks")}
+        onPress={() => router.push("/tasks")}
       />
     </View>
   )

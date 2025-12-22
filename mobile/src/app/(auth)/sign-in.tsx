@@ -4,19 +4,20 @@ import {
   View,
   Platform,
 } from "react-native"
-import { Link, useRouter } from "expo-router"
-import { useAuthActions } from "@/src/features/auth/useAuthStore"
+import { Link, useRouter, Redirect } from "expo-router"
+import { useAuthStore } from "@/src/features/auth/useAuthStore"
 import { signIn } from "@/src/lib/api/authApi"
-import { setAccessToken } from "@/src/lib/storage"
+import * as SecureStore from "expo-secure-store"
 import { signInSchema } from "@/src/types/userType"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 import { SocialLoginButtons } from "@/src/components/features/auth/SocialLoginButtons"
 import Input from "@/src/components/ui/Input"
 import Button from "@/src/components/ui/Button"
+import { useAuth } from "@/src/features/auth/useAuthStore"
 
 export default function SignIn() {
   const router = useRouter()
-  const { setUser } = useAuthActions()
+  const { isAuthenticated, user } = useAuth()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -42,20 +43,57 @@ export default function SignIn() {
     setIsSubmitting(true)
 
     try {
+      console.log('[SIGN-IN] Calling signIn API...')
       const response = await signIn(email, password)
+      console.log('[SIGN-IN] API Response:', response)
 
       if (response.error) {
+        console.log('[SIGN-IN] Error from API:', response.error)
         setFormError(response.error.message || "Login failed")
-      } else if (response.data) {
-        await setAccessToken(response.data.token)
+        return
+      }
+
+      // Success case: We already have user and token from the API!
+      if (response.data?.token && response.data?.user) {
+        console.log('[SIGN-IN] Got user and token, saving directly...')
+
+        // Save token to SecureStore
+        await SecureStore.setItemAsync("selftracker.better-auth.session_token", response.data.token)
+        await SecureStore.setItemAsync("selftracker.session_token", response.data.token)
+
+        // Update store with user and token
+        const { setUser, setToken, setIsLoading } = useAuthStore.getState()
         setUser(response.data.user)
-        router.replace("/home")
+        setToken(response.data.token)
+        setIsLoading(false)
+
+        console.log('[SIGN-IN] User and token saved successfully!')
+      } else {
+        console.log('[SIGN-IN] No token/user in response:', response.data)
+        setFormError("No authentication data received")
       }
     } catch (err) {
+      console.error('[SIGN-IN] Exception:', err)
       setFormError("An unexpected error occurred.")
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  console.log('[SIGN-IN] isAuthenticated:', isAuthenticated)
+  console.log('[SIGN-IN] user:', user)
+  console.log('[SIGN-IN] user?.emailVerified:', user?.emailVerified)
+
+  // Redirect to home if already authenticated and verified
+  if (isAuthenticated && user?.emailVerified) {
+    console.log('[SIGN-IN] Redirecting to /home')
+    return <Redirect href="/home" />
+  }
+
+  // Redirect to verify-email if authenticated but not verified
+  if (isAuthenticated && !user?.emailVerified) {
+    console.log('[SIGN-IN] Redirecting to /verify-email')
+    return <Redirect href="/verify-email" />
   }
 
   return (

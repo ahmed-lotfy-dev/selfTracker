@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { WorkoutLogType } from "@/src/types/workoutLogType"
-import { secureStorage } from "@/src/lib/storage"
 
 type WorkoutLogState = {
   selectedWorkout: WorkoutLogType | null
@@ -22,7 +22,7 @@ export const useWorkoutLogStore = create<WorkoutLogStore>()(
     }),
     {
       name: "selected-workout-storage",
-      storage: createJSONStorage(() => secureStorage),
+      storage: createJSONStorage(() => AsyncStorage),
     }
   )
 )
