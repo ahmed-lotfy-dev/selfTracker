@@ -329,11 +329,18 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
           const processedData = sanitizeData(data)
 
           if (idx === 0) {
-            console.log(`[LiveStore] WS Processed Sample[0]: type=${e.eventType} data=${JSON.stringify(processedData).substring(0, 150)}...`)
+            console.log(`[LiveStore] WS Pull Batch[0]: type=${e.eventType} id=${e.id}`)
           }
 
+          // Use name/args format for LiveStore v0.4 protocol compatibility
           return {
-            event: { _tag: e.eventType, ...processedData },
+            event: {
+              name: e.eventType,
+              args: processedData,
+              seqNum: Number(e.id),
+              clientId: "backend",
+              sessionId: "static"
+            },
             metadata: { _tag: "Some", value: { createdAt: new Date(Number(e.timestamp)).toISOString() } }
           }
         }),
@@ -354,7 +361,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         traceId: traceId
       })
       console.log(`[LiveStore] Sending Pull response - ID: ${id}, Events: ${events.length}`)
-      console.log(`[LiveStore] Response Snippet: ${response.substring(0, 300)}...`)
+      console.log(`[LiveStore] Response Snippet: ${response.substring(0, 400)}...`)
       ws.send(response)
     }
   } catch (error) {
