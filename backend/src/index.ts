@@ -49,15 +49,13 @@ app.use(
   }),
 );
 
-// MAIN AUTH ROUTE (Double Star Wildcard for deep paths)
-// MAIN AUTH ROUTE (Robust Wildcard matching)
-app.all("/api/auth/:path*", async (c) => {
-  console.log(`[AUTH_BACKEND] Request: ${c.req.method} ${c.req.path}`);
+// Better Auth route handler
+app.all("/api/auth/*", async (c) => {
   const res = await auth.handler(c.req.raw);
 
   // Log redirects for debugging mobile flow
   if (res.status >= 300 && res.status < 400 && res.headers.has("Location")) {
-    console.log(`[AUTH_BACKEND] Redirecting to: ${res.headers.get("Location")}`);
+    console.log(`[AUTH_BACKEND] ${c.req.method} ${c.req.path} -> Redirect to: ${res.headers.get("Location")}`);
   }
 
   return res;
