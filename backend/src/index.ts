@@ -49,17 +49,7 @@ app.use(
   }),
 );
 
-// Better Auth route handler
-app.all("/api/auth/*", async (c) => {
-  const res = await auth.handler(c.req.raw);
-
-  // Log redirects for debugging mobile flow
-  if (res.status >= 300 && res.status < 400 && res.headers.has("Location")) {
-    console.log(`[AUTH_BACKEND] ${c.req.method} ${c.req.path} -> Redirect to: ${res.headers.get("Location")}`);
-  }
-
-  return res;
-});
+app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.route("/api/users", userRouter)
 

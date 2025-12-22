@@ -13,12 +13,18 @@ export default function Index() {
   const { isAuthenticated, user, token } = useAuth()
 
   console.log('[INDEX] isReady:', isReady)
-  console.log('[INDEX] Incoming URL:', url)
+  console.log('[INDEX] Incoming URL (useURL):', url)
   console.log('[INDEX] isOnboarding:', isOnboarding)
   console.log('[INDEX] isAuthenticated:', isAuthenticated)
   console.log('[INDEX] token:', token)
   console.log('[INDEX] user:', user)
   console.log('[INDEX] user?.emailVerified:', user?.emailVerified)
+
+  React.useEffect(() => {
+    Linking.getInitialURL().then(initialUrl => {
+      console.log('[INDEX] Initial URL (getInitialURL):', initialUrl)
+    })
+  }, [])
 
   if (!isReady) {
     return <LoadingScreen />
@@ -27,6 +33,13 @@ export default function Index() {
   if (isOnboarding) {
     console.log('[INDEX] Redirecting to /onboarding')
     return <Redirect href="/onboarding" />
+  }
+
+  // Hold on redirects if we are in the middle of a deep link return
+  // or if rehydration hasn't settled yet
+  if (!isAuthenticated && (url?.includes('callback') || !isReady)) {
+    console.log('[INDEX] Holding for deep link or hydration...')
+    return <LoadingScreen />
   }
 
   if (!isAuthenticated) {

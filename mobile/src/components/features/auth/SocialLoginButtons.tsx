@@ -4,6 +4,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { authClient } from '@/src/lib/auth-client';
 import { useToast } from '@/src/hooks/useToast';
 import { useThemeColors } from '@/src/constants/Colors';
+import Constants from 'expo-constants';
 
 /**
  * Social login buttons component providing Google and GitHub OAuth authentication.
@@ -26,6 +27,7 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
 
     try {
       console.log(`[SOCIAL LOGIN] Starting ${provider} login`);
+      console.log(`[SOCIAL LOGIN] Execution Environment: ${Constants.executionEnvironment}`);
 
       const result = await authClient.signIn.social({
         provider,
