@@ -59,8 +59,17 @@ export function AppProviders({ children }: AppProvidersProps) {
   const finalStoreId = storeId ?? 'anonymous'
 
   // Only attempt sync if we have a token (since our backend is strict)
-  // If no token, we just don't pass a backend to the adapter
-  const authenticatedUrl = (token && syncUrl) ? `${syncUrl}?token=${token}` : undefined
+  const authenticatedUrl = useMemo(() => {
+    if (!token || !syncUrl) return undefined
+    try {
+      const url = new URL(syncUrl)
+      url.searchParams.set('token', token)
+      return url.toString()
+    } catch (e) {
+      console.error("[LiveStore] Failed to parse syncUrl:", syncUrl)
+      return `${syncUrl}${syncUrl.includes('?') ? '&' : '?'}token=${token}`
+    }
+  }, [token, syncUrl])
 
   useEffect(() => {
     if (authenticatedUrl) {

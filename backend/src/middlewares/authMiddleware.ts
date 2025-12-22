@@ -11,14 +11,21 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     const headers = new Headers(c.req.raw.headers);
 
     let session;
+    // Synthesis: combine raw headers with our injected ones
+    const finalHeaders = new Headers(c.req.raw.headers);
+
+    // Normalize protocol for Better Auth (wss -> https)
+    const proto = finalHeaders.get('x-forwarded-proto');
+    if (proto === 'wss') finalHeaders.set('x-forwarded-proto', 'https');
+
     if (token) {
-      // For WebSocket/Query-token based requests, we MUST use custom headers
-      headers.set('Authorization', `Bearer ${token}`);
-      headers.set('Cookie', `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`);
-      session = await auth.api.getSession({ headers });
+      // For WebSocket/Query-token based requests
+      finalHeaders.set('Authorization', `Bearer ${token}`);
+      finalHeaders.set('Cookie', `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`);
+      session = await auth.api.getSession({ headers: finalHeaders });
     } else {
-      // For standard HTTP requests (Axios), passing the raw Headers is more robust 
-      session = await auth.api.getSession({ headers: c.req.raw.headers });
+      // For standard HTTP requests, use the normalized headers
+      session = await auth.api.getSession({ headers: finalHeaders });
     }
     const log = c.get("logger");
 
