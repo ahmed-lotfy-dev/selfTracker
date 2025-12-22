@@ -386,7 +386,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         pageInfo: {
           hasMore: events.length >= 50,
           cursor: events.length > 0
-            ? { _tag: "Some", value: { eventSequenceNumber: events[events.length - 1].id } }
+            ? { _tag: "Some", value: { eventSequenceNumber: Number(events[events.length - 1].seqNum) } }
             : { _tag: "None" }
         },
         backendId: "selftracker-v1"
