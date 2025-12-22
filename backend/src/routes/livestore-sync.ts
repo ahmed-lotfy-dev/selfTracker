@@ -302,9 +302,10 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       const batch = innerPayload?.batch ?? payload?.batch
       console.log(`[LiveStore] WS Push received - Store: ${storeId}, Batch Size: ${batch?.length || 0}`)
 
-      if (batch && batch.length > 0) {
+      if (batch && Array.isArray(batch) && batch.length > 0) {
         // Log first event of push for debugging
-        console.log(`[LiveStore] Push Sample[0]: type=${batch[0].eventType} eventId=${batch[0].eventId}`)
+        const first = batch[0]
+        console.log(`[LiveStore] Push Sample[0] Raw: ${JSON.stringify(first).substring(0, 200)}`)
         await pushEventsToDb(batch, storeId)
       }
 
@@ -363,19 +364,33 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
 
 
-async function pushEventsToDb(batch: LiveStoreEvent[], storeId: string) {
-  for (const event of batch) {
+async function pushEventsToDb(batch: any[], storeId: string) {
+  for (const item of batch) {
+    // LiveStore Push payload: { event: { _tag: string, ...data }, eventId: string, timestamp: number }
+    const event = item.event
+    const eventId = item.eventId
+    const timestamp = item.timestamp
+
+    if (!event || !eventId) {
+      console.warn("[LiveStore] WS Warning: Push item missing event or eventId", item)
+      continue
+    }
+
+    const eventType = event._tag
+    const eventData = { ...event }
+    delete eventData._tag // Clean data for storage
+
     // 1. Store the event for LiveStore sync
     await db.insert(livestoreEvents).values({
       storeId,
-      eventId: event.eventId,
-      eventType: event.eventType,
-      eventData: event.eventData,
-      timestamp: event.timestamp,
+      eventId,
+      eventType,
+      eventData,
+      timestamp,
     }).onConflictDoNothing()
 
     // 2. Materialize the event into our legacy tables (Source of Truth)
-    await materializeEvent(event, storeId)
+    await materializeEvent({ eventId, eventType, eventData, timestamp, storeId }, storeId)
   }
 }
 
