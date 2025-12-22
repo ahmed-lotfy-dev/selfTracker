@@ -13,17 +13,17 @@ import { queryDb } from "@livestore/livestore"
 import { tables } from "@/src/livestore/schema"
 
 const allWorkoutLogs$ = queryDb(
-  () => tables.workoutLogs.where({ deletedAt: null }),
+  () => tables.workoutLogs,
   { label: 'homeWorkoutLogs' }
 )
 
 const allWeightLogs$ = queryDb(
-  () => tables.weightLogs.where({ deletedAt: null }),
+  () => tables.weightLogs,
   { label: 'homeWeightLogs' }
 )
 
 const allTasks$ = queryDb(
-  () => tables.tasks.where({ deletedAt: null }),
+  () => tables.tasks,
   { label: 'homeTasks' }
 )
 

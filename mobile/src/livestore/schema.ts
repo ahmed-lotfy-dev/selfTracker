@@ -255,7 +255,7 @@ export const events = {
 const materializers = State.SQLite.materializers(events, {
   'v1.WorkoutLogCreated': ({ id, userId, workoutId, workoutName, notes, createdAt }) => {
     console.log(`[LiveStore] Materializing WorkoutLogCreated: ${id}`)
-    return tables.workoutLogs.insert({ id, userId, workoutId, workoutName, notes, createdAt })
+    return tables.workoutLogs.insert({ id, userId, workoutId, workoutName, notes, createdAt, deletedAt: null, updatedAt: null })
   },
   'v1.WorkoutLogUpdated': ({ id, notes, updatedAt }) =>
     tables.workoutLogs.update({ notes, updatedAt }).where({ id }),
@@ -264,7 +264,7 @@ const materializers = State.SQLite.materializers(events, {
 
   'v1.WeightLogCreated': ({ id, userId, weight, mood, energy, notes, createdAt }) => {
     console.log(`[LiveStore] Materializing WeightLogCreated: ${id} (${weight}kg)`)
-    return tables.weightLogs.insert({ id, userId, weight, mood, energy, notes, createdAt })
+    return tables.weightLogs.insert({ id, userId, weight, mood, energy, notes, createdAt, deletedAt: null, updatedAt: null })
   },
   'v1.WeightLogUpdated': ({ id, weight, mood, energy, notes, updatedAt }) =>
     tables.weightLogs.update({ weight, mood, energy, notes, updatedAt }).where({ id }),
@@ -273,7 +273,7 @@ const materializers = State.SQLite.materializers(events, {
 
   'v1.TaskCreated': ({ id, userId, title, category, description, dueDate, priority, createdAt }) => {
     console.log(`[LiveStore] Materializing TaskCreated: ${id} (${title})`)
-    return tables.tasks.insert({ id, userId, title, category, description, dueDate, priority, completed: false, createdAt })
+    return tables.tasks.insert({ id, userId, title, category, description, dueDate, priority, completed: false, createdAt, deletedAt: null, updatedAt: null })
   },
   'v1.TaskUpdated': ({ id, title, description, dueDate, priority, updatedAt }) =>
     tables.tasks.update({ title, description, dueDate, priority, updatedAt }).where({ id }),
@@ -284,8 +284,10 @@ const materializers = State.SQLite.materializers(events, {
   'v1.TaskDeleted': ({ id, deletedAt }) =>
     tables.tasks.update({ deletedAt }).where({ id }),
 
-  'v1.GoalCreated': ({ id, userId, goalType, targetValue, deadline, createdAt }) =>
-    tables.userGoals.insert({ id, userId, goalType, targetValue, deadline, achieved: false, createdAt }),
+  'v1.GoalCreated': ({ id, userId, goalType, targetValue, deadline, createdAt }) => {
+    console.log(`[LiveStore] Materializing GoalCreated: ${id}`)
+    return tables.userGoals.insert({ id, userId, goalType, targetValue, deadline, achieved: false, createdAt, deletedAt: null, updatedAt: null })
+  },
   'v1.GoalUpdated': ({ id, targetValue, deadline, achieved, updatedAt }) =>
     tables.userGoals.update({ targetValue, deadline, achieved, updatedAt }).where({ id }),
   'v1.GoalDeleted': ({ id, deletedAt }) =>

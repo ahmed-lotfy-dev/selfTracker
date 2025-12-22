@@ -299,7 +299,14 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     }
 
     if (tag === "SyncWsRpc.Push") {
-      await pushEventsToDb(payload.batch, storeId)
+      const batch = innerPayload?.batch ?? payload?.batch
+      console.log(`[LiveStore] WS Push received - Store: ${storeId}, Batch Size: ${batch?.length || 0}`)
+
+      if (batch && batch.length > 0) {
+        // Log first event of push for debugging
+        console.log(`[LiveStore] Push Sample[0]: type=${batch[0].eventType} eventId=${batch[0].eventId}`)
+        await pushEventsToDb(batch, storeId)
+      }
 
       ws.send(JSON.stringify({
         _tag: "Response",
