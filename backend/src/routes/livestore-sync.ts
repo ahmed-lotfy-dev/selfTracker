@@ -221,6 +221,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     // session verification
     let storeId = payload?.storeId
     const authToken = payload?.authToken
+    console.log(`[LiveStore] WS Payload - storeId: ${storeId}, authToken: ${authToken ? 'YES' : 'NO'}`)
 
     if (authToken) {
       const session = await auth.api.getSession({
@@ -232,6 +233,8 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       } else {
         console.warn(`[LiveStore] WS Auth Fail: Invalid token for store ${storeId}`)
       }
+    } else {
+      console.warn(`[LiveStore] WS No authToken provided, using storeId: ${storeId}`)
     }
 
     if (tag === "SyncWsRpc.Push") {
