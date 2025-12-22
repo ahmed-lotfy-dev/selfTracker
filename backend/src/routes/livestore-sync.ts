@@ -317,9 +317,13 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     const cursorField = innerPayload?.cursor ?? payload?.cursor
 
     if (authToken) {
-      const session = await auth.api.getSession({
-        headers: new Headers({ Cookie: `__Secure-better-auth.session_token=${authToken}` })
-      })
+      // Try multiple auth methods: Bearer (since plugin enabled) + Cookies
+      const headers = new Headers()
+      headers.set('Authorization', `Bearer ${authToken}`)
+      headers.set('Cookie', `__Secure-better-auth.session_token=${authToken}; better-auth.session_token=${authToken}`)
+
+      const session = await auth.api.getSession({ headers })
+
       if (session?.user) {
         console.log(`[LiveStore] WS Auth Success for user: ${session.user.id}`)
         storeId = session.user.id
