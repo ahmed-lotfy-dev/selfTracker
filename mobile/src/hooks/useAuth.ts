@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { authClient } from "@/src/lib/auth-client"
-import { useAuthActions, useUser, useToken, useHasHydrated } from "../store/useAuthStore"
+import { useAuthActions, useUser, useToken, useHasHydrated } from "@/src/features/auth/useAuthStore"
 import { getAccessToken, clearAllUserData } from "@/src/lib/storage"
 import { queryClient } from "@/src/lib/react-query"
 import { Uniwind } from 'uniwind'

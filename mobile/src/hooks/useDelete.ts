@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useAlertStore } from "@/src/store/useAlertStore"
-import { useToastStore } from "@/src/store/useToastStore"
+import { useAlertStore } from "@/src/features/ui/useAlertStore"
+import { useToastStore } from "@/src/features/ui/useToastStore"
 
 type UseDeleteOptions = {
   mutationFn: () => Promise<any>

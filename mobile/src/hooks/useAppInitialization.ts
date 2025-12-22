@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { useOnboardingStore } from "../store/useOnboardingStore"
-import { useAuthStore } from "../store/useAuthStore"
+import { useOnboardingStore } from "@/src/features/onboarding/useOnboardingStore"
+import { useAuthStore } from "@/src/features/auth/useAuthStore"
 import { useAuth } from "./useAuth"
 
 type AppInitState = {

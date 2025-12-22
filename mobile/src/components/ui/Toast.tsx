@@ -1,6 +1,6 @@
 import React, { useEffect } from "react"
 import { View, Text } from "react-native"
-import { useToastStore } from "@/src/store/useToastStore"
+import { useToastStore } from "@/src/features/ui/useToastStore";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated"
 import { Feather } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"

@@ -1,16 +1,14 @@
 import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import { useAuthActions } from '@/src/store/useAuthStore';
-import { API_BASE_URL } from '@/src/lib/api/config';
+import { useAuthActions, useAuthStore } from '@/src/features/auth/useAuthStore';
 import { useToast } from '@/src/hooks/useToast';
 import { queryClient } from '@/src/lib/react-query';
 
 export default function AuthCallback() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { setUser, setToken } = useAuthActions();
+  const { setUser, setToken, loginWithToken } = useAuthActions();
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -32,37 +30,12 @@ export default function AuthCallback() {
       }
 
       try {
-        // 2. Save Token Manually
-        await SecureStore.setItemAsync("selftracker.better-auth.session_token", token);
-        await SecureStore.setItemAsync("selftracker.session_token", token);
-        await SecureStore.setItemAsync("accessToken", token); // Legacy support
+        // Use centralized store action - ONE SOURCE OF TRUTH
+        const success = await loginWithToken(token);
 
-        // 3. Verify & Fetch User (Direct Fetch with Cookie)
-        const response = await fetch(`${API_BASE_URL}/api/auth/get-session`, {
-          headers: {
-            'Cookie': `__Secure-better-auth.session_token=${token}`
-          },
-          credentials: 'include'
-        });
-
-        const responseText = await response.text();
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${responseText}`);
-        }
-
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
-        }
-
-        if (data?.user) {
-          // 4. Update State & Redirect
-          setUser(data.user);
-          setToken(token); // CRITICAL: Update Zustand so AppProviders sees it
-          showToast(`Welcome back, ${data.user.name.split(" ")[0]}!`, "success");
+        if (success) {
+          const user = useAuthStore.getState().user;
+          showToast(`Welcome back, ${user?.name?.split(" ")[0]}!`, "success");
 
           // Invalidate queries to trigger data refetch
           await queryClient.invalidateQueries({ queryKey: ['session'] });
@@ -71,12 +44,10 @@ export default function AuthCallback() {
           await queryClient.invalidateQueries({ queryKey: ['weights'] });
           await queryClient.invalidateQueries({ queryKey: ['workouts'] });
 
-          // Small delay to ensure state updates?
-          setTimeout(() => {
-            router.replace("/(drawer)/(tabs)/home");
-          }, 500);
+          // Navigate home
+          router.replace("/(drawer)/(tabs)/home");
         } else {
-          throw new Error("No user data in session");
+          throw new Error("Failed to verify session token");
         }
 
       } catch (err: any) {

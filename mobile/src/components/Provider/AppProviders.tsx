@@ -13,7 +13,7 @@ import { makeWsSync } from '@livestore/sync-cf/client'
 import { queryClient } from "@/src/lib/react-query"
 import { ToastProvider } from "@/src/hooks/useToast"
 import { useAuth } from "@/src/hooks/useAuth"
-import { useHasHydrated } from "@/src/store/useAuthStore"
+import { useHasHydrated } from "@/src/features/auth/useAuthStore";
 import { schema } from '@/src/livestore/schema'
 
 export { queryClient }

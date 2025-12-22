@@ -1,7 +1,6 @@
 import React from "react"
 import { View, Text, Modal, TouchableWithoutFeedback, Pressable, Platform } from "react-native"
-import { useAlertStore } from "@/src/store/useAlertStore"
-import { BlurView } from "expo-blur"
+import { useAlertStore } from "@/src/features/ui/useAlertStore";
 import { useThemeColors } from "@/src/constants/Colors"
 
 export default function CustomAlert() {
