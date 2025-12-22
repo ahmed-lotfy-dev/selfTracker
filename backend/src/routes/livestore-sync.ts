@@ -207,8 +207,9 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     const rpcRequest = JSON.parse(data)
     console.log(`[LiveStore] RAW MESSAGE: ${data.substring(0, 200)}${data.length > 200 ? '...' : ''}`)
 
-    // Effect RPC sends messages with _tag: "Request"
+    // Effect RPC sends messages with _tag: "Ping"
     if (rpcRequest._tag === "Ping") {
+      console.log("[LiveStore] Received Ping, sending Pong")
       ws.send(JSON.stringify({ _tag: "Pong" }))
       return
     }

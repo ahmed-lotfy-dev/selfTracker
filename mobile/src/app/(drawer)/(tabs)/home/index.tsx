@@ -33,6 +33,10 @@ export default function HomeScreen() {
   const weightLogs = useQuery(allWeightLogs$)
   const tasks = useQuery(allTasks$)
 
+  React.useEffect(() => {
+    console.log(`[HomeScreen] Data Status - Workouts: ${workoutLogs.length}, Weights: ${weightLogs.length}, Tasks: ${tasks.length}`)
+  }, [workoutLogs.length, weightLogs.length, tasks.length])
+
   const stats = useMemo(() => {
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
