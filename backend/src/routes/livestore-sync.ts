@@ -246,20 +246,23 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         requestId: String(id) // Defensive: legacy LiveStore/Effect might use this
       }))
     } else if (tag === "SyncWsRpc.Pull") {
-      const checkpoint = payload.cursor?._tag === "Some" ? payload.cursor.value.eventSequenceNumber : 0
-      const events = await fetchEvents(checkpoint, storeId)
-
       const responsePayload = {
-        batch: events.map(e => ({
-          eventEncoded: { _tag: e.eventType, ...e.eventData },
-          metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
-        })),
+        batch: events.map(e => {
+          // Explicitly cast eventData as object to avoid spread issues
+          const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
+          return {
+            eventEncoded: { _tag: e.eventType, ...data },
+            metadata: { _tag: "None" }
+          }
+        }),
         pageInfo: {
           hasMore: false,
           cursor: { _tag: "None" }
         },
         backendId: "selftracker-v1"
       }
+
+      console.log(`[LiveStore] SyncWsRpc.Pull: Returned ${events.length} events for store ${storeId}`)
 
       ws.send(JSON.stringify({
         _tag: "Response",
@@ -418,6 +421,7 @@ async function materializeEvent(event: LiveStoreEvent, storeId: string) {
 async function fetchEvents(checkpoint: number, storeId: string) {
   return await db
     .select({
+      id: livestoreEvents.id,
       eventId: livestoreEvents.eventId,
       eventType: livestoreEvents.eventType,
       eventData: livestoreEvents.eventData,
@@ -427,10 +431,10 @@ async function fetchEvents(checkpoint: number, storeId: string) {
     .where(
       and(
         eq(livestoreEvents.storeId, storeId),
-        gt(livestoreEvents.timestamp, checkpoint || 0)
+        gt(livestoreEvents.id, checkpoint || 0)
       )
     )
-    .orderBy(livestoreEvents.timestamp)
+    .orderBy(livestoreEvents.id)
     .limit(1000)
 }
 
