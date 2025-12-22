@@ -107,7 +107,7 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
           clientId: "backend",
           sessionId: "static"
         },
-        metadata: { _tag: "Some", value: { createdAt: new Date(Number(e.timestamp)).toISOString() } }
+        metadata: { _tag: "Some", value: { createdAt: Number(e.timestamp) } }
       }
     })
 
@@ -336,7 +336,8 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         _tag: "Response",
         payload: { _tag: "Success", value: {} },
         id: id,
-        requestId: id
+        requestId: id,
+        traceId: traceId
       }))
     } else if (tag === "SyncWsRpc.Pull") {
       const checkpoint = cursorField?._tag === "Some" ? cursorField.value.eventSequenceNumber : 0
@@ -364,7 +365,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
               clientId: "backend",
               sessionId: "static"
             },
-            metadata: { _tag: "Some", value: { createdAt: new Date(Number(e.timestamp)).toISOString() } }
+            metadata: { _tag: "Some", value: { createdAt: Number(e.timestamp) } }
           }
         }),
         pageInfo: {
