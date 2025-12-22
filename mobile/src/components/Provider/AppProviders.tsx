@@ -29,27 +29,27 @@ export function AppProviders({ children }: AppProvidersProps) {
   const hasHydrated = useHasHydrated()
   const [isRepairMode, setRepairMode] = useState(false)
 
-  const adapter = useMemo(() => {
-    // Only log essential lifecycle events
-    if (isRepairMode) console.log("[LiveStore] Initializing adapter in REPAIR MODE (resetPersistence: true)")
+  // 1. Storage Hydration
+  if (!hasHydrated) return <LoadingView message="Initializing..." />
 
-    // Pass token in Query String for Middleware Auth on Backend
-    const authenticatedUrl = token && syncUrl ? `${syncUrl}?token=${token}` : syncUrl
+  // 2. Auth Stabilization (Prevent flickering)
+  // We wait for auth to settle so we don't start a sync session before we know who the user is
+  if (isLoading) return <LoadingView message="Preparing Experience..." />
+
+  const finalStoreId = storeId ?? 'anonymous'
+
+  // Only attempt sync if we have a token (since our backend is strict)
+  // If no token, we just don't pass a backend to the adapter
+  const authenticatedUrl = (token && syncUrl) ? `${syncUrl}?token=${token}` : undefined
+
+  const adapter = useMemo(() => {
+    if (isRepairMode) console.log("[LiveStore] Initializing adapter in REPAIR MODE (resetPersistence: true)")
 
     return makePersistedAdapter({
       sync: { backend: authenticatedUrl ? makeWsSync({ url: authenticatedUrl }) : undefined },
       resetPersistence: isRepairMode,
     })
-  }, [isRepairMode, token])
-
-  // 1. Storage Hydration
-  if (!hasHydrated) return <LoadingView message="Initializing..." />
-
-  const finalStoreId = storeId ?? 'anonymous'
-
-  // 2. Auth Stabilization (Prevent flickering)
-  // We wait for auth to settle so we don't start an anonymous session just to switch immediately
-  if (isLoading && finalStoreId === 'anonymous') return <LoadingView message="Preparing Experience..." />
+  }, [isRepairMode, authenticatedUrl])
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

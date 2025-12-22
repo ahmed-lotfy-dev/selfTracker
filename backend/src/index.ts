@@ -37,9 +37,6 @@ app.use(
   cors({
     origin: [
       "http://192.168.1.5:8081",
-      "exp://192.168.1.5:8081",
-      "selftracker://",
-      "exp+selftracker://",
       "http://localhost:1420", // Tauri
       "http://localhost:5173", // Vite local
     ],

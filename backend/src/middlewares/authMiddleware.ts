@@ -18,8 +18,10 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     }
 
     const session = await auth.api.getSession({ headers });
+    const log = c.get("logger");
 
     if (!session) {
+      if (log) log.info({ msg: "[AuthMiddleware] Session not found", path: c.req.path });
       return c.json({ error: "Unauthorized" }, 401);
     }
 

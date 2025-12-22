@@ -11,13 +11,20 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    // Get token from SecureStore (faster than authClient.getSession())
-    const token = await SecureStore.getItemAsync("selftracker.better-auth.session_token");
+    // Check both potential token keys
+    let token = await SecureStore.getItemAsync("selftracker.session_token");
+    if (!token) {
+      token = await SecureStore.getItemAsync("selftracker.better-auth.session_token");
+    }
 
     if (token) {
-      // Send as both Bearer (for non-better-auth endpoints) and Cookie (for better-auth)
+      // Send as both Bearer and Cookie for maximum compatibility
       config.headers.Authorization = `Bearer ${token}`
-      config.headers.Cookie = `__Secure-better-auth.session_token=${token}`
+      config.headers.Cookie = `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
+
+      // console.log(`[AXIOS] Attaching token to ${config.url}: ${token.substring(0, 10)}...`)
+    } else {
+      // console.warn(`[AXIOS] No token found in SecureStore for ${config.url}`)
     }
     return config
   },
