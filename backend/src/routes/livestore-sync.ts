@@ -17,16 +17,22 @@ function sanitizeData(obj: any): any {
       continue
     }
 
-    // Schema compliance: these must be strings
-    if (["weight", "amount", "targetValue"].includes(key)) {
+    // Schema compliance: these must be strings (ensure numeric types are converted)
+    if (["id", "userId", "workoutId", "workoutName", "title", "category", "description", "priority", "weight", "amount", "targetValue", "notes", "mood", "energy", "goalType"].includes(key)) {
       newObj[key] = String(val)
       continue
     }
 
-    // Schema compliance: these must be ISO dates
+    // Schema compliance: these must be numbers
+    if (["sets", "reps", "order", "duration"].includes(key)) {
+      newObj[key] = Number(val)
+      continue
+    }
+
+    // Schema compliance: these must be ISO dates for Event schema
     if (["createdAt", "updatedAt", "deletedAt", "dueDate", "deadline", "startTime", "endTime"].includes(key)) {
-      if (typeof val === "number" || (typeof val === "string" && !isNaN(Date.parse(val)))) {
-        newObj[key] = new Date(val).toISOString()
+      if (typeof val === "number" || typeof val === "bigint" || (typeof val === "string" && !isNaN(Date.parse(val)))) {
+        newObj[key] = new Date(Number(val)).toISOString()
         continue
       }
     }
@@ -72,9 +78,19 @@ livestoreRouter.post("/SyncHttpRpc.Pull", async (c) => {
 
     const events = await fetchEvents(checkpoint, storeId)
     console.log(`[LiveStore] HTTP Pull for ${storeId} at ${checkpoint} returned ${events.length} events`)
+
+    const pullEvents = events.map(e => {
+      const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
+      const processedData = sanitizeData(data)
+      return {
+        eventEncoded: { _tag: e.eventType, ...processedData },
+        metadata: { _tag: "Some", value: { createdAt: new Date(Number(e.timestamp)).toISOString() } }
+      }
+    })
+
     return c.json({
       type: "pull-response",
-      events,
+      events: pullEvents,
       backendId: "selftracker-v1"
     })
   } catch (error) {
@@ -297,17 +313,17 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
       if (events.length > 0) {
         console.log(`[LiveStore] Pull for ${storeId} at ${checkpoint} returned ${events.length} events`)
-        const sample = events[0]
-        const sampleData = typeof sample.eventData === "string" ? JSON.parse(sample.eventData) : sample.eventData
-        console.log(`[LiveStore] Sample Event[0]: type=${sample.eventType} data=${JSON.stringify(sampleData).substring(0, 100)}...`)
       }
 
       const responsePayload = {
-        batch: events.map(e => {
+        batch: events.map((e, idx) => {
           const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
-
-          // THE FIX: Clean and standardize data for Schema compliance
           const processedData = sanitizeData(data)
+
+          if (idx === 0) {
+            console.log(`[LiveStore] WS Processed Sample[0]: type=${e.eventType} data=${JSON.stringify(processedData).substring(0, 150)}...`)
+            console.log(`[LiveStore] Metadata: Some (createdAt: ${new Date(Number(e.timestamp)).toISOString()})`)
+          }
 
           return {
             eventEncoded: { _tag: e.eventType, ...processedData },
