@@ -283,7 +283,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
           return {
             eventEncoded: { _tag: e.eventType, ...processedData },
-            metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
+            metadata: { _tag: "None" }
           }
         }),
         pageInfo: {
@@ -292,7 +292,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
             ? { _tag: "Some", value: { eventSequenceNumber: events[events.length - 1].id } }
             : { _tag: "None" }
         },
-        backendId: "selftracker-v1"
+        backendId: "anonymous"
       }
 
       const response = JSON.stringify({
