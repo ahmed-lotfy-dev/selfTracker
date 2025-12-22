@@ -219,7 +219,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       return
     }
 
-    const { tag, payload, id } = rpcRequest
+    const { tag, payload, id, traceId } = rpcRequest
 
     console.log(`[LiveStore] WS Request Tag: ${tag} | ID: ${id} | Store: ${payload?.storeId}`)
 
@@ -284,7 +284,7 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
 
           return {
             eventEncoded: { _tag: e.eventType, ...processedData },
-            metadata: { _tag: "None" }
+            metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
           }
         }),
         pageInfo: {
@@ -300,7 +300,8 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         _tag: "Response",
         payload: { _tag: "Success", value: responsePayload },
         id: id,
-        requestId: id
+        requestId: id,
+        traceId: traceId
       })
       console.log(`[LiveStore] Sending Pull response - ID: ${id}, Events: ${events.length}`)
       ws.send(response)
