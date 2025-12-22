@@ -25,6 +25,10 @@ export default function AuthCallback() {
         }
       }
 
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('[AUTH CALLBACK] Token from backend:', token);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
       if (!token) {
         return;
       }

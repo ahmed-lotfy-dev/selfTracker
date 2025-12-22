@@ -38,7 +38,7 @@ export function AppProviders({ children }: AppProvidersProps) {
 
     return makePersistedAdapter({
       sync: { backend: authenticatedUrl ? makeWsSync({ url: authenticatedUrl }) : undefined },
-      // resetPersistence: isRepairMode,
+      resetPersistence: isRepairMode,
     })
   }, [isRepairMode, token])
 
