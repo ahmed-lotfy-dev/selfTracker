@@ -25,6 +25,8 @@ const app = new Hono<{
   }
 }>()
 
+app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
 app.use(loggerMiddleware)
 
 // Auth middleware for all API routes (except /api/auth/*)
@@ -48,8 +50,6 @@ app.use(
     credentials: true,
   }),
 );
-
-app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.route("/api/users", userRouter)
 
