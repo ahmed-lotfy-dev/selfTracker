@@ -267,8 +267,17 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
       const responsePayload = {
         batch: events.map(e => {
           const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
+
+          // Ensure dates are ISO strings for LiveStore Schema.Date
+          const processedData = { ...data }
+          if (typeof processedData.createdAt === 'number') processedData.createdAt = new Date(processedData.createdAt).toISOString()
+          if (typeof processedData.updatedAt === 'number') processedData.updatedAt = new Date(processedData.updatedAt).toISOString()
+          if (typeof processedData.dueDate === 'number') processedData.dueDate = new Date(processedData.dueDate).toISOString()
+          if (typeof processedData.deadline === 'number') processedData.deadline = new Date(processedData.deadline).toISOString()
+          if (typeof processedData.deletedAt === 'number') processedData.deletedAt = new Date(processedData.deletedAt).toISOString()
+
           return {
-            eventEncoded: { _tag: e.eventType, ...data },
+            eventEncoded: { _tag: e.eventType, ...processedData },
             metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
           }
         }),
