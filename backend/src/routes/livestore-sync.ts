@@ -208,6 +208,11 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
     console.log(`[LiveStore] RAW MESSAGE: ${data.substring(0, 200)}${data.length > 200 ? '...' : ''}`)
 
     // Effect RPC sends messages with _tag: "Request"
+    if (rpcRequest._tag === "Ping") {
+      ws.send(JSON.stringify({ _tag: "Pong" }))
+      return
+    }
+
     if (rpcRequest._tag !== "Request") {
       console.log(`[LiveStore] Ignored non-request message: ${rpcRequest._tag}`)
       return
@@ -276,12 +281,14 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         backendId: "selftracker-v1"
       }
 
-      ws.send(JSON.stringify({
+      const response = JSON.stringify({
         _tag: "Response",
         payload: { _tag: "Success", value: responsePayload },
         id: id,
         requestId: id
-      }))
+      })
+      console.log(`[LiveStore] Sending Pull response - ID: ${id}, Events: ${events.length}`)
+      ws.send(response)
     }
   } catch (error) {
     console.error("[LiveStore] WS Error:", error)

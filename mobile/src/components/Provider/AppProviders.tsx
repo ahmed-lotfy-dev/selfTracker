@@ -1,4 +1,4 @@
-import { ReactNode, useMemo } from "react"
+import { ReactNode, useEffect, useMemo } from "react"
 import { SafeAreaView } from "react-native-safe-area-context"
 import React from "react"
 import { QueryClientProvider } from "@tanstack/react-query"
@@ -28,10 +28,15 @@ export function AppProviders({ children }: AppProvidersProps) {
   const { storeId, token, isLoading } = useAuth()
 
   const adapter = useMemo(() => {
+    console.log(`[LiveStore] RE-CREATING ADAPTER - Store: ${storeId}, Token: ${token ? 'PRESENT' : 'MISSING'}`)
     return makePersistedAdapter({
       sync: { backend: syncUrl ? makeWsSync({ url: syncUrl }) : undefined },
     })
   }, [storeId, token])
+
+  useEffect(() => {
+    console.log(`[LiveStore] useAuth state changed - storeId: ${storeId}, token: ${token ? 'YES' : 'NO'}, isLoading: ${isLoading}`)
+  }, [storeId, token, isLoading])
 
   if (isLoading) {
     return (
