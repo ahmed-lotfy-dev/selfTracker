@@ -8,9 +8,30 @@ function sanitizeData(obj: any): any {
   if (obj === null) return undefined
   if (typeof obj !== "object") return obj
   if (Array.isArray(obj)) return obj.map(sanitizeData)
+
   const newObj: any = {}
   for (const key in obj) {
-    newObj[key] = sanitizeData(obj[key])
+    let val = obj[key]
+    if (val === null) {
+      newObj[key] = undefined
+      continue
+    }
+
+    // Schema compliance: these must be strings
+    if (["weight", "amount", "targetValue"].includes(key)) {
+      newObj[key] = String(val)
+      continue
+    }
+
+    // Schema compliance: these must be ISO dates
+    if (["createdAt", "updatedAt", "deletedAt", "dueDate", "deadline", "startTime", "endTime"].includes(key)) {
+      if (typeof val === "number" || (typeof val === "string" && !isNaN(Date.parse(val)))) {
+        newObj[key] = new Date(val).toISOString()
+        continue
+      }
+    }
+
+    newObj[key] = sanitizeData(val)
   }
   return newObj
 }
@@ -285,19 +306,12 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         batch: events.map(e => {
           const data = typeof e.eventData === "string" ? JSON.parse(e.eventData) : e.eventData
 
-          // THE FIX: Clean data of nulls (convert to undefined) to satisfy Schema.optional
+          // THE FIX: Clean and standardize data for Schema compliance
           const processedData = sanitizeData(data)
-
-          // Ensure dates are ISO strings for LiveStore Schema.Date
-          if (typeof processedData.createdAt === 'number') processedData.createdAt = new Date(processedData.createdAt).toISOString()
-          if (typeof processedData.updatedAt === 'number') processedData.updatedAt = new Date(processedData.updatedAt).toISOString()
-          if (typeof processedData.dueDate === 'number') processedData.dueDate = new Date(processedData.dueDate).toISOString()
-          if (typeof processedData.deadline === 'number') processedData.deadline = new Date(processedData.deadline).toISOString()
-          if (typeof processedData.deletedAt === 'number') processedData.deletedAt = new Date(processedData.deletedAt).toISOString()
 
           return {
             eventEncoded: { _tag: e.eventType, ...processedData },
-            metadata: { _tag: "Some", value: { createdAt: new Date(e.timestamp).toISOString() } }
+            metadata: { _tag: "Some", value: { createdAt: new Date(Number(e.timestamp)).toISOString() } }
           }
         }),
         pageInfo: {
