@@ -31,18 +31,6 @@ export const useAuth = () => {
   const finalToken = sessionData?.session?.token ?? manualToken ?? null
   const storeId = finalUser?.id ?? 'anonymous'
 
-  // Debug Logging
-  useEffect(() => {
-    // Log state changes to debug "disappearing user"
-    console.log(`[useAuth] State Update: 
-      SessionUser: ${sessionData?.user?.id}
-      ZustandUser: ${user?.id}
-      ManualToken: ${manualToken ? 'Yes' : 'No'}
-      IsAuthenticated: ${!!finalUser && !!finalToken}
-      StoreId: ${storeId}
-    `)
-  }, [sessionData, user, manualToken, finalUser, finalToken, storeId])
-
   // 4. Sync Theme
   useEffect(() => {
     const theme = (sessionData?.user as any)?.theme ?? (user as any)?.theme ?? 'system'

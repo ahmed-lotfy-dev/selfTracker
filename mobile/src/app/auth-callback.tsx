@@ -5,6 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useAuthActions } from '@/src/store/useAuthStore';
 import { API_BASE_URL } from '@/src/lib/api/config';
 import { useToast } from '@/src/hooks/useToast';
+import { queryClient } from '@/src/lib/react-query';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -30,13 +31,11 @@ export default function AuthCallback() {
       }
 
       if (!token) {
-        console.log("[AuthCallback] No token found in params:", params);
-        // If we just landed here without params, maybe wait? Or error?
-        // showToast("No authentication token received", "error");
+        console.log("[AuthCallback] No token - returning early");
         return;
       }
 
-      console.log("[AuthCallback] Token received:", token.substring(0, 10) + "...");
+      console.log("[AuthCallback] Token validated, proceeding to save and verify...");
 
       try {
         // 2. Save Token Manually
@@ -52,16 +51,34 @@ export default function AuthCallback() {
           credentials: 'include'
         });
 
+        console.log("[AuthCallback] Backend response status:", response.status);
+        const responseText = await response.text();
+
         if (!response.ok) {
-          throw new Error("Failed to validate session");
+          throw new Error(`HTTP ${response.status}: ${responseText}`);
         }
 
-        const data = await response.json();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
+        }
+
+        console.log("[AuthCallback] Backend returned user:", data?.user?.id || "NO USER");
+        console.log("[AuthCallback] Full response keys:", Object.keys(data || {}));
 
         if (data?.user) {
           // 4. Update State & Redirect
           setUser(data.user);
           showToast(`Welcome back, ${data.user.name.split(" ")[0]}!`, "success");
+
+          // Invalidate queries to trigger data refetch
+          await queryClient.invalidateQueries({ queryKey: ['session'] });
+          await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
+          await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          await queryClient.invalidateQueries({ queryKey: ['weights'] });
+          await queryClient.invalidateQueries({ queryKey: ['workouts'] });
 
           // Small delay to ensure state updates?
           setTimeout(() => {
@@ -72,9 +89,9 @@ export default function AuthCallback() {
         }
 
       } catch (err: any) {
-        console.error("[AuthCallback] Error:", err);
+        console.error("[AuthCallback] Login failed:", err.message);
         showToast(`Login Failed: ${err.message}`, "error");
-        // router.replace("/sign-in"); // Optional: send them back
+        router.replace("/(auth)/sign-in");
       }
     };
 

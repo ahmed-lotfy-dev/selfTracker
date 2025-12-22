@@ -25,7 +25,9 @@ axiosInstance.interceptors.request.use(
     }
 
     if (token) {
+      // Send as both Bearer (for non-better-auth endpoints) and Cookie (for better-auth)
       config.headers.Authorization = `Bearer ${token}`
+      config.headers.Cookie = `__Secure-better-auth.session_token=${token}`
     }
     return config
   },
