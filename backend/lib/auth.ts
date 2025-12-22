@@ -106,19 +106,8 @@ export const auth = betterAuth({
     "exp+selftracker://",
     "exp+selftracker://callback",
     "exp+selftracker:///callback",
-    "exp+selftracker:///callback",
     "exp+selftracker://callback/",
     "exp+selftracker:///callback/",
-    "selftracker://callback",
-    "selftracker:///callback",
-    "selftracker://callback/",
-    "selftracker:///callback/",
-    "selftracker://auth",
-    "selftracker:///auth",
-    "exp://192.168.1.5:8081",
-    "exp://192.168.1.5:8081/--/auth",
-    "exp://192.168.1.5:8081/--/callback",
-    "exp://192.168.1.5:8081/--/callback/",
     "https://selftracker.ahmedlotfy.site",
     "http://localhost:8000",
     "http://localhost:8081",
@@ -139,6 +128,5 @@ export const auth = betterAuth({
       "exp+selftracker://*",
       "exp+selftracker:///*"
     ])
-
   ],
 })
