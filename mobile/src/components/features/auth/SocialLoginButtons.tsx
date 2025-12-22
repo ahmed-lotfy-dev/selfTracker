@@ -5,6 +5,7 @@ import { authClient } from '@/src/lib/auth-client';
 import { useToast } from '@/src/hooks/useToast';
 import { useThemeColors } from '@/src/constants/Colors';
 import Constants from 'expo-constants';
+import * as Linking from 'expo-linking';
 
 /**
  * Social login buttons component providing Google and GitHub OAuth authentication.
@@ -29,9 +30,15 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
       console.log(`[SOCIAL LOGIN] Starting ${provider} login`);
       console.log(`[SOCIAL LOGIN] Execution Environment: ${Constants.executionEnvironment}`);
 
+      const callbackURL = Linking.createURL("callback");
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`[SOCIAL LOGIN] Starting ${provider} login`);
+      console.log(`[SOCIAL LOGIN] Generated callbackURL: ${callbackURL}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
       const result = await authClient.signIn.social({
         provider,
-        callbackURL: "/callback",
+        callbackURL,
       });
 
       console.log(`[SOCIAL LOGIN] ${provider} result:`, JSON.stringify(result));

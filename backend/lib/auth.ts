@@ -10,7 +10,7 @@ import { emailOTP } from "better-auth/plugins"
 
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || "https://selftracker.ahmedlotfy.site",
+  baseURL: process.env.BETTER_AUTH_URL ,
   database: drizzleAdapter(db, {
     provider: "pg",
   }),

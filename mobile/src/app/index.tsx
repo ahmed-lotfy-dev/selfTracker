@@ -5,6 +5,8 @@ import { useOnboardingStore } from "@/src/features/onboarding/useOnboardingStore
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { LoadingScreen } from "../components/LoadingScreen"
 import * as Linking from 'expo-linking'
+import { authClient } from "../lib/auth-client"
+import { router } from "expo-router"
 
 export default function Index() {
   const url = Linking.useURL()
@@ -21,9 +23,39 @@ export default function Index() {
   console.log('[INDEX] user?.emailVerified:', user?.emailVerified)
 
   React.useEffect(() => {
-    Linking.getInitialURL().then(initialUrl => {
-      console.log('[INDEX] Initial URL (getInitialURL):', initialUrl)
-    })
+    const processUrl = async (url: string | null) => {
+      if (!url) return;
+
+      const isAuthUrl = url.includes('callback') || url.includes('token=') || url.includes('error=') || url.includes('state=');
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('[INDEX] Processing URL:', url);
+      console.log('[INDEX] Is Auth URL?', isAuthUrl);
+
+      if (isAuthUrl) {
+        try {
+          console.log('[INDEX] Calling handleRedirect...');
+          const result = await (authClient as any).handleRedirect?.(url);
+          console.log('[INDEX] handleRedirect finished. Result:', JSON.stringify(result));
+        } catch (err) {
+          console.error('[INDEX] handleRedirect Error:', err);
+        }
+
+        console.log('[INDEX] Manual navigation to /callback');
+        router.push('/callback');
+      }
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    };
+
+    Linking.getInitialURL().then(processUrl);
+
+    const subscription = Linking.addEventListener('url', (event) => {
+      processUrl(event.url);
+    });
+
+    return () => {
+      subscription.remove()
+    }
   }, [])
 
   if (!isReady) {
