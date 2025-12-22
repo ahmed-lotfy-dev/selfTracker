@@ -204,11 +204,17 @@ export const websocket = {
 async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
   try {
     const rpcRequest = JSON.parse(data)
+    console.log(`[LiveStore] RAW MESSAGE: ${data.substring(0, 200)}${data.length > 200 ? '...' : ''}`)
 
     // Effect RPC sends messages with _tag: "Request"
-    if (rpcRequest._tag !== "Request") return
+    if (rpcRequest._tag !== "Request") {
+      console.log(`[LiveStore] Ignored non-request message: ${rpcRequest._tag}`)
+      return
+    }
 
     const { tag, payload, id } = rpcRequest
+
+    console.log(`[LiveStore] WS Request Tag: ${tag} | ID: ${id} | Store: ${payload?.storeId}`)
 
     // Guard against missing ID (notifications don't need response, but requests do)
     if (id === undefined || id === null) {
@@ -225,8 +231,13 @@ async function handleWebSocketMessage(ws: ServerWebSocket, data: string) {
         headers: new Headers({ Cookie: `__Secure-better-auth.session_token=${authToken}` })
       })
       if (session?.user) {
+        console.log(`[LiveStore] WS Auth Success for user: ${session.user.id}`)
         storeId = session.user.id
+      } else {
+        console.log(`[LiveStore] WS Auth Failed for token: ${authToken.substring(0, 10)}...`)
       }
+    } else {
+      console.log(`[LiveStore] WS No AuthToken provided in payload`)
     }
 
     if (tag === "SyncWsRpc.Push") {
