@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, ActivityIndicator } from "react-native"
-import React, { useMemo } from "react"
+import React from "react"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import { TasksChart } from "@/src/components/features/home/TasksChart"
 import UserProfile from "@/src/components/features/profile/UserProfile"
@@ -7,67 +7,13 @@ import ActionButtons from "@/src/components/features/home/ActionButtons"
 import { StatsRow } from "@/src/components/features/home/StatsRow"
 import Header from "@/src/components/Header"
 import { useUser } from "@/src/features/auth/useAuthStore"
-import { useLiveQuery, eq } from "@tanstack/react-db"
-import { workoutLogCollection, weightLogCollection, taskCollection } from "@/src/db/collections"
-import { safeParseDate } from "@/src/lib/utils/dateUtils"
+import { useCollections } from "@/src/db/collections"
 
 export default function HomeScreen() {
   const user = useUser()
+  const collections = useCollections()
 
-  // Always call hooks in the same order - can't have conditional returns before hooks!
-  const { data: workoutLogsData, isLoading: workoutLogsLoading } = useLiveQuery((q) =>
-    taskCollection ? q.from({ logs: workoutLogCollection })
-      .select(({ logs }) => logs) : q.from({ logs: null as any })
-  ) as { data: any[], isLoading: boolean }
-
-  const { data: weightLogsData, isLoading: weightLogsLoading } = useLiveQuery((q) =>
-    weightLogCollection ? q.from({ logs: weightLogCollection })
-      .select(({ logs }) => logs) : q.from({ logs: null as any })
-  ) as { data: any[], isLoading: boolean }
-
-  const { data: tasksData, isLoading: tasksLoading } = useLiveQuery((q) =>
-    taskCollection ? q.from({ tasks: taskCollection })
-      .select(({ tasks }) => tasks) : q.from({ tasks: null as any })
-  ) as { data: any[], isLoading: boolean }
-
-  const workoutLogs = useMemo(() => workoutLogsData || [], [workoutLogsData])
-  const weightLogs = useMemo(() => weightLogsData || [], [weightLogsData])
-  const tasks = useMemo(() => tasksData || [], [tasksData])
-
-  React.useEffect(() => {
-  }, [workoutLogs.length, weightLogs.length, tasks.length])
-
-  const stats = useMemo(() => {
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    const monthAgo = new Date()
-    monthAgo.setMonth(monthAgo.getMonth() - 1)
-
-    const weeklyWorkouts = workoutLogs.filter(
-      log => log.createdAt && safeParseDate(log.createdAt) > weekAgo
-    ).length
-
-    const monthlyWorkouts = workoutLogs.filter(
-      log => log.createdAt && safeParseDate(log.createdAt) > monthAgo
-    ).length
-
-    const sortedWeights = [...weightLogs]
-      .filter(w => w.createdAt)
-      .sort((a, b) => safeParseDate(b.createdAt).getTime() - safeParseDate(a.createdAt).getTime())
-
-    const latestWeight = sortedWeights[0]?.weight
-    const previousWeight = sortedWeights[1]?.weight
-    const weightChange = latestWeight && previousWeight
-      ? (parseFloat(latestWeight) - parseFloat(previousWeight)).toFixed(1)
-      : ""
-
-    const pendingTasks = tasks.filter(t => !t.completed).length
-    const completedTasks = tasks.filter(t => t.completed).length
-
-    return { weeklyWorkouts, monthlyWorkouts, weightChange, pendingTasks, completedTasks }
-  }, [workoutLogs, weightLogs, tasks])
-
-  if (!user) {
+  if (!user || !collections) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#10B981" />
@@ -110,20 +56,11 @@ export default function HomeScreen() {
           <Text className="text-lg font-semibold text-text">
             Insights
           </Text>
-          <StatsRow
-            weeklyWorkouts={stats.weeklyWorkouts}
-            monthlyWorkouts={stats.monthlyWorkouts}
-            weightChange={stats.weightChange}
-            bmi={null}
-            goalWeight={null}
-          />
+          <StatsRow />
         </View>
 
         <View className="mt-4">
-          <TasksChart
-            pendingTasks={stats.pendingTasks}
-            completedTasks={stats.completedTasks}
-          />
+          <TasksChart />
         </View>
       </ScrollView>
     </View>

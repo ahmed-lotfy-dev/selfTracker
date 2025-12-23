@@ -1,7 +1,10 @@
 import { View, Text, ScrollView } from "react-native"
-import React from "react"
+import React, { useMemo } from "react"
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
+import { useCollections } from "@/src/db/collections"
+import { useLiveQuery } from "@tanstack/react-db"
+import { safeParseDate } from "@/src/lib/utils/dateUtils"
 
 interface StatCardProps {
   label: string
@@ -40,22 +43,57 @@ const StatCard = ({ label, value, subLabel, icon, colorClass }: StatCardProps) =
   </View>
 )
 
-interface StatsRowProps {
-  weeklyWorkouts: number
-  monthlyWorkouts: number
-  weightChange: string
-  bmi: number | null
-  goalWeight: number | null
-}
-
-export const StatsRow = ({
-  weeklyWorkouts,
-  monthlyWorkouts,
-  weightChange,
-  bmi,
-  goalWeight,
-}: StatsRowProps) => {
+export const StatsRow = () => {
   const colors = useThemeColors()
+  const collections = useCollections()
+
+  if (!collections) {
+    return null
+  }
+
+  const { data: workoutLogs = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.workoutLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        createdAt: logs.createdAt,
+      }))
+  ) ?? { data: [] }
+
+  const { data: weightLogs = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.weightLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        weight: logs.weight,
+        createdAt: logs.createdAt,
+      }))
+  ) ?? { data: [] }
+
+  const stats = useMemo(() => {
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    const monthAgo = new Date()
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+
+    const weeklyWorkouts = workoutLogs.filter(
+      (log: any) => log.createdAt && safeParseDate(log.createdAt) > weekAgo
+    ).length
+
+    const monthlyWorkouts = workoutLogs.filter(
+      (log: any) => log.createdAt && safeParseDate(log.createdAt) > monthAgo
+    ).length
+
+    const sortedWeights = [...weightLogs]
+      .filter((w: any) => w.createdAt)
+      .sort((a: any, b: any) => safeParseDate(b.createdAt).getTime() - safeParseDate(a.createdAt).getTime())
+
+    const latestWeight = sortedWeights[0]?.weight
+    const previousWeight = sortedWeights[1]?.weight
+    const weightChange = latestWeight && previousWeight
+      ? (parseFloat(latestWeight) - parseFloat(previousWeight)).toFixed(1)
+      : ""
+
+    return { weeklyWorkouts, monthlyWorkouts, weightChange }
+  }, [workoutLogs, weightLogs])
 
   return (
     <ScrollView
@@ -66,42 +104,24 @@ export const StatsRow = ({
     >
       <StatCard
         label="Weekly Workouts"
-        value={weeklyWorkouts}
+        value={stats.weeklyWorkouts}
         icon={<FontAwesome5 name="dumbbell" size={16} color={colors.statPrimary} />}
         colorClass="text-statPrimary"
       />
 
       <StatCard
         label="Monthly Workouts"
-        value={monthlyWorkouts}
+        value={stats.monthlyWorkouts}
         icon={<MaterialIcons name="calendar-today" size={16} color={colors.statSecondary} />}
         colorClass="text-statSecondary"
       />
 
       <StatCard
         label="Weight Change"
-        value={weightChange || "N/A"}
+        value={stats.weightChange || "N/A"}
         icon={<MaterialIcons name="monitor-weight" size={18} color={colors.statSecondary} />}
         colorClass="text-statSecondary"
       />
-
-      {bmi && (
-        <StatCard
-          label="BMI"
-          value={bmi.toFixed(1)}
-          icon={<MaterialIcons name="accessibility" size={18} color={colors.statTertiary} />}
-          colorClass="text-statTertiary"
-        />
-      )}
-
-      {goalWeight && (
-        <StatCard
-          label="Goal Weight"
-          value={`${goalWeight} kg`}
-          icon={<MaterialIcons name="flag" size={18} color={colors.statQuaternary} />}
-          colorClass="text-statQuaternary"
-        />
-      )}
     </ScrollView>
   )
 }

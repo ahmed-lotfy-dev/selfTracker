@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema } from "@/src/types/taskType"
 import { useUser } from "@/src/features/auth/useAuthStore"
-import { taskCollection } from "@/src/db/collections"
+import axiosInstance from "@/src/lib/api/axiosInstance"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function TaskForm() {
@@ -30,19 +30,20 @@ export default function TaskForm() {
     setIsSubmitting(true)
 
     try {
-      await taskCollection.insert({
-        id: crypto.randomUUID(),
-        userId: user?.id || "",
+      const newTask = {
         title: title.trim(),
         category: "general",
         completed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-        deletedAt: null,
-      })
+      }
+
+      console.log('[TaskForm] Creating task via API:', newTask)
+      const resp = await axiosInstance.post('/api/tasks', newTask)
+      console.log('[TaskForm] Task created successfully, ElectricSQL will sync:', resp.data)
       setTitle("")
     } catch (e) {
-      console.error("Failed to add task:", e)
+      console.error("[TaskForm] Failed to add task:", e)
     } finally {
       setIsSubmitting(false)
     }

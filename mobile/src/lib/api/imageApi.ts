@@ -1,4 +1,4 @@
-import axiosInstance from "./axiosInstane"
+import axiosInstance from "./axiosInstance"
 import { API_BASE_URL } from "./config"
 import { ImageResult } from "expo-image-manipulator"
 

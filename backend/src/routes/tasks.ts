@@ -22,6 +22,8 @@ const createTaskSchema = z.object({
   columnId: z.string().optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   order: z.number().int().optional(),
+  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
 })
 
 const updateTaskSchema = z.object({

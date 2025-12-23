@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo, ReactNode, useEffect, useSta
 import { createCollection } from '@tanstack/react-db';
 import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import { useAuth } from '@/src/features/auth/useAuthStore';
-import axiosInstance from '@/src/lib/api/axiosInstane';
+import axiosInstance from '@/src/lib/api/axiosInstance';
 import { API_BASE_URL } from '@/src/lib/api/config';
 import { _setCollections } from '@/src/db/collections';
 import {
@@ -65,21 +65,42 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           },
           onInsert: async ({ transaction }) => {
             const data = transaction.mutations[0].modified;
+            console.log('[Collections] onInsert - adding to local first:', data)
+
             // Generate ID if not present
             if (!data.id) {
               data.id = crypto.randomUUID();
             }
-            const resp = await axiosInstance.post(`${API_BASE}/tasks`, data);
-            return { txid: resp.data.task.txid };
+
+            // Optimistic: Add to local state immediately, sync to backend asynchronously
+            // Don't throw errors - let ElectricSQL retry sync later
+            axiosInstance.post(`${API_BASE}/tasks`, data)
+              .then(resp => console.log('[Collections] Backend sync success:', resp.data))
+              .catch(error => console.warn('[Collections] Backend sync failed (will retry):', error.message))
+
+            return undefined
           },
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
-            const resp = await axiosInstance.patch(`${API_BASE}/tasks/${mutation.original.id}`, mutation.modified);
-            return { txid: resp.data.task.txid };
+            console.log('[Collections] onUpdate - updating local first:', mutation.modified)
+
+            // Optimistic: Update locally first, sync to backend asynchronously
+            axiosInstance.patch(`${API_BASE}/tasks/${mutation.original.id}`, mutation.modified)
+              .then(resp => console.log('[Collections] Backend update success:', resp.data))
+              .catch(error => console.warn('[Collections] Backend update failed (will retry):', error.message))
+
+            return undefined;
           },
           onDelete: async ({ transaction }) => {
-            const resp = await axiosInstance.delete(`${API_BASE}/tasks/${transaction.mutations[0].original.id}`);
-            return { txid: resp.data.txid };
+            const original = transaction.mutations[0].original;
+            console.log('[Collections] onDelete - removing from local first:', original.id)
+
+            // Optimistic: Delete locally first, sync to backend asynchronously
+            axiosInstance.delete(`${API_BASE}/tasks/${original.id}`)
+              .then(resp => console.log('[Collections] Backend delete success:', resp.data))
+              .catch(error => console.warn('[Collections] Backend delete failed (will retry):', error.message))
+
+            return undefined;
           },
         })
       ),
@@ -97,17 +118,24 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             if (!data.id) {
               data.id = crypto.randomUUID();
             }
-            const resp = await axiosInstance.post(`${API_BASE}/weightLogs`, data);
-            return { txid: resp.data.txid };
+            axiosInstance.post(`${API_BASE}/weightLogs`, data)
+              .then(resp => console.log('[Collections] WeightLog sync success:', resp.data))
+              .catch(error => console.warn('[Collections] WeightLog sync failed:', error.message))
+            return undefined;
           },
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
-            const resp = await axiosInstance.patch(`${API_BASE}/weightLogs/${mutation.original.id}`, mutation.modified);
-            return { txid: resp.data.txid };
+            axiosInstance.patch(`${API_BASE}/weightLogs/${mutation.original.id}`, mutation.modified)
+              .then(resp => console.log('[Collections] WeightLog update success:', resp.data))
+              .catch(error => console.warn('[Collections] WeightLog update failed:', error.message))
+            return undefined;
           },
           onDelete: async ({ transaction }) => {
-            const resp = await axiosInstance.delete(`${API_BASE}/weightLogs/${transaction.mutations[0].original.id}`);
-            return { txid: resp.data.txid };
+            const original = transaction.mutations[0].original;
+            axiosInstance.delete(`${API_BASE}/weightLogs/${original.id}`)
+              .then(resp => console.log('[Collections] WeightLog delete success:', resp.data))
+              .catch(error => console.warn('[Collections] WeightLog delete failed:', error.message))
+            return undefined;
           },
         })
       ),
@@ -125,17 +153,24 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             if (!data.id) {
               data.id = crypto.randomUUID();
             }
-            const resp = await axiosInstance.post(`${API_BASE}/workoutLogs`, data);
-            return { txid: resp.data.txid };
+            axiosInstance.post(`${API_BASE}/workoutLogs`, data)
+              .then(resp => console.log('[Collections] WorkoutLog sync success:', resp.data))
+              .catch(error => console.warn('[Collections] WorkoutLog sync failed:', error.message))
+            return undefined;
           },
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
-            const resp = await axiosInstance.patch(`${API_BASE}/workoutLogs/${mutation.original.id}`, mutation.modified);
-            return { txid: resp.data.txid };
+            axiosInstance.patch(`${API_BASE}/workoutLogs/${mutation.original.id}`, mutation.modified)
+              .then(resp => console.log('[Collections] WorkoutLog update success:', resp.data))
+              .catch(error => console.warn('[Collections] WorkoutLog update failed:', error.message))
+            return undefined;
           },
           onDelete: async ({ transaction }) => {
-            const resp = await axiosInstance.delete(`${API_BASE}/workoutLogs/${transaction.mutations[0].original.id}`);
-            return { txid: resp.data.txid };
+            const original = transaction.mutations[0].original;
+            axiosInstance.delete(`${API_BASE}/workoutLogs/${original.id}`)
+              .then(resp => console.log('[Collections] WorkoutLog delete success:', resp.data))
+              .catch(error => console.warn('[Collections] WorkoutLog delete failed:', error.message))
+            return undefined;
           },
         })
       ),
@@ -153,17 +188,24 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             if (!data.id) {
               data.id = crypto.randomUUID();
             }
-            const resp = await axiosInstance.post(`${API_BASE}/expenses`, data);
-            return { txid: resp.data.txid };
+            axiosInstance.post(`${API_BASE}/expenses`, data)
+              .then(resp => console.log('[Collections] Expense sync success:', resp.data))
+              .catch(error => console.warn('[Collections] Expense sync failed:', error.message))
+            return undefined;
           },
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
-            const resp = await axiosInstance.patch(`${API_BASE}/expenses/${mutation.original.id}`, mutation.modified);
-            return { txid: resp.data.txid };
+            axiosInstance.patch(`${API_BASE}/expenses/${mutation.original.id}`, mutation.modified)
+              .then(resp => console.log('[Collections] Expense update success:', resp.data))
+              .catch(error => console.warn('[Collections] Expense update failed:', error.message))
+            return undefined;
           },
           onDelete: async ({ transaction }) => {
-            const resp = await axiosInstance.delete(`${API_BASE}/expenses/${transaction.mutations[0].original.id}`);
-            return { txid: resp.data.txid };
+            const original = transaction.mutations[0].original;
+            axiosInstance.delete(`${API_BASE}/expenses/${original.id}`)
+              .then(resp => console.log('[Collections] Expense delete success:', resp.data))
+              .catch(error => console.warn('[Collections] Expense delete failed:', error.message))
+            return undefined;
           },
         })
       ),

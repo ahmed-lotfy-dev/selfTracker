@@ -4,14 +4,16 @@ import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import TaskForm from "@/src/components/features/tasks/TaskForm"
 import TaskListItem from "@/src/components/features/tasks/TaskListItem"
+import { useCollections } from "@/src/db/collections"
 import { useLiveQuery } from "@tanstack/react-db"
-import { taskCollection } from "@/src/db/collections"
 import TaskProgress from "@/src/components/features/tasks/TaskProgress"
 
 
 export default function TaskScreen() {
-  // Handle case where collection isn't ready yet
-  if (!taskCollection) {
+  const collections = useCollections()
+
+  // Wait for collections to be ready
+  if (!collections?.tasks) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#10B981" />
@@ -20,12 +22,37 @@ export default function TaskScreen() {
     )
   }
 
-  const { data: tasksData, isLoading } = useLiveQuery((q) =>
-    q.from({ tasks: taskCollection })
-      .select(({ tasks }) => tasks)
-  ) as { data: any[], isLoading: boolean }
+  // Explicit field selection (this is what works with TanStack DB + ElectricSQL)
+  const { data: tasks = [], isLoading } = useLiveQuery((q: any) =>
+    q.from({ tasks: collections.tasks })
+      .orderBy(({ tasks }: any) => tasks.createdAt, 'desc')
+      .select(({ tasks }: any) => ({
+        id: tasks.id,
+        userId: tasks.userId,  // Required for updates
+        title: tasks.title,
+        completed: tasks.completed,
+        category: tasks.category,
+        createdAt: tasks.createdAt,  // Required for updates
+        updatedAt: tasks.updatedAt,
+        deletedAt: tasks.deletedAt,
+        dueDate: tasks.dueDate,
+        description: tasks.description,
+        projectId: tasks.projectId,
+        columnId: tasks.columnId,
+        priority: tasks.priority,
+        order: tasks.order,
+        completedAt: tasks.completedAt,
+      }))
+  ) ?? { data: [], isLoading: false }
 
-  const tasks = useMemo(() => tasksData || [], [tasksData])
+  // Debug
+  React.useEffect(() => {
+    console.log('[TASKS] Query update - Total:', tasks.length, 'Loading:', isLoading)
+    if (tasks.length > 0) {
+      console.log('[TASKS] First task:', tasks[0])
+      console.log('[TASKS] Last task:', tasks[tasks.length - 1])
+    }
+  }, [tasks, isLoading])
 
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {

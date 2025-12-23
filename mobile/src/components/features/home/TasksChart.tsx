@@ -1,39 +1,52 @@
 import { View, Text, Dimensions } from "react-native"
-import React from "react"
+import React, { useMemo } from "react"
 import { PieChart } from "react-native-chart-kit"
 import { COLORS, useThemeColors } from "@/src/constants/Colors"
+import { useCollections } from "@/src/db/collections"
+import { useLiveQuery } from "@tanstack/react-db"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 
-interface TasksChartProps {
-  pendingTasks: number
-  completedTasks: number
-}
-
-export const TasksChart = ({
-  pendingTasks,
-  completedTasks,
-}: TasksChartProps) => {
+export const TasksChart = () => {
   const colors = useThemeColors()
+  const collections = useCollections()
+
+  if (!collections) {
+    return null
+  }
+
+  const { data: tasks = [] } = useLiveQuery((q: any) =>
+    q.from({ tasks: collections.tasks })
+      .select(({ tasks }: any) => ({
+        id: tasks.id,
+        completed: tasks.completed,
+      }))
+  ) ?? { data: [] }
+
+  const stats = useMemo(() => {
+    const pendingTasks = tasks.filter((t: any) => !t.completed).length
+    const completedTasks = tasks.filter((t: any) => t.completed).length
+    return { pendingTasks, completedTasks }
+  }, [tasks])
 
   const data = [
     {
       name: "Pending",
-      population: pendingTasks,
-      color: colors.secondary, // Emerald 400/600
+      population: stats.pendingTasks,
+      color: colors.secondary,
       legendFontColor: colors.text,
       legendFontSize: 12,
     },
     {
       name: "Done",
-      population: completedTasks,
-      color: colors.primary, // Emerald 500
+      population: stats.completedTasks,
+      color: colors.primary,
       legendFontColor: colors.text,
       legendFontSize: 12,
     },
   ]
 
-  const hasData = pendingTasks > 0 || completedTasks > 0
+  const hasData = stats.pendingTasks > 0 || stats.completedTasks > 0
 
   return (
     <View

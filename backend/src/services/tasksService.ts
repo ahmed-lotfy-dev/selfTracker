@@ -15,7 +15,12 @@ export const createTask = async (userId: string, fields: any) => {
   return await db.transaction(async (tx) => {
     const [created] = await tx
       .insert(tasks)
-      .values({ ...fields, userId })
+      .values({
+        ...fields,
+        userId,
+        createdAt: fields.createdAt || new Date(),
+        updatedAt: fields.updatedAt || new Date(),
+      })
       .returning()
 
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
