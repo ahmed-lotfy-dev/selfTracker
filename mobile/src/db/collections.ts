@@ -28,7 +28,10 @@ const getElectricHeaders = async () => {
     (await SecureStore.getItemAsync('selftracker.better-auth.session_token'));
 
   if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
+  return {
+    Authorization: `Bearer ${token}`,
+    Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
+  };
 };
 
 const API_BASE = `${getApiBase()}/api`;

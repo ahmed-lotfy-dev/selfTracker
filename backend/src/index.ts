@@ -24,6 +24,21 @@ const app = new Hono<{
   }
 }>()
 
+// Validate Environment Variables
+const REQUIRED_ENV = [
+  "BETTER_AUTH_URL",
+  "BETTER_AUTH_SECRET",
+  "ELECTRIC_SOURCE_ID",
+  "ELECTRIC_SOURCE_SECRET"
+];
+
+const missingEnv = REQUIRED_ENV.filter(key => !process.env[key]);
+if (missingEnv.length > 0) {
+  console.error(`\x1b[31m[CRITICAL] Missing required environment variables: ${missingEnv.join(", ")}\x1b[0m`);
+} else {
+  console.log("\x1b[32m[INFO] All critical environment variables are set.\x1b[0m");
+}
+
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.use(loggerMiddleware)
