@@ -52,24 +52,29 @@ electricRouter.get("/:table", async (c) => {
     }
   });
 
-  // Server decides shape and tenant isolation
-  origin.searchParams.set("table", table);
+  // Determine the actual table name in the destination (Electric/DB)
+  let electricTable = table;
+  if (table === "tasks") electricTable = "task_items";
+
+  origin.searchParams.set("table", electricTable);
 
   // Tenant isolation: only show data for the current user
-  // Note: For some tables like 'exercises' or 'training_splits' that might be public, 
-  // we might want different logic. Focusing on user-owned data first.
   const tablesWithUserId = [
-    "workout_logs", "weight_logs", "tasks", "workouts",
+    "task_items", "workout_logs", "weight_logs", "workouts",
     "projects", "user_goals", "expenses", "timer_sessions"
   ];
 
-  if (tablesWithUserId.includes(table)) {
+  if (tablesWithUserId.includes(electricTable)) {
     origin.searchParams.set("where", "user_id=$1");
     origin.searchParams.set("params", JSON.stringify([user.id]));
   }
 
+  console.log(`[ElectricRouter] Proxying sync | Path Table: ${table} | Target Table: ${electricTable} | User ID: ${user.id} | Query: ${origin.searchParams.get("where")} ${origin.searchParams.get("params")}`);
+
   origin.searchParams.set("source_id", SOURCE_ID);
   origin.searchParams.set("secret", SOURCE_SECRET);
+
+  console.log(`[ElectricRouter] Proxying sync for table: ${table} | User: ${user?.id} | URL: ${origin.toString()}`);
 
   const res = await fetch(origin.toString());
   const headers = new Headers(res.headers);

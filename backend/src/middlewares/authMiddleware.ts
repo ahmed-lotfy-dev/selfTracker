@@ -23,8 +23,14 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     const session = await auth.api.getSession({ headers: finalHeaders });
     const log = c.get("logger");
 
+    console.log(`[AuthMiddleware] Request Path: ${c.req.path} | Has Auth: ${!!finalHeaders.get('Authorization')} | Has Cookie: ${!!finalHeaders.get('Cookie')} | Host: ${finalHeaders.get('host')}`);
+
+    if (finalHeaders.get('Authorization')) {
+      console.log(`[AuthMiddleware] Auth Header Snippet: ${finalHeaders.get('Authorization')?.substring(0, 20)}...`);
+    }
+
     if (!session) {
-      console.warn(`[AuthMiddleware] Session not found | Path: ${c.req.path} | Auth Found: ${!!finalHeaders.get('Authorization')} | Cookie Found: ${!!finalHeaders.get('Cookie')} | Proto: ${proto}`);
+      console.warn(`[AuthMiddleware] Session NOT FOUND for request to ${c.req.path}`);
 
       if (log) {
         log.info({
