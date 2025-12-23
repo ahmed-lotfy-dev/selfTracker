@@ -4,18 +4,19 @@ import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import TaskForm from "@/src/components/features/tasks/TaskForm"
 import TaskListItem from "@/src/components/features/tasks/TaskListItem"
-import { useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { taskCollection } from "@/src/db/collections"
 import TaskProgress from "@/src/components/features/tasks/TaskProgress"
 
-const allTasks$ = queryDb(
-  () => tables.tasks.where({ deletedAt: null }),
-  { label: 'allTasks' }
-)
 
 export default function TaskScreen() {
-  const tasks = useQuery(allTasks$)
+  const { data: tasksData } = useLiveQuery((q) =>
+    q.from({ tasks: taskCollection })
+      .where(({ tasks }) => eq(tasks.deletedAt, null))
+      .select(({ tasks }) => tasks)
+  ) as { data: any[] }
+
+  const tasks = useMemo(() => tasksData || [], [tasksData])
 
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {

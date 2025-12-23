@@ -3,13 +3,12 @@ import React from "react"
 import { MaterialIcons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { Swipeable } from "react-native-gesture-handler"
-import { useStore } from "@livestore/react"
-import { deleteWorkoutLogEvent } from "@/src/livestore/actions"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 import { useRouter } from "expo-router"
 import { useWorkoutActions } from "@/src/features/workouts/useWorkoutStore"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { format } from "date-fns"
+import { workoutLogCollection } from "@/src/db/collections"
 
 interface WorkoutLogItemProps {
   item: {
@@ -23,7 +22,6 @@ interface WorkoutLogItemProps {
 
 export default function WorkoutLogItem({ item, path }: WorkoutLogItemProps) {
   const colors = useThemeColors()
-  const { store } = useStore()
   const { showAlert } = useAlertStore()
   const router = useRouter()
   const { setSelectedWorkout } = useWorkoutActions()
@@ -39,7 +37,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogItemProps) {
     showAlert(
       "Delete Workout Log",
       "Are you sure you want to delete this entry?",
-      () => store.commit(deleteWorkoutLogEvent(item.id)),
+      () => workoutLogCollection.delete(item.id),
       () => { },
       "Delete",
       "Cancel"

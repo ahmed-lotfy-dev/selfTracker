@@ -1,20 +1,20 @@
 import React, { useMemo } from "react"
 import { View, Text } from "react-native"
-import { useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { workoutLogCollection } from "@/src/db/collections"
 import { BarChart } from "react-native-chart-kit"
 import { Dimensions } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 
-const allWorkoutLogs$ = queryDb(
-  () => tables.workoutLogs.where({ deletedAt: null }),
-  { label: 'workoutLogsChart' }
-)
-
 export function WorkoutChart() {
   const colors = useThemeColors()
-  const allLogs = useQuery(allWorkoutLogs$)
+
+  const { data: allLogs } = useLiveQuery((q) =>
+    q.from({ logs: workoutLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
+
   const screenWidth = Dimensions.get("window").width - 48
 
   const chartData = useMemo(() => {

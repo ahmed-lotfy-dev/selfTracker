@@ -9,8 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema } from "@/src/types/taskType"
 import { useUser } from "@/src/features/auth/useAuthStore"
-import { useStore } from "@livestore/react"
-import { createTaskEvent } from "@/src/livestore/actions"
+import { taskCollection } from "@/src/db/collections"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
 export default function TaskForm() {
@@ -18,9 +17,8 @@ export default function TaskForm() {
   const [title, setTitle] = useState("")
   const [titleError, setTitleError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { store } = useStore()
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const result = TaskSchema.shape.title.safeParse(title.trim())
 
     if (!result.success) {
@@ -31,10 +29,23 @@ export default function TaskForm() {
     setTitleError("")
     setIsSubmitting(true)
 
-    store.commit(createTaskEvent(user?.id || "", title.trim(), "general"))
-
-    setTitle("")
-    setIsSubmitting(false)
+    try {
+      await taskCollection.insert({
+        id: crypto.randomUUID(),
+        userId: user?.id || "",
+        title: title.trim(),
+        category: "general",
+        completed: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      })
+      setTitle("")
+    } catch (e) {
+      console.error("Failed to add task:", e)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

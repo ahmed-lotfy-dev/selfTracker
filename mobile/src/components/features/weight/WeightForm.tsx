@@ -19,8 +19,7 @@ import { useUser } from "@/src/features/auth/useAuthStore"
 import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
 import { formatLocal, formatUTC, safeParseDate } from "@/src/lib/utils/dateUtils"
-import { useStore } from "@livestore/react"
-import { createWeightLogEvent, updateWeightLogEvent } from "@/src/livestore/actions"
+import { weightLogCollection } from "@/src/db/collections"
 
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
@@ -31,7 +30,6 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const selectedWeight = useSelectedWeight()
   const colors = useThemeColors()
   const [showDate, setShowDate] = useState(false)
-  const { store } = useStore()
 
   const [weight, setWeight] = useState(
     isEditing && selectedWeight ? String(selectedWeight.weight) : ""
@@ -46,7 +44,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true)
 
     const formData = {
@@ -69,23 +67,34 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
       return
     }
 
-    if (isEditing && selectedWeight) {
-      store.commit(updateWeightLogEvent(selectedWeight.id!, {
-        weight: String(weight),
-        mood,
-        energy,
-        notes,
-      }))
-    } else {
-      store.commit(createWeightLogEvent(
-        user?.id || "",
-        String(weight),
-        { mood, energy, notes, createdAt: formatUTC(createdAt) }
-      ))
-    }
+    try {
+      if (isEditing && selectedWeight) {
+        await weightLogCollection.update(selectedWeight.id!, (draft) => {
+          draft.weight = String(weight)
+          draft.mood = mood
+          draft.energy = energy
+          draft.notes = notes
+          draft.updatedAt = new Date()
+        })
+      } else {
+        await weightLogCollection.insert({
+          id: crypto.randomUUID(),
+          userId: user?.id || "",
+          weight: String(weight),
+          mood,
+          energy,
+          notes,
+          createdAt: formatUTC(createdAt),
+          deletedAt: null,
+        })
+      }
 
-    setIsSubmitting(false)
-    router.push("/weights")
+      setIsSubmitting(false)
+      router.push("/weights")
+    } catch (e) {
+      console.error("Failed to save weight log:", e)
+      setIsSubmitting(false)
+    }
   }
 
   return (

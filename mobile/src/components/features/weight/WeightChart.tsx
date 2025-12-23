@@ -1,24 +1,22 @@
 import React, { useMemo } from "react"
-import { View, Text } from "react-native"
-import { useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
+import { View, Text, Dimensions } from "react-native"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { weightLogCollection } from "@/src/db/collections"
 import { LineChart } from "react-native-chart-kit"
-import { Dimensions } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 import { safeParseDate, formatLocal } from "@/src/lib/utils/dateUtils"
 
-const allWeightLogs$ = queryDb(
-  () => tables.weightLogs.where({ deletedAt: null }),
-  { label: 'weightLogsChart' }
-)
-
 export function WeightChart() {
   const colors = useThemeColors()
-  const allLogs = useQuery(allWeightLogs$)
+  const { data: allLogs } = useLiveQuery((q) =>
+    q.from({ logs: weightLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
   const screenWidth = Dimensions.get("window").width - 48
 
   const chartData = useMemo(() => {
+    if (!allLogs || !Array.isArray(allLogs)) return { labels: [], datasets: [{ data: [0] }] }
     const sortedLogs = [...allLogs]
       .filter(log => log.createdAt)
       .sort((a, b) => safeParseDate(a.createdAt).getTime() - safeParseDate(b.createdAt).getTime())

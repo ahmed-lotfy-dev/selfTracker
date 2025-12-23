@@ -4,9 +4,8 @@ import React, { useState, useRef } from "react"
 import { MaterialIcons, Ionicons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { Swipeable } from "react-native-gesture-handler"
-import { useStore } from "@livestore/react"
-import { deleteTaskEvent, updateTaskEvent, completeTaskEvent, uncompleteTaskEvent } from "@/src/livestore/actions"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
+import { taskCollection } from "@/src/db/collections"
 
 interface TaskListItemProps {
   task: TaskType
@@ -18,16 +17,15 @@ export default function TaskListItem({ task }: TaskListItemProps) {
   const inputRef = useRef<TextInput>(null)
   const swipeableRef = useRef<Swipeable>(null)
   const colors = useThemeColors()
-  const { store } = useStore()
   const { showAlert } = useAlertStore()
 
-  const toggleTask = () => {
+  const toggleTask = async () => {
     if (!isEditing) {
-      if (task.completed) {
-        store.commit(uncompleteTaskEvent(task.id))
-      } else {
-        store.commit(completeTaskEvent(task.id))
-      }
+      await taskCollection.update(task.id, (draft) => {
+        draft.completed = !draft.completed
+        draft.completedAt = draft.completed ? new Date() : null
+        draft.updatedAt = new Date()
+      })
     }
   }
 
@@ -38,10 +36,13 @@ export default function TaskListItem({ task }: TaskListItemProps) {
     setTimeout(() => inputRef.current?.focus(), 100)
   }
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     const trimmed = editedTitle.trim()
     if (trimmed && trimmed !== task.title) {
-      store.commit(updateTaskEvent(task.id, { title: trimmed }))
+      await taskCollection.update(task.id, (draft) => {
+        draft.title = trimmed
+        draft.updatedAt = new Date()
+      })
     }
     setIsEditing(false)
   }
@@ -56,7 +57,7 @@ export default function TaskListItem({ task }: TaskListItemProps) {
     showAlert(
       "Delete Task",
       "Are you sure you want to delete this task?",
-      () => store.commit(deleteTaskEvent(task.id)),
+      () => taskCollection.delete(task.id),
       () => { },
       "Delete",
       "Cancel"

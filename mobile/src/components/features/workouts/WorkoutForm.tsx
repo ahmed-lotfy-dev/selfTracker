@@ -19,26 +19,25 @@ import { useUser } from "@/src/features/auth/useAuthStore"
 import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
 import { formatLocal, formatUTC, safeParseDate } from "@/src/lib/utils/dateUtils"
-import { useStore, useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
-import { createWorkoutLogEvent, updateWorkoutLogEvent } from "@/src/livestore/actions"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { workoutLogCollection, workoutCollection } from "@/src/db/collections"
 
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
-
-const allWorkouts$ = queryDb(
-  () => tables.workouts.where({ deletedAt: null }),
-  { label: 'workoutTypes' }
-)
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
   const user = useUser()
   const selectedWorkout = useSelectedWorkout()
   const colors = useThemeColors()
-  const { store } = useStore()
-  const allWorkouts = useQuery(allWorkouts$)
+
+  const { data: allWorkoutsData } = useLiveQuery((q) =>
+    q.from({ workouts: workoutCollection })
+      .where(({ workouts }) => eq(workouts.deletedAt, null))
+      .select(({ workouts }) => workouts)
+  ) as { data: any[] }
+
+  const allWorkouts = useMemo(() => allWorkoutsData || [], [allWorkoutsData])
 
   const defaultWorkouts = useMemo(() => {
     if (allWorkouts.length > 0) return allWorkouts
@@ -67,7 +66,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showDate, setShowDate] = useState(false)
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const workoutName = defaultWorkouts.find((w) => w.id === workoutId)?.name || ""
 
     const formData = {
@@ -90,17 +89,30 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     }
 
     setIsSubmitting(true)
-    if (isEditing && selectedWorkout) {
-      store.commit(updateWorkoutLogEvent(selectedWorkout.id!, notes))
-    } else {
-      store.commit(createWorkoutLogEvent(
-        user?.id || "",
-        workoutId,
-        workoutName,
-        { notes, createdAt: formatUTC(createdAt) }
-      ))
+    try {
+      if (isEditing && selectedWorkout) {
+        await workoutLogCollection.update(selectedWorkout.id!, (draft) => {
+          draft.notes = notes
+          draft.updatedAt = new Date()
+          draft.createdAt = new Date(createdAt)
+        })
+      } else {
+        await workoutLogCollection.insert({
+          id: crypto.randomUUID(),
+          userId: user?.id || "",
+          workoutId,
+          workoutName,
+          notes,
+          createdAt: formatUTC(createdAt),
+          deletedAt: null,
+        })
+      }
+      router.push("/workouts")
+    } catch (e) {
+      console.error("Failed to save workout log:", e)
+    } finally {
+      setIsSubmitting(false)
     }
-    router.push("/workouts")
   }
 
   return (

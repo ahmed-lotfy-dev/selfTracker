@@ -1,8 +1,7 @@
 import { View, Text } from "react-native"
 import React, { useMemo } from "react"
-import { useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { workoutLogCollection } from "@/src/db/collections"
 import WorkoutLogItem from "./WorkoutLogItem"
 import { FlashList } from "@shopify/flash-list"
 import { WorkoutChart } from "./WorkoutChart"
@@ -10,21 +9,22 @@ import { useThemeColors } from "@/src/constants/Colors"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 
-const allWorkoutLogs$ = queryDb(
-  () => tables.workoutLogs.where({ deletedAt: null }),
-  { label: 'allWorkoutLogs' }
-)
-
 interface WorkoutLogsListProps {
   headerElement?: React.ReactNode
 }
 
 export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
   const colors = useThemeColors()
-  const allLogs = useQuery(allWorkoutLogs$)
+
+  const { data: allLogs } = useLiveQuery((q) =>
+    q.from({ logs: workoutLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
 
   const sortedLogs = useMemo(() => {
-    return [...allLogs].sort((a, b) => {
+    if (!allLogs || !Array.isArray(allLogs)) return []
+    return (allLogs as any[]).sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
       return dateB - dateA
@@ -73,7 +73,7 @@ export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
       <FlashList
         ListHeaderComponent={ListHeader}
         data={sortedLogs}
-        renderItem={({ item }) => <WorkoutLogItem item={item as any} path="/workouts" />}
+        renderItem={({ item }) => <WorkoutLogItem item={item} path="/workouts" />}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         keyExtractor={(item) => item.id}

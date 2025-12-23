@@ -1,13 +1,11 @@
 import React, { useState, useMemo } from "react"
+import { useThemeColors } from "@/src/constants/Colors"
 import {
   View,
   Text,
   Pressable,
   LayoutAnimation,
 } from "react-native"
-import { useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
@@ -21,14 +19,20 @@ const VIEW_TYPES = {
   CALENDAR: "calendar",
 }
 
-const allWorkoutLogs$ = queryDb(
-  () => tables.workoutLogs.where({ deletedAt: null }),
-  { label: 'workoutsScreenLogs' }
-)
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { workoutLogCollection } from "@/src/db/collections"
 
 export default function WorkoutScreen() {
   const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST)
-  const workoutLogs = useQuery(allWorkoutLogs$)
+  const colors = useThemeColors()
+
+  const { data: workoutLogsData } = useLiveQuery((q) =>
+    q.from({ logs: workoutLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
+
+  const workoutLogs = useMemo(() => workoutLogsData || [], [workoutLogsData])
 
   const stats = useMemo(() => {
     const weekAgo = new Date()

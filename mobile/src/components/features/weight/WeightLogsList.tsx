@@ -1,8 +1,7 @@
 import { View, Text } from "react-native"
 import React, { useMemo } from "react"
-import { useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { weightLogCollection } from "@/src/db/collections"
 import WeightLogItem from "./WeightLogItem"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { FlashList } from "@shopify/flash-list"
@@ -10,17 +9,18 @@ import { WeightChart } from "./WeightChart"
 import { useThemeColors } from "@/src/constants/Colors"
 import { WeightStatsRow } from "./WeightStatsRow"
 
-const allWeightLogs$ = queryDb(
-  () => tables.weightLogs.where({ deletedAt: null }),
-  { label: 'allWeightLogs' }
-)
-
 export const WeightLogsList = () => {
   const colors = useThemeColors()
-  const allLogs = useQuery(allWeightLogs$)
+
+  const { data: allLogs } = useLiveQuery((q) =>
+    q.from({ logs: weightLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
 
   const sortedLogs = useMemo(() => {
-    return [...allLogs].sort((a, b) => {
+    if (!allLogs || !Array.isArray(allLogs)) return []
+    return (allLogs as any[]).sort((a, b) => {
       const dateA = safeParseDate(a.createdAt).getTime()
       const dateB = safeParseDate(b.createdAt).getTime()
       return dateB - dateA
@@ -60,7 +60,7 @@ export const WeightLogsList = () => {
       <FlashList
         ListHeaderComponent={ListHeader}
         data={sortedLogs}
-        renderItem={({ item }) => <WeightLogItem item={item as any} path="/weights" />}
+        renderItem={({ item }) => <WeightLogItem item={item} path="/weights" />}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         keyExtractor={(item) => item.id}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import {
   View,
   Text,
@@ -17,8 +17,9 @@ import { useAlertStore } from "@/src/features/ui/useAlertStore"
 import { useUpdate } from "@/src/hooks/useUpdate"
 import { User } from "@/src/types/userType"
 import LogoutButton from "@/src/components/features/auth/LogoutButton"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { fetchGoals, createGoal, deleteGoal, updateUser } from "@/src/lib/api/userApi"
+import { updateUser } from "@/src/lib/api/userApi"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { userGoalCollection } from "@/src/db/collections"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useProfileImage } from "@/src/hooks/useProfileImage"
@@ -30,10 +31,9 @@ import Input from "@/src/components/ui/Input"
 import SyncSection from "./SyncSection"
 
 export default function ProfileSettings() {
-  const { user, refetch } = useAuth()
+  const { user } = useAuth()
   const { updateMutation } = useUpdate({ mutationFn: updateUser })
   const { mutate: updateUserMutation, isPending } = updateMutation
-  const queryClient = useQueryClient()
   const { showAlert } = useAlertStore()
   const colors = useThemeColors()
 
@@ -56,28 +56,14 @@ export default function ProfileSettings() {
   const [newGoalType, setNewGoalType] = useState<"loseWeight" | "gainWeight" | "bodyFat" | "muscleMass">("loseWeight")
   const [newGoalTarget, setNewGoalTarget] = useState("")
 
-  const { data: goals, isLoading: isLoadingGoals } = useQuery({
-    queryKey: ['userGoals', user?.id],
-    queryFn: () => fetchGoals(user?.id),
-    enabled: !!user?.id
-  })
+  const { data: goalsData } = useLiveQuery((q) =>
+    q.from({ goals: userGoalCollection })
+      .where(({ goals }) => eq(goals.userId, user?.id || ""))
+      .select(({ goals }) => goals)
+  ) as { data: any[] }
 
-  const createGoalMutation = useMutation({
-    mutationFn: createGoal,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userGoals'] })
-      setShowAddGoal(false)
-      setNewGoalTarget("")
-      showAlert("Success", "Goal added successfully!", () => { }, undefined, "Got it", undefined)
-    }
-  })
-
-  const deleteGoalMutation = useMutation({
-    mutationFn: deleteGoal,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userGoals'] })
-    }
-  })
+  const goals = useMemo(() => goalsData || [], [goalsData])
+  const isLoadingGoals = goalsData === undefined
 
   const handleSave = () => {
     if (!user?.id) return
@@ -99,7 +85,6 @@ export default function ProfileSettings() {
       { id: user.id, ...updatedFields },
       {
         onSuccess: () => {
-          refetch()
           showAlert("Saved", "Profile updated successfully!", () => { }, undefined, "Got it", undefined)
         },
         onError: (e) => showAlert("Error", e.message, () => { }, undefined, "OK", undefined),
@@ -113,18 +98,29 @@ export default function ProfileSettings() {
     setDateOfBirth(currentDate)
   }
 
-  const handleAddGoal = () => {
+  const handleAddGoal = async () => {
     if (!user?.id) return
     if (!newGoalTarget) {
       showAlert("Error", "Please enter a target value", () => { }, undefined, "OK", undefined)
       return
     }
 
-    createGoalMutation.mutate({
-      userId: user.id,
-      goalType: newGoalType,
-      targetValue: newGoalTarget
-    })
+    try {
+      await userGoalCollection.insert({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        goalType: newGoalType,
+        targetValue: newGoalTarget,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      })
+      setShowAddGoal(false)
+      setNewGoalTarget("")
+      showAlert("Success", "Goal added successfully!", () => { }, undefined, "Got it", undefined)
+    } catch (e) {
+      console.error("Failed to add goal:", e)
+    }
   }
 
   return (
@@ -253,7 +249,7 @@ export default function ProfileSettings() {
                           showAlert(
                             "Delete Goal",
                             "Are you sure you want to delete this goal?",
-                            () => deleteGoalMutation.mutate(goal.id),
+                            () => userGoalCollection.delete(goal.id),
                             undefined,
                             "Delete",
                             "Cancel"
@@ -301,7 +297,6 @@ export default function ProfileSettings() {
 
                       <Button
                         onPress={handleAddGoal}
-                        loading={createGoalMutation.isPending}
                         variant="secondary"
                         size="sm"
                       >

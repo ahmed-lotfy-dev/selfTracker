@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from "react-native"
 import { Stack, useLocalSearchParams, useRouter, Route } from "expo-router"
-import React from "react"
+import React, { useMemo } from "react"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
 import { useThemeColors } from "@/src/constants/Colors"
 import BackButton from "@/src/components/Buttons/BackButton"
@@ -8,34 +8,32 @@ import { format } from "date-fns"
 import { MaterialIcons } from "@expo/vector-icons"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { useWeightLogStore } from "@/src/features/weight/useWeightStore"
-import { useStore, useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
-import { deleteWeightLogEvent } from "@/src/livestore/actions"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { weightLogCollection } from "@/src/db/collections"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
-
-const allWeightLogs$ = queryDb(
-  () => tables.weightLogs.where({ deletedAt: null }),
-  { label: 'weightLogDetail' }
-)
 
 export default function WeightLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams() as { id: string }
   const { setSelectedWeight } = useWeightLogStore()
   const colors = useThemeColors()
-  const { store } = useStore()
   const { showAlert } = useAlertStore()
-  const allLogs = useQuery(allWeightLogs$)
 
-  const weightLog = allLogs.find(log => log.id === id)
+  const { data: allLogsData } = useLiveQuery((q) =>
+    q.from({ logs: weightLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
+
+  const allLogs = useMemo(() => allLogsData || [], [allLogsData])
+  const weightLog = allLogs.find((log: any) => log.id === id)
 
   const handleDelete = () => {
     showAlert(
       "Delete Weight",
       "Are you sure you want to delete this weight log?",
-      () => {
-        store.commit(deleteWeightLogEvent(id))
+      async () => {
+        await weightLogCollection.delete(id)
         router.back()
       },
       () => { },

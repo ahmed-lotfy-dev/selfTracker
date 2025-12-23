@@ -3,13 +3,12 @@ import React from "react"
 import { MaterialIcons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { Swipeable } from "react-native-gesture-handler"
-import { useStore } from "@livestore/react"
-import { deleteWeightLogEvent } from "@/src/livestore/actions"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 import { useRouter } from "expo-router"
 import { useWeightActions } from "@/src/features/weight/useWeightStore"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { format } from "date-fns"
+import { weightLogCollection } from "@/src/db/collections"
 
 interface WeightLogItemProps {
   item: {
@@ -25,7 +24,6 @@ interface WeightLogItemProps {
 
 export default function WeightLogItem({ item, path }: WeightLogItemProps) {
   const colors = useThemeColors()
-  const { store } = useStore()
   const { showAlert } = useAlertStore()
   const router = useRouter()
   const { setSelectedWeight } = useWeightActions()
@@ -41,7 +39,7 @@ export default function WeightLogItem({ item, path }: WeightLogItemProps) {
     showAlert(
       "Delete Weight Log",
       "Are you sure you want to delete this entry?",
-      () => store.commit(deleteWeightLogEvent(item.id)),
+      () => weightLogCollection.delete(item.id),
       () => { },
       "Delete",
       "Cancel"

@@ -1,5 +1,4 @@
 import { useThemeColors } from "@/src/constants/Colors"
-import { useQuery } from "@livestore/react"
 import React, { useState, useMemo } from "react"
 import { View, Text, Pressable } from "react-native"
 import { Calendar, DateData } from "react-native-calendars"
@@ -9,13 +8,8 @@ import WorkoutLogItem from "./WorkoutLogItem"
 import { format } from "date-fns"
 import { MaterialIcons } from "@expo/vector-icons"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
-
-const allWorkoutLogs$ = queryDb(
-  () => tables.workoutLogs.where({ deletedAt: null }),
-  { label: 'allWorkoutLogsCalendar' }
-)
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { workoutLogCollection } from "@/src/db/collections"
 
 type WorkoutLog = {
   id: string
@@ -40,7 +34,13 @@ const CalendarView = ({ headerElement }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"))
   const colors = useThemeColors()
 
-  const allLogs = useQuery(allWorkoutLogs$)
+  const { data: allLogsData } = useLiveQuery((q) =>
+    q.from({ logs: workoutLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
+
+  const allLogs = useMemo(() => allLogsData || [], [allLogsData])
 
   const data = useMemo(() => {
     const grouped: WorkoutLogMap = {}

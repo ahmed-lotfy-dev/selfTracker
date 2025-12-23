@@ -1,40 +1,38 @@
 import { View, Text, Pressable } from "react-native"
 import { Stack, useLocalSearchParams, useRouter } from "expo-router"
-import React from "react"
+import React, { useMemo } from "react"
 import BackButton from "@/src/components/Buttons/BackButton"
 import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
 import { MaterialIcons } from "@expo/vector-icons"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { useWorkoutActions } from "@/src/features/workouts/useWorkoutStore"
-import { useStore, useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
-import { deleteWorkoutLogEvent } from "@/src/livestore/actions"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { workoutLogCollection } from "@/src/db/collections"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
-
-const allWorkoutLogs$ = queryDb(
-  () => tables.workoutLogs.where({ deletedAt: null }),
-  { label: 'workoutLogDetail' }
-)
 
 export default function WorkoutLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
   const { setSelectedWorkout } = useWorkoutActions()
   const colors = useThemeColors()
-  const { store } = useStore()
   const { showAlert } = useAlertStore()
-  const allLogs = useQuery(allWorkoutLogs$)
 
-  const workoutLog = allLogs.find(log => log.id === id)
+  const { data: allLogsData } = useLiveQuery((q) =>
+    q.from({ logs: workoutLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
+
+  const allLogs = useMemo(() => allLogsData || [], [allLogsData])
+  const workoutLog = allLogs.find((log: any) => log.id === id)
 
   const handleDelete = () => {
     showAlert(
       "Delete Workout",
       "Are you sure you want to delete this workout?",
-      () => {
-        store.commit(deleteWorkoutLogEvent(String(id)))
+      async () => {
+        await workoutLogCollection.delete(String(id))
         router.back()
       },
       () => { },

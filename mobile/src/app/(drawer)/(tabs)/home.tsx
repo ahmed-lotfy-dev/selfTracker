@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from "react-native"
+import { View, Text, ScrollView, ActivityIndicator } from "react-native"
 import React, { useMemo } from "react"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import { TasksChart } from "@/src/components/features/home/TasksChart"
@@ -7,38 +7,37 @@ import ActionButtons from "@/src/components/features/home/ActionButtons"
 import { StatsRow } from "@/src/components/features/home/StatsRow"
 import Header from "@/src/components/Header"
 import { useUser } from "@/src/features/auth/useAuthStore"
-import { ActivityIndicator } from "react-native"
-import { useQuery } from "@livestore/react"
-import { queryDb } from "@livestore/livestore"
-import { tables } from "@/src/livestore/schema"
+import { useLiveQuery, eq } from "@tanstack/react-db"
+import { workoutLogCollection, weightLogCollection, taskCollection } from "@/src/db/collections"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
-
-const allWorkoutLogs$ = queryDb(
-  () => tables.workoutLogs,
-  { label: 'homeWorkoutLogs' }
-)
-
-const allWeightLogs$ = queryDb(
-  () => tables.weightLogs,
-  { label: 'homeWeightLogs' }
-)
-
-const allTasks$ = queryDb(
-  () => tables.tasks,
-  { label: 'homeTasks' }
-)
 
 export default function HomeScreen() {
   const user = useUser()
-  const workoutLogs = useQuery(allWorkoutLogs$)
-  const weightLogs = useQuery(allWeightLogs$)
-  const tasks = useQuery(allTasks$)
+
+  const { data: workoutLogsData } = useLiveQuery((q) =>
+    q.from({ logs: workoutLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
+
+  const { data: weightLogsData } = useLiveQuery((q) =>
+    q.from({ logs: weightLogCollection })
+      .where(({ logs }) => eq(logs.deletedAt, null))
+      .select(({ logs }) => logs)
+  ) as { data: any[] }
+
+  const { data: tasksData } = useLiveQuery((q) =>
+    q.from({ tasks: taskCollection })
+      .where(({ tasks }) => eq(tasks.deletedAt, null))
+      .select(({ tasks }) => tasks)
+  ) as { data: any[] }
+
+  const workoutLogs = useMemo(() => workoutLogsData || [], [workoutLogsData])
+  const weightLogs = useMemo(() => weightLogsData || [], [weightLogsData])
+  const tasks = useMemo(() => tasksData || [], [tasksData])
 
   React.useEffect(() => {
     console.log(`[HomeScreen] DATA STATUS - Workouts: ${workoutLogs.length}, Weights: ${weightLogs.length}, Tasks: ${tasks.length}`)
-    if (workoutLogs.length > 0) console.log(`[HomeScreen] Sample Workout: ${JSON.stringify(workoutLogs[0]).substring(0, 100)}`)
-    if (weightLogs.length > 0) console.log(`[HomeScreen] Sample Weight: ${JSON.stringify(weightLogs[0]).substring(0, 100)}`)
-    if (tasks.length > 0) console.log(`[HomeScreen] Sample Task: ${JSON.stringify(tasks[0]).substring(0, 100)}`)
   }, [workoutLogs.length, weightLogs.length, tasks.length])
 
   const stats = useMemo(() => {
