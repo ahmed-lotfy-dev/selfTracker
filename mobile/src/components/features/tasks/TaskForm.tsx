@@ -31,6 +31,7 @@ export default function TaskForm() {
 
     try {
       const newTask = {
+        id: crypto.randomUUID(),
         title: title.trim(),
         category: "general",
         completed: false,

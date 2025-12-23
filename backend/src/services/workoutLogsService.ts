@@ -99,6 +99,7 @@ export const createWorkoutLog = async (userId: string, fields: any) => {
       .insert(workoutLogs)
       .values({
         ...fields,
+        id: fields.id || crypto.randomUUID(), // Client-generated ID preferred
         userId,
         workoutName: fields.workoutName,
         workoutId: fields.workoutId,

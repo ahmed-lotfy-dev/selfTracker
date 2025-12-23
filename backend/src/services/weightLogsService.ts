@@ -54,6 +54,7 @@ export const createWeightLog = async (userId: string, fields: any) => {
       .insert(weightLogs)
       .values({
         ...fields,
+        id: fields.id || crypto.randomUUID(), // Client-generated ID preferred
         userId: userId,
         createdAt: fields.createdAt || new Date(),
         updatedAt: fields.updatedAt || new Date(),

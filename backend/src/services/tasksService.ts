@@ -17,6 +17,7 @@ export const createTask = async (userId: string, fields: any) => {
       .insert(tasks)
       .values({
         ...fields,
+        id: fields.id || crypto.randomUUID(), // Client-generated ID preferred
         userId,
         createdAt: fields.createdAt || new Date(),
         updatedAt: fields.updatedAt || new Date(),
