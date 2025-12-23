@@ -9,7 +9,7 @@ import { MaterialIcons } from "@expo/vector-icons"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { useWeightLogStore } from "@/src/features/weight/useWeightStore"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { weightLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
 export default function WeightLog() {
@@ -19,11 +19,19 @@ export default function WeightLog() {
   const colors = useThemeColors()
   const { showAlert } = useAlertStore()
 
-  const { data: allLogsData } = useLiveQuery((q) =>
-    q.from({ logs: weightLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const collections = useCollections()
+  if (!collections) return null
+
+  const { data: allLogsData = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.weightLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        weight: logs.weight,
+        notes: logs.notes,
+        createdAt: logs.created_at,
+        userId: logs.user_id,
+      }))
+  ) ?? { data: [] }
 
   const allLogs = useMemo(() => allLogsData || [], [allLogsData])
   const weightLog = allLogs.find((log: any) => log.id === id)
@@ -33,7 +41,7 @@ export default function WeightLog() {
       "Delete Weight",
       "Are you sure you want to delete this weight log?",
       async () => {
-        await weightLogCollection.delete(id)
+        await collections.weightLogs.delete(id)
         router.back()
       },
       () => { },

@@ -64,7 +64,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             headers: getHeaders()
           },
           onInsert: async ({ transaction }) => {
-            const data = transaction.mutations[0].modified;
+            const data = { ...transaction.mutations[0].modified };
             console.log('[Collections] onInsert - adding to local first:', data)
 
             // Generate ID if not present
@@ -72,9 +72,20 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
               data.id = crypto.randomUUID();
             }
 
-            // Optimistic: Add to local state immediately, sync to backend asynchronously
-            // Don't throw errors - let ElectricSQL retry sync later
-            axiosInstance.post(`${API_BASE}/tasks`, data)
+            // Map snake_case to camelCase for API
+            const apiData = {
+              ...data,
+              userId: data.user_id,
+              projectId: data.project_id,
+              columnId: data.column_id,
+              dueDate: data.due_date,
+              completedAt: data.completed_at,
+              createdAt: data.created_at,
+              updatedAt: data.updated_at,
+            };
+
+            // Optimistic sync
+            axiosInstance.post(`${API_BASE}/tasks`, apiData)
               .then(resp => console.log('[Collections] Backend sync success:', resp.data))
               .catch(error => console.warn('[Collections] Backend sync failed (will retry):', error.message))
 
@@ -82,10 +93,20 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           },
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
-            console.log('[Collections] onUpdate - updating local first:', mutation.modified)
+            const modified = { ...mutation.modified };
+            console.log('[Collections] onUpdate - updating local first:', modified)
 
-            // Optimistic: Update locally first, sync to backend asynchronously
-            axiosInstance.patch(`${API_BASE}/tasks/${mutation.original.id}`, mutation.modified)
+            // Map snake_case to camelCase for API
+            const apiData: Record<string, any> = { ...modified };
+            if (modified.user_id !== undefined) apiData.userId = modified.user_id;
+            if (modified.project_id !== undefined) apiData.projectId = modified.project_id;
+            if (modified.column_id !== undefined) apiData.columnId = modified.column_id;
+            if (modified.due_date !== undefined) apiData.dueDate = modified.due_date;
+            if (modified.completed_at !== undefined) apiData.completedAt = modified.completed_at;
+            if (modified.created_at !== undefined) apiData.createdAt = modified.created_at;
+            if (modified.updated_at !== undefined) apiData.updatedAt = modified.updated_at;
+
+            axiosInstance.patch(`${API_BASE}/tasks/${mutation.original.id}`, apiData)
               .then(resp => console.log('[Collections] Backend update success:', resp.data))
               .catch(error => console.warn('[Collections] Backend update failed (will retry):', error.message))
 
@@ -114,18 +135,30 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             headers: getHeaders()
           },
           onInsert: async ({ transaction }) => {
-            const data = transaction.mutations[0].modified;
-            if (!data.id) {
-              data.id = crypto.randomUUID();
-            }
-            axiosInstance.post(`${API_BASE}/weightLogs`, data)
+            const data = { ...transaction.mutations[0].modified };
+            if (!data.id) data.id = crypto.randomUUID();
+
+            const apiData = {
+              ...data,
+              userId: data.user_id,
+              createdAt: data.created_at,
+              updatedAt: data.updated_at,
+            };
+
+            axiosInstance.post(`${API_BASE}/weightLogs`, apiData)
               .then(resp => console.log('[Collections] WeightLog sync success:', resp.data))
               .catch(error => console.warn('[Collections] WeightLog sync failed:', error.message))
             return undefined;
           },
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
-            axiosInstance.patch(`${API_BASE}/weightLogs/${mutation.original.id}`, mutation.modified)
+            const modified = { ...mutation.modified };
+            const apiData: Record<string, any> = { ...modified };
+            if (modified.user_id !== undefined) apiData.userId = modified.user_id;
+            if (modified.created_at !== undefined) apiData.createdAt = modified.created_at;
+            if (modified.updated_at !== undefined) apiData.updatedAt = modified.updated_at;
+
+            axiosInstance.patch(`${API_BASE}/weightLogs/${mutation.original.id}`, apiData)
               .then(resp => console.log('[Collections] WeightLog update success:', resp.data))
               .catch(error => console.warn('[Collections] WeightLog update failed:', error.message))
             return undefined;
@@ -149,18 +182,34 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             headers: getHeaders()
           },
           onInsert: async ({ transaction }) => {
-            const data = transaction.mutations[0].modified;
-            if (!data.id) {
-              data.id = crypto.randomUUID();
-            }
-            axiosInstance.post(`${API_BASE}/workoutLogs`, data)
+            const data = { ...transaction.mutations[0].modified };
+            if (!data.id) data.id = crypto.randomUUID();
+
+            const apiData = {
+              ...data,
+              userId: data.user_id,
+              workoutId: data.workout_id,
+              workoutName: data.workout_name,
+              createdAt: data.created_at,
+              updatedAt: data.updated_at,
+            };
+
+            axiosInstance.post(`${API_BASE}/workoutLogs`, apiData)
               .then(resp => console.log('[Collections] WorkoutLog sync success:', resp.data))
               .catch(error => console.warn('[Collections] WorkoutLog sync failed:', error.message))
             return undefined;
           },
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
-            axiosInstance.patch(`${API_BASE}/workoutLogs/${mutation.original.id}`, mutation.modified)
+            const modified = { ...mutation.modified };
+            const apiData: Record<string, any> = { ...modified };
+            if (modified.user_id !== undefined) apiData.userId = modified.user_id;
+            if (modified.workout_id !== undefined) apiData.workoutId = modified.workout_id;
+            if (modified.workout_name !== undefined) apiData.workoutName = modified.workout_name;
+            if (modified.created_at !== undefined) apiData.createdAt = modified.created_at;
+            if (modified.updated_at !== undefined) apiData.updatedAt = modified.updated_at;
+
+            axiosInstance.patch(`${API_BASE}/workoutLogs/${mutation.original.id}`, apiData)
               .then(resp => console.log('[Collections] WorkoutLog update success:', resp.data))
               .catch(error => console.warn('[Collections] WorkoutLog update failed:', error.message))
             return undefined;
@@ -184,18 +233,30 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             headers: getHeaders()
           },
           onInsert: async ({ transaction }) => {
-            const data = transaction.mutations[0].modified;
-            if (!data.id) {
-              data.id = crypto.randomUUID();
-            }
-            axiosInstance.post(`${API_BASE}/expenses`, data)
+            const data = { ...transaction.mutations[0].modified };
+            if (!data.id) data.id = crypto.randomUUID();
+
+            const apiData = {
+              ...data,
+              userId: data.user_id,
+              createdAt: data.created_at,
+              updatedAt: data.updated_at,
+            };
+
+            axiosInstance.post(`${API_BASE}/expenses`, apiData)
               .then(resp => console.log('[Collections] Expense sync success:', resp.data))
               .catch(error => console.warn('[Collections] Expense sync failed:', error.message))
             return undefined;
           },
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
-            axiosInstance.patch(`${API_BASE}/expenses/${mutation.original.id}`, mutation.modified)
+            const modified = { ...mutation.modified };
+            const apiData: Record<string, any> = { ...modified };
+            if (modified.user_id !== undefined) apiData.userId = modified.user_id;
+            if (modified.created_at !== undefined) apiData.createdAt = modified.created_at;
+            if (modified.updated_at !== undefined) apiData.updatedAt = modified.updated_at;
+
+            axiosInstance.patch(`${API_BASE}/expenses/${mutation.original.id}`, apiData)
               .then(resp => console.log('[Collections] Expense update success:', resp.data))
               .catch(error => console.warn('[Collections] Expense update failed:', error.message))
             return undefined;
@@ -255,8 +316,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       ),
     };
 
+    console.log('[CollectionsProvider] Initializing collections...')
     setCollections(newCollections);
     _setCollections(newCollections); // Update module-level exports for backwards compatibility
+    console.log('[CollectionsProvider] Collections initialized:', Object.keys(newCollections))
   }, [token]);
 
   // Always render children - individual screens will handle loading states

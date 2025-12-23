@@ -8,7 +8,7 @@ import { MaterialIcons } from "@expo/vector-icons"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { useWorkoutActions } from "@/src/features/workouts/useWorkoutStore"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { workoutLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
 export default function WorkoutLog() {
@@ -18,11 +18,19 @@ export default function WorkoutLog() {
   const colors = useThemeColors()
   const { showAlert } = useAlertStore()
 
-  const { data: allLogsData } = useLiveQuery((q) =>
-    q.from({ logs: workoutLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const collections = useCollections()
+  if (!collections) return null
+
+  const { data: allLogsData = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.workoutLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        workoutName: logs.workout_name,
+        notes: logs.notes,
+        createdAt: logs.created_at,
+        userId: logs.user_id,
+      }))
+  ) ?? { data: [] }
 
   const allLogs = useMemo(() => allLogsData || [], [allLogsData])
   const workoutLog = allLogs.find((log: any) => log.id === id)
@@ -32,7 +40,7 @@ export default function WorkoutLog() {
       "Delete Workout",
       "Are you sure you want to delete this workout?",
       async () => {
-        await workoutLogCollection.delete(String(id))
+        await collections.workoutLogs.delete(String(id))
         router.back()
       },
       () => { },

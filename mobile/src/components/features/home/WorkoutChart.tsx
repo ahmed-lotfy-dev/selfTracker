@@ -1,7 +1,7 @@
 import React, { useMemo } from "react"
 import { View, Text } from "react-native"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { workoutLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 import { BarChart } from "react-native-chart-kit"
 import { Dimensions } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
@@ -9,13 +9,17 @@ import { useThemeColors } from "@/src/constants/Colors"
 export function WorkoutChart() {
   const colors = useThemeColors()
 
-  const { data: allLogsData } = useLiveQuery((q) =>
-    q.from({ logs: workoutLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const collections = useCollections()
+  if (!collections) return null
 
-  const allLogs = useMemo(() => allLogsData || [], [allLogsData])
+  const { data: allLogs = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.workoutLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        workoutName: logs.workout_name,
+      }))
+  ) ?? { data: [] }
+
   const screenWidth = Dimensions.get("window").width - 48
 
   const chartData = useMemo(() => {

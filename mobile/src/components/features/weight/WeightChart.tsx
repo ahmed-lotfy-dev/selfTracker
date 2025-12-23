@@ -1,18 +1,24 @@
 import React, { useMemo } from "react"
 import { View, Text, Dimensions } from "react-native"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { weightLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 import { LineChart } from "react-native-chart-kit"
 import { useThemeColors } from "@/src/constants/Colors"
 import { safeParseDate, formatLocal } from "@/src/lib/utils/dateUtils"
 
 export function WeightChart() {
   const colors = useThemeColors()
-  const { data: allLogs } = useLiveQuery((q) =>
-    q.from({ logs: weightLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const collections = useCollections()
+  if (!collections) return null
+
+  const { data: allLogs = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.weightLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        weight: logs.weight,
+        createdAt: logs.created_at,
+      }))
+  ) ?? { data: [] }
   const screenWidth = Dimensions.get("window").width - 48
 
   const chartData = useMemo(() => {

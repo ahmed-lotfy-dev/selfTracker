@@ -1,7 +1,7 @@
 import { View, Text } from "react-native"
 import React, { useMemo } from "react"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { weightLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 import WeightLogItem from "./WeightLogItem"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { FlashList } from "@shopify/flash-list"
@@ -12,11 +12,31 @@ import { WeightStatsRow } from "./WeightStatsRow"
 export const WeightLogsList = () => {
   const colors = useThemeColors()
 
-  const { data: allLogs } = useLiveQuery((q) =>
-    q.from({ logs: weightLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const collections = useCollections()
+  if (!collections) return null
+
+  const { data: allLogs = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.weightLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        weight: logs.weight,
+        mood: logs.mood,
+        energy: logs.energy,
+        notes: logs.notes,
+        createdAt: logs.created_at,
+        updatedAt: logs.updated_at,
+        deletedAt: logs.deleted_at,
+        userId: logs.user_id,
+      }))
+  ) ?? { data: [] }
+
+  React.useEffect(() => {
+    console.log('[WEIGHTS] Raw collection size:', collections.weightLogs.count?.() || 'N/A')
+    console.log('[WEIGHTS] Query result:', allLogs.length, 'logs found')
+    if (allLogs.length > 0) {
+      console.log('[WEIGHTS] First log sample:', allLogs[0])
+    }
+  }, [allLogs])
 
   const sortedLogs = useMemo(() => {
     if (!allLogs || !Array.isArray(allLogs)) return []

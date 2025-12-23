@@ -55,21 +55,21 @@ export const WorkoutStatsRow = ({
       contentContainerStyle={{ paddingRight: 32 }} // Extra padding at end
     >
       <StatCard
-        label="Weekly Workouts"
+        label="This Week"
         value={weeklyWorkouts}
         icon={<FontAwesome5 name="dumbbell" size={16} color={colors.primary} />}
         colorClass="text-primary"
       />
 
       <StatCard
-        label="Monthly Workouts"
+        label="This Month"
         value={monthlyWorkouts}
         icon={<MaterialIcons name="calendar-today" size={16} color="#6366f1" />}
         colorClass="text-indigo-500"
       />
 
       <StatCard
-        label="Total Workouts"
+        label="All Time"
         value={totalWorkouts}
         icon={<MaterialIcons name="fitness-center" size={18} color="#a855f7" />}
         colorClass="text-purple-500"

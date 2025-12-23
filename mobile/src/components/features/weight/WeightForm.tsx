@@ -19,7 +19,7 @@ import { useUser } from "@/src/features/auth/useAuthStore"
 import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
 import { formatLocal, formatUTC, safeParseDate } from "@/src/lib/utils/dateUtils"
-import { weightLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
@@ -29,6 +29,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
   const user = useUser()
   const selectedWeight = useSelectedWeight()
   const colors = useThemeColors()
+  const collections = useCollections()
   const [showDate, setShowDate] = useState(false)
 
   const [weight, setWeight] = useState(
@@ -69,23 +70,23 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
 
     try {
       if (isEditing && selectedWeight) {
-        await weightLogCollection.update(selectedWeight.id!, (draft) => {
+        await collections.weightLogs.update(selectedWeight.id!, (draft: any) => {
           draft.weight = String(weight)
           draft.mood = mood
           draft.energy = energy
           draft.notes = notes
-          draft.updatedAt = new Date()
+          draft.updated_at = new Date()
         })
       } else {
-        await weightLogCollection.insert({
+        await collections.weightLogs.insert({
           id: crypto.randomUUID(),
-          userId: user?.id || "",
+          user_id: user?.id || "",
           weight: String(weight),
           mood,
           energy,
           notes,
-          createdAt: formatUTC(createdAt),
-          deletedAt: null,
+          created_at: formatUTC(createdAt),
+          deleted_at: null,
         })
       }
 

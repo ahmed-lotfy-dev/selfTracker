@@ -1,7 +1,7 @@
 import { View, Text } from "react-native"
 import React, { useMemo } from "react"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { workoutLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 import WorkoutLogItem from "./WorkoutLogItem"
 import { FlashList } from "@shopify/flash-list"
 import { WorkoutChart } from "./WorkoutChart"
@@ -16,11 +16,30 @@ interface WorkoutLogsListProps {
 export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
   const colors = useThemeColors()
 
-  const { data: allLogs } = useLiveQuery((q) =>
-    q.from({ logs: workoutLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const collections = useCollections()
+  if (!collections) return null
+
+  const { data: allLogs = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.workoutLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        workoutId: logs.workout_id,
+        workoutName: logs.workout_name,
+        notes: logs.notes,
+        createdAt: logs.created_at,
+        updatedAt: logs.updated_at,
+        deletedAt: logs.deleted_at,
+        userId: logs.user_id,
+      }))
+  ) ?? { data: [] }
+
+  React.useEffect(() => {
+    console.log('[WORKOUTS] Raw collection size:', collections.workoutLogs.count?.() || 'N/A')
+    console.log('[WORKOUTS] Query result:', allLogs.length, 'logs found')
+    if (allLogs.length > 0) {
+      console.log('[WORKOUTS] First log sample:', allLogs[0])
+    }
+  }, [allLogs])
 
   const sortedLogs = useMemo(() => {
     if (!allLogs || !Array.isArray(allLogs)) return []
@@ -46,16 +65,6 @@ export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
   const ListHeader = (
     <View className="mb-2">
       {headerElement}
-      <View className="flex-row justify-around bg-card rounded-2xl mx-2 p-4 border border-border">
-        <View className="items-center">
-          <Text className="text-2xl font-bold text-primary">{weeklyCount}</Text>
-          <Text className="text-sm text-placeholder">This Week</Text>
-        </View>
-        <View className="items-center">
-          <Text className="text-2xl font-bold text-secondary">{monthlyCount}</Text>
-          <Text className="text-sm text-placeholder">This Month</Text>
-        </View>
-      </View>
 
       <View className="mt-6 px-2">
         <Text className="text-lg font-semibold text-text mb-3">Workout Types</Text>

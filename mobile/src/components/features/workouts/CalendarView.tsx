@@ -9,7 +9,7 @@ import { format } from "date-fns"
 import { MaterialIcons } from "@expo/vector-icons"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { workoutLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 
 type WorkoutLog = {
   id: string
@@ -34,11 +34,20 @@ const CalendarView = ({ headerElement }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"))
   const colors = useThemeColors()
 
-  const { data: allLogsData } = useLiveQuery((q) =>
-    q.from({ logs: workoutLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const collections = useCollections()
+  if (!collections) return null
+
+  const { data: allLogsData = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.workoutLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        workoutName: logs.workout_name,
+        createdAt: logs.created_at,
+        notes: logs.notes,
+        userId: logs.user_id,
+        workoutId: logs.workout_id,
+      }))
+  ) ?? { data: [] }
 
   const allLogs = useMemo(() => allLogsData || [], [allLogsData])
 

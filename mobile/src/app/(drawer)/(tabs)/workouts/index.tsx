@@ -20,17 +20,25 @@ const VIEW_TYPES = {
 }
 
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { workoutLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
+
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated"
 
 export default function WorkoutScreen() {
   const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST)
   const colors = useThemeColors()
 
-  const { data: workoutLogsData } = useLiveQuery((q) =>
-    q.from({ logs: workoutLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const collections = useCollections()
+  if (!collections) return null
+
+  const { data: workoutLogsData = [] } = useLiveQuery((q: any) =>
+    q.from({ logs: collections.workoutLogs })
+      .select(({ logs }: any) => ({
+        id: logs.id,
+        workoutName: logs.workout_name,
+        createdAt: logs.created_at,
+      }))
+  ) ?? { data: [] }
 
   const workoutLogs = useMemo(() => workoutLogsData || [], [workoutLogsData])
 
@@ -89,10 +97,20 @@ export default function WorkoutScreen() {
   )
 
   const renderContent = () => {
-    if (currentView === VIEW_TYPES.CALENDAR) {
-      return <CalendarView headerElement={headerContent} />
-    }
-    return <WorkoutLogsList headerElement={headerContent} />
+    return (
+      <Animated.View
+        key={currentView}
+        entering={FadeIn.duration(300)}
+        exiting={FadeOut.duration(300)}
+        className="flex-1"
+      >
+        {currentView === VIEW_TYPES.CALENDAR ? (
+          <CalendarView headerElement={headerContent} />
+        ) : (
+          <WorkoutLogsList headerElement={headerContent} />
+        )}
+      </Animated.View>
+    )
   }
 
   return (

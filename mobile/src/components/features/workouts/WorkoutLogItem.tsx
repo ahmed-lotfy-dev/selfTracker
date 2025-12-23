@@ -8,7 +8,7 @@ import { useRouter } from "expo-router"
 import { useWorkoutActions } from "@/src/features/workouts/useWorkoutStore"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { format } from "date-fns"
-import { workoutLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 
 interface WorkoutLogItemProps {
   item: {
@@ -25,6 +25,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogItemProps) {
   const { showAlert } = useAlertStore()
   const router = useRouter()
   const { setSelectedWorkout } = useWorkoutActions()
+  const collections = useCollections()
   const swipeableRef = React.useRef<Swipeable>(null)
 
   const handlePress = () => {
@@ -37,7 +38,7 @@ export default function WorkoutLogItem({ item, path }: WorkoutLogItemProps) {
     showAlert(
       "Delete Workout Log",
       "Are you sure you want to delete this entry?",
-      () => workoutLogCollection.delete(item.id),
+      () => collections.workoutLogs.delete(item.id),
       () => { },
       "Delete",
       "Cancel"

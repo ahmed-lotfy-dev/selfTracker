@@ -7,7 +7,6 @@ import {
   Platform,
   Image,
 } from "react-native"
-import * as ImagePicker from "expo-image-picker"
 import { Feather } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import DateTimePicker from "@react-native-community/datetimepicker"
@@ -19,8 +18,8 @@ import { User } from "@/src/types/userType"
 import LogoutButton from "@/src/components/features/auth/LogoutButton"
 import { updateUser } from "@/src/lib/api/userApi"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { userGoalCollection } from "@/src/db/collections"
-import Animated, { FadeInDown } from "react-native-reanimated"
+import { useCollections } from "@/src/db/collections"
+import Animated, { FadeInDown, LinearTransition, FadeIn, FadeOut } from "react-native-reanimated"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useProfileImage } from "@/src/hooks/useProfileImage"
 
@@ -36,6 +35,7 @@ export default function ProfileSettings() {
   const { mutate: updateUserMutation, isPending } = updateMutation
   const { showAlert } = useAlertStore()
   const colors = useThemeColors()
+  const collections = useCollections()
 
   const [name, setName] = useState(user?.name || "")
   const [weight, setWeight] = useState(user?.weight?.toString() || "")
@@ -56,11 +56,19 @@ export default function ProfileSettings() {
   const [newGoalType, setNewGoalType] = useState<"loseWeight" | "gainWeight" | "bodyFat" | "muscleMass">("loseWeight")
   const [newGoalTarget, setNewGoalTarget] = useState("")
 
-  const { data: goalsData } = useLiveQuery((q) =>
-    q.from({ goals: userGoalCollection })
-      .where(({ goals }) => eq(goals.userId, user?.id || ""))
-      .select(({ goals }) => goals)
-  ) as { data: any[] }
+  const { data: goalsData = [] } = useLiveQuery((q: any) =>
+    collections?.userGoals ? q.from({ goals: collections.userGoals })
+      .where(({ goals }: any) => eq(goals.user_id, user?.id || ""))
+      .select(({ goals }: any) => ({
+        id: goals.id,
+        userId: goals.user_id,
+        goalType: goals.goal_type,
+        targetValue: goals.target_value,
+        createdAt: goals.created_at,
+        updatedAt: goals.updated_at,
+        deletedAt: goals.deleted_at,
+      })) : { data: [] }
+  ) ?? { data: [] }
 
   const goals = useMemo(() => goalsData || [], [goalsData])
   const isLoadingGoals = goalsData === undefined
@@ -106,18 +114,20 @@ export default function ProfileSettings() {
     }
 
     try {
-      await userGoalCollection.insert({
-        id: crypto.randomUUID(),
-        userId: user.id,
-        goalType: newGoalType,
-        targetValue: newGoalTarget,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      })
-      setShowAddGoal(false)
-      setNewGoalTarget("")
-      showAlert("Success", "Goal added successfully!", () => { }, undefined, "Got it", undefined)
+      if (collections?.userGoals) {
+        await collections.userGoals.insert({
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          goal_type: newGoalType,
+          target_value: newGoalTarget,
+          created_at: new Date(),
+          updated_at: new Date(),
+          deleted_at: null,
+        })
+        setShowAddGoal(false)
+        setNewGoalTarget("")
+        showAlert("Success", "Goal added successfully!", () => { }, undefined, "Got it", undefined)
+      }
     } catch (e) {
       console.error("Failed to add goal:", e)
     }
@@ -249,7 +259,11 @@ export default function ProfileSettings() {
                           showAlert(
                             "Delete Goal",
                             "Are you sure you want to delete this goal?",
-                            () => userGoalCollection.delete(goal.id),
+                            async () => {
+                              if (collections?.userGoals) {
+                                await collections.userGoals.delete(goal.id)
+                              }
+                            },
                             undefined,
                             "Delete",
                             "Cancel"

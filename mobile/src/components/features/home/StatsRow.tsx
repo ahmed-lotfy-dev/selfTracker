@@ -55,7 +55,7 @@ export const StatsRow = () => {
     q.from({ logs: collections.workoutLogs })
       .select(({ logs }: any) => ({
         id: logs.id,
-        createdAt: logs.createdAt,
+        createdAt: logs.created_at,
       }))
   ) ?? { data: [] }
 
@@ -64,7 +64,7 @@ export const StatsRow = () => {
       .select(({ logs }: any) => ({
         id: logs.id,
         weight: logs.weight,
-        createdAt: logs.createdAt,
+        createdAt: logs.created_at,
       }))
   ) ?? { data: [] }
 

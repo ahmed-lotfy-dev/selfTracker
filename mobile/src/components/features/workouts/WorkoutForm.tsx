@@ -20,7 +20,7 @@ import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
 import { formatLocal, formatUTC, safeParseDate } from "@/src/lib/utils/dateUtils"
 import { useLiveQuery, eq } from "@tanstack/react-db"
-import { workoutLogCollection, workoutCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
@@ -30,12 +30,16 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const user = useUser()
   const selectedWorkout = useSelectedWorkout()
   const colors = useThemeColors()
+  const collections = useCollections()
+  if (!collections) return null
 
-  const { data: allWorkoutsData } = useLiveQuery((q) =>
-    q.from({ workouts: workoutCollection })
-      .where(({ workouts }) => eq(workouts.deletedAt, null))
-      .select(({ workouts }) => workouts)
-  ) as { data: any[] }
+  const { data: allWorkoutsData = [] } = useLiveQuery((q: any) =>
+    q.from({ workouts: collections.workouts })
+      .select(({ workouts }: any) => ({
+        id: workouts.id,
+        name: workouts.name,
+      }))
+  ) ?? { data: [] }
 
   const allWorkouts = useMemo(() => allWorkoutsData || [], [allWorkoutsData])
 
@@ -91,20 +95,20 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     setIsSubmitting(true)
     try {
       if (isEditing && selectedWorkout) {
-        await workoutLogCollection.update(selectedWorkout.id!, (draft) => {
+        await collections.workoutLogs.update(selectedWorkout.id!, (draft: any) => {
           draft.notes = notes
-          draft.updatedAt = new Date()
-          draft.createdAt = new Date(createdAt)
+          draft.updated_at = new Date()
+          draft.created_at = new Date(createdAt)
         })
       } else {
-        await workoutLogCollection.insert({
+        await collections.workoutLogs.insert({
           id: crypto.randomUUID(),
-          userId: user?.id || "",
-          workoutId,
-          workoutName,
+          user_id: user?.id || "",
+          workout_id: workoutId,
+          workout_name: workoutName,
           notes,
-          createdAt: formatUTC(createdAt),
-          deletedAt: null,
+          created_at: formatUTC(createdAt),
+          deleted_at: null,
         })
       }
       router.push("/workouts")

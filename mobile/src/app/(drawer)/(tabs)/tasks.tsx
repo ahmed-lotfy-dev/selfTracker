@@ -1,5 +1,6 @@
 import React, { useMemo } from "react"
 import { FlatList, Text, View, ActivityIndicator } from "react-native"
+import Animated, { LinearTransition, FadeIn } from "react-native-reanimated"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import TaskForm from "@/src/components/features/tasks/TaskForm"
@@ -25,34 +26,25 @@ export default function TaskScreen() {
   // Explicit field selection (this is what works with TanStack DB + ElectricSQL)
   const { data: tasks = [], isLoading } = useLiveQuery((q: any) =>
     q.from({ tasks: collections.tasks })
-      .orderBy(({ tasks }: any) => tasks.createdAt, 'desc')
+      .orderBy(({ tasks }: any) => tasks.created_at, 'desc')
       .select(({ tasks }: any) => ({
         id: tasks.id,
-        userId: tasks.userId,  // Required for updates
+        userId: tasks.user_id,
         title: tasks.title,
         completed: tasks.completed,
         category: tasks.category,
-        createdAt: tasks.createdAt,  // Required for updates
-        updatedAt: tasks.updatedAt,
-        deletedAt: tasks.deletedAt,
-        dueDate: tasks.dueDate,
+        createdAt: tasks.created_at,
+        updatedAt: tasks.updated_at,
+        deletedAt: tasks.deleted_at,
+        dueDate: tasks.due_date,
         description: tasks.description,
-        projectId: tasks.projectId,
-        columnId: tasks.columnId,
+        projectId: tasks.project_id,
+        columnId: tasks.column_id,
         priority: tasks.priority,
         order: tasks.order,
-        completedAt: tasks.completedAt,
+        completedAt: tasks.completed_at,
       }))
   ) ?? { data: [], isLoading: false }
-
-  // Debug
-  React.useEffect(() => {
-    console.log('[TASKS] Query update - Total:', tasks.length, 'Loading:', isLoading)
-    if (tasks.length > 0) {
-      console.log('[TASKS] First task:', tasks[0])
-      console.log('[TASKS] Last task:', tasks[tasks.length - 1])
-    }
-  }, [tasks, isLoading])
 
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {
@@ -77,7 +69,7 @@ export default function TaskScreen() {
   }
 
   const ListHeader = (
-    <View className="">
+    <Animated.View entering={FadeIn.duration(600).springify()}>
       <Header
         title="Tasks"
         rightAction={<DrawerToggleButton />}
@@ -85,12 +77,13 @@ export default function TaskScreen() {
       <TaskProgress tasks={tasks as any} />
       <TaskForm />
       <Text className="text-lg font-bold text-text mx-2 my-3">Your List</Text>
-    </View>
+    </Animated.View>
   )
 
   return (
     <View className="flex-1 bg-background px-2">
-      <FlatList
+      <Animated.FlatList
+        itemLayoutAnimation={LinearTransition.springify().damping(15)}
         data={sortedTasks}
         keyExtractor={(item, index) => item?.id?.toString() || `task-${index}`}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -102,9 +95,9 @@ export default function TaskScreen() {
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View className="px-2">
-            <TaskListItem task={item as any} />
+            <TaskListItem task={item as any} index={index} />
           </View>
         )}
         showsVerticalScrollIndicator={false}

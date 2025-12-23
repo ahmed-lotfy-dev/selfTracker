@@ -8,7 +8,7 @@ import { useRouter } from "expo-router"
 import { useWeightActions } from "@/src/features/weight/useWeightStore"
 import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import { format } from "date-fns"
-import { weightLogCollection } from "@/src/db/collections"
+import { useCollections } from "@/src/db/collections"
 
 interface WeightLogItemProps {
   item: {
@@ -27,6 +27,7 @@ export default function WeightLogItem({ item, path }: WeightLogItemProps) {
   const { showAlert } = useAlertStore()
   const router = useRouter()
   const { setSelectedWeight } = useWeightActions()
+  const collections = useCollections()
   const swipeableRef = React.useRef<Swipeable>(null)
 
   const handlePress = () => {
@@ -39,7 +40,7 @@ export default function WeightLogItem({ item, path }: WeightLogItemProps) {
     showAlert(
       "Delete Weight Log",
       "Are you sure you want to delete this entry?",
-      () => weightLogCollection.delete(item.id),
+      () => collections.weightLogs.delete(item.id),
       () => { },
       "Delete",
       "Cancel"
