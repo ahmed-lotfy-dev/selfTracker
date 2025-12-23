@@ -102,7 +102,8 @@ export const createWorkoutLog = async (userId: string, fields: any) => {
         userId,
         workoutName: fields.workoutName,
         workoutId: fields.workoutId,
-        createdAt: new Date(fields.createdAt),
+        createdAt: fields.createdAt || new Date(),
+        updatedAt: fields.updatedAt || new Date(),
       })
       .returning()
 
@@ -122,9 +123,17 @@ export const updateWorkoutLog = async (
   await clearCache([`userHomeData:${userId}`, `workoutLogs:list:${userId}:*`])
 
   return await db.transaction(async (tx) => {
+    const updateData: any = { ...fields }
+    if (fields.createdAt) {
+      updateData.createdAt = new Date(fields.createdAt)
+    }
+    if (fields.updatedAt) {
+      updateData.updatedAt = new Date(fields.updatedAt)
+    }
+
     const [updated] = await tx
       .update(workoutLogs)
-      .set({ ...fields, createdAt: fields.createdAt ? new Date(fields.createdAt) : undefined })
+      .set(updateData)
       .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, userId)))
       .returning()
 

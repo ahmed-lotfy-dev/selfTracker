@@ -12,6 +12,8 @@ const createExpenseSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.string().or(z.number()).transform((val) => String(val)),
   category: z.string().min(1, "Category is required"),
+  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
 })
 
 const updateExpenseSchema = z.object({
@@ -19,6 +21,7 @@ const updateExpenseSchema = z.object({
   description: z.string().optional(),
   amount: z.string().or(z.number()).transform((val) => String(val)).optional(),
   category: z.string().optional(),
+  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
 })
 
 expensesRouter.get("/", async (c) => {
@@ -59,15 +62,19 @@ expensesRouter.post("/", zValidator("json", createExpenseSchema), async (c) => {
 
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
-  const { description, amount, category } = c.req.valid("json")
+  const body = c.req.valid("json")
+  const { description, amount, category } = body
 
   const [createdExpense] = await db
     .insert(expenses)
     .values({
+      id: crypto.randomUUID(),
       userId: user.id,
       description,
       amount,
       category,
+      createdAt: body.createdAt || new Date(),
+      updatedAt: body.updatedAt || new Date(),
     })
     .returning()
 
@@ -92,9 +99,9 @@ expensesRouter.patch("/:id", zValidator("json", updateExpenseSchema), async (c) 
   }
 
   const { description, amount, category } = c.req.valid("json")
-  
+
   if (description === undefined && amount === undefined && category === undefined) {
-     return c.json({ message: "At least one field is required" }, 400)
+    return c.json({ message: "At least one field is required" }, 400)
   }
 
   const expenseExist = await db.query.expenses.findFirst({

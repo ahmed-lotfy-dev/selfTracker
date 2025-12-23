@@ -55,7 +55,8 @@ export const createWeightLog = async (userId: string, fields: any) => {
       .values({
         ...fields,
         userId: userId,
-        createdAt: new Date(fields.createdAt),
+        createdAt: fields.createdAt || new Date(),
+        updatedAt: fields.updatedAt || new Date(),
       })
       .returning()
 

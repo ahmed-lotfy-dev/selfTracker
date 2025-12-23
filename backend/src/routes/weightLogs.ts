@@ -22,6 +22,7 @@ const createWeightLogSchema = z.object({
   mood: z.enum(["Low", "Medium", "High"]),
   notes: z.string().optional(),
   createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
 })
 
 const updateWeightLogSchema = z.object({
@@ -30,6 +31,7 @@ const updateWeightLogSchema = z.object({
   mood: z.enum(["Low", "Medium", "High"]).optional(),
   notes: z.string().optional(),
   createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
 })
 
 weightsLogsRouter.get("/", async (c) => {
@@ -142,7 +144,7 @@ weightsLogsRouter.post("/", zValidator("json", createWeightLogSchema), async (c)
     return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
   const body = c.req.valid("json")
-  
+
   try {
     await clearCache([
       `userHomeData:${user.id}`,
@@ -188,7 +190,7 @@ weightsLogsRouter.patch("/:id", zValidator("json", updateWeightLogSchema), async
 
     // Verify ownership
     if (existingLog.userId !== user.id) {
-        return c.json({ message: "Unauthorized" }, 401)
+      return c.json({ message: "Unauthorized" }, 401)
     }
 
     const body = c.req.valid("json")
