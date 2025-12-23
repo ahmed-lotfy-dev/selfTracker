@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Image } from 'react-native';
+import { View, Text, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthActions, useAuthStore } from '@/src/features/auth/useAuthStore';
 import { useToast } from '@/src/hooks/useToast';
@@ -59,56 +59,25 @@ export default function AuthCallback() {
 
   // Branded loading screen with SelfTracker theme
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View className="flex-1 justify-center items-center bg-background p-6">
       <Image
         source={require('@/assets/images/icon.png')}
-        style={styles.logo}
+        className="w-30 h-30 mb-10 rounded-3xl"
       />
 
       <ActivityIndicator
         size="large"
         color={colors.primary}
-        style={styles.spinner}
+        className="my-6"
       />
 
-      <Text style={[styles.title, { color: colors.text }]}>
+      <Text className="text-xl font-semibold mt-4 text-center text-text">
         Setting up your account
       </Text>
 
-      <Text style={[styles.subtitle, { color: colors.placeholder }]}>
+      <Text className="text-base mt-2 text-center font-normal text-placeholder">
         Securing your session...
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 40,
-    borderRadius: 24,
-  },
-  spinner: {
-    marginVertical: 24,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 16,
-    textAlign: 'center',
-    letterSpacing: -0.3,
-  },
-  subtitle: {
-    fontSize: 15,
-    marginTop: 8,
-    textAlign: 'center',
-    fontWeight: '400',
-  },
-});
