@@ -1,7 +1,7 @@
 import { createCollection } from '@tanstack/react-db';
 import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import axiosInstance from '../lib/api/axiosInstane';
-import * as SecureStore from 'expo-secure-store';
+import { useAuthStore } from '../features/auth/useAuthStore';
 import {
   taskSchema,
   weightLogSchema,
@@ -23,17 +23,6 @@ const getApiBase = () => {
   return base.endsWith('/') ? base.slice(0, -1) : base;
 };
 
-const getElectricHeaders = async () => {
-  const token = (await SecureStore.getItemAsync('selftracker.session_token')) ||
-    (await SecureStore.getItemAsync('selftracker.better-auth.session_token'));
-
-  if (!token) return {};
-  return {
-    Authorization: `Bearer ${token}`,
-    Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-  };
-};
-
 const API_BASE = `${getApiBase()}/api`;
 
 console.log(`[DB_COLLECTIONS] Initialized with API_BASE: ${API_BASE}`);
@@ -45,7 +34,13 @@ export const taskCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/tasks`,
-      headers: getElectricHeaders as any,
+      get headers() {
+        const token = useAuthStore.getState().token;
+        if (!token) return undefined;
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
     },
     onInsert: async ({ transaction }) => {
       const resp = await axiosInstance.post(`${API_BASE}/tasks`, transaction.mutations[0].modified);
@@ -70,7 +65,13 @@ export const weightLogCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/weight_logs`,
-      headers: getElectricHeaders as any,
+      get headers() {
+        const token = useAuthStore.getState().token;
+        if (!token) return undefined;
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
     },
     onInsert: async ({ transaction }) => {
       const resp = await axiosInstance.post(`${API_BASE}/weightLogs`, transaction.mutations[0].modified);
@@ -95,7 +96,13 @@ export const workoutLogCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/workout_logs`,
-      headers: getElectricHeaders as any,
+      get headers() {
+        const token = useAuthStore.getState().token;
+        if (!token) return undefined;
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
     },
     onInsert: async ({ transaction }) => {
       const resp = await axiosInstance.post(`${API_BASE}/workoutLogs`, transaction.mutations[0].modified);
@@ -120,7 +127,13 @@ export const expenseCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/expenses`,
-      headers: getElectricHeaders as any,
+      get headers() {
+        const token = useAuthStore.getState().token;
+        if (!token) return undefined;
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
     },
     onInsert: async ({ transaction }) => {
       const resp = await axiosInstance.post(`${API_BASE}/expenses`, transaction.mutations[0].modified);
@@ -146,7 +159,13 @@ export const workoutCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/workouts`,
-      headers: getElectricHeaders as any,
+      get headers() {
+        const token = useAuthStore.getState().token;
+        if (!token) return undefined;
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
     },
   })
 );
@@ -158,7 +177,13 @@ export const projectCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/projects`,
-      headers: getElectricHeaders as any,
+      get headers() {
+        const token = useAuthStore.getState().token;
+        if (!token) return undefined;
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
     },
   })
 );
@@ -170,7 +195,13 @@ export const userGoalCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/user_goals`,
-      headers: getElectricHeaders as any,
+      get headers() {
+        const token = useAuthStore.getState().token;
+        if (!token) return undefined;
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
     },
   })
 );
@@ -182,7 +213,13 @@ export const exerciseCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/exercises`,
-      headers: getElectricHeaders as any,
+      get headers() {
+        const token = useAuthStore.getState().token;
+        if (!token) return undefined;
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
     },
   })
 );
