@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, sql } from "drizzle-orm"
 import { db } from "../db"
 import { expenses } from "../db/schema"
 
@@ -12,9 +12,18 @@ export const getUserExpenses = async (userId: string) => {
 }
 
 export const createExpense = async (userId: string, fields: any) => {
-  const [created] = await db.insert(expenses).values(fields).returning()
+  return await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(expenses)
+      .values({ ...fields, userId })
+      .returning()
 
-  return created
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...created, txid: parseInt(txid) }
+  })
 }
 
 export const updateExpense = async (
@@ -22,19 +31,37 @@ export const updateExpense = async (
   userId: string,
   fields: any
 ) => {
-  const [updated] = await db
-    .update(expenses)
-    .set(fields)
-    .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
-    .returning()
-    .prepare("updateExpens")
-    .execute()
+  return await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(expenses)
+      .set(fields)
+      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
+      .returning()
 
-  return updated
+    if (!updated) return null
+
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...updated, txid: parseInt(txid) }
+  })
 }
 
 export const deleteExpense = async (userId: string, ExpenseId: string) => {
-  const deleted = await db.delete(expenses).where(eq(expenses.id, ExpenseId))
+  return await db.transaction(async (tx) => {
+    const [deleted] = await tx
+      .delete(expenses)
+      .where(and(eq(expenses.id, ExpenseId), eq(expenses.userId, userId)))
+      .returning()
 
-  return deleted
+    if (!deleted) return null
+
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...deleted, txid: parseInt(txid) }
+  })
 }
+

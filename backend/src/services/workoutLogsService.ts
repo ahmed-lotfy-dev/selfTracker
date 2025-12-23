@@ -1,4 +1,4 @@
-import { and, eq, lt, desc, gte, lte, count, asc } from "drizzle-orm"
+import { and, eq, lt, desc, gte, lte, count, asc, sql } from "drizzle-orm"
 import { db } from "../db"
 import { workoutLogs } from "../db/schema/workoutLogs"
 import { clearCache } from "../../lib/redis"
@@ -16,9 +16,9 @@ export const getWorkoutLogs = async (
     .findMany({
       where: cursor
         ? and(
-            eq(workoutLogs.userId, userId),
-            lt(workoutLogs.createdAt, new Date(cursor))
-          )
+          eq(workoutLogs.userId, userId),
+          lt(workoutLogs.createdAt, new Date(cursor))
+        )
         : eq(workoutLogs.userId, userId),
       orderBy: desc(workoutLogs.createdAt),
       limit: limitNumber + 1,
@@ -94,20 +94,24 @@ export const getSingleWorkoutLog = async (logId: string) => {
 }
 
 export const createWorkoutLog = async (userId: string, fields: any) => {
-  const [created] = await db
-    .insert(workoutLogs)
-    .values({
-      ...fields,
-      userId,
-      workoutName: fields.workoutName,
-      workoutId: fields.workoutId,
-      createdAt: new Date(fields.createdAt),
-    })
-    .returning()
-    .prepare("createWorkoutLog")
-    .execute()
+  return await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(workoutLogs)
+      .values({
+        ...fields,
+        userId,
+        workoutName: fields.workoutName,
+        workoutId: fields.workoutId,
+        createdAt: new Date(fields.createdAt),
+      })
+      .returning()
 
-  return created
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...created, txid: parseInt(txid) }
+  })
 }
 
 export const updateWorkoutLog = async (
@@ -117,15 +121,21 @@ export const updateWorkoutLog = async (
 ) => {
   await clearCache([`userHomeData:${userId}`, `workoutLogs:list:${userId}:*`])
 
-  const [updated] = await db
-    .update(workoutLogs)
-    .set({ ...fields, createdAt: fields.createdAt })
-    .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, userId)))
-    .returning()
-    .prepare("updateWorkotLog")
-    .execute()
-  console.log(updated)
-  return updated
+  return await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(workoutLogs)
+      .set({ ...fields, createdAt: fields.createdAt ? new Date(fields.createdAt) : undefined })
+      .where(and(eq(workoutLogs.id, id), eq(workoutLogs.userId, userId)))
+      .returning()
+
+    if (!updated) return null
+
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...updated, txid: parseInt(txid) }
+  })
 }
 
 export const deleteWorkoutLog = async (
@@ -134,13 +144,22 @@ export const deleteWorkoutLog = async (
 ) => {
   await clearCache([`userHomeData:${userId}`, `workoutLogs:list:${userId}:*`])
 
-  const deletedWorkout = await db
-    .delete(workoutLogs)
-    .where(eq(workoutLogs.id, workoutLogId))
-    .returning()
+  return await db.transaction(async (tx) => {
+    const [deleted] = await tx
+      .delete(workoutLogs)
+      .where(and(eq(workoutLogs.id, workoutLogId), eq(workoutLogs.userId, userId)))
+      .returning()
 
-  return deletedWorkout
+    if (!deleted) return null
+
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...deleted, txid: parseInt(txid) }
+  })
 }
+
 
 export const getTimeWorkoutLogs = async (userId: string, month: number) => {
   try {

@@ -16,9 +16,9 @@ export const getWeightLogs = async (
     .findMany({
       where: cursor
         ? and(
-            eq(weightLogs.userId, userId as string),
-            lt(weightLogs.createdAt, new Date(cursor))
-          )
+          eq(weightLogs.userId, userId as string),
+          lt(weightLogs.createdAt, new Date(cursor))
+        )
         : eq(weightLogs.userId, userId as string),
       orderBy: desc(weightLogs.createdAt),
       limit: limitNumber + 1,
@@ -48,48 +48,66 @@ export const getSingleWeightLog = async (logId: string) => {
 
 export const createWeightLog = async (userId: string, fields: any) => {
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
-  console.log(fields)
-  const [created] = await db
-    .insert(weightLogs)
-    .values({
-      ...fields,
-      userId: userId,
-      createdAt: new Date(fields.createdAt),
-    })
-    .returning()
-    .prepare("createWeightLog")
-    .execute()
 
-  return created
+  return await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(weightLogs)
+      .values({
+        ...fields,
+        userId: userId,
+        createdAt: new Date(fields.createdAt),
+      })
+      .returning()
+
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...created, txid: parseInt(txid) }
+  })
 }
 
 export const updateWeightLog = async (
   id: string,
   userId: string,
-  updatedFields: {}
+  updatedFields: any
 ) => {
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
 
-  const [updated] = await db
-    .update(weightLogs)
-    .set(updatedFields)
-    .where(and(eq(weightLogs.id, id), eq(weightLogs.userId, userId)))
-    .returning()
-    .prepare("updateWeightLog")
-    .execute()
+  return await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(weightLogs)
+      .set(updatedFields)
+      .where(and(eq(weightLogs.id, id), eq(weightLogs.userId, userId)))
+      .returning()
 
-  return updated
+    if (!updated) return null
+
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...updated, txid: parseInt(txid) }
+  })
 }
 
 export const deleteWeightLog = async (userId: string, weightLogId: string) => {
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
 
-  const deletedWeight = await db
-    .delete(weightLogs)
-    .where(eq(weightLogs.id, weightLogId))
-    .returning()
+  return await db.transaction(async (tx) => {
+    const [deleted] = await tx
+      .delete(weightLogs)
+      .where(and(eq(weightLogs.id, weightLogId), eq(weightLogs.userId, userId)))
+      .returning()
 
-  return deletedWeight
+    if (!deleted) return null
+
+    const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
+    const rows = res.rows as { txid: string }[]
+    const txid = rows[0].txid
+
+    return { ...deleted, txid: parseInt(txid) }
+  })
 }
 
 export const getTimeWeightLogs = async (userId: string, month: number) => {

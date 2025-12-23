@@ -12,8 +12,7 @@ import workoutLogsRouter from "./routes/workoutsLogs.js"
 import uploadRouter from "./routes/image.js"
 import projectsRouter from "./routes/projects.js"
 import timerRouter from "./routes/timer.js"
-import syncRouter from "./routes/sync.js"
-import livestoreSyncRouter, { websocket as livestoreWS } from "./routes/livestore-sync.js"
+import electricRouter from "./routes/electric.js"
 import { auth } from "../lib/auth.js"
 import { authMiddleware } from "./middlewares/authMiddleware.js"
 
@@ -66,10 +65,7 @@ app.route("/api/timer", timerRouter)
 
 app.route("/api/image", uploadRouter)
 
-app.route("/api/sync", syncRouter)
-
-app.route("/api/livestore", livestoreSyncRouter)
-
+app.route("/api/electric", electricRouter)
 
 app.get("/", async (c) => {
   return c.json({ message: "Hello world" })
@@ -99,15 +95,4 @@ export default {
   hostname: "0.0.0.0",
   fetch: app.fetch,
   idleTimeout: 250,
-  websocket: {
-    message(ws: any, message: any) {
-      livestoreWS.message(ws, message)
-    },
-    open(ws: any) {
-      livestoreWS.open(ws)
-    },
-    close(ws: any) {
-      livestoreWS.close(ws)
-    },
-  },
 }

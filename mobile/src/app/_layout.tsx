@@ -1,3 +1,4 @@
+import "react-native-random-uuid"
 import "@/src/polyfills/crypto"
 import React, { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
@@ -15,7 +16,7 @@ import {
   setUpNotificationListeners,
 } from "../lib/notifications"
 import { PortalHost } from "@rn-primitives/portal"
-import { Platform, StatusBar, useColorScheme } from "react-native"
+import { View, Text, Platform, StatusBar, useColorScheme } from "react-native"
 import {
   FontAwesome5,
   Ionicons,
@@ -56,9 +57,13 @@ function RootLayout() {
     return () => { } // Return an empty cleanup function for web
   }, [])
 
+  console.log("[RootLayout] Render", { loaded, appIsReady })
+
   useEffect(() => {
     const prepareApp = async () => {
-      if (loaded && !appIsReady) {
+      // Bypass font loaded requirement for debugging if it's stalling
+      if (!appIsReady) {
+        console.log("[RootLayout] Preparing App (Bypassing font check)...")
         checkForUpdates()
         SplashScreen.hide()
         setAppIsReady(true)
@@ -66,9 +71,10 @@ function RootLayout() {
     }
 
     prepareApp()
-  }, [loaded, appIsReady])
+  }, [appIsReady])
 
   if (!appIsReady) {
+    console.log("[RootLayout] App not ready, returning null")
     return null
   }
 
