@@ -31,8 +31,10 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     }
 
     console.log(`[AuthMiddleware] Session token: ${sessionToken.substring(0, 20)}... (length: ${sessionToken.length})`);
+    console.log(`[AuthMiddleware] Full token for debugging: ${sessionToken}`);
 
     // Query session directly from database
+    console.log(`[AuthMiddleware] Querying database for session...`);
     const sessionResult = await db
       .select({
         session: sessions,
@@ -48,20 +50,35 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
       )
       .limit(1);
 
-    if (!sessionResult || sessionResult.length === 0) {
-      console.warn(`[AuthMiddleware] ❌ Session NOT FOUND or EXPIRED for token ${sessionToken.substring(0, 15)}...`);
+    console.log(`[AuthMiddleware] Query returned ${sessionResult.length} results`);
+
+    if (sessionResult.length === 0) {
+      // Debug: Check if ANY session exists for debugging
+      const allSessionsCount = await db.select({ token: sessions.token }).from(sessions);
+      console.log(`[AuthMiddleware] Total sessions in DB: ${allSessionsCount.length}`);
+
+      // Check if token exists with different format
+      const partialMatch = await db
+        .select({ token: sessions.token })
+        .from(sessions)
+        .limit(5);
+      console.log(`[AuthMiddleware] Sample session tokens in DB:`, partialMatch.map(s => `${s.token.substring(0, 20)}... (len: ${s.token.length})`));
+    }
+
+    if (sessionResult.length === 0) {
+      console.log(`[AuthMiddleware] ❌ Session NOT FOUND or EXPIRED for token ${sessionToken.substring(0, 20)}...`);
       return c.json({ error: "Unauthorized" }, 401);
     }
 
     const { session, user } = sessionResult[0];
     console.log(`[AuthMiddleware] ✓ Session found for user: ${user.email} (${user.id})`);
 
-    c.set("user", user);
+    c.set("user" as any, user);
     c.set("session", session);
 
     await next();
   } catch (error) {
-    console.error("[AuthMiddleware] Error validating session:", error);
-    return c.json({ error: "Unauthorized" }, 401);
+    console.error("[AuthMiddleware] Error during authentication:", error);
+    return c.json({ error: "Internal server error" }, 500);
   }
 };

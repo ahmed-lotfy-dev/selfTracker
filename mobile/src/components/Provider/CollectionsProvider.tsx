@@ -192,10 +192,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     _setCollections(newCollections); // Update module-level exports for backwards compatibility
   }, [token]);
 
-  if (!collections) {
-    return null; // Don't render children until collections are ready with token
-  }
-
+  // Always render children - individual screens will handle loading states
   return (
     <CollectionsContext.Provider value={collections}>
       {children}

@@ -24,10 +24,19 @@ export default function AuthCallback() {
 
       // Fallback: Check cookie param for session_token
       if (!token && params.cookie) {
-        const cookieString = Array.isArray(params.cookie) ? params.cookie[0] : params.cookie;
-        const match = cookieString.match(/__Secure-better-auth\.session_token=([^;]+)/);
+        let cookieString = Array.isArray(params.cookie) ? params.cookie[0] : params.cookie;
+        // Decode URL encoding (spaces might be encoded as +)
+        cookieString = decodeURIComponent(cookieString.replace(/\+/g, ' '));
+
+        console.log('[AUTH CALLBACK] Decoded cookie:', cookieString);
+
+        // Extract the session token - preserve all characters
+        const match = cookieString.match(/__Secure-better-auth\.session_token=([^;,]+)/);
         if (match && match[1]) {
-          token = match[1].trim();
+          // Remove all spaces - base64 tokens don't have spaces, they're URL encoding artifacts
+          token = match[1].replace(/\s+/g, '');
+          console.log('[AUTH CALLBACK] Extracted token (first 40):', token.substring(0, 40));
+          console.log('[AUTH CALLBACK] Token length after cleanup:', token.length);
         }
       }
 
