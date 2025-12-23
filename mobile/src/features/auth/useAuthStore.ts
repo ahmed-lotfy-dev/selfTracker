@@ -41,44 +41,61 @@ export const useAuthStore = create<AuthStore>()(
 
       loginWithToken: async (token: string) => {
         try {
-          console.log('[AUTH_STORE] loginWithToken called with token:', token?.substring(0, 10) + '...')
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.log('[AUTH_STORE] loginWithToken called');
+          console.log(`[AUTH_STORE] Token received:`, {
+            first20Chars: token.substring(0, 20) + '...',
+            length: token.length,
+            type: typeof token
+          });
+
           // Save to SecureStore - Use consistent keys
           await SecureStore.setItemAsync("selftracker.session_token", token);
-          console.log('[AUTH_STORE] Token saved to SecureStore (key: selftracker.session_token)')
+          console.log('[AUTH_STORE] ✓ Token saved to SecureStore (key: selftracker.session_token)');
 
           // Verify Session
-          console.log('[AUTH_STORE] Fetching session from:', `${API_BASE_URL}/api/auth/get-session`)
+          console.log('[AUTH_STORE] Fetching session from:', `${API_BASE_URL}/api/auth/get-session`);
           const response = await fetch(`${API_BASE_URL}/api/auth/get-session`, {
             headers: {
               'Cookie': `__Secure-better-auth.session_token=${token}`
             },
           });
-          console.log('[AUTH_STORE] Session response status:', response.status)
+          console.log('[AUTH_STORE] Session response status:', response.status);
 
-          if (!response.ok) throw new Error("Session fetch failed")
+          if (!response.ok) throw new Error("Session fetch failed");
 
-          const data = await response.json()
-          console.log('[AUTH_STORE] Session data received:', JSON.stringify(data))
-          console.log('[AUTH_STORE] Has user?', !!data?.user)
+          const data = await response.json();
+          console.log('[AUTH_STORE] Session data received:', {
+            hasUser: !!data?.user,
+            userId: data?.user?.id,
+            userEmail: data?.user?.email
+          });
 
           if (data?.user) {
-            console.log('[AUTH_STORE] Setting user state:', JSON.stringify(data.user))
-            set({ user: data.user, token, isLoading: false })
+            console.log('[AUTH_STORE] ✓ Setting user and token in Zustand state');
+            set({ user: data.user, token, isLoading: false });
+            console.log('[AUTH_STORE] Zustand state updated:', {
+              hasUser: true,
+              hasToken: true,
+              tokenFirst20: token.substring(0, 20) + '...'
+            });
 
             // Sync theme
-            const theme = data.user?.theme ?? 'system'
-            Uniwind.setTheme(theme)
+            const theme = data.user?.theme ?? 'system';
+            Uniwind.setTheme(theme);
 
-            return true
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            return true;
           }
-          set({ isLoading: false })
-          return false
+          set({ isLoading: false });
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          return false;
         } catch (error) {
-          console.error("LoginWithToken Failed:", error)
-          set({ user: null, token: null, isLoading: false })
-          await SecureStore.deleteItemAsync("selftracker.better-auth.session_token")
-          await SecureStore.deleteItemAsync("selftracker.session_token")
-          return false
+          console.error("❌ LoginWithToken Failed:", error);
+          set({ user: null, token: null, isLoading: false });
+          await SecureStore.deleteItemAsync("selftracker.better-auth.session_token");
+          await SecureStore.deleteItemAsync("selftracker.session_token");
+          return false;
         }
       },
 

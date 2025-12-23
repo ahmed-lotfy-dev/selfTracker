@@ -30,13 +30,16 @@ console.log(`[DB_COLLECTIONS] Initialized with API_BASE: ${API_BASE}`);
 // Function-based headers getter for dynamic auth token injection
 const getAuthHeaders = () => {
   const token = useAuthStore.getState().token;
-  console.log(`[DB_COLLECTIONS] getAuthHeaders called | Token present: ${!!token}`);
+
   if (!token) {
-    console.warn('[DB_COLLECTIONS] No token available for sync request');
+    console.warn('[DB_COLLECTIONS] No token available for Electric SQL sync');
     return {};
   }
+
+  console.log(`[DB_COLLECTIONS] Using token for sync | First 20 chars: ${token.substring(0, 20)}...`);
+
+  // better-auth expects session token via cookies, not Authorization header
   return {
-    'Authorization': `Bearer ${token}`,
     'Cookie': `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
   };
 };
