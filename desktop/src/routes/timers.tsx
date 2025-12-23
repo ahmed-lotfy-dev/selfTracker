@@ -26,7 +26,7 @@ export default function TimersPage() {
         <h1 className="text-2xl font-bold mb-4">Focus Timer</h1>
 
         {/* Floating Timer Controls */}
-        <div className="bg-card rounded-lg border p-6 space-y-4 bg-transparent">
+        <div className="bg-card rounded-lg border p-6 space-y-4">
           <h2 className="text-lg font-semibold">Floating Timer Overlay</h2>
           <p className="text-sm text-muted-foreground">
             Control the always-on-top floating timer that follows you across all workspaces.
