@@ -69,7 +69,8 @@ export const weightLogCollection = createCollection(
         const token = useAuthStore.getState().token;
         if (!token) return undefined;
         return {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
         };
       }
     },
@@ -100,7 +101,8 @@ export const workoutLogCollection = createCollection(
         const token = useAuthStore.getState().token;
         if (!token) return undefined;
         return {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
         };
       }
     },
@@ -131,7 +133,8 @@ export const expenseCollection = createCollection(
         const token = useAuthStore.getState().token;
         if (!token) return undefined;
         return {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
         };
       }
     },
@@ -163,7 +166,8 @@ export const workoutCollection = createCollection(
         const token = useAuthStore.getState().token;
         if (!token) return undefined;
         return {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
         };
       }
     },
@@ -181,7 +185,8 @@ export const projectCollection = createCollection(
         const token = useAuthStore.getState().token;
         if (!token) return undefined;
         return {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
         };
       }
     },
