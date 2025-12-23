@@ -27,6 +27,20 @@ const API_BASE = `${getApiBase()}/api`;
 
 console.log(`[DB_COLLECTIONS] Initialized with API_BASE: ${API_BASE}`);
 
+// Function-based headers getter for dynamic auth token injection
+const getAuthHeaders = () => {
+  const token = useAuthStore.getState().token;
+  console.log(`[DB_COLLECTIONS] getAuthHeaders called | Token present: ${!!token}`);
+  if (!token) {
+    console.warn('[DB_COLLECTIONS] No token available for sync request');
+    return {};
+  }
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Cookie': `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
+  };
+};
+
 export const taskCollection = createCollection(
   electricCollectionOptions({
     id: 'tasks',
@@ -34,13 +48,7 @@ export const taskCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/tasks`,
-      get headers() {
-        const token = useAuthStore.getState().token;
-        if (!token) return undefined;
-        return {
-          Authorization: `Bearer ${token}`
-        };
-      }
+      headers: getAuthHeaders as any
     },
     onInsert: async ({ transaction }) => {
       const resp = await axiosInstance.post(`${API_BASE}/tasks`, transaction.mutations[0].modified);
@@ -65,14 +73,7 @@ export const weightLogCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/weight_logs`,
-      get headers() {
-        const token = useAuthStore.getState().token;
-        if (!token) return undefined;
-        return {
-          Authorization: `Bearer ${token}`,
-          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-        };
-      }
+      headers: getAuthHeaders as any
     },
     onInsert: async ({ transaction }) => {
       const resp = await axiosInstance.post(`${API_BASE}/weightLogs`, transaction.mutations[0].modified);
@@ -97,14 +98,7 @@ export const workoutLogCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/workout_logs`,
-      get headers() {
-        const token = useAuthStore.getState().token;
-        if (!token) return undefined;
-        return {
-          Authorization: `Bearer ${token}`,
-          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-        };
-      }
+      headers: getAuthHeaders as any
     },
     onInsert: async ({ transaction }) => {
       const resp = await axiosInstance.post(`${API_BASE}/workoutLogs`, transaction.mutations[0].modified);
@@ -129,14 +123,7 @@ export const expenseCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/expenses`,
-      get headers() {
-        const token = useAuthStore.getState().token;
-        if (!token) return undefined;
-        return {
-          Authorization: `Bearer ${token}`,
-          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-        };
-      }
+      headers: getAuthHeaders as any
     },
     onInsert: async ({ transaction }) => {
       const resp = await axiosInstance.post(`${API_BASE}/expenses`, transaction.mutations[0].modified);
@@ -162,14 +149,7 @@ export const workoutCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/workouts`,
-      get headers() {
-        const token = useAuthStore.getState().token;
-        if (!token) return undefined;
-        return {
-          Authorization: `Bearer ${token}`,
-          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-        };
-      }
+      headers: getAuthHeaders as any
     },
   })
 );
@@ -181,14 +161,7 @@ export const projectCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/projects`,
-      get headers() {
-        const token = useAuthStore.getState().token;
-        if (!token) return undefined;
-        return {
-          Authorization: `Bearer ${token}`,
-          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-        };
-      }
+      headers: getAuthHeaders as any
     },
   })
 );
@@ -200,13 +173,7 @@ export const userGoalCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/user_goals`,
-      get headers() {
-        const token = useAuthStore.getState().token;
-        if (!token) return undefined;
-        return {
-          Authorization: `Bearer ${token}`
-        };
-      }
+      headers: getAuthHeaders as any
     },
   })
 );
@@ -218,13 +185,7 @@ export const exerciseCollection = createCollection(
     getKey: (row) => row.id,
     shapeOptions: {
       url: `${API_BASE}/electric/exercises`,
-      get headers() {
-        const token = useAuthStore.getState().token;
-        if (!token) return undefined;
-        return {
-          Authorization: `Bearer ${token}`
-        };
-      }
+      headers: getAuthHeaders as any
     },
   })
 );

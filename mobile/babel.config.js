@@ -20,7 +20,7 @@ module.exports = function (api) {
       "babel-plugin-transform-vite-meta-env",
       "@babel/plugin-syntax-import-attributes",
       ["inline-import", { "extensions": [".sql"] }],
-      "react-native-reanimated/plugin",
+      "react-native-worklets/plugin",
     ],
   }
 }
