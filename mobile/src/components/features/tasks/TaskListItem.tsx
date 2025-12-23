@@ -6,6 +6,7 @@ import { useThemeColors } from "@/src/constants/Colors"
 import { Swipeable } from "react-native-gesture-handler"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 import { taskCollection } from "@/src/db/collections"
+import axiosInstance from "@/src/lib/api/axiosInstance"
 
 interface TaskListItemProps {
   task: TaskType
@@ -21,11 +22,16 @@ export default function TaskListItem({ task }: TaskListItemProps) {
 
   const toggleTask = async () => {
     if (!isEditing) {
-      await taskCollection.update(task.id, (draft: any) => {
-        draft.completed = !draft.completed
-        draft.completedAt = draft.completed ? new Date() : null
-        draft.updatedAt = new Date()
-      })
+      try {
+        const now = new Date().toISOString()
+        await axiosInstance.patch(`/api/tasks/${task.id}`, {
+          completed: !task.completed,
+          completedAt: !task.completed ? now : null,
+          updatedAt: now,
+        })
+      } catch (e) {
+        console.error('[TaskListItem] Failed to toggle task:', e)
+      }
     }
   }
 
@@ -39,10 +45,14 @@ export default function TaskListItem({ task }: TaskListItemProps) {
   const saveEdit = async () => {
     const trimmed = editedTitle.trim()
     if (trimmed && trimmed !== task.title) {
-      await taskCollection.update(task.id, (draft: any) => {
-        draft.title = trimmed
-        draft.updatedAt = new Date()
-      })
+      try {
+        await axiosInstance.patch(`/api/tasks/${task.id}`, {
+          title: trimmed,
+          updatedAt: new Date().toISOString(),
+        })
+      } catch (e) {
+        console.error('[TaskListItem] Failed to update task:', e)
+      }
     }
     setIsEditing(false)
   }
@@ -57,7 +67,13 @@ export default function TaskListItem({ task }: TaskListItemProps) {
     showAlert(
       "Delete Task",
       "Are you sure you want to delete this task?",
-      () => taskCollection.delete(task.id),
+      async () => {
+        try {
+          await axiosInstance.delete(`/api/tasks/${task.id}`)
+        } catch (e) {
+          console.error('[TaskListItem] Failed to delete task:', e)
+        }
+      },
       () => { },
       "Delete",
       "Cancel"

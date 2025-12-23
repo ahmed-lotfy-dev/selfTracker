@@ -30,13 +30,14 @@ export default function TaskForm() {
     setIsSubmitting(true)
 
     try {
+      const now = new Date()
       const newTask = {
         id: crypto.randomUUID(),
         title: title.trim(),
         category: "general",
         completed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       }
 
       console.log('[TaskForm] Creating task via API:', newTask)
