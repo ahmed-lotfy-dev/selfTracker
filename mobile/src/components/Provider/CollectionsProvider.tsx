@@ -60,7 +60,12 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           getKey: (row) => row.id,
           shapeOptions: { url: getUrl('/electric/tasks') },
           onInsert: async ({ transaction }) => {
-            const resp = await axiosInstance.post(`${API_BASE}/tasks`, transaction.mutations[0].modified);
+            const data = transaction.mutations[0].modified;
+            // Generate ID if not present
+            if (!data.id) {
+              data.id = crypto.randomUUID();
+            }
+            const resp = await axiosInstance.post(`${API_BASE}/tasks`, data);
             return { txid: resp.data.task.txid };
           },
           onUpdate: async ({ transaction }) => {
@@ -81,7 +86,11 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           getKey: (row) => row.id,
           shapeOptions: { url: getUrl('/electric/weight_logs') },
           onInsert: async ({ transaction }) => {
-            const resp = await axiosInstance.post(`${API_BASE}/weightLogs`, transaction.mutations[0].modified);
+            const data = transaction.mutations[0].modified;
+            if (!data.id) {
+              data.id = crypto.randomUUID();
+            }
+            const resp = await axiosInstance.post(`${API_BASE}/weightLogs`, data);
             return { txid: resp.data.txid };
           },
           onUpdate: async ({ transaction }) => {
@@ -102,7 +111,11 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           getKey: (row) => row.id,
           shapeOptions: { url: getUrl('/electric/workout_logs') },
           onInsert: async ({ transaction }) => {
-            const resp = await axiosInstance.post(`${API_BASE}/workoutLogs`, transaction.mutations[0].modified);
+            const data = transaction.mutations[0].modified;
+            if (!data.id) {
+              data.id = crypto.randomUUID();
+            }
+            const resp = await axiosInstance.post(`${API_BASE}/workoutLogs`, data);
             return { txid: resp.data.txid };
           },
           onUpdate: async ({ transaction }) => {
@@ -123,7 +136,11 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           getKey: (row) => row.id,
           shapeOptions: { url: getUrl('/electric/expenses') },
           onInsert: async ({ transaction }) => {
-            const resp = await axiosInstance.post(`${API_BASE}/expenses`, transaction.mutations[0].modified);
+            const data = transaction.mutations[0].modified;
+            if (!data.id) {
+              data.id = crypto.randomUUID();
+            }
+            const resp = await axiosInstance.post(`${API_BASE}/expenses`, data);
             return { txid: resp.data.txid };
           },
           onUpdate: async ({ transaction }) => {

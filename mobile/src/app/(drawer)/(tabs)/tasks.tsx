@@ -1,20 +1,29 @@
 import React, { useMemo } from "react"
-import { FlatList, Text, View } from "react-native"
+import { FlatList, Text, View, ActivityIndicator } from "react-native"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import TaskForm from "@/src/components/features/tasks/TaskForm"
 import TaskListItem from "@/src/components/features/tasks/TaskListItem"
-import { useLiveQuery, eq } from "@tanstack/react-db"
+import { useLiveQuery } from "@tanstack/react-db"
 import { taskCollection } from "@/src/db/collections"
 import TaskProgress from "@/src/components/features/tasks/TaskProgress"
 
 
 export default function TaskScreen() {
-  const { data: tasksData } = useLiveQuery((q) =>
+  // Handle case where collection isn't ready yet
+  if (!taskCollection) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color="#10B981" />
+        <Text className="mt-4 text-placeholder text-sm">Loading tasks...</Text>
+      </View>
+    )
+  }
+
+  const { data: tasksData, isLoading } = useLiveQuery((q) =>
     q.from({ tasks: taskCollection })
-      .where(({ tasks }) => eq(tasks.deletedAt, null))
       .select(({ tasks }) => tasks)
-  ) as { data: any[] }
+  ) as { data: any[], isLoading: boolean }
 
   const tasks = useMemo(() => tasksData || [], [tasksData])
 
@@ -23,6 +32,22 @@ export default function TaskScreen() {
       return Number(a.completed) - Number(b.completed)
     })
   }, [tasks])
+
+  // Show loading during initial sync
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-background px-2">
+        <Header
+          title="Tasks"
+          rightAction={<DrawerToggleButton />}
+        />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#10B981" />
+          <Text className="mt-4 text-placeholder text-sm">Syncing tasks...</Text>
+        </View>
+      </View>
+    )
+  }
 
   const ListHeader = (
     <View className="">
@@ -40,7 +65,7 @@ export default function TaskScreen() {
     <View className="flex-1 bg-background px-2">
       <FlatList
         data={sortedTasks}
-        keyExtractor={(item) => item?.id.toString()}
+        keyExtractor={(item, index) => item?.id?.toString() || `task-${index}`}
         contentContainerStyle={{ paddingBottom: 100 }}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={

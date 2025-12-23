@@ -21,7 +21,7 @@ export default function TaskListItem({ task }: TaskListItemProps) {
 
   const toggleTask = async () => {
     if (!isEditing) {
-      await taskCollection.update(task.id, (draft) => {
+      await taskCollection.update(task.id, (draft: any) => {
         draft.completed = !draft.completed
         draft.completedAt = draft.completed ? new Date() : null
         draft.updatedAt = new Date()
@@ -39,7 +39,7 @@ export default function TaskListItem({ task }: TaskListItemProps) {
   const saveEdit = async () => {
     const trimmed = editedTitle.trim()
     if (trimmed && trimmed !== task.title) {
-      await taskCollection.update(task.id, (draft) => {
+      await taskCollection.update(task.id, (draft: any) => {
         draft.title = trimmed
         draft.updatedAt = new Date()
       })
@@ -131,7 +131,7 @@ export default function TaskListItem({ task }: TaskListItemProps) {
                 className={`text-base font-medium shrink ${task.completed ? "text-placeholder line-through" : "text-text"
                   }`}
               >
-                {task.title.slice(0, 1).toUpperCase() + task.title.slice(1)}
+                {task.title ? (task.title.slice(0, 1).toUpperCase() + task.title.slice(1)) : 'Untitled'}
               </Text>
               {task.category && task.category !== "general" && (
                 <View className="self-start bg-secondary/10 px-2 py-0.5 rounded-md mt-1">

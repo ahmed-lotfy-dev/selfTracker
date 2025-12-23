@@ -14,23 +14,21 @@ import { safeParseDate } from "@/src/lib/utils/dateUtils"
 export default function HomeScreen() {
   const user = useUser()
 
-  const { data: workoutLogsData } = useLiveQuery((q) =>
-    q.from({ logs: workoutLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  // Always call hooks in the same order - can't have conditional returns before hooks!
+  const { data: workoutLogsData, isLoading: workoutLogsLoading } = useLiveQuery((q) =>
+    taskCollection ? q.from({ logs: workoutLogCollection })
+      .select(({ logs }) => logs) : q.from({ logs: null as any })
+  ) as { data: any[], isLoading: boolean }
 
-  const { data: weightLogsData } = useLiveQuery((q) =>
-    q.from({ logs: weightLogCollection })
-      .where(({ logs }) => eq(logs.deletedAt, null))
-      .select(({ logs }) => logs)
-  ) as { data: any[] }
+  const { data: weightLogsData, isLoading: weightLogsLoading } = useLiveQuery((q) =>
+    weightLogCollection ? q.from({ logs: weightLogCollection })
+      .select(({ logs }) => logs) : q.from({ logs: null as any })
+  ) as { data: any[], isLoading: boolean }
 
-  const { data: tasksData } = useLiveQuery((q) =>
-    q.from({ tasks: taskCollection })
-      .where(({ tasks }) => eq(tasks.deletedAt, null))
-      .select(({ tasks }) => tasks)
-  ) as { data: any[] }
+  const { data: tasksData, isLoading: tasksLoading } = useLiveQuery((q) =>
+    taskCollection ? q.from({ tasks: taskCollection })
+      .select(({ tasks }) => tasks) : q.from({ tasks: null as any })
+  ) as { data: any[], isLoading: boolean }
 
   const workoutLogs = useMemo(() => workoutLogsData || [], [workoutLogsData])
   const weightLogs = useMemo(() => weightLogsData || [], [weightLogsData])
