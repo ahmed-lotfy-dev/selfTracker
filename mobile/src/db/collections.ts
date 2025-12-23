@@ -1,194 +1,32 @@
-import { createCollection } from '@tanstack/react-db';
-import { electricCollectionOptions } from '@tanstack/electric-db-collection';
-import axiosInstance from '../lib/api/axiosInstane';
-import { useAuthStore } from '../features/auth/useAuthStore';
-import {
-  taskSchema,
-  weightLogSchema,
-  workoutLogSchema,
-  userGoalSchema,
-  expenseSchema,
-  workoutSchema,
-  projectSchema,
-  projectColumnSchema,
-  exerciseSchema,
-  trainingSplitSchema,
-  workoutExerciseSchema,
-  timerSessionSchema
-} from './schema';
-import { API_BASE_URL } from '../lib/api/config';
+// Re-export for components that want to use the hook pattern
+export { useCollections } from '@/src/components/Provider/CollectionsProvider';
 
-const getApiBase = () => {
-  const base = API_BASE_URL || 'https://selftracker.ahmedlotfy.site';
-  return base.endsWith('/') ? base.slice(0, -1) : base;
-};
+// Internal storage for collections set by provider
+let _collections: any = null;
 
-const API_BASE = `${getApiBase()}/api`;
+// Export variables that will be updated when provider initializes
+export let taskCollection: any = null;
+export let weightLogCollection: any = null;
+export let workoutLogCollection: any = null;
+export let expenseCollection: any = null;
+export let workoutCollection: any = null;
+export let projectCollection: any = null;
+export let userGoalCollection: any = null;
+export let exerciseCollection: any = null;
 
-console.log(`[DB_COLLECTIONS] Initialized with API_BASE: ${API_BASE}`);
+// Called by CollectionsProvider to update collections
+export function _setCollections(collections: any) {
+  _collections = collections;
 
-// Function-based headers getter for dynamic auth token injection
-const getAuthHeaders = () => {
-  const token = useAuthStore.getState().token;
+  // Update all exported collections
+  taskCollection = collections.tasks;
+  weightLogCollection = collections.weightLogs;
+  workoutLogCollection = collections.workoutLogs;
+  expenseCollection = collections.expenses;
+  workoutCollection = collections.workouts;
+  projectCollection = collections.projects;
+  userGoalCollection = collections.userGoals;
+  exerciseCollection = collections.exercises;
 
-  if (!token) {
-    console.warn('[DB_COLLECTIONS] No token available for Electric SQL sync');
-    return {};
-  }
-
-  console.log(`[DB_COLLECTIONS] Using token for sync | First 20 chars: ${token.substring(0, 20)}...`);
-
-  // better-auth expects session token via cookies, not Authorization header
-  return {
-    'Cookie': `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-  };
-};
-
-export const taskCollection = createCollection(
-  electricCollectionOptions({
-    id: 'tasks',
-    schema: taskSchema,
-    getKey: (row) => row.id,
-    shapeOptions: {
-      url: `${API_BASE}/electric/tasks`,
-      headers: getAuthHeaders as any
-    },
-    onInsert: async ({ transaction }) => {
-      const resp = await axiosInstance.post(`${API_BASE}/tasks`, transaction.mutations[0].modified);
-      return { txid: resp.data.task.txid };
-    },
-    onUpdate: async ({ transaction }) => {
-      const mutation = transaction.mutations[0];
-      const resp = await axiosInstance.patch(`${API_BASE}/tasks/${mutation.original.id}`, mutation.modified);
-      return { txid: resp.data.task.txid };
-    },
-    onDelete: async ({ transaction }) => {
-      const resp = await axiosInstance.delete(`${API_BASE}/tasks/${transaction.mutations[0].original.id}`);
-      return { txid: resp.data.txid };
-    },
-  })
-);
-
-export const weightLogCollection = createCollection(
-  electricCollectionOptions({
-    id: 'weight_logs',
-    schema: weightLogSchema,
-    getKey: (row) => row.id,
-    shapeOptions: {
-      url: `${API_BASE}/electric/weight_logs`,
-      headers: getAuthHeaders as any
-    },
-    onInsert: async ({ transaction }) => {
-      const resp = await axiosInstance.post(`${API_BASE}/weightLogs`, transaction.mutations[0].modified);
-      return { txid: resp.data.txid };
-    },
-    onUpdate: async ({ transaction }) => {
-      const mutation = transaction.mutations[0];
-      const resp = await axiosInstance.patch(`${API_BASE}/weightLogs/${mutation.original.id}`, mutation.modified);
-      return { txid: resp.data.txid };
-    },
-    onDelete: async ({ transaction }) => {
-      const resp = await axiosInstance.delete(`${API_BASE}/weightLogs/${transaction.mutations[0].original.id}`);
-      return { txid: resp.data.txid };
-    },
-  })
-);
-
-export const workoutLogCollection = createCollection(
-  electricCollectionOptions({
-    id: 'workout_logs',
-    schema: workoutLogSchema,
-    getKey: (row) => row.id,
-    shapeOptions: {
-      url: `${API_BASE}/electric/workout_logs`,
-      headers: getAuthHeaders as any
-    },
-    onInsert: async ({ transaction }) => {
-      const resp = await axiosInstance.post(`${API_BASE}/workoutLogs`, transaction.mutations[0].modified);
-      return { txid: resp.data.txid };
-    },
-    onUpdate: async ({ transaction }) => {
-      const mutation = transaction.mutations[0];
-      const resp = await axiosInstance.patch(`${API_BASE}/workoutLogs/${mutation.original.id}`, mutation.modified);
-      return { txid: resp.data.txid };
-    },
-    onDelete: async ({ transaction }) => {
-      const resp = await axiosInstance.delete(`${API_BASE}/workoutLogs/${transaction.mutations[0].original.id}`);
-      return { txid: resp.data.txid };
-    },
-  })
-);
-
-export const expenseCollection = createCollection(
-  electricCollectionOptions({
-    id: 'expenses',
-    schema: expenseSchema,
-    getKey: (row) => row.id,
-    shapeOptions: {
-      url: `${API_BASE}/electric/expenses`,
-      headers: getAuthHeaders as any
-    },
-    onInsert: async ({ transaction }) => {
-      const resp = await axiosInstance.post(`${API_BASE}/expenses`, transaction.mutations[0].modified);
-      return { txid: resp.data.txid };
-    },
-    onUpdate: async ({ transaction }) => {
-      const mutation = transaction.mutations[0];
-      const resp = await axiosInstance.patch(`${API_BASE}/expenses/${mutation.original.id}`, mutation.modified);
-      return { txid: resp.data.txid };
-    },
-    onDelete: async ({ transaction }) => {
-      const resp = await axiosInstance.delete(`${API_BASE}/expenses/${transaction.mutations[0].original.id}`);
-      return { txid: resp.data.txid };
-    },
-  })
-);
-
-// Read-only collections (for now, or using standard API if writes are needed)
-export const workoutCollection = createCollection(
-  electricCollectionOptions({
-    id: 'workouts',
-    schema: workoutSchema,
-    getKey: (row) => row.id,
-    shapeOptions: {
-      url: `${API_BASE}/electric/workouts`,
-      headers: getAuthHeaders as any
-    },
-  })
-);
-
-export const projectCollection = createCollection(
-  electricCollectionOptions({
-    id: 'projects',
-    schema: projectSchema,
-    getKey: (row) => row.id,
-    shapeOptions: {
-      url: `${API_BASE}/electric/projects`,
-      headers: getAuthHeaders as any
-    },
-  })
-);
-
-export const userGoalCollection = createCollection(
-  electricCollectionOptions({
-    id: 'user_goals',
-    schema: userGoalSchema,
-    getKey: (row) => row.id,
-    shapeOptions: {
-      url: `${API_BASE}/electric/user_goals`,
-      headers: getAuthHeaders as any
-    },
-  })
-);
-
-export const exerciseCollection = createCollection(
-  electricCollectionOptions({
-    id: 'exercises',
-    schema: exerciseSchema,
-    getKey: (row) => row.id,
-    shapeOptions: {
-      url: `${API_BASE}/electric/exercises`,
-      headers: getAuthHeaders as any
-    },
-  })
-);
+  console.log('[COLLECTIONS] Collections updated from provider');
+}

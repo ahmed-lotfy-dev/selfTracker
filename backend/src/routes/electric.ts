@@ -65,11 +65,12 @@ electricRouter.get("/:table", async (c) => {
   ];
 
   if (tablesWithUserId.includes(electricTable)) {
-    origin.searchParams.set("where", "user_id=$1");
-    origin.searchParams.set("params", JSON.stringify([user.id]));
+    // Electric SQL HTTP API doesn't support parameterized queries
+    // Embed user ID directly in WHERE clause with proper escaping
+    origin.searchParams.set("where", `user_id='${user.id}'`);
   }
 
-  console.log(`[ElectricRouter] Proxying sync | Path Table: ${table} | Target Table: ${electricTable} | User ID: ${user.id} | Query: ${origin.searchParams.get("where")} ${origin.searchParams.get("params")}`);
+  console.log(`[ElectricRouter] Proxying sync | Path Table: ${table} | Target Table: ${electricTable} | User ID: ${user.id} | WHERE: ${origin.searchParams.get("where")}`);
 
   origin.searchParams.set("source_id", SOURCE_ID);
   origin.searchParams.set("secret", SOURCE_SECRET);

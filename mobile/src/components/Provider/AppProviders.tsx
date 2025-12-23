@@ -12,6 +12,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/src/lib/react-query"
 import { ToastProvider } from "@/src/hooks/useToast"
 import { useAuth, useHasHydrated } from "@/src/features/auth/useAuthStore"
+import { CollectionsProvider } from "./CollectionsProvider"
 
 export { queryClient }
 
@@ -55,10 +56,12 @@ export function AppProviders({ children }: AppProvidersProps) {
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
             <KeyboardProvider>
-              <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
-                {isLoading && <LoadingOverlay />}
-                {children}
-              </SafeAreaView>
+              <CollectionsProvider>
+                <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
+                  {isLoading && <LoadingOverlay />}
+                  {children}
+                </SafeAreaView>
+              </CollectionsProvider>
             </KeyboardProvider>
           </ToastProvider>
         </QueryClientProvider>
