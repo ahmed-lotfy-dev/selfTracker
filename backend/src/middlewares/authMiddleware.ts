@@ -1,56 +1,63 @@
 import type { MiddlewareHandler } from "hono";
-import { auth } from "../../lib/auth.js";
+import { db } from "../db/index.js";
+import { sessions, users } from "../db/schema/index.js";
+import { eq, and, gt } from "drizzle-orm";
 
 /**
  * Middleware to authenticate requests using better-auth session tokens.
- * Checks for session token in Cookie or Authorization Bearer header.
+ * Directly validates session tokens from cookies against the database.
+ * Supports both email/password and social login authentication.
  */
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
   try {
     const token = c.req.query('token');
-    const finalHeaders = new Headers(c.req.raw.headers);
 
-    // Normalize protocol for Better Auth (wss -> https)
-    const proto = finalHeaders.get('x-forwarded-proto');
-    if (proto === 'wss') finalHeaders.set('x-forwarded-proto', 'https');
+    // Extract session token from query or cookies
+    let sessionToken: string | undefined = token;
 
-    // If token is provided in query (e.g. from mobile WebSocket), inject it into headers
-    if (token) {
-      finalHeaders.set('Authorization', `Bearer ${token}`);
-      finalHeaders.set('Cookie', `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`);
+    if (!sessionToken) {
+      const cookieHeader = c.req.header('Cookie') || '';
+      // Try to extract from either cookie format
+      const betterAuthMatch = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
+      const secureMatch = cookieHeader.match(/__Secure-better-auth\.session_token=([^;]+)/);
+      sessionToken = betterAuthMatch?.[1] || secureMatch?.[1];
     }
 
-    const session = await auth.api.getSession({ headers: finalHeaders });
-    const log = c.get("logger");
+    console.log(`[AuthMiddleware] Request Path: ${c.req.path} | Has Token: ${!!sessionToken}`);
 
-    console.log(`[AuthMiddleware] Request Path: ${c.req.path} | Has Auth: ${!!finalHeaders.get('Authorization')} | Has Cookie: ${!!finalHeaders.get('Cookie')} | Host: ${finalHeaders.get('host')}`);
-
-    if (finalHeaders.get('Authorization')) {
-      console.log(`[AuthMiddleware] Auth Header Snippet: ${finalHeaders.get('Authorization')?.substring(0, 20)}...`);
-    }
-
-    if (!session) {
-      console.warn(`[AuthMiddleware] Session NOT FOUND for request to ${c.req.path}`);
-      console.warn(`[AuthMiddleware] BETTER_AUTH_URL: ${process.env.BETTER_AUTH_URL}`);
-      console.warn(`[AuthMiddleware] Request Host: ${finalHeaders.get('host')}`);
-
-      if (log) {
-        log.info({
-          msg: "[AuthMiddleware] Session not found",
-          path: c.req.path,
-          fullUrl: c.req.url,
-          hasTokenInQuery: !!token,
-          authHeader: finalHeaders.get('Authorization')?.substring(0, 15),
-          cookieHeader: finalHeaders.get('Cookie')?.substring(0, 40),
-          host: finalHeaders.get('host'),
-          betterAuthUrl: process.env.BETTER_AUTH_URL,
-        });
-      }
+    if (!sessionToken) {
+      console.warn(`[AuthMiddleware] No session token found for request to ${c.req.path}`);
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    c.set("user", session.user);
-    c.set("session", session.session);
+    console.log(`[AuthMiddleware] Session token: ${sessionToken.substring(0, 20)}... (length: ${sessionToken.length})`);
+
+    // Query session directly from database
+    const sessionResult = await db
+      .select({
+        session: sessions,
+        user: users
+      })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(
+        and(
+          eq(sessions.token, sessionToken),
+          gt(sessions.expiresAt, new Date())
+        )
+      )
+      .limit(1);
+
+    if (!sessionResult || sessionResult.length === 0) {
+      console.warn(`[AuthMiddleware] ❌ Session NOT FOUND or EXPIRED for token ${sessionToken.substring(0, 15)}...`);
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const { session, user } = sessionResult[0];
+    console.log(`[AuthMiddleware] ✓ Session found for user: ${user.email} (${user.id})`);
+
+    c.set("user", user);
+    c.set("session", session);
 
     await next();
   } catch (error) {
