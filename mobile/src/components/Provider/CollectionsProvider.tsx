@@ -47,8 +47,11 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     }
 
 
-    // Build authenticated URL with token as query parameter
-    const getUrl = (path: string) => `${API_BASE}${path}?token=${encodeURIComponent(token)}`;
+    // Build stable URLs (no token) and pass token via headers for caching
+    const getUrl = (path: string) => `${API_BASE}${path}`;
+    const getHeaders = () => ({
+      'Authorization': `Bearer ${token}`
+    });
 
     const newCollections = {
       tasks: createCollection(
@@ -56,7 +59,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           id: 'tasks',
           schema: taskSchema,
           getKey: (row) => row.id,
-          shapeOptions: { url: getUrl('/electric/tasks') },
+          shapeOptions: {
+            url: getUrl('/electric/tasks'),
+            headers: getHeaders()
+          },
           onInsert: async ({ transaction }) => {
             const data = transaction.mutations[0].modified;
             // Generate ID if not present
@@ -82,7 +88,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           id: 'weight_logs',
           schema: weightLogSchema,
           getKey: (row) => row.id,
-          shapeOptions: { url: getUrl('/electric/weight_logs') },
+          shapeOptions: {
+            url: getUrl('/electric/weight_logs'),
+            headers: getHeaders()
+          },
           onInsert: async ({ transaction }) => {
             const data = transaction.mutations[0].modified;
             if (!data.id) {
@@ -107,7 +116,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           id: 'workout_logs',
           schema: workoutLogSchema,
           getKey: (row) => row.id,
-          shapeOptions: { url: getUrl('/electric/workout_logs') },
+          shapeOptions: {
+            url: getUrl('/electric/workout_logs'),
+            headers: getHeaders()
+          },
           onInsert: async ({ transaction }) => {
             const data = transaction.mutations[0].modified;
             if (!data.id) {
@@ -132,7 +144,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           id: 'expenses',
           schema: expenseSchema,
           getKey: (row) => row.id,
-          shapeOptions: { url: getUrl('/electric/expenses') },
+          shapeOptions: {
+            url: getUrl('/electric/expenses'),
+            headers: getHeaders()
+          },
           onInsert: async ({ transaction }) => {
             const data = transaction.mutations[0].modified;
             if (!data.id) {
@@ -157,7 +172,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           id: 'workouts',
           schema: workoutSchema,
           getKey: (row) => row.id,
-          shapeOptions: { url: getUrl('/electric/workouts') },
+          shapeOptions: {
+            url: getUrl('/electric/workouts'),
+            headers: getHeaders()
+          },
         })
       ),
       projects: createCollection(
@@ -165,7 +183,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           id: 'projects',
           schema: projectSchema,
           getKey: (row) => row.id,
-          shapeOptions: { url: getUrl('/electric/projects') },
+          shapeOptions: {
+            url: getUrl('/electric/projects'),
+            headers: getHeaders()
+          },
         })
       ),
       userGoals: createCollection(
@@ -173,7 +194,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           id: 'user_goals',
           schema: userGoalSchema,
           getKey: (row) => row.id,
-          shapeOptions: { url: getUrl('/electric/user_goals') },
+          shapeOptions: {
+            url: getUrl('/electric/user_goals'),
+            headers: getHeaders()
+          },
         })
       ),
       exercises: createCollection(
@@ -181,7 +205,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           id: 'exercises',
           schema: exerciseSchema,
           getKey: (row) => row.id,
-          shapeOptions: { url: getUrl('/electric/exercises') },
+          shapeOptions: {
+            url: getUrl('/electric/exercises'),
+            headers: getHeaders()
+          },
         })
       ),
     };

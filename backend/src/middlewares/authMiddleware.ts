@@ -12,9 +12,18 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
   try {
     const token = c.req.query('token');
 
-    // Extract session token from query or cookies
+    // Extract session token from query, Authorization header, or cookies
     let sessionToken: string | undefined = token;
 
+    // Check Authorization header (Bearer token)
+    if (!sessionToken) {
+      const authHeader = c.req.header('Authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        sessionToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+      }
+    }
+
+    // Check cookies
     if (!sessionToken) {
       const cookieHeader = c.req.header('Cookie') || '';
       // Try to extract from either cookie format
