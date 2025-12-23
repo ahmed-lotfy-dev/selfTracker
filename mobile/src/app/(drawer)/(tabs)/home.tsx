@@ -35,7 +35,6 @@ export default function HomeScreen() {
   const tasks = useMemo(() => tasksData || [], [tasksData])
 
   React.useEffect(() => {
-    console.log(`[HomeScreen] DATA STATUS - Workouts: ${workoutLogs.length}, Weights: ${weightLogs.length}, Tasks: ${tasks.length}`)
   }, [workoutLogs.length, weightLogs.length, tasks.length])
 
   const stats = useMemo(() => {

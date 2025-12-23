@@ -24,7 +24,6 @@ export const SyncErrorView = ({ error, isRepairing, onRepair }: SyncErrorViewPro
 
   useEffect(() => {
     if (isCorruption && !isRepairing) {
-      console.log("[LiveStore] Database corruption detected. Auto-repairing in 2 seconds...")
       const timer = setTimeout(onRepair, 2000) // Delay a bit to let previous state settle
       return () => clearTimeout(timer)
     } else if (isCorruption && isRepairing) {

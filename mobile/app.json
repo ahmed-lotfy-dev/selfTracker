@@ -2,7 +2,7 @@
   "expo": {
     "name": "selfTracker",
     "slug": "selftracker",
-    "version": "1.0.6",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/splash-screen.png",
     "scheme": ["selftracker", "exp+selftracker"],
@@ -20,7 +20,8 @@
       },
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
-      "package": "com.ahmedlotfy.selftracker"
+      "package": "com.ahmedlotfy.selftracker",
+      "versionCode": 11
     },
     "plugins": [
       "expo-router",
@@ -74,7 +75,7 @@
       }
     },
     "owner": "ahmed-lotfy",
-    "runtimeVersion": "1.0.6",
+    "runtimeVersion": "1.1.0",
     "updates": {
       "url": "https://u.expo.dev/6cb0f186-29d6-46d3-baa5-af88fdccee50"
     },

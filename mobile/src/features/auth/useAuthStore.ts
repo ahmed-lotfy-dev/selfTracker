@@ -41,55 +41,33 @@ export const useAuthStore = create<AuthStore>()(
 
       loginWithToken: async (token: string) => {
         try {
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          console.log('[AUTH_STORE] loginWithToken called');
-          console.log(`[AUTH_STORE] Token received:`, {
-            first20Chars: token.substring(0, 20) + '...',
-            length: token.length,
-            type: typeof token
-          });
-
-          // Save to SecureStore - Use consistent keys
+          // Save to SecureStore
           await SecureStore.setItemAsync("selftracker.session_token", token);
-          console.log('[AUTH_STORE] ✓ Token saved to SecureStore (key: selftracker.session_token)');
 
           // Verify Session
-          console.log('[AUTH_STORE] Fetching session from:', `${API_BASE_URL}/api/auth/get-session`);
           const response = await fetch(`${API_BASE_URL}/api/auth/get-session`, {
             headers: {
               'Cookie': `__Secure-better-auth.session_token=${token}`
             },
           });
-          console.log('[AUTH_STORE] Session response status:', response.status);
 
           if (!response.ok) throw new Error("Session fetch failed");
 
           const data = await response.json();
-          console.log('[AUTH_STORE] Session data received:', {
-            hasUser: !!data?.user,
-            userId: data?.user?.id,
-            userEmail: data?.user?.email
-          });
 
           if (data?.user) {
-            console.log('[AUTH_STORE] ✓ Setting user and token in Zustand state');
             set({ user: data.user, token, isLoading: false });
-            console.log('[AUTH_STORE] Zustand state updated:', {
-              hasUser: true,
-              hasToken: true,
-              tokenFirst20: token.substring(0, 20) + '...'
-            });
 
             // Sync theme
             const theme = data.user?.theme ?? 'system';
             Uniwind.setTheme(theme);
 
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             return true;
+          } else {
+            // OAuth tokens may not have backend session - accept for basic auth
+            set({ user: null, token, isLoading: false });
+            return false;
           }
-          set({ isLoading: false });
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          return false;
         } catch (error) {
           console.error("❌ LoginWithToken Failed:", error);
           set({ user: null, token: null, isLoading: false });
@@ -117,7 +95,6 @@ export const useAuthStore = create<AuthStore>()(
       partialize: (state) => ({ user: state.user }), // Only persist user, not token
       onRehydrateStorage: () => async (state) => {
         if (!state) return
-        console.log('[AUTH_STORE] Rehydrating storage...')
 
         // Load token from SecureStore after hydration
         try {
@@ -127,10 +104,8 @@ export const useAuthStore = create<AuthStore>()(
             storedToken = await SecureStore.getItemAsync("selftracker.better-auth.session_token")
           }
 
-          console.log('[AUTH_STORE] Stored token found?', !!storedToken)
 
           if (storedToken && state.user) {
-            console.log('[AUTH_STORE] Rehydrating with user and token')
             state.setToken(storedToken)
             state.setIsLoading(false)
 
@@ -138,7 +113,6 @@ export const useAuthStore = create<AuthStore>()(
             const theme = state.user?.theme ?? 'system'
             Uniwind.setTheme(theme)
           } else {
-            console.log('[AUTH_STORE] Rehydration complete, no valid session found (user:', !!state.user, 'token:', !!storedToken, ')')
             state.setIsLoading(false)
           }
         } catch (error) {
@@ -149,7 +123,6 @@ export const useAuthStore = create<AuthStore>()(
 
         // Mark as hydrated
         state.setHasHydrated(true)
-        console.log('[AUTH_STORE] Storage hydration complete')
       },
     }
   )

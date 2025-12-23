@@ -42,12 +42,10 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!token) {
-      console.log('[COLLECTIONS_PROVIDER] No token yet, waiting...');
       setCollections(null);
       return;
     }
 
-    console.log(`[COLLECTIONS_PROVIDER] Creating collections with token param`);
 
     // Build authenticated URL with token as query parameter
     const getUrl = (path: string) => `${API_BASE}${path}?token=${encodeURIComponent(token)}`;

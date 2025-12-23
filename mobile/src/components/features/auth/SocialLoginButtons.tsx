@@ -27,24 +27,30 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
     setIsSigningIn(provider);
 
     try {
-      console.log(`[SOCIAL LOGIN] Starting ${provider} login`);
-      console.log(`[SOCIAL LOGIN] Execution Environment: ${Constants.executionEnvironment}`);
 
       const callbackURL = Linking.createURL("callback");
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`[SOCIAL LOGIN] Starting ${provider} login`);
-      console.log(`[SOCIAL LOGIN] Generated callbackURL: ${callbackURL}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       const result = await authClient.signIn.social({
         provider,
         callbackURL,
       });
 
-      console.log(`[SOCIAL LOGIN] ${provider} result:`, JSON.stringify(result));
+
+      if (result.data) {
+      }
+
+      if (result.error) {
+        console.error('[SOCIAL LOGIN] ❌ Error from authClient:', result.error);
+        showToast(`OAuth error: ${result.error.message || 'Unknown'}`, 'error');
+      }
     } catch (error: any) {
-      console.error(`Error during ${provider} OAuth:`, error);
-      showToast(`Failed to sign in with ${provider}`, 'error');
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error(`[SOCIAL LOGIN] ❌ EXCEPTION during ${provider} OAuth:`);
+      console.error('[SOCIAL LOGIN] Error name:', error.name);
+      console.error('[SOCIAL LOGIN] Error message:', error.message);
+      console.error('[SOCIAL LOGIN] Error stack:', error.stack);
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      showToast(`Failed to sign in with ${provider}: ${error.message}`, 'error');
     } finally {
       setIsSigningIn(null);
     }

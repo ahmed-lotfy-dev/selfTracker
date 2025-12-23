@@ -13,7 +13,6 @@ export async function registerForPushNotificationsAsync(): Promise<
     return
   }
   if (!Device.isDevice) {
-    console.warn("Must use physical device for Push Notifications")
     return
   }
 
@@ -29,7 +28,6 @@ export async function registerForPushNotificationsAsync(): Promise<
   }
 
   if (finalStatus !== "granted") {
-    console.warn("Push notification permissions not granted")
     return
   }
 

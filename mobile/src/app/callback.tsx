@@ -5,6 +5,8 @@ import { useAuthActions, useAuthStore } from '@/src/features/auth/useAuthStore';
 import { useToast } from '@/src/hooks/useToast';
 import { queryClient } from '@/src/lib/react-query';
 import { useAuth } from '@/src/features/auth/useAuthStore';
+import { authClient } from '@/src/lib/auth-client';
+import * as SecureStore from 'expo-secure-store';
 
 export default function AuthCallback() {
   const params = useLocalSearchParams();
@@ -12,67 +14,34 @@ export default function AuthCallback() {
   const { showToast } = useToast();
   const { isAuthenticated, user } = useAuth();
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('[AUTH CALLBACK] Component mounted!');
-  console.log('[AUTH CALLBACK] All URL params:', JSON.stringify(params));
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   useEffect(() => {
     const handleAuth = async () => {
-      // 1. Extract Token
-      let token = params.token as string;
-
-      // Fallback: Check cookie param for session_token
-      if (!token && params.cookie) {
-        let cookieString = Array.isArray(params.cookie) ? params.cookie[0] : params.cookie;
-        // Decode URL encoding (spaces might be encoded as +)
-        cookieString = decodeURIComponent(cookieString.replace(/\+/g, ' '));
-
-        console.log('[AUTH CALLBACK] Decoded cookie:', cookieString);
-
-        // Extract the session token - preserve all characters
-        const match = cookieString.match(/__Secure-better-auth\.session_token=([^;,]+)/);
-        if (match && match[1]) {
-          // Remove all spaces - base64 tokens don't have spaces, they're URL encoding artifacts
-          token = match[1].replace(/\s+/g, '');
-          console.log('[AUTH CALLBACK] Extracted token (first 40):', token.substring(0, 40));
-          console.log('[AUTH CALLBACK] Token length after cleanup:', token.length);
-        }
-      }
-
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('[AUTH CALLBACK] All params:', params);
-      console.log('[AUTH CALLBACK] Token from backend:', token);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-      if (!token) {
-        console.warn('[AUTH CALLBACK] No token found in params!');
-        return;
-      }
 
       try {
-        console.log('[AUTH CALLBACK] Calling loginWithToken with token hash:', token.substring(0, 10) + '...');
-        // Use centralized store action - ONE SOURCE OF TRUTH
-        const success = await loginWithToken(token);
-        console.log('[AUTH CALLBACK] loginWithToken result:', success);
+        // Use better-auth's session management instead of manual cookie parsing!
 
-        if (success) {
-          const updatedUser = useAuthStore.getState().user;
-          console.log('[AUTH CALLBACK] User from store after login:', JSON.stringify(updatedUser));
-          showToast(`Welcome back, ${updatedUser?.name?.split(" ")[0]}!`, "success");
+        const { data: session, error } = await authClient.getSession();
 
-          // Invalidate queries to trigger data refetch
-          console.log('[AUTH CALLBACK] Invalidating queries...');
-          await queryClient.invalidateQueries({ queryKey: ['session'] });
-          await queryClient.invalidateQueries({ queryKey: ['userHomeData'] });
-          await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-          await queryClient.invalidateQueries({ queryKey: ['weights'] });
-          await queryClient.invalidateQueries({ queryKey: ['workouts'] });
-          console.log('[AUTH CALLBACK] Queries invalidated.');
-        } else {
-          console.error('[AUTH CALLBACK] loginWithToken returned false');
-          throw new Error("Failed to verify session token");
+        if (error) {
+          console.error('[AUTH CALLBACK] ❌ Session fetch error:', error);
+          throw new Error(`Session fetch failed: ${error.message}`);
         }
+
+        if (!session?.session?.token) {
+          console.error('[AUTH CALLBACK] ❌ No session token in response');
+          throw new Error("No session token found after OAuth");
+        }
+
+        const token = session.session.token;
+
+        // Save session directly - we already have all the data from authClient!
+        await SecureStore.setItemAsync("selftracker.session_token", token);
+        useAuthStore.setState({ user: session.user, token, isLoading: false });
+
+        showToast(`Welcome back, ${session.user?.name?.split(" ")[0]}!`, "success");
+
+        await queryClient.invalidateQueries();
 
       } catch (err: any) {
         console.error("[AuthCallback] Login failed:", err.message);

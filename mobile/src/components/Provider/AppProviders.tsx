@@ -23,15 +23,12 @@ interface AppProvidersProps {
 const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
 
 export function AppProviders({ children }: AppProvidersProps) {
-  console.log("[AppProviders] Render")
   const { storeId, isLoading } = useAuth()
   const hasHydrated = useHasHydrated()
 
-  console.log("[AppProviders] State:", { hasHydrated, isLoading, storeId })
 
   // 1. Storage Hydration
   if (!hasHydrated) {
-    console.log("[AppProviders] Waiting for hydration...")
     return (
       <SafeAreaProvider>
         <LoadingIndicator message="Initializing..." />
@@ -41,7 +38,6 @@ export function AppProviders({ children }: AppProvidersProps) {
 
   // 2. Auth Stabilization
   if (isLoading) {
-    console.log("[AppProviders] Waiting for auth...")
     return (
       <SafeAreaProvider>
         <LoadingIndicator message="Preparing Experience..." />
@@ -49,7 +45,6 @@ export function AppProviders({ children }: AppProvidersProps) {
     )
   }
 
-  console.log("[AppProviders] Rendering children")
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>

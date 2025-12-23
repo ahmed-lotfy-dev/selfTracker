@@ -16,12 +16,6 @@ export let exerciseCollection: any = null;
 
 // Called by CollectionsProvider to update collections
 export function _setCollections(collections: any) {
-  console.log('[COLLECTIONS] _setCollections called with:', {
-    tasks: !!collections.tasks,
-    weightLogs: !!collections.weightLogs,
-    workoutLogs: !!collections.workoutLogs,
-  });
-
   _collections = collections;
 
   // Update all exported collections
@@ -33,7 +27,4 @@ export function _setCollections(collections: any) {
   projectCollection = collections.projects;
   userGoalCollection = collections.userGoals;
   exerciseCollection = collections.exercises;
-
-  console.log('[COLLECTIONS] Module exports updated - taskCollection type:', typeof taskCollection);
-  console.log('[COLLECTIONS] Collections updated from provider');
 }

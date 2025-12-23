@@ -15,7 +15,6 @@ export default function SyncSection() {
   const handleSyncExisting = async () => {
     setIsSyncing(true)
     try {
-      console.log(`[SyncSection] Attempting to sync existing data...`)
       const response = await axiosInstance.post("/api/livestore/sync-existing")
       setSyncResult(response.data.message)
       showAlert("Data Sync", "Your existing records have been successfully connected to this device!", () => { }, undefined, "Great!", undefined)

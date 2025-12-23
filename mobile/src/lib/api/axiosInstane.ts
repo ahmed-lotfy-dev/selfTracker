@@ -22,9 +22,7 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
       config.headers.Cookie = `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
 
-      // console.log(`[AXIOS] Attaching token to ${config.url}: ${token.substring(0, 10)}...`)
     } else {
-      // console.warn(`[AXIOS] No token found in SecureStore for ${config.url}`)
     }
     return config
   },

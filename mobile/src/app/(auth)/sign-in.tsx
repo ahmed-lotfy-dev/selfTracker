@@ -43,19 +43,15 @@ export default function SignIn() {
     setIsSubmitting(true)
 
     try {
-      console.log('[SIGN-IN] Calling signIn API...')
       const response = await signIn(email, password)
-      console.log('[SIGN-IN] API Response:', response)
 
       if (response.error) {
-        console.log('[SIGN-IN] Error from API:', response.error)
         setFormError(response.error.message || "Login failed")
         return
       }
 
       // Success case: We already have user and token from the API!
       if (response.data?.token && response.data?.user) {
-        console.log('[SIGN-IN] Got user and token, saving directly...')
 
         // Save token to SecureStore
         await SecureStore.setItemAsync("selftracker.better-auth.session_token", response.data.token)
@@ -67,9 +63,7 @@ export default function SignIn() {
         setToken(response.data.token)
         setIsLoading(false)
 
-        console.log('[SIGN-IN] User and token saved successfully!')
       } else {
-        console.log('[SIGN-IN] No token/user in response:', response.data)
         setFormError("No authentication data received")
       }
     } catch (err) {
@@ -80,19 +74,14 @@ export default function SignIn() {
     }
   }
 
-  console.log('[SIGN-IN] isAuthenticated:', isAuthenticated)
-  console.log('[SIGN-IN] user:', user)
-  console.log('[SIGN-IN] user?.emailVerified:', user?.emailVerified)
 
   // Redirect to home if already authenticated and verified
   if (isAuthenticated && user?.emailVerified) {
-    console.log('[SIGN-IN] Redirecting to /home')
     return <Redirect href="/home" />
   }
 
   // Redirect to verify-email if authenticated but not verified
   if (isAuthenticated && !user?.emailVerified) {
-    console.log('[SIGN-IN] Redirecting to /verify-email')
     return <Redirect href="/verify-email" />
   }
 
