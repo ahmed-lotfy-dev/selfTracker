@@ -31,6 +31,8 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
 
     if (!session) {
       console.warn(`[AuthMiddleware] Session NOT FOUND for request to ${c.req.path}`);
+      console.warn(`[AuthMiddleware] BETTER_AUTH_URL: ${process.env.BETTER_AUTH_URL}`);
+      console.warn(`[AuthMiddleware] Request Host: ${finalHeaders.get('host')}`);
 
       if (log) {
         log.info({
@@ -41,6 +43,7 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
           authHeader: finalHeaders.get('Authorization')?.substring(0, 15),
           cookieHeader: finalHeaders.get('Cookie')?.substring(0, 40),
           host: finalHeaders.get('host'),
+          betterAuthUrl: process.env.BETTER_AUTH_URL,
         });
       }
       return c.json({ error: "Unauthorized" }, 401);

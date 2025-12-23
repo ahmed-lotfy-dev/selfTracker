@@ -7,10 +7,30 @@ import { sendEmail } from "./email"
 import { bearer } from "better-auth/plugins/bearer"
 import { emailOTP } from "better-auth/plugins"
 
+const baseURL = process.env.BETTER_AUTH_URL;
 
+if (!baseURL) {
+  throw new Error("BETTER_AUTH_URL environment variable is required");
+}
+
+if (process.env.NODE_ENV === "production" && baseURL.includes("localhost")) {
+  console.error("💥 CRITICAL ERROR: BETTER_AUTH_URL is set to localhost in production!");
+  console.error(`   Current value: ${baseURL}`);
+  console.error("   Better-auth requires the actual deployed domain for session validation.");
+  console.error("   Sessions will FAIL until this is fixed.");
+  throw new Error("Invalid BETTER_AUTH_URL for production environment");
+}
+
+if (baseURL.includes("localhost")) {
+  console.warn("⚠️  WARNING: BETTER_AUTH_URL is set to localhost");
+  console.warn(`   Current value: ${baseURL}`);
+  console.warn("   This is only acceptable in local development");
+}
+
+console.log(`✓ Better-auth configured with baseURL: ${baseURL}`);
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL,
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
