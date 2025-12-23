@@ -61,12 +61,12 @@ return <LoadingSpinner />
 
 ```mermaid
 graph TD
-    A["_layout.tsx<br/>(Root Component)"] --> B["AppProviders<br/>(Wrapper Component)"]
-    B --> C["CollectionsProvider<br/>(Electric SQL)"]
-    C --> D["Stack Navigator<br/>(Expo Router)"]
-    D --> E["index.tsx<br/>(Route Logic)"]
-    D --> F["callback.tsx<br/>(OAuth Handler)"]
-    D --> G["home.tsx<br/>(Main Screen)"]
+    A["_layout.tsx\n(Root Component)"] --> B["AppProviders\n(Wrapper Component)"]
+    B --> C["CollectionsProvider\n(Electric SQL)"]
+    C --> D["Stack Navigator\n(Expo Router)"]
+    D --> E["index.tsx\n(Route Logic)"]
+    D --> F["callback.tsx\n(OAuth Handler)"]
+    D --> G["home.tsx\n(Main Screen)"]
     
     style A fill:#ff6b6b,color:#fff
     style B fill:#4ecdc4,color:#fff
@@ -83,13 +83,13 @@ graph TD
 
 ```mermaid
 graph LR
-    A[App Starts] --> B{_layout.tsx<br/>loaded?}
+    A[App Starts] --> B{_layout.tsx\nloaded?}
     B -->|No| C[Show Nothing]
-    B -->|Yes| D{AppProviders<br/>hydrated?}
+    B -->|Yes| D{AppProviders\nhydrated?}
     D -->|No| E[Loading Spinner 1]
-    D -->|Yes| F{index.tsx<br/>isReady?}
+    D -->|Yes| F{index.tsx\nisReady?}
     F -->|No| G[Loading Spinner 2]
-    F -->|Yes| H{CollectionsProvider<br/>has token?}
+    F -->|Yes| H{CollectionsProvider\nhas token?}
     H -->|No| I[Loading Spinner 3]
     H -->|Yes| J[Show Home]
     
@@ -226,8 +226,8 @@ stateDiagram-v2
     ReRender --> RenderingChildren: AppProviders renders children
     RenderingChildren --> [*]
     
-    Note right of WaitingForAsync: ⚠️ This is where your<br/>loading state happens!
-    Note right of StateUpdate: 🎯 This triggers ALL<br/>components to re-render!
+    Note right of WaitingForAsync: ⚠️ This is where your\nloading state happens!
+    Note right of StateUpdate: 🎯 This triggers ALL\ncomponents to re-render!
 ```
 
 **Visual Code Flow:**
