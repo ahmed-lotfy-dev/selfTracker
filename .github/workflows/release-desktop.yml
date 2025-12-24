@@ -40,6 +40,14 @@ jobs:
         working-directory: ./desktop
         run: bun install
 
+      - name: install rust target
+        if: matrix.args != ''
+        run: |
+          if [[ "${{ matrix.args }}" == *"--target"* ]]; then
+            TARGET=$(echo "${{ matrix.args }}" | grep -o 'target [^ ]*' | cut -d ' ' -f 2)
+            rustup target add $TARGET
+          fi
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
