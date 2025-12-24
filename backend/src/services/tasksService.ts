@@ -29,6 +29,7 @@ export const createTask = async (userId: string, fields: any) => {
         category: fields.category,
         createdAt: fields.createdAt || new Date(),
         updatedAt: fields.updatedAt || new Date(),
+        completedAt: fields.completedAt,
       })
       .returning()
 
@@ -46,6 +47,7 @@ export const updateTask = async (id: string, userId: string, fields: any) => {
     if (fields.title !== undefined) updateData.title = fields.title
     if (fields.description !== undefined) updateData.description = fields.description
     if (fields.completed !== undefined) updateData.completed = fields.completed
+    if (fields.completedAt !== undefined) updateData.completedAt = fields.completedAt
     if (fields.dueDate !== undefined) updateData.dueDate = fields.dueDate
     if (fields.priority !== undefined) updateData.priority = fields.priority
     if (fields.order !== undefined) updateData.order = fields.order

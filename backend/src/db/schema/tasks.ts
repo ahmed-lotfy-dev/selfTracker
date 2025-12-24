@@ -35,6 +35,7 @@ export const tasks = pgTable("task_items", {
   category: text("category").default("general"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
   deletedAt: timestamp("deleted_at"),
 })
 

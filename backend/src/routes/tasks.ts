@@ -25,6 +25,7 @@ const createTaskSchema = z.object({
   order: z.number().int().optional(),
   createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
   updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  completedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
 })
 
 const updateTaskSchema = z.object({
@@ -39,6 +40,7 @@ const updateTaskSchema = z.object({
   order: z.number().int().optional(),
   createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
   updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  completedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
 })
 
 tasksRouter.get("/", async (c) => {
