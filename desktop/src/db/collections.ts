@@ -1,7 +1,6 @@
 export { useCollections } from '@/components/Provider/CollectionsProvider';
 
 // Internal storage for collections set by provider
-let _collections: any = null;
 
 // Export variables that will be updated when provider initializes
 export let taskCollection: any = null;
@@ -17,8 +16,6 @@ export let timerSessionCollection: any = null;
 
 // Called by CollectionsProvider to update collections
 export function _setCollections(collections: any) {
-  _collections = collections;
-
   // Update all exported collections
   taskCollection = collections.tasks;
   weightLogCollection = collections.weightLogs;

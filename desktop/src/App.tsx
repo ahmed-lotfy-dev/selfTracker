@@ -56,7 +56,7 @@ function RootLayout() {
 const rootRoute = createRootRoute({
   beforeLoad: ({ location }) => {
     const onboardingComplete = localStorage.getItem("onboarding_complete");
-    if (!onboardingComplete && location.pathname !== '/onboarding') {
+    if (!onboardingComplete && location.pathname !== '/onboarding' && location.pathname !== '/timer-overlay') {
       throw redirect({
         to: '/onboarding',
       })

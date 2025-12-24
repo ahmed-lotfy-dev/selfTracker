@@ -12,6 +12,7 @@
     "shell:allow-open",
     "updater:default",
     "dialog:default",
-    "process:default"
+    "process:default",
+    "core:window:allow-request-user-attention"
   ]
 }

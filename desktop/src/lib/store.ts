@@ -112,6 +112,44 @@ export const useTimerStore = create<TimerState>((set, get) => {
       const { timeLeft, isRunning } = get();
       if (isRunning && timeLeft > 0) {
         set({ timeLeft: timeLeft - 1 });
+      } else if (timeLeft <= 0 && isRunning) {
+        set({ isRunning: false });
+
+        // Play sound
+        try {
+          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
+          gain.gain.setValueAtTime(0.5, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.5);
+        } catch (e) {
+          console.error("Failed to play sound", e);
+        }
+
+        // Flash the taskbar/dock icon to get attention
+        try {
+          import("@tauri-apps/api/window").then(async ({ getCurrentWindow, UserAttentionType }) => {
+            const win = getCurrentWindow();
+            // Flash the icon (Critical = continuous flash until focused, Informational = flash few times)
+            await win.requestUserAttention(UserAttentionType.Critical);
+          });
+        } catch (e) {
+          console.error("Failed to request attention", e);
+        }
+
+        // Show notification
+        try {
+          new Notification("Timer Finished", { body: "Your focus session is complete!" });
+        } catch (e) {
+          console.error("Failed to show notification", e);
+        }
       } else if (timeLeft <= 0) {
         set({ isRunning: false });
       }
