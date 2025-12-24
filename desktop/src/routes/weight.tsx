@@ -1,18 +1,30 @@
-import { useQuery } from "@tanstack/react-query";
-import { getWeightLogs } from "@/services/api/weight";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scale } from "lucide-react";
 import { formatLocal } from "@/lib/dateUtils";
+import { WeightChart } from "@/components/charts/WeightChart";
+import { useCollections } from "@/db/collections";
+import { useLiveQuery } from "@tanstack/react-db";
+import { LogWeightDialog } from "@/features/weight/components/LogWeightDialog";
 
 export default function WeightPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["weightLogs"],
-    queryFn: () => getWeightLogs()
-  });
+  const collections = useCollections();
 
-  if (isLoading) return <div className="p-8">Loading weight logs...</div>;
+  const { data: logs = [] } = useLiveQuery(
+    (q: any) => q.from({ w: collections?.weightLogs })
+      .orderBy(({ w }: any) => w.created_at, 'DESC')
+      .select(({ w }: any) => ({
+        id: w.id,
+        weight: w.weight,
+        mood: w.mood,
+        energy: w.energy,
+        createdAt: w.created_at, // Map snake_case
+        updatedAt: w.updated_at
+      }))
+  ) as unknown as { data: any[] } || { data: [] };
 
-  const currentWeight = data?.logs[0]?.weight;
+  if (!collections) return <div className="p-8">Initializing database...</div>;
+
+  const currentWeight = logs[0]?.weight;
 
   return (
     <div className="p-8 space-y-6">
@@ -21,11 +33,11 @@ export default function WeightPage() {
           <h1 className="text-3xl font-bold tracking-tight">Weight Tracker</h1>
           <p className="text-muted-foreground">Monitor your weight, mood, and energy.</p>
         </div>
-        {/* TODO: Add 'Log Weight' button */}
+        <LogWeightDialog />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Current Weight</CardTitle>
           </CardHeader>
@@ -35,19 +47,23 @@ export default function WeightPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Entries</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.logs.length || 0}</div>
+            <div className="text-2xl font-bold">{logs.length}</div>
           </CardContent>
         </Card>
       </div>
 
+      <div className="grid gap-6 md:grid-cols-2">
+        <WeightChart />
+      </div>
+
       <h2 className="text-xl font-semibold mt-8">Recent Logs</h2>
       <div className="space-y-4">
-        {data?.logs.map((log) => (
+        {logs.map((log: any) => (
           <Card key={log.id}>
             <CardContent className="flex items-center justify-between p-6">
               <div>
@@ -67,7 +83,7 @@ export default function WeightPage() {
             </CardContent>
           </Card>
         ))}
-        {data?.logs.length === 0 && (
+        {logs.length === 0 && (
           <div className="text-center py-10 text-muted-foreground">No weight logs found.</div>
         )}
       </div>

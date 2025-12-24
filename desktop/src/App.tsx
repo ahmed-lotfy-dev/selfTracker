@@ -7,18 +7,18 @@ import "./index.css";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { TimerController } from "@/components/timer/TimerController";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
-
-// Pages
-import DashboardPage from "./routes/dashboard";
+import { CollectionsProvider } from "@/components/Provider/CollectionsProvider";
+import { DataSyncReminder } from "@/components/ui/DataSyncReminder";
+import { ThemeProvider } from "@/components/Provider/ThemeProvider";
+import DashboardPage from "@/features/dashboard/DashboardPage";
 import LoginPage from "./routes/login";
 import RegisterPage from "./routes/register";
 import SettingsPage from "./routes/settings";
 import WorkoutsPage from "./routes/workouts";
 import WeightPage from "./routes/weight";
 import HabitsPage from "./routes/habits";
-import TasksPage from "./routes/tasks";
+import TasksPage from "@/features/tasks/TasksPage";
 import TimersPage from "./routes/timers";
 import TimerOverlayPage from "./routes/timer-overlay";
 import OnboardingPage from "./routes/onboarding";
@@ -45,6 +45,7 @@ function RootLayout() {
   return (
     <>
       <TimerController /> {/* Global Timer Logic runs everywhere */}
+      <DataSyncReminder />
       <Outlet />
       <Toaster />
     </>
@@ -69,9 +70,7 @@ const shellRoute = createRoute({
   id: 'shell',
   getParentRoute: () => rootRoute,
   component: () => (
-    <ProtectedRoute>
-      <AppShell />
-    </ProtectedRoute>
+    <AppShell />
   ),
 });
 
@@ -195,7 +194,11 @@ function App() {
       client={queryClient}
       persistOptions={{ persister }}
     >
-      <RouterProvider router={router} />
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <CollectionsProvider>
+          <RouterProvider router={router} />
+        </CollectionsProvider>
+      </ThemeProvider>
     </PersistQueryClientProvider>
   );
 }

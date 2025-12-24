@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import { Board } from "@/components/kanban/Board";
+import { Board } from "@/features/tasks/components/kanban/Board";
 
 export default function ProjectDetailPage() {
   // @ts-ignore - Route types are inferred weirdly with manual setup

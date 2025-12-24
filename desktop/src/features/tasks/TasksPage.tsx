@@ -1,39 +1,66 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getTasks, createTask } from "@/services/api/tasks";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Circle, ListTodo, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useCollections } from "@/db/collections";
+import { useLiveQuery } from "@tanstack/react-db";
 
 export default function TasksPage() {
-  const { data: tasks, isLoading } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: getTasks
-  });
+  const collections = useCollections();
 
-  const queryClient = useQueryClient();
+  const { data: tasks = [] } = useLiveQuery(
+    (q: any) => q.from({ tasks: collections?.tasks })
+      .orderBy(({ tasks }: any) => tasks.created_at, 'DESC')
+      .select(({ tasks }: any) => ({
+        id: tasks.id,
+        title: tasks.title,
+        description: tasks.description,
+        completed: tasks.completed,
+        priority: tasks.priority,
+        created_at: tasks.created_at,
+        updated_at: tasks.updated_at
+      }))
+  ) || { data: [] };
+
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
-  // Todo: Implement toggle completion mutation
+  const handleCreate = async () => {
+    if (!newTaskTitle.trim() || !collections) return;
 
-  const createMutation = useMutation({
-    mutationFn: (title: string) => createTask({ title, priority: "medium" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    try {
+      await collections.tasks.insert({
+        title: newTaskTitle,
+        priority: "medium",
+        user_id: "local", // Will be overwritten by sync if logged in, or used locally
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
       setIsOpen(false);
       setNewTaskTitle("");
+    } catch (e) {
+      console.error("Failed to create task", e);
     }
-  });
-
-  const handleCreate = () => {
-    if (!newTaskTitle.trim()) return;
-    createMutation.mutate(newTaskTitle);
   }
 
-  if (isLoading) return <div className="p-8">Loading tasks...</div>;
+  const toggleTask = async (task: any) => {
+    if (!collections) return;
+    try {
+      await collections.tasks.update({
+        where: { id: task.id },
+        data: {
+          completed: !task.completed,
+          completed_at: !task.completed ? new Date().toISOString() : null
+        }
+      });
+    } catch (e) {
+      console.error("Failed to toggle task", e);
+    }
+  };
+
+  if (!collections) return <div className="p-8">Initializing database...</div>;
 
   return (
     <div className="p-8 space-y-6">
@@ -58,9 +85,10 @@ export default function TasksPage() {
                 placeholder="Task title..."
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               />
-              <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Adding..." : "Add Task"}
+              <Button onClick={handleCreate}>
+                Add Task
               </Button>
             </div>
           </DialogContent>
@@ -68,8 +96,8 @@ export default function TasksPage() {
       </div>
 
       <div className="grid gap-4">
-        {tasks?.map((task) => (
-          <Card key={task.id} className="hover:bg-accent/20 transition-colors">
+        {tasks.map((task: any) => (
+          <Card key={task.id} className="hover:bg-accent/20 transition-colors cursor-pointer" onClick={() => toggleTask(task)}>
             <CardContent className="p-4 flex items-center gap-4">
               {task.completed ? (
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -93,7 +121,7 @@ export default function TasksPage() {
             </CardContent>
           </Card>
         ))}
-        {tasks?.length === 0 && (
+        {tasks.length === 0 && (
           <div className="text-center py-10 text-muted-foreground flex flex-col items-center gap-2">
             <ListTodo className="h-10 w-10 opacity-50" />
             No tasks found. Get things done!

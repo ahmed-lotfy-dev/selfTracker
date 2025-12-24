@@ -14,6 +14,7 @@ export interface Task {
   userId: string
   createdAt: string
   updatedAt: string
+  completedAt?: string | null
 }
 
 export type ColumnType = "todo" | "doing" | "done"

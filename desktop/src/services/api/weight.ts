@@ -45,3 +45,16 @@ export async function deleteWeightLog(id: string): Promise<void> {
   })
   if (!res.ok) throw new Error("Failed to delete weight log")
 }
+
+export interface WeightChartData {
+  labels: string[]
+  datasets: {
+    data: number[] // This might need adjustment based on valid backend response
+  }[]
+}
+
+export async function getWeightChart(month: number): Promise<WeightChartData> {
+  const res = await fetch(`${backendUrl}/api/weightLogs/chart?month=${month}`)
+  if (!res.ok) throw new Error("Failed to fetch weight chart data")
+  return res.json()
+}

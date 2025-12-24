@@ -55,3 +55,16 @@ export async function deleteWorkoutLog(id: string): Promise<void> {
   })
   if (!res.ok) throw new Error("Failed to delete workout log")
 }
+
+export interface WorkoutChartData {
+  labels: string[]
+  datasets: {
+    data: number[]
+  }[]
+}
+
+export async function getWorkoutChart(month: number): Promise<WorkoutChartData> {
+  const res = await fetch(`${backendUrl}/api/workoutLogs/chart?month=${month}`)
+  if (!res.ok) throw new Error("Failed to fetch workout chart data")
+  return res.json()
+}
