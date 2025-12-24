@@ -105,27 +105,48 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           onUpdate: async ({ transaction }) => {
             const mutation = transaction.mutations[0];
             const modified = { ...mutation.modified };
-            console.log('[Collections] onUpdate - updating local first:', modified)
+            console.log('[Collections] onUpdate - syncing to backend:', mutation.original.id, modified)
 
-            // Map snake_case to camelCase for API
-            const mod: any = modified;
-            const apiData: Record<string, any> = {};
-            if (mod.title !== undefined) apiData.title = getVal(mod, 'title', 'title');
-            if (mod.description !== undefined) apiData.description = getVal(mod, 'description', 'description');
-            if (mod.completed !== undefined) apiData.completed = Boolean(getVal(mod, 'completed', 'completed'));
-            if (mod.completed_at !== undefined || mod.completedAt !== undefined) apiData.completedAt = getVal(mod, 'completed_at', 'completedAt');
-            if (mod.due_date !== undefined || mod.dueDate !== undefined) apiData.dueDate = getVal(mod, 'due_date', 'dueDate');
-            if (mod.priority !== undefined) apiData.priority = getVal(mod, 'priority', 'priority');
-            if (mod.order !== undefined) apiData.order = getVal(mod, 'order', 'order');
-            if (mod.category !== undefined) apiData.category = getVal(mod, 'category', 'category');
-            if (mod.project_id !== undefined || mod.projectId !== undefined) apiData.projectId = getVal(mod, 'project_id', 'projectId');
-            if (mod.column_id !== undefined || mod.columnId !== undefined) apiData.columnId = getVal(mod, 'column_id', 'columnId');
-            if (mod.created_at !== undefined || mod.createdAt !== undefined) apiData.createdAt = getVal(mod, 'created_at', 'createdAt');
-            if (mod.updated_at !== undefined || mod.updatedAt !== undefined) apiData.updatedAt = getVal(mod, 'updated_at', 'updatedAt');
+            const apiData: any = {};
+            const mapping: Record<string, string> = {
+              'title': 'title',
+              'description': 'description',
+              'completed': 'completed',
+              'completed_at': 'completedAt',
+              'completedAt': 'completedAt',
+              'due_date': 'dueDate',
+              'dueDate': 'dueDate',
+              'priority': 'priority',
+              'order': 'order',
+              'category': 'category',
+              'project_id': 'projectId',
+              'projectId': 'projectId',
+              'column_id': 'columnId',
+              'columnId': 'columnId',
+              'created_at': 'createdAt',
+              'createdAt': 'createdAt',
+              'updated_at': 'updatedAt',
+              'updatedAt': 'updatedAt'
+            };
+
+            Object.keys(modified).forEach(key => {
+              if (mapping[key]) {
+                let val = (modified as any)[key];
+                if (mapping[key] === 'completed') {
+                  val = Boolean(val);
+                }
+                apiData[mapping[key]] = val;
+              }
+            });
+
+            console.log('[Collections] PATCH payload:', JSON.stringify(apiData, null, 2));
 
             axiosInstance.patch(`${API_BASE}/tasks/${mutation.original.id}`, apiData)
               .then(resp => console.log('[Collections] Backend update success:', resp.data))
-              .catch(error => console.warn('[Collections] Backend update failed (will retry):', error.message))
+              .catch(error => {
+                const details = error.response?.data?.errors ? JSON.stringify(error.response.data.errors) : error.message;
+                console.warn('[Collections] Backend update failed:', details);
+              });
 
             return undefined;
           },

@@ -97,10 +97,12 @@ tasksRouter.patch("/:id", zValidator("json", updateTaskSchema), async (c) => {
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
   const { id } = c.req.param()
+  console.log(`[Tasks] Patching task ${id} for user ${user.id}`);
 
   if (!id) return c.json({ message: "Task ID is required" }, 400)
 
   const body = c.req.valid("json")
+  console.log(`[Tasks] Request body:`, JSON.stringify(body, null, 2));
 
   if (Object.keys(body).length === 0) {
     return c.json({ message: "At least one field is required" }, 400)
@@ -110,6 +112,7 @@ tasksRouter.patch("/:id", zValidator("json", updateTaskSchema), async (c) => {
     const updated = await updateTask(id, user.id, body)
 
     if (!updated) {
+      console.warn(`[Tasks] Task ${id} not found or unauthorized for user ${user.id}`);
       return c.json({ message: "Task not found or unauthorized" }, 404)
     }
 
