@@ -9,14 +9,20 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema } from "@/src/types/taskType"
 import { useUser } from "@/src/features/auth/useAuthStore"
-import axiosInstance from "@/src/lib/api/axiosInstance"
+import { useCollections } from "@/src/db/collections"
 import { KeyboardAvoidingView } from "react-native-keyboard-controller"
+import { useThemeColors } from "@/src/constants/Colors"
 
 export default function TaskForm() {
   const user = useUser()
+  const collections = useCollections()
+  const colors = useThemeColors()
+
   const [title, setTitle] = useState("")
   const [titleError, setTitleError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  if (!collections) return null
 
   const handleSubmit = async () => {
     const result = TaskSchema.shape.title.safeParse(title.trim())
@@ -30,19 +36,18 @@ export default function TaskForm() {
     setIsSubmitting(true)
 
     try {
-      const now = new Date()
-      const newTask = {
+      const now = new Date().toISOString()
+      await collections.tasks.insert({
         id: crypto.randomUUID(),
+        user_id: user?.id || "",
         title: title.trim(),
         category: "general",
         completed: false,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      }
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      })
 
-      console.log('[TaskForm] Creating task via API:', newTask)
-      const resp = await axiosInstance.post('/api/tasks', newTask)
-      console.log('[TaskForm] Task created successfully, ElectricSQL will sync:', resp.data)
       setTitle("")
     } catch (e) {
       console.error("[TaskForm] Failed to add task:", e)

@@ -1,5 +1,5 @@
 import { View, Text, Pressable, TextInput } from "react-native"
-import Animated, { FadeIn, FadeOutRight, Layout } from "react-native-reanimated"
+import Animated, { FadeIn, FadeOutRight, LinearTransition } from "react-native-reanimated"
 import { TaskType } from "@/src/types/taskType"
 import React, { useState, useRef } from "react"
 import { MaterialIcons, Ionicons } from "@expo/vector-icons"
@@ -106,9 +106,10 @@ export default function TaskListItem({ task, index = 0 }: TaskListItemProps) {
 
   return (
     <Animated.View
-      entering={FadeIn.delay(index * 50).springify().damping(12)}
+      entering={FadeIn.delay(Math.min(index * 35, 500)).duration(400)}
       exiting={FadeOutRight.duration(300)}
-      layout={Layout.springify().damping(15)}
+      layout={LinearTransition.duration(400)}
+      className="px-4"
     >
       <Swipeable
         ref={swipeableRef}

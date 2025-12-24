@@ -86,6 +86,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
               title: getVal(data, 'title', 'title'),
               description: getVal(data, 'description', 'description'),
               completed: getVal(data, 'completed', 'completed'),
+              completedAt: getVal(data, 'completed_at', 'completedAt'),
               dueDate: getVal(data, 'due_date', 'dueDate'),
               priority: getVal(data, 'priority', 'priority'),
               order: getVal(data, 'order', 'order'),
@@ -109,17 +110,14 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             // Map snake_case to camelCase for API
             const mod: any = modified;
             const apiData: Record<string, any> = {};
-            if (mod.title !== undefined) apiData.title = mod.title;
-            if (mod.title === undefined && mod.title !== undefined) apiData.title = mod.title; // Fallback if needed, but mod.title is same
-
-            // Actually, let's just use getVal logic within the if checks
-            if (mod.title !== undefined || mod.title !== undefined) apiData.title = getVal(mod, 'title', 'title');
-            if (mod.description !== undefined || mod.description !== undefined) apiData.description = getVal(mod, 'description', 'description');
-            if (mod.completed !== undefined || mod.completed !== undefined) apiData.completed = getVal(mod, 'completed', 'completed');
+            if (mod.title !== undefined) apiData.title = getVal(mod, 'title', 'title');
+            if (mod.description !== undefined) apiData.description = getVal(mod, 'description', 'description');
+            if (mod.completed !== undefined) apiData.completed = getVal(mod, 'completed', 'completed');
+            if (mod.completed_at !== undefined || mod.completedAt !== undefined) apiData.completedAt = getVal(mod, 'completed_at', 'completedAt');
             if (mod.due_date !== undefined || mod.dueDate !== undefined) apiData.dueDate = getVal(mod, 'due_date', 'dueDate');
-            if (mod.priority !== undefined || mod.priority !== undefined) apiData.priority = getVal(mod, 'priority', 'priority');
-            if (mod.order !== undefined || mod.order !== undefined) apiData.order = getVal(mod, 'order', 'order');
-            if (mod.category !== undefined || mod.category !== undefined) apiData.category = getVal(mod, 'category', 'category');
+            if (mod.priority !== undefined) apiData.priority = getVal(mod, 'priority', 'priority');
+            if (mod.order !== undefined) apiData.order = getVal(mod, 'order', 'order');
+            if (mod.category !== undefined) apiData.category = getVal(mod, 'category', 'category');
             if (mod.project_id !== undefined || mod.projectId !== undefined) apiData.projectId = getVal(mod, 'project_id', 'projectId');
             if (mod.column_id !== undefined || mod.columnId !== undefined) apiData.columnId = getVal(mod, 'column_id', 'columnId');
             if (mod.created_at !== undefined || mod.createdAt !== undefined) apiData.createdAt = getVal(mod, 'created_at', 'createdAt');

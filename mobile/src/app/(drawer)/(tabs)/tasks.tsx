@@ -83,7 +83,6 @@ export default function TaskScreen() {
   return (
     <View className="flex-1 bg-background px-2">
       <Animated.FlatList
-        itemLayoutAnimation={LinearTransition.springify().damping(15)}
         data={sortedTasks}
         keyExtractor={(item, index) => item?.id?.toString() || `task-${index}`}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -96,9 +95,7 @@ export default function TaskScreen() {
           </View>
         }
         renderItem={({ item, index }) => (
-          <View className="px-2">
-            <TaskListItem task={item as any} index={index} />
-          </View>
+          <TaskListItem task={item as any} index={index} />
         )}
         showsVerticalScrollIndicator={false}
       />
