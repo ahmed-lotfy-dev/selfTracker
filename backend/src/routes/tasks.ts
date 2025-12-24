@@ -13,7 +13,7 @@ const tasksRouter = new Hono()
 
 // Zod Schemas
 const createTaskSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
   completed: z.boolean().optional(),
   dueDate: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),

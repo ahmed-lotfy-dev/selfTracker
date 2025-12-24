@@ -342,7 +342,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
               userId: data.user_id,
               name: data.name,
               color: data.color,
-              isArchived: data.is_archived,
+              isArchived: Boolean(data.is_archived),
               createdAt: data.created_at,
               updatedAt: data.updated_at,
             };
@@ -357,7 +357,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             const apiData: Record<string, any> = {};
             if (modified.name !== undefined) apiData.name = modified.name;
             if (modified.color !== undefined) apiData.color = modified.color;
-            if (modified.is_archived !== undefined) apiData.isArchived = modified.is_archived;
+            if (modified.is_archived !== undefined) apiData.isArchived = Boolean(modified.is_archived);
             if (modified.updated_at !== undefined) apiData.updatedAt = modified.updated_at;
 
             axiosInstance.patch(`${API_BASE}/projects/${mutation.original.id}`, apiData)
@@ -391,6 +391,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
               userId: data.user_id,
               goalType: data.goal_type,
               targetValue: data.target_value,
+              achieved: Boolean(data.achieved),
               deadline: data.deadline,
               createdAt: data.created_at,
               updatedAt: data.updated_at,
