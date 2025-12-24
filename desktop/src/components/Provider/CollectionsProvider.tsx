@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { createCollection } from '@tanstack/react-db';
 import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import axiosInstance from '@/lib/api/axiosInstance';
