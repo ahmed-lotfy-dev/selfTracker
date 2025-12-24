@@ -96,9 +96,11 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
     try {
       if (isEditing && selectedWorkout) {
         await collections.workoutLogs.update(selectedWorkout.id!, (draft: any) => {
+          draft.workout_id = workoutId
+          draft.workout_name = workoutName
           draft.notes = notes
+          draft.created_at = formatUTC(createdAt)
           draft.updated_at = new Date()
-          draft.created_at = new Date(createdAt)
         })
       } else {
         await collections.workoutLogs.insert({

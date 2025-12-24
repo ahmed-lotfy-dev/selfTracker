@@ -53,9 +53,12 @@ export const createWeightLog = async (userId: string, fields: any) => {
     const [created] = await tx
       .insert(weightLogs)
       .values({
-        ...fields,
-        id: fields.id || crypto.randomUUID(), // Client-generated ID preferred
+        id: fields.id || crypto.randomUUID(),
         userId: userId,
+        weight: String(fields.weight),
+        mood: fields.mood,
+        energy: fields.energy,
+        notes: fields.notes,
         createdAt: fields.createdAt || new Date(),
         updatedAt: fields.updatedAt || new Date(),
       })
@@ -77,9 +80,17 @@ export const updateWeightLog = async (
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
 
   return await db.transaction(async (tx) => {
+    const updateData: any = {}
+    if (updatedFields.weight !== undefined) updateData.weight = String(updatedFields.weight)
+    if (updatedFields.mood !== undefined) updateData.mood = updatedFields.mood
+    if (updatedFields.energy !== undefined) updateData.energy = updatedFields.energy
+    if (updatedFields.notes !== undefined) updateData.notes = updatedFields.notes
+    if (updatedFields.createdAt !== undefined) updateData.createdAt = updatedFields.createdAt
+    if (updatedFields.updatedAt !== undefined) updateData.updatedAt = updatedFields.updatedAt
+
     const [updated] = await tx
       .update(weightLogs)
-      .set(updatedFields)
+      .set(updateData)
       .where(and(eq(weightLogs.id, id), eq(weightLogs.userId, userId)))
       .returning()
 

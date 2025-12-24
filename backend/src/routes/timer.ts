@@ -38,7 +38,7 @@ timerRouter.get("/sessions", async (c) => {
 timerRouter.post("/sessions", async (c) => {
   const user = c.get("user")!
   try {
-    const { taskId, startTime, endTime, duration, type, completed } = await c.req.json()
+    const { id, taskId, startTime, endTime, duration, type, completed, createdAt, updatedAt } = await c.req.json()
 
     // Ensure startTime is valid date object/string
     const start = new Date(startTime)
@@ -47,6 +47,7 @@ timerRouter.post("/sessions", async (c) => {
     const [newSession] = await db
       .insert(timerSessions)
       .values({
+        id: id || crypto.randomUUID(),
         userId: user.id,
         taskId: taskId || null,
         startTime: start,
@@ -54,6 +55,8 @@ timerRouter.post("/sessions", async (c) => {
         duration: duration || 0,
         type: type || "focus",
         completed: completed ?? true,
+        createdAt: createdAt ? new Date(createdAt) : new Date(),
+        updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
       })
       .returning()
 

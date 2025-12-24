@@ -98,11 +98,11 @@ export const createWorkoutLog = async (userId: string, fields: any) => {
     const [created] = await tx
       .insert(workoutLogs)
       .values({
-        ...fields,
-        id: fields.id || crypto.randomUUID(), // Client-generated ID preferred
+        id: fields.id || crypto.randomUUID(),
         userId,
-        workoutName: fields.workoutName,
         workoutId: fields.workoutId,
+        workoutName: fields.workoutName,
+        notes: fields.notes,
         createdAt: fields.createdAt || new Date(),
         updatedAt: fields.updatedAt || new Date(),
       })
@@ -124,13 +124,12 @@ export const updateWorkoutLog = async (
   await clearCache([`userHomeData:${userId}`, `workoutLogs:list:${userId}:*`])
 
   return await db.transaction(async (tx) => {
-    const updateData: any = { ...fields }
-    if (fields.createdAt) {
-      updateData.createdAt = new Date(fields.createdAt)
-    }
-    if (fields.updatedAt) {
-      updateData.updatedAt = new Date(fields.updatedAt)
-    }
+    const updateData: any = {}
+    if (fields.notes !== undefined) updateData.notes = fields.notes
+    if (fields.workoutId !== undefined) updateData.workoutId = fields.workoutId
+    if (fields.workoutName !== undefined) updateData.workoutName = fields.workoutName
+    if (fields.createdAt !== undefined) updateData.createdAt = fields.createdAt
+    if (fields.updatedAt !== undefined) updateData.updatedAt = fields.updatedAt
 
     const [updated] = await tx
       .update(workoutLogs)

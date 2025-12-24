@@ -12,9 +12,28 @@ import {
   getWorkoutLogsCalendar,
   updateWorkoutLog,
 } from "../services/workoutLogsService"
+import { zValidator } from "@hono/zod-validator"
+import { z } from "zod"
 import workoutsRouter from "./workouts"
 
 const workoutLogsRouter = new Hono()
+
+const createWorkoutLogSchema = z.object({
+  id: z.string().optional(),
+  workoutId: z.string().min(1, "Workout ID is required"),
+  workoutName: z.string().min(1, "Workout Name is required"),
+  notes: z.string().optional().nullable(),
+  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+})
+
+const updateWorkoutLogSchema = z.object({
+  workoutId: z.string().optional(),
+  workoutName: z.string().optional(),
+  notes: z.string().optional().nullable(),
+  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+})
 
 workoutLogsRouter.get("/", async (c) => {
   const user = c.get("user" as any)
@@ -53,9 +72,9 @@ workoutLogsRouter.get("/", async (c) => {
       .where(
         cursor
           ? and(
-              eq(workoutLogs.userId, user.id as string),
-              lt(workoutLogs.createdAt, new Date(cursor))
-            )
+            eq(workoutLogs.userId, user.id as string),
+            lt(workoutLogs.createdAt, new Date(cursor))
+          )
           : eq(workoutLogs.userId, user.id as string)
       )
       .orderBy(desc(workoutLogs.createdAt))
@@ -187,18 +206,15 @@ workoutLogsRouter.get("/:id", async (c) => {
   }
 })
 
-workoutLogsRouter.post("/", async (c) => {
+workoutLogsRouter.post("/", zValidator("json", createWorkoutLogSchema), async (c) => {
   const user = c.get("user" as any)
 
   if (!user || !user.id) {
     return c.json({ message: "Unauthorized: User not found in context" }, 401)
   }
 
-  const body = await c.req.json()
+  const body = c.req.valid("json")
   console.log(body)
-  if (!body.workoutId) {
-    return c.json({ message: "Workout ID is racequired" }, 400)
-  }
 
   try {
     await clearCache([
@@ -217,7 +233,7 @@ workoutLogsRouter.post("/", async (c) => {
   }
 })
 
-workoutLogsRouter.patch("/:id", async (c) => {
+workoutLogsRouter.patch("/:id", zValidator("json", updateWorkoutLogSchema), async (c) => {
   const user = c.get("user" as any)
   const id = c.req.param("id")
 
@@ -249,13 +265,14 @@ workoutLogsRouter.patch("/:id", async (c) => {
       )
     }
 
-    const body = await c.req.json()
+    const body = c.req.valid("json")
     const updatedFields: Record<string, any> = {}
 
     if ("notes" in body) updatedFields.notes = body.notes
     if ("workoutId" in body) updatedFields.workoutId = body.workoutId
     if ("workoutName" in body) updatedFields.workoutName = body.workoutName
-    if ("createdAt" in body) updatedFields.createdAt = new Date(body.createdAt)
+    if (body.createdAt !== undefined) updatedFields.createdAt = body.createdAt
+    if (body.updatedAt !== undefined) updatedFields.updatedAt = body.updatedAt
 
     if (Object.keys(updatedFields).length === 0) {
       return c.json({ message: "No fields to update" }, 400)
@@ -303,7 +320,7 @@ workoutLogsRouter.delete("/:id", async (c) => {
 
     const deleted = await deleteWorkoutLog(user.id, id)
 
-    if (deleted.length === 0) {
+    if (!deleted) {
       return c.json({ message: "Workout log not found" }, 404)
     }
 

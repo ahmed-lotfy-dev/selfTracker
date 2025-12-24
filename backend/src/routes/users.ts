@@ -250,7 +250,7 @@ userRouter.post("/goals", async (c) => {
 
   try {
     await clearCache(`userHomeData:${user.id}`)
-    const { goalType, targetValue, deadline } = await c.req.json()
+    const { id, goalType, targetValue, deadline, createdAt, updatedAt } = await c.req.json()
 
     if (!goalType || !targetValue) {
       return c.json({ message: "All fields are required" }, 400)
@@ -280,11 +280,13 @@ userRouter.post("/goals", async (c) => {
     const [newGoal] = await db
       .insert(userGoals)
       .values({
-        id: crypto.randomUUID(),
+        id: id || crypto.randomUUID(),
         userId: user.id,
         goalType,
         targetValue,
         deadline: deadline ? new Date(deadline) : null,
+        createdAt: createdAt ? new Date(createdAt) : new Date(),
+        updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
       })
       .returning()
 

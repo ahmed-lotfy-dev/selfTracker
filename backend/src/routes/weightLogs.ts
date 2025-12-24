@@ -17,6 +17,7 @@ import {
 const weightsLogsRouter = new Hono()
 
 const createWeightLogSchema = z.object({
+  id: z.string().optional(),
   weight: z.string().or(z.number()).transform((val) => String(val)),
   energy: z.enum(["Low", "Okay", "Good", "Great"]),
   mood: z.enum(["Low", "Medium", "High"]),
@@ -201,6 +202,7 @@ weightsLogsRouter.patch("/:id", zValidator("json", updateWeightLogSchema), async
     if (body.energy !== undefined) updateFields.energy = body.energy
     if (body.notes !== undefined) updateFields.notes = body.notes
     if (body.createdAt !== undefined) updateFields.createdAt = body.createdAt
+    if (body.updatedAt !== undefined) updateFields.updatedAt = body.updatedAt
 
     if (Object.keys(updateFields).length === 0) {
       return c.json({ message: "No fields to update" }, 400)

@@ -13,7 +13,7 @@ const tasksRouter = new Hono()
 
 // Zod Schemas
 const createTaskSchema = z.object({
-  id: z.string().uuid().optional(), // Client can provide UUID
+  id: z.string().uuid().optional(),
   title: z.string().min(1, "Title is required"),
   completed: z.boolean().optional(),
   dueDate: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
@@ -37,6 +37,8 @@ const updateTaskSchema = z.object({
   columnId: z.string().optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   order: z.number().int().optional(),
+  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
 })
 
 tasksRouter.get("/", async (c) => {
@@ -98,38 +100,12 @@ tasksRouter.patch("/:id", zValidator("json", updateTaskSchema), async (c) => {
 
   const body = c.req.valid("json")
 
-  // Clean up undefined fields
-  const updateFields: Record<string, any> = {}
-  if (body.title !== undefined) updateFields.title = body.title
-  if (body.completed !== undefined) updateFields.completed = body.completed
-  if (body.dueDate !== undefined) updateFields.dueDate = body.dueDate
-  if (body.category !== undefined) updateFields.category = body.category
-  if (body.description !== undefined) updateFields.description = body.description
-  if (body.projectId !== undefined) updateFields.projectId = body.projectId
-  if (body.columnId !== undefined) updateFields.columnId = body.columnId
-  if (body.priority !== undefined) updateFields.priority = body.priority
-  if (body.order !== undefined) updateFields.order = body.order
-
-  if (Object.keys(updateFields).length === 0) {
+  if (Object.keys(body).length === 0) {
     return c.json({ message: "At least one field is required" }, 400)
   }
 
   try {
-    // Note: updateTask service should handle ownership check? 
-    // I should verify `tasksService` handles ownership check.
-    // Original code did: if (!taskExisted || taskExisted.userId !== user.id) in the route.
-    // Since I'm using the service `updateTask(id, user.id, updateFields)`, hopefully it checks.
-    // But wait, the original code had the check INLINE before calling create/update!
-    // Original code:
-    // const taskExisted = await db.query.tasks.findFirst(...)
-    // if (!taskExisted ...)
-    // const updated = await updateTask(...)
-
-    // Pass user.id to updateTask and let it handle or I should add check here.
-    // I will look at `updateTask` signature in `services/tasksService.ts`.
-    // Assuming `updateTask` takes `(taskId, userId, fields)`.
-
-    const updated = await updateTask(id, user.id, updateFields)
+    const updated = await updateTask(id, user.id, body)
 
     if (!updated) {
       return c.json({ message: "Task not found or unauthorized" }, 404)

@@ -49,7 +49,7 @@ projectsRouter.get("/", async (c) => {
 projectsRouter.post("/", async (c) => {
   const user = c.get("user")!
   try {
-    const { name, color } = await c.req.json()
+    const { id, name, color } = await c.req.json()
 
     if (!name) {
       return c.json({ success: false, message: "Project name is required" }, 400)
@@ -58,9 +58,12 @@ projectsRouter.post("/", async (c) => {
     const [newProject] = await db
       .insert(projects)
       .values({
+        id: id || crypto.randomUUID(),
         userId: user.id,
         name,
         color: color || "#000000",
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning()
 
@@ -76,10 +79,13 @@ projectsRouter.post("/", async (c) => {
         db
           .insert(columns)
           .values({
+            id: crypto.randomUUID(),
             projectId: newProject.id,
             name: col.name,
             type: col.type as "todo" | "doing" | "done",
             order: col.order,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           })
           .returning()
       )
@@ -123,11 +129,15 @@ projectsRouter.patch("/:id", async (c) => {
   const user = c.get("user")!
   const projectId = c.req.param("id")
   try {
-    const { name, color, isArchived } = await c.req.json()
+    const body = await c.req.json()
+    const updateData: any = { updatedAt: new Date() }
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.color !== undefined) updateData.color = body.color
+    if (body.isArchived !== undefined) updateData.isArchived = body.isArchived
 
     const [updatedProject] = await db
       .update(projects)
-      .set({ name, color, isArchived, updatedAt: new Date() })
+      .set(updateData)
       .where(and(eq(projects.id, projectId), eq(projects.userId, user.id)))
       .returning()
 
@@ -166,7 +176,7 @@ projectsRouter.post("/:id/columns", async (c) => {
   const user = c.get("user")!
   const projectId = c.req.param("id")
   try {
-    const { name, type } = await c.req.json()
+    const { id, name, type } = await c.req.json()
     // Verify project ownership
     const [project] = await db
       .select()
@@ -185,10 +195,13 @@ projectsRouter.post("/:id/columns", async (c) => {
     const [newColumn] = await db
       .insert(columns)
       .values({
+        id: id || crypto.randomUUID(),
         projectId,
         name,
         type: type || "todo",
         order: maxOrder + 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning()
 
@@ -204,14 +217,14 @@ projectsRouter.patch("/columns/:id", async (c) => {
   const user = c.get("user")!
   const columnId = c.req.param("id")
   try {
-    const { name, order } = await c.req.json()
-
-    // Verify ownership via join (skipping for brevity, strictly should verify chain user->project->column)
-    // Here assuming id is UUID and reasonably secure, but robust implementation would join projects.
+    const body = await c.req.json()
+    const updateData: any = { updatedAt: new Date() }
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.order !== undefined) updateData.order = body.order
 
     const [updatedColumn] = await db
       .update(columns)
-      .set({ name, order, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(columns.id, columnId))
       .returning()
 

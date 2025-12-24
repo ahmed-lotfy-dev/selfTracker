@@ -15,7 +15,15 @@ export const createExpense = async (userId: string, fields: any) => {
   return await db.transaction(async (tx) => {
     const [created] = await tx
       .insert(expenses)
-      .values({ ...fields, userId })
+      .values({
+        id: fields.id || crypto.randomUUID(),
+        userId,
+        description: fields.description,
+        amount: String(fields.amount),
+        category: fields.category,
+        createdAt: fields.createdAt || new Date(),
+        updatedAt: fields.updatedAt || new Date(),
+      })
       .returning()
 
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
@@ -32,9 +40,16 @@ export const updateExpense = async (
   fields: any
 ) => {
   return await db.transaction(async (tx) => {
+    const updateData: any = {}
+    if (fields.description !== undefined) updateData.description = fields.description
+    if (fields.amount !== undefined) updateData.amount = String(fields.amount)
+    if (fields.category !== undefined) updateData.category = fields.category
+    if (fields.createdAt !== undefined) updateData.createdAt = fields.createdAt
+    if (fields.updatedAt !== undefined) updateData.updatedAt = fields.updatedAt
+
     const [updated] = await tx
       .update(expenses)
-      .set(fields)
+      .set(updateData)
       .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
       .returning()
 

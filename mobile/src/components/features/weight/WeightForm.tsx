@@ -75,6 +75,7 @@ export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
           draft.mood = mood
           draft.energy = energy
           draft.notes = notes
+          draft.created_at = formatUTC(createdAt)
           draft.updated_at = new Date()
         })
       } else {
