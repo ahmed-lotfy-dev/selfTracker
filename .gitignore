@@ -36,3 +36,6 @@ lerna-debug.log*
 # Ignored large files and secrets
 *.apk
 # google-services.json
+
+# Desktop Signing Keys
+**/desktop/src-tauri/keys/
