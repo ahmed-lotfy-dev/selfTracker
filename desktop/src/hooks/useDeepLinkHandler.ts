@@ -56,6 +56,9 @@ export function useDeepLinkHandler() {
           try {
             // Parse the deep link URL: selftracker://auth?token=abc123
             const urlObj = new URL(url);
+            console.log("DEBUG: Deep Link URL:", url);
+            console.log("DEBUG: Parsed params:", Object.fromEntries(urlObj.searchParams.entries()));
+
             const token = urlObj.searchParams.get('token');
 
             if (!token) {

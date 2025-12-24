@@ -108,7 +108,7 @@ export default function RegisterPage() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         provider: "google",
-                        callbackURL: `${backendUrl}/api/social-success?platform=desktop`,
+                        callbackURL: `${backendUrl}/api/desktop-success`,
                       }),
                     });
 
@@ -147,7 +147,7 @@ export default function RegisterPage() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         provider: "github",
-                        callbackURL: `${backendUrl}/api/social-success?platform=desktop`,
+                        callbackURL: `${backendUrl}/api/desktop-success`,
                       }),
                     });
 
@@ -171,6 +171,14 @@ export default function RegisterPage() {
               </Button>
             </div>
 
+
+
+            <div className="pt-2 w-full">
+              <Button variant="ghost" type="button" onClick={() => window.location.href = "/"} className="w-full text-muted-foreground hover:text-primary">
+                Later (Continue as Guest)
+              </Button>
+            </div>
+
             <div className="text-center text-sm">
               Already have an account?{" "}
               <Link to="/login" className="underline">
@@ -185,6 +193,6 @@ export default function RegisterPage() {
           )}
         </form>
       </Card>
-    </div>
+    </div >
   )
 }

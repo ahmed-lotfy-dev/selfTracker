@@ -7,5 +7,13 @@ export const authClient = createAuthClient({
       type: "Bearer",
       token: () => localStorage.getItem("bearer_token") || "",
     },
+    onResponse: (context) => {
+      // Better-auth returns the session token in headers or as part of sign-in response
+      // When using the 'bearer' plugin, it often includes it in the set-cookie or as a token field
+      const token = context.response.headers.get("Authorization")?.replace("Bearer ", "");
+      if (token) {
+        localStorage.setItem("bearer_token", token);
+      }
+    }
   },
 })

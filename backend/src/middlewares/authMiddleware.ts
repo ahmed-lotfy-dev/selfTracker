@@ -9,6 +9,11 @@ import { eq, and, gt } from "drizzle-orm";
  * Supports both email/password and social login authentication.
  */
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
+  // Skip auth check for OPTIONS requests (CORS preflight) and auth routes (login/register)
+  if (c.req.method === "OPTIONS" || c.req.path.startsWith("/api/auth")) {
+    return next();
+  }
+
   try {
     const token = c.req.query('token');
 
@@ -30,6 +35,11 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
       const betterAuthMatch = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
       const secureMatch = cookieHeader.match(/__Secure-better-auth\.session_token=([^;]+)/);
       sessionToken = betterAuthMatch?.[1] || secureMatch?.[1];
+
+      // Handle signed cookies (token.signature) - better-auth uses this format
+      if (sessionToken && sessionToken.includes(".")) {
+        sessionToken = sessionToken.split(".")[0];
+      }
     }
 
     console.log(`[AuthMiddleware] Request Path: ${c.req.path} | Has Token: ${!!sessionToken}`);

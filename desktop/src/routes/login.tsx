@@ -28,8 +28,10 @@ export default function LoginPage() {
         toast.success("Login successful")
         window.location.href = "/"
       }
-    } catch (err) {
-      toast.error("An unexpected error occurred")
+    } catch (err: any) {
+      console.error("Login error:", err);
+      toast.error(err.message || "An unexpected error occurred");
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false)
     }
@@ -94,24 +96,32 @@ export default function LoginPage() {
                     const { open } = await import("@tauri-apps/plugin-shell");
                     const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 
+                    console.log("Initiating Google login...", backendUrl);
                     const response = await fetch(`${backendUrl}/api/auth/sign-in/social`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         provider: "google",
-                        callbackURL: `${backendUrl}/api/social-success?platform=desktop`,
+                        callbackURL: `${backendUrl}/api/desktop-success`,
                       }),
                     });
 
+                    if (!response.ok) {
+                      const text = await response.text();
+                      throw new Error(`Server error ${response.status}: ${text}`);
+                    }
+
                     const data = await response.json();
                     if (data?.url) {
+                      console.log("Opening browser URL:", data.url);
                       await open(data.url);
                     } else {
                       throw new Error(data?.message || "Failed to get auth URL");
                     }
                   } catch (err: any) {
-                    console.error("Failed to open system browser", err);
-                    setError(err.message || "Failed to open browser");
+                    console.error("Google login failed:", err);
+                    setError(`Google login failed: ${err.message}`);
+                    toast.error(`Google login failed: ${err.message}`);
                   } finally {
                     setLoading(false);
                   }
@@ -133,24 +143,32 @@ export default function LoginPage() {
                     const { open } = await import("@tauri-apps/plugin-shell");
                     const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 
+                    console.log("Initiating GitHub login...", backendUrl);
                     const response = await fetch(`${backendUrl}/api/auth/sign-in/social`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         provider: "github",
-                        callbackURL: `${backendUrl}/api/social-success?platform=desktop`,
+                        callbackURL: `${backendUrl}/api/desktop-success`,
                       }),
                     });
 
+                    if (!response.ok) {
+                      const text = await response.text();
+                      throw new Error(`Server error ${response.status}: ${text}`);
+                    }
+
                     const data = await response.json();
                     if (data?.url) {
+                      console.log("Opening browser URL:", data.url);
                       await open(data.url);
                     } else {
                       throw new Error(data?.message || "Failed to get auth URL");
                     }
                   } catch (err: any) {
-                    console.error("Failed to open system browser", err);
-                    setError(err.message || "Failed to open browser");
+                    console.error("GitHub login failed:", err);
+                    setError(`GitHub login failed: ${err.message}`);
+                    toast.error(`GitHub login failed: ${err.message}`);
                   } finally {
                     setLoading(false);
                   }
@@ -159,6 +177,14 @@ export default function LoginPage() {
               >
                 <Github className="h-4 w-4" />
                 GitHub
+              </Button>
+            </div>
+
+
+
+            <div className="pt-2 w-full">
+              <Button variant="ghost" type="button" onClick={() => window.location.href = "/"} className="w-full text-muted-foreground hover:text-primary">
+                Later (Continue as Guest)
               </Button>
             </div>
 

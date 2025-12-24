@@ -13,6 +13,7 @@ import uploadRouter from "./routes/image.js"
 import projectsRouter from "./routes/projects.js"
 import timerRouter from "./routes/timer.js"
 import electricRouter from "./routes/electric.js"
+import desktopCallbackRouter from "./routes/desktopCallback.js"
 import { auth } from "../lib/auth.js"
 import { authMiddleware } from "./middlewares/authMiddleware.js"
 
@@ -24,30 +25,10 @@ const app = new Hono<{
   }
 }>()
 
-// Validate Environment Variables
-const REQUIRED_ENV = [
-  "BETTER_AUTH_URL",
-  "BETTER_AUTH_SECRET",
-  "ELECTRIC_SOURCE_ID",
-  "ELECTRIC_SOURCE_SECRET"
-];
-
-const missingEnv = REQUIRED_ENV.filter(key => !process.env[key]);
-if (missingEnv.length > 0) {
-  console.error(`\x1b[31m[CRITICAL] Missing required environment variables: ${missingEnv.join(", ")}\x1b[0m`);
-} else {
-  console.log("\x1b[32m[INFO] All critical environment variables are set.\x1b[0m");
-}
-
-app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
-
 app.use(loggerMiddleware)
 
-// Auth middleware for all API routes (except /api/auth/*)
-app.use("/api/*", authMiddleware)
-
 app.use(
-  "/api/auth/*", // or replace with "*" to enable cors for all routes
+  "*",
   cors({
     origin: [
       "http://192.168.1.5:8081",
@@ -61,6 +42,11 @@ app.use(
     credentials: true,
   }),
 );
+
+app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+// Auth middleware for all API routes (except /api/auth/*)
+app.use("/api/*", authMiddleware)
 
 app.route("/api/users", userRouter)
 
@@ -81,6 +67,8 @@ app.route("/api/timer", timerRouter)
 app.route("/api/image", uploadRouter)
 
 app.route("/api/electric", electricRouter)
+
+app.route("/api", desktopCallbackRouter)
 
 app.get("/", async (c) => {
   return c.json({ message: "Hello world" })

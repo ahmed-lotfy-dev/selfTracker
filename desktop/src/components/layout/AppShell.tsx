@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, Settings, Minimize2, LogOut, Timer, Dumbbell, Scale, CalendarCheck, ListTodo, FolderKanban } from "lucide-react";
+import { LayoutDashboard, Settings, Minimize2, LogOut, LogIn, Timer, Dumbbell, Scale, CalendarCheck, ListTodo, FolderKanban } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -133,13 +133,23 @@ export function AppShell() {
             <Settings className="h-4 w-4" />
             Settings
           </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
-          >
-            <LogOut className="h-4 w-4" />
-            Log out
-          </button>
+          {localStorage.getItem("bearer_token") ? (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+            >
+              <LogOut className="h-4 w-4" />
+              Log out
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-primary hover:bg-primary/10"
+            >
+              <LogIn className="h-4 w-4" />
+              Log in (sync data)
+            </Link>
+          )}
         </div>
       </aside>
 
