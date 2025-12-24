@@ -6,7 +6,6 @@ import { KeyboardProvider } from "react-native-keyboard-controller"
 import { Feather } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { LoadingIndicator, LoadingOverlay } from "../ui/Loading"
-import { SyncErrorView } from "../ui/SyncErrorView"
 
 import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/src/lib/react-query"
@@ -20,7 +19,7 @@ interface AppProvidersProps {
   children: ReactNode
 }
 
-const syncUrl = process.env.EXPO_PUBLIC_LIVESTORE_SYNC_URL
+
 
 export function AppProviders({ children }: AppProvidersProps) {
   const { storeId, isLoading } = useAuth()

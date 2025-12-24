@@ -303,6 +303,32 @@ userRouter.post("/goals", async (c) => {
   }
 })
 
+userRouter.delete("/goals/:id", async (c) => {
+  const user = c.get("user" as any)
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401)
+  }
+
+  const id = c.req.param("id")
+
+  try {
+    await clearCache(`userHomeData:${user.id}`)
+    const deletedGoal = await db
+      .delete(userGoals)
+      .where(and(eq(userGoals.id, id), eq(userGoals.userId, user.id)))
+      .returning()
+
+    if (!deletedGoal.length) {
+      return c.json({ message: "Goal not found" }, 404)
+    }
+
+    return c.json({ message: "Goal deleted successfully" })
+  } catch (error) {
+    console.error("Error deleting goal:", error)
+    return c.json({ message: "Internal server error" }, 500)
+  }
+})
+
 userRouter.delete("/:id", async (c) => {
   const token = c.req.header("Authorization")
   const decoded = decode(token!)

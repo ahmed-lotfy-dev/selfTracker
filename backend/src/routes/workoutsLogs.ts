@@ -227,9 +227,9 @@ workoutLogsRouter.post("/", zValidator("json", createWorkoutLogSchema), async (c
     const created = await createWorkoutLog(user.id, body)
 
     return c.json({ message: "log created successfully", workoutLog: created })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating workout log:", error)
-    return c.json({ message: "Failed to create workout log" }, 500)
+    return c.json({ message: "Failed to create workout log", error: error.message }, 500)
   }
 })
 
