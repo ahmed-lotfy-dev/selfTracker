@@ -65,7 +65,7 @@
       }
     },
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE4OTZBMEQ0NzNCMzQyMDAKUldRQVFyTnoxS0NXcUxLK0R6Tk5xK1RLdG5LNXF6a01ZbzB0aGpBN0ROb1NzZDJYY2pHa25SYmwK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY4QTgwQjU3QUVCOThCODkKUldTSmk3bXVWd3VvYUVhN0lMTTh2OTZRSWQ2NTlsc01Qb2lrV1l6SXZEQ0k3RWY5NlhPMjIvU1MK",
       "endpoints": [
         "https://github.com/ahmed-lotfy-dev/selfTracker/releases/latest/download/latest.json"
       ]
