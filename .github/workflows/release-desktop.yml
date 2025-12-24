@@ -61,3 +61,6 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+      
+      - name: Debug - List Build Artifacts
+        run: ls -R desktop/src-tauri/target/release/bundle
