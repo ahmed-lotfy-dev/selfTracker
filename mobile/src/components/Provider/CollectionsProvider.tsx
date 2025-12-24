@@ -85,7 +85,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
               columnId: getVal(data, 'column_id', 'columnId'),
               title: getVal(data, 'title', 'title'),
               description: getVal(data, 'description', 'description'),
-              completed: getVal(data, 'completed', 'completed'),
+              completed: Boolean(getVal(data, 'completed', 'completed')),
               completedAt: getVal(data, 'completed_at', 'completedAt'),
               dueDate: getVal(data, 'due_date', 'dueDate'),
               priority: getVal(data, 'priority', 'priority'),
@@ -112,7 +112,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             const apiData: Record<string, any> = {};
             if (mod.title !== undefined) apiData.title = getVal(mod, 'title', 'title');
             if (mod.description !== undefined) apiData.description = getVal(mod, 'description', 'description');
-            if (mod.completed !== undefined) apiData.completed = getVal(mod, 'completed', 'completed');
+            if (mod.completed !== undefined) apiData.completed = Boolean(getVal(mod, 'completed', 'completed'));
             if (mod.completed_at !== undefined || mod.completedAt !== undefined) apiData.completedAt = getVal(mod, 'completed_at', 'completedAt');
             if (mod.due_date !== undefined || mod.dueDate !== undefined) apiData.dueDate = getVal(mod, 'due_date', 'dueDate');
             if (mod.priority !== undefined) apiData.priority = getVal(mod, 'priority', 'priority');

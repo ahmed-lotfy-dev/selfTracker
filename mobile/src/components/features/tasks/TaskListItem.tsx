@@ -24,9 +24,11 @@ export default function TaskListItem({ task, index = 0 }: TaskListItemProps) {
   const collections = useCollections()
 
   const toggleTask = async () => {
+    console.log('[TaskListItem] toggleTask - current state:', task.completed, 'new state:', !task.completed)
     if (!isEditing && collections) {
       try {
         const now = new Date().toISOString()
+        console.log('[TaskListItem] Updating collection for task:', task.id)
         await collections.tasks.update(task.id, (draft: any) => {
           draft.completed = !task.completed
           draft.completed_at = !task.completed ? now : null
