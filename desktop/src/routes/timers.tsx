@@ -1,35 +1,44 @@
 import { PomodoroTimer } from "@/components/timer/PomodoroTimer";
-import { useTimerStore } from "@/lib/store";
+import { useTimerStore, MODES } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Square, AppWindow } from "lucide-react";
-import { invoke } from "@tauri-apps/api/core";
+import { Input } from "@/components/ui/input";
+import { Play, Pause, Square, AppWindow, Clock } from "lucide-react";
+import { useState } from "react";
 
 export default function TimersPage() {
-  const { timeLeft, isRunning, startTimer, pauseTimer, stopTimer } = useTimerStore();
+  const {
+    timeLeft,
+    isRunning,
+    startTimer,
+    pauseTimer,
+    stopTimer,
+    setMode,
+    mode,
+    setCustomTime,
+    isOverlayVisible,
+    setOverlayVisible
+  } = useTimerStore();
 
-  // Helper to match the interface if needed, or just use store directly
-  // The store has toggleTimer and stopTimer. It doesn't have explicit pause, 
-  // but toggle handles it if running. 
-  // Let's use the store actions directly.
+  const [customMinutes, setCustomMinutes] = useState("25");
 
-  const handleToggleOverlay = async () => {
-    try {
-      await invoke("toggle_overlay");
-    } catch (error) {
-      console.error("Failed to toggle overlay:", error);
+  const handleApplyCustomTime = () => {
+    const mins = parseInt(customMinutes);
+    if (!isNaN(mins) && mins > 0) {
+      setCustomTime(mins);
     }
   };
 
   return (
     <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold mb-4">Focus Timer</h1>
-
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Floating Timer Controls */}
         <div className="bg-card rounded-lg border p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Floating Timer Overlay</h2>
+          <div className="flex items-center gap-2">
+            <AppWindow className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Floating Overlay</h2>
+          </div>
           <p className="text-sm text-muted-foreground">
-            Control the always-on-top floating timer that follows you across all workspaces.
+            Control the floating timer that follows you across all workspaces.
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -46,32 +55,68 @@ export default function TimersPage() {
               ) : (
                 <>
                   <Play className="w-4 h-4" />
-                  {timeLeft < 25 * 60 && timeLeft > 0 ? "Resume" : "Start Timer"}
+                  {timeLeft < 25 * 60 && timeLeft > 0 ? "Resume" : "Start"}
                 </>
               )}
             </Button>
 
             <Button onClick={stopTimer} variant="destructive" className="gap-2">
               <Square className="w-4 h-4" />
-              Stop
+              Stop & Hide
             </Button>
 
-            <Button onClick={handleToggleOverlay} variant="outline" className="gap-2">
+            <Button
+              onClick={() => setOverlayVisible(!isOverlayVisible)}
+              variant="outline"
+              className="gap-2"
+            >
               <AppWindow className="w-4 h-4" />
-              Show Floating Window
+              {isOverlayVisible ? "Hide Overlay" : "Show Overlay"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Custom Duration Picker */}
+        <div className="bg-card rounded-lg border p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Custom Duration</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Input
+                type="number"
+                value={customMinutes}
+                onChange={(e) => setCustomMinutes(e.target.value)}
+                placeholder="Minutes"
+                className="pr-12"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground uppercase">
+                min
+              </span>
+            </div>
+            <Button onClick={handleApplyCustomTime} variant="outline">
+              Apply
             </Button>
           </div>
 
-          <div className="text-sm text-muted-foreground">
-            Status: {isRunning ? "⏱️ Running" : "⏸️ Paused"} •
-            Time: {Math.floor(timeLeft / 3600)}h {Math.floor((timeLeft % 3600) / 60)}m {timeLeft % 60}s
+          <div className="flex gap-2">
+            {(Object.keys(MODES) as Array<keyof typeof MODES>).map((m) => (
+              <Button
+                key={m}
+                size="sm"
+                variant={mode === m ? "default" : "secondary"}
+                onClick={() => setMode(m)}
+                className="flex-1"
+              >
+                {MODES[m].label}
+              </Button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Pomodoro Timer */}
-      <div className="flex flex-col items-center justify-center">
-        <h2 className="text-xl font-semibold mb-6">Pomodoro Timer</h2>
+      <div className="flex flex-col items-center justify-center py-12">
         <PomodoroTimer />
       </div>
     </div>

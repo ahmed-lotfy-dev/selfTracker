@@ -100,6 +100,12 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated]);
 
   if (!collections) {
+    // If we're in the timer overlay, don't show the initialization splash
+    // to prevent the "new app instance" flicker.
+    if (window.location.pathname === '/timer-overlay') {
+      return null;
+    }
+
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background text-muted-foreground">
         <div className="flex flex-col items-center gap-2">

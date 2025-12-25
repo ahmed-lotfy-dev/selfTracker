@@ -7,6 +7,7 @@ import "./index.css";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { TimerController } from "@/components/timer/TimerController";
+import { AppUpdater } from "@/components/updater/AppUpdater";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { CollectionsProvider } from "@/components/Provider/CollectionsProvider";
 import { DataSyncReminder } from "@/components/ui/DataSyncReminder";
@@ -44,6 +45,7 @@ function RootLayout() {
 
   return (
     <>
+      <AppUpdater />
       <TimerController /> {/* Global Timer Logic runs everywhere */}
       <DataSyncReminder />
       <Outlet />

@@ -17,6 +17,7 @@ export type OverlayPosition =
 interface TimerState {
   timeLeft: number;
   isRunning: boolean;
+  isOverlayVisible: boolean;
   mode: keyof typeof MODES;
   overlayPosition: OverlayPosition;
 
@@ -27,6 +28,8 @@ interface TimerState {
   toggleTimer: () => void;
   resetTimer: (mode?: TimerState["mode"]) => void;
   setMode: (mode: TimerState["mode"]) => void;
+  setCustomTime: (minutes: number) => void;
+  setOverlayVisible: (visible: boolean) => void;
   togglePosition: () => void;
   tick: () => void;
 }
@@ -49,19 +52,17 @@ export const useTimerStore = create<TimerState>((set, get) => {
   return {
     timeLeft: 25 * 60,
     isRunning: false,
+    isOverlayVisible: false,
     mode: "pomodoro",
     overlayPosition: "top-right",
 
     setTimeLeft: (timeLeft) => {
       set({ timeLeft });
-      // Depending on preference, we might not broadcast every tick to avoid noise,
-      // but for overlay sync, we usually need it.
-      // syncState({ timeLeft });
     },
 
     startTimer: () => {
-      set({ isRunning: true });
-      syncState({ isRunning: true });
+      set({ isRunning: true, isOverlayVisible: true });
+      syncState({ isRunning: true, isOverlayVisible: true });
     },
 
     pauseTimer: () => {
@@ -70,27 +71,43 @@ export const useTimerStore = create<TimerState>((set, get) => {
     },
 
     stopTimer: () => {
-      set({ isRunning: false });
-      syncState({ isRunning: false });
+      set({ isRunning: false, isOverlayVisible: false });
+      syncState({ isRunning: false, isOverlayVisible: false });
     },
 
     toggleTimer: () => {
-      const isRunning = get().isRunning;
-      set({ isRunning: !isRunning });
-      syncState({ isRunning: !isRunning });
+      const { isRunning, isOverlayVisible } = get();
+      const nextRunning = !isRunning;
+      // If starting, show overlay. If stopping, we might want to keep it or hide it.
+      // User said "when stopped it stop the timer it doesnt [hide]" -> so hide on stop.
+      // But toggle usually implies pause/resume. 
+      // Let's make it smarter: if starting, show.
+      set({ isRunning: nextRunning, isOverlayVisible: nextRunning ? true : isOverlayVisible });
+      syncState({ isRunning: nextRunning, isOverlayVisible: nextRunning ? true : isOverlayVisible });
     },
 
     resetTimer: (mode) => {
-      const newTime =
-        mode === "shortBreak" ? 5 * 60 : mode === "longBreak" ? 15 * 60 : 25 * 60;
-      const finalMode = mode || "pomodoro";
-      set({ isRunning: false, timeLeft: newTime, mode: finalMode });
-      syncState({ isRunning: false, timeLeft: newTime, mode: finalMode });
+      const targetMode = mode || get().mode;
+      const newTime = MODES[targetMode].minutes * 60;
+      set({ isRunning: false, timeLeft: newTime, mode: targetMode });
+      syncState({ isRunning: false, timeLeft: newTime, mode: targetMode });
     },
 
     setMode: (mode) => {
-      set({ mode });
-      syncState({ mode });
+      const newTime = MODES[mode].minutes * 60;
+      set({ mode, timeLeft: newTime, isRunning: false });
+      syncState({ mode, timeLeft: newTime, isRunning: false });
+    },
+
+    setCustomTime: (minutes) => {
+      const seconds = minutes * 60;
+      set({ timeLeft: seconds, isRunning: false });
+      syncState({ timeLeft: seconds, isRunning: false });
+    },
+
+    setOverlayVisible: (isOverlayVisible) => {
+      set({ isOverlayVisible });
+      syncState({ isOverlayVisible });
     },
 
     togglePosition: () =>
