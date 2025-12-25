@@ -10,7 +10,6 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core"
 import { users } from "./users"
-import { projects, columns } from "./projects"
 
 export const priorityEnum = pgEnum("task_priority", ["low", "medium", "high"])
 
@@ -20,12 +19,9 @@ export const tasks = pgTable("task_items", {
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
-  projectId: text("project_id").references(() => projects.id, {
-    onDelete: "cascade",
-  }),
-  columnId: text("column_id").references(() => columns.id, {
-    onDelete: "set null",
-  }),
+  // Removed Project/Column references for simplification
+  projectId: text("project_id"),
+  columnId: text("column_id"),
   title: text("title").notNull(),
   description: text("description"),
   completed: boolean("completed").default(false),
@@ -43,13 +39,5 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   user: one(users, {
     fields: [tasks.userId],
     references: [users.id],
-  }),
-  project: one(projects, {
-    fields: [tasks.projectId],
-    references: [projects.id],
-  }),
-  column: one(columns, {
-    fields: [tasks.columnId],
-    references: [columns.id],
   }),
 }))

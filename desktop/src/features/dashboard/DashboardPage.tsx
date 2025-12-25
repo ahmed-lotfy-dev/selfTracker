@@ -1,26 +1,37 @@
-import { Board } from "@/features/tasks/components/kanban/Board"
-import { PomodoroTimer } from "@/components/timer/PomodoroTimer"
 import { DashboardStats } from "@/components/dashboard/DashboardStats"
+import { TodayTasks } from "@/components/dashboard/TodayTasks"
+import { HabitsWidget } from "@/components/dashboard/HabitsWidget"
+// Assuming no complex user object is easily available in this context without hook, using "User" fallback or just "Good Morning"
 
 export default function DashboardPage() {
-  return (
-    <div className="h-full flex flex-col">
-      {/* Header moved to AppShell */}
-      <div className="flex-1 overflow-hidden flex">
-        <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-muted/10">
-          <Board />
-        </div>
-        <div className="w-80 border-l p-4 bg-background shrink-0 flex flex-col gap-6">
-          <div>
-            <h2 className="font-semibold mb-4">Summary</h2>
-            <DashboardStats />
-          </div>
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
 
-          <div>
-            <h2 className="font-semibold mb-4">Focus</h2>
-            <PomodoroTimer />
-          </div>
+  return (
+    <div className="h-full flex flex-col overflow-y-auto bg-background">
+      <div className="max-w-5xl w-full mx-auto p-6 space-y-8">
+
+        {/* Header Section */}
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">{getGreeting()}</h1>
+          <p className="text-muted-foreground">Here is your daily overview.</p>
         </div>
+
+        {/* Quick Stats */}
+        <DashboardStats />
+
+        {/* Habits Row */}
+        <HabitsWidget />
+
+        {/* Tasks Section */}
+        <TodayTasks />
+
+        {/* Bottom Spacer */}
+        <div className="h-10"></div>
       </div>
     </div>
   )

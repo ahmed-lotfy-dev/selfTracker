@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, Settings, Minimize2, LogOut, LogIn, Timer, Dumbbell, Scale, CalendarCheck, ListTodo, FolderKanban } from "lucide-react";
+import { LayoutDashboard, Settings, Minimize2, LogOut, LogIn, Timer, Dumbbell, Scale, CalendarCheck, ListTodo } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,11 +16,6 @@ export function AppShell() {
       to: "/",
       label: "Dashboard",
       icon: LayoutDashboard,
-    },
-    {
-      to: "/projects",
-      label: "Projects",
-      icon: FolderKanban,
     },
     {
       to: "/tasks",
