@@ -5,6 +5,7 @@ export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhos
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
+  withCredentials: true,
 });
 
 axiosInstance.interceptors.request.use(

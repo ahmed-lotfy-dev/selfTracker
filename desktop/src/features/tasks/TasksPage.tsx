@@ -10,8 +10,14 @@ import { useLiveQuery } from "@tanstack/react-db";
 export default function TasksPage() {
   const collections = useCollections();
 
+  if (!collections) return <div className="p-8">Initializing database...</div>;
+
+  return <TasksList collections={collections} />;
+}
+
+function TasksList({ collections }: { collections: any }) {
   const { data: tasks = [] } = useLiveQuery(
-    (q: any) => q.from({ tasks: collections?.tasks })
+    (q: any) => q.from({ tasks: collections.tasks })
       .orderBy(({ tasks }: any) => tasks.created_at, 'DESC')
       .select(({ tasks }: any) => ({
         id: tasks.id,
@@ -28,13 +34,13 @@ export default function TasksPage() {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleCreate = async () => {
-    if (!newTaskTitle.trim() || !collections) return;
+    if (!newTaskTitle.trim()) return;
 
     try {
       await collections.tasks.insert({
         title: newTaskTitle,
         priority: "medium",
-        user_id: "local", // Will be overwritten by sync if logged in, or used locally
+        user_id: "local",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -46,7 +52,6 @@ export default function TasksPage() {
   }
 
   const toggleTask = async (task: any) => {
-    if (!collections) return;
     try {
       await collections.tasks.update({
         where: { id: task.id },
@@ -59,8 +64,6 @@ export default function TasksPage() {
       console.error("Failed to toggle task", e);
     }
   };
-
-  if (!collections) return <div className="p-8">Initializing database...</div>;
 
   return (
     <div className="p-8 space-y-6">

@@ -6,19 +6,26 @@ import { cn } from "@/lib/utils";
 export function TodayTasks() {
   const collections = useCollections();
 
+  if (!collections) return <div className="py-8 text-center text-sm text-muted-foreground">Loading tasks...</div>;
+
+  return <TodayTasksList collections={collections} />;
+}
+
+function TodayTasksList({ collections }: { collections: any }) {
   const { data: tasks = [] } = useLiveQuery(
     (q: any) => {
       // Simple filter: Not completed OR completed today
       // In a real app we'd filter for "due today" or similar, 
       // but for "Today's Focus" showing all active tasks is a good start.
       // We can refine this to "pinned" or "today" later.
-      return q.from({ tasks: collections?.tasks })
-        .orderBy(({ tasks }: any) => tasks.created_at, 'DESC')
+      return q.from({ tasks: collections.tasks })
+        // IMPORTANT: Filter must be applied BEFORE orderBy for correct query generation
         .filter(({ tasks }: any) => {
           // For now, show uncompleted tasks. 
           // Ideally we filter by date, but keeping it simple first.
           return tasks.completed.eq(false)
         })
+        .orderBy(({ tasks }: any) => tasks.created_at, 'DESC')
         .select(({ tasks }: any) => ({
           id: tasks.id,
           title: tasks.title,
@@ -29,7 +36,6 @@ export function TodayTasks() {
   ) || { data: [] };
 
   const toggleTask = async (task: any) => {
-    if (!collections) return;
     try {
       await collections.tasks.update({
         where: { id: task.id },

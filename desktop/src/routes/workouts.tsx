@@ -9,8 +9,14 @@ import { LogWorkoutDialog } from "@/features/workouts/components/LogWorkoutDialo
 export default function WorkoutsPage() {
   const collections = useCollections();
 
+  if (!collections) return <div className="p-8">Initializing database...</div>;
+
+  return <WorkoutsPageContent collections={collections} />;
+}
+
+function WorkoutsPageContent({ collections }: { collections: any }) {
   const { data: logs = [] } = useLiveQuery(
-    (q: any) => q.from({ wl: collections?.workoutLogs })
+    (q: any) => q.from({ wl: collections.workoutLogs })
       .orderBy(({ wl }: any) => wl.created_at, 'DESC')
       .select(({ wl }: any) => ({
         id: wl.id,
@@ -20,8 +26,6 @@ export default function WorkoutsPage() {
         updatedAt: wl.updated_at
       }))
   ) as unknown as { data: any[] } || { data: [] };
-
-  if (!collections) return <div className="p-8">Initializing database...</div>;
 
   return (
     <div className="p-8 space-y-6">

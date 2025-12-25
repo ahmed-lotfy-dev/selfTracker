@@ -7,6 +7,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Link } from "@tanstack/react-router"
 import { toast } from "sonner"
 import { Github } from "lucide-react"
+import { waitForDeepLink } from "@/lib/external-auth"
+import { open } from "@tauri-apps/plugin-shell"
+import { API_BASE_URL } from "@/lib/api"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -60,9 +63,6 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                {/* <Link to="/forgot-password" className="text-sm text-muted-foreground hover:underline">
-                  Forgot password?
-                </Link> */}
               </div>
               <Input
                 id="password"
@@ -91,37 +91,31 @@ export default function LoginPage() {
                 type="button"
                 onClick={async () => {
                   setLoading(true);
-                  setError("");
                   try {
-                    const { open } = await import("@tauri-apps/plugin-shell");
-                    const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
-
-                    console.log("Initiating Google login...", backendUrl);
-                    const response = await fetch(`${backendUrl}/api/auth/sign-in/social`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        provider: "google",
-                        callbackURL: `${backendUrl}/api/desktop-success`,
-                      }),
+                    const result = await authClient.signIn.social({
+                      provider: "google",
+                      callbackURL: `${API_BASE_URL}/api/desktop-success`,
+                      // @ts-ignore - MUST BE disableRedirect TO PREVENT IN-APP OPEN
+                      disableRedirect: true
                     });
 
-                    if (!response.ok) {
-                      const text = await response.text();
-                      throw new Error(`Server error ${response.status}: ${text}`);
-                    }
+                    if (result.data?.url) {
+                      console.log("[Login] Opening Google OAuth in system browser:", result.data.url);
+                      await open(result.data.url);
 
-                    const data = await response.json();
-                    if (data?.url) {
-                      console.log("Opening browser URL:", data.url);
-                      await open(data.url);
-                    } else {
-                      throw new Error(data?.message || "Failed to get auth URL");
+                      const authResult = await waitForDeepLink();
+
+                      if (authResult?.token) {
+                        localStorage.setItem("bearer_token", authResult.token);
+                        toast.success("Login successful");
+                        window.location.href = "/";
+                      }
                     }
                   } catch (err: any) {
-                    console.error("Google login failed:", err);
-                    setError(`Google login failed: ${err.message}`);
-                    toast.error(`Google login failed: ${err.message}`);
+                    console.error("Google login error:", err);
+                    const errorMsg = err?.message || err?.toString() || "Unknown error";
+                    setError(`Google login failed: ${errorMsg}`);
+                    toast.error(`Google login failed: ${errorMsg}`);
                   } finally {
                     setLoading(false);
                   }
@@ -138,37 +132,31 @@ export default function LoginPage() {
                 type="button"
                 onClick={async () => {
                   setLoading(true);
-                  setError("");
                   try {
-                    const { open } = await import("@tauri-apps/plugin-shell");
-                    const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
-
-                    console.log("Initiating GitHub login...", backendUrl);
-                    const response = await fetch(`${backendUrl}/api/auth/sign-in/social`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        provider: "github",
-                        callbackURL: `${backendUrl}/api/desktop-success`,
-                      }),
+                    const result = await authClient.signIn.social({
+                      provider: "github",
+                      callbackURL: `${API_BASE_URL}/api/desktop-success`,
+                      // @ts-ignore - MUST BE disableRedirect TO PREVENT IN-APP OPEN
+                      disableRedirect: true
                     });
 
-                    if (!response.ok) {
-                      const text = await response.text();
-                      throw new Error(`Server error ${response.status}: ${text}`);
-                    }
+                    if (result.data?.url) {
+                      console.log("[Login] Opening GitHub OAuth in system browser:", result.data.url);
+                      await open(result.data.url);
 
-                    const data = await response.json();
-                    if (data?.url) {
-                      console.log("Opening browser URL:", data.url);
-                      await open(data.url);
-                    } else {
-                      throw new Error(data?.message || "Failed to get auth URL");
+                      const authResult = await waitForDeepLink();
+
+                      if (authResult?.token) {
+                        localStorage.setItem("bearer_token", authResult.token);
+                        toast.success("Login successful");
+                        window.location.href = "/";
+                      }
                     }
                   } catch (err: any) {
-                    console.error("GitHub login failed:", err);
-                    setError(`GitHub login failed: ${err.message}`);
-                    toast.error(`GitHub login failed: ${err.message}`);
+                    console.error("GitHub login error:", err);
+                    const errorMsg = err?.message || err?.toString() || "Unknown error";
+                    setError(`GitHub login failed: ${errorMsg}`);
+                    toast.error(`GitHub login failed: ${errorMsg}`);
                   } finally {
                     setLoading(false);
                   }
@@ -179,8 +167,6 @@ export default function LoginPage() {
                 GitHub
               </Button>
             </div>
-
-
 
             <div className="pt-2 w-full">
               <Button variant="ghost" type="button" onClick={() => window.location.href = "/"} className="w-full text-muted-foreground hover:text-primary">
@@ -202,6 +188,6 @@ export default function LoginPage() {
           )}
         </form>
       </Card>
-    </div >
+    </div>
   )
 }

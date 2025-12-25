@@ -4,9 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + React + Typescript</title>
+    <title>Tauri + React + TS</title>
+    <script>
+      // Prevent window from closing on error
+      window.addEventListener('error', function(e) {
+        console.error('GLOBAL ERROR:', e.error);
+        e.preventDefault();
+        document.body.innerHTML = '<div style="padding:20px;font-family:monospace"><h1 style="color:red">ERROR!</h1><pre>' + e.error?.stack + '</pre></div>';
+        return false;
+      });
+      
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('UNHANDLED PROMISE REJECTION:', e.reason);
+        e.preventDefault();
+        document.body.innerHTML = '<div style="padding:20px;font-family:monospace"><h1 style="color:red">PROMISE ERROR!</h1><pre>' + JSON.stringify(e.reason, null, 2) + '</pre></div>';
+      });
+    </script>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

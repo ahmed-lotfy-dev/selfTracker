@@ -8,8 +8,7 @@ export let weightLogCollection: any = null;
 export let workoutLogCollection: any = null;
 export let expenseCollection: any = null;
 export let workoutCollection: any = null;
-export let projectCollection: any = null;
-export let projectColumnCollection: any = null;
+
 export let userGoalCollection: any = null;
 export let exerciseCollection: any = null;
 export let timerSessionCollection: any = null;
@@ -22,8 +21,7 @@ export function _setCollections(collections: any) {
   workoutLogCollection = collections.workoutLogs;
   expenseCollection = collections.expenses;
   workoutCollection = collections.workouts;
-  projectCollection = collections.projects;
-  projectColumnCollection = collections.projectColumns;
+
   userGoalCollection = collections.userGoals;
   exerciseCollection = collections.exercises;
   timerSessionCollection = collections.timerSessions;

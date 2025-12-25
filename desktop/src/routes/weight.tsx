@@ -9,20 +9,24 @@ import { LogWeightDialog } from "@/features/weight/components/LogWeightDialog";
 export default function WeightPage() {
   const collections = useCollections();
 
+  if (!collections) return <div className="p-8">Initializing database...</div>;
+
+  return <WeightPageContent collections={collections} />;
+}
+
+function WeightPageContent({ collections }: { collections: any }) {
   const { data: logs = [] } = useLiveQuery(
-    (q: any) => q.from({ w: collections?.weightLogs })
+    (q: any) => q.from({ w: collections.weightLogs })
       .orderBy(({ w }: any) => w.created_at, 'DESC')
       .select(({ w }: any) => ({
         id: w.id,
         weight: w.weight,
         mood: w.mood,
         energy: w.energy,
-        createdAt: w.created_at, // Map snake_case
+        createdAt: w.created_at,
         updatedAt: w.updated_at
       }))
   ) as unknown as { data: any[] } || { data: [] };
-
-  if (!collections) return <div className="p-8">Initializing database...</div>;
 
   const currentWeight = logs[0]?.weight;
 

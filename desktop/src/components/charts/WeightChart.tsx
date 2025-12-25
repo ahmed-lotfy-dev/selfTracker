@@ -11,13 +11,19 @@ export function WeightChart() {
   const [period, setPeriod] = useState<Period>(3)
   const collections = useCollections();
 
+  // If collections is null, we are initializing.
+  const isLoading = !collections;
+
   const { data: logs = [] } = useLiveQuery(
-    (q: any) => q.from({ w: collections?.weightLogs })
-      .orderBy(({ w }: any) => w.created_at, 'ASC') // Recharts expects sorted by X
-      .select(({ w }: any) => ({
-        weight: w.weight,
-        createdAt: w.created_at
-      }))
+    (q: any) => {
+      if (!collections?.weightLogs) return q.from({ w: [] }).select(() => ({}));
+      return q.from({ w: collections.weightLogs })
+        .orderBy(({ w }: any) => w.created_at, 'ASC')
+        .select(({ w }: any) => ({
+          weight: w.weight,
+          createdAt: w.created_at
+        }));
+    }
   ) as unknown as { data: any[] } || { data: [] };
 
   const chartData = useMemo(() => {
@@ -35,9 +41,6 @@ export function WeightChart() {
       weight: log.weight
     }));
   }, [logs, period]);
-
-  // If collections is null, we are initializing.
-  const isLoading = !collections;
 
   return (
     <Card className="col-span-1 md:col-span-2">

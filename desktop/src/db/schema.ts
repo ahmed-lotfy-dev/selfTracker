@@ -26,14 +26,12 @@ export const weightLogSchema = z.object({
 export const taskSchema = z.object({
   id: z.string(),
   user_id: z.string(),
-  project_id: z.string().optional().nullable(),
-  column_id: z.string().optional().nullable(),
+
   title: z.string(),
   description: z.string().optional().nullable(),
   completed: z.union([z.boolean(), z.number()]).transform(v => !!v).default(false),
   due_date: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
   priority: z.string().default('medium'),
-  order: z.number().default(0),
   category: z.string(),
   completed_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
   created_at: z.union([z.string(), z.number(), z.date()]),
@@ -46,28 +44,6 @@ export const workoutSchema = z.object({
   user_id: z.string().optional().nullable(),
   name: z.string(),
   training_split_id: z.string().optional().nullable(),
-  created_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-  updated_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-  deleted_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-});
-
-export const projectSchema = z.object({
-  id: z.string(),
-  user_id: z.string(),
-  name: z.string(),
-  color: z.string().default('#000000'),
-  is_archived: z.union([z.boolean(), z.number()]).transform(v => !!v).default(false),
-  created_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-  updated_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-  deleted_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-});
-
-export const projectColumnSchema = z.object({
-  id: z.string(),
-  project_id: z.string(),
-  name: z.string(),
-  order: z.number().default(0),
-  type: z.string().default('todo'),
   created_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
   updated_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
   deleted_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),

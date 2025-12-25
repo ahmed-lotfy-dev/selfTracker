@@ -1,4 +1,4 @@
-import { backendUrl } from "@/lib/api"
+import axiosInstance from "@/lib/api/axiosInstance"
 
 export interface Workout {
   id: string
@@ -19,13 +19,13 @@ export interface WorkoutLog {
 }
 
 export async function getWorkouts(): Promise<{ workouts: Workout[] }> {
-  const res = await fetch(`${backendUrl}/api/workouts`)
-  if (!res.ok) {
-    // If 404, it might mean no workouts found, handle gracefully or throw
-    if (res.status === 404) return { workouts: [] }
+  try {
+    const res = await axiosInstance.get("/workouts")
+    return res.data
+  } catch (err: any) {
+    if (err.response?.status === 404) return { workouts: [] }
     throw new Error("Failed to fetch workouts")
   }
-  return res.json()
 }
 
 export async function getWorkoutLogs(cursor?: string, limit = 10): Promise<{ logs: WorkoutLog[], nextCursor?: string }> {
@@ -33,27 +33,17 @@ export async function getWorkoutLogs(cursor?: string, limit = 10): Promise<{ log
   if (cursor) params.append("cursor", cursor)
   params.append("limit", limit.toString())
 
-  const res = await fetch(`${backendUrl}/api/workoutLogs?${params.toString()}`)
-  if (!res.ok) throw new Error("Failed to fetch workout logs")
-  return res.json()
+  const res = await axiosInstance.get(`/workoutLogs?${params.toString()}`)
+  return res.data
 }
 
 export async function createWorkoutLog(data: { workoutId: string; notes?: string; createdAt?: Date | string }): Promise<WorkoutLog> {
-  const res = await fetch(`${backendUrl}/api/workoutLogs`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error("Failed to create workout log")
-  const json = await res.json()
-  return json.workoutLog
+  const res = await axiosInstance.post("/workoutLogs", data)
+  return res.data.workoutLog
 }
 
 export async function deleteWorkoutLog(id: string): Promise<void> {
-  const res = await fetch(`${backendUrl}/api/workoutLogs/${id}`, {
-    method: "DELETE",
-  })
-  if (!res.ok) throw new Error("Failed to delete workout log")
+  await axiosInstance.delete(`/workoutLogs/${id}`)
 }
 
 export interface WorkoutChartData {
@@ -64,7 +54,6 @@ export interface WorkoutChartData {
 }
 
 export async function getWorkoutChart(month: number): Promise<WorkoutChartData> {
-  const res = await fetch(`${backendUrl}/api/workoutLogs/chart?month=${month}`)
-  if (!res.ok) throw new Error("Failed to fetch workout chart data")
-  return res.json()
+  const res = await axiosInstance.get(`/workoutLogs/chart?month=${month}`)
+  return res.data
 }

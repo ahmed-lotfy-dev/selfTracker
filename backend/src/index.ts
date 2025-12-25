@@ -25,7 +25,6 @@ const app = new Hono<{
   }
 }>()
 
-app.use(loggerMiddleware)
 
 app.use(
   "*",
@@ -33,6 +32,7 @@ app.use(
     origin: [
       "http://192.168.1.5:8081",
       "http://localhost:1420", // Tauri
+      "tauri://localhost", // Tauri Production
       "http://localhost:5173", // Vite local
     ],
     allowHeaders: ["Content-Type", "Authorization"],
@@ -43,7 +43,11 @@ app.use(
   }),
 );
 
-app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+app.on(["POST", "GET"], "/api/auth/*", (c) => {
+  return auth.handler(c.req.raw);
+});
+
+app.use(loggerMiddleware)
 
 // Auth middleware for all API routes (except /api/auth/*)
 app.use("/api/*", authMiddleware)

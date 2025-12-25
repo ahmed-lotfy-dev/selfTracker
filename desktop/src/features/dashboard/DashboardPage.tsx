@@ -1,7 +1,5 @@
 import { DashboardStats } from "@/components/dashboard/DashboardStats"
-import { TodayTasks } from "@/components/dashboard/TodayTasks"
 import { HabitsWidget } from "@/components/dashboard/HabitsWidget"
-// Assuming no complex user object is easily available in this context without hook, using "User" fallback or just "Good Morning"
 
 export default function DashboardPage() {
   const getGreeting = () => {
@@ -27,8 +25,8 @@ export default function DashboardPage() {
         {/* Habits Row */}
         <HabitsWidget />
 
-        {/* Tasks Section */}
-        <TodayTasks />
+        {/* Tasks Section - TEMPORARILY DISABLED */}
+        {/* <TodayTasks /> */}
 
         {/* Bottom Spacer */}
         <div className="h-10"></div>

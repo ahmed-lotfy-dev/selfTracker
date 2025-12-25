@@ -18,7 +18,7 @@ import SettingsPage from "./routes/settings";
 import WorkoutsPage from "./routes/workouts";
 import WeightPage from "./routes/weight";
 import HabitsPage from "./routes/habits";
-import TasksPage from "@/features/tasks/TasksPage";
+// import TasksPage from "./features/tasks/TasksPage"; // Temporarily disabled
 import TimersPage from "./routes/timers";
 import TimerOverlayPage from "./routes/timer-overlay";
 import OnboardingPage from "./routes/onboarding";
@@ -106,11 +106,12 @@ const habitsRoute = createRoute({
   component: HabitsPage,
 });
 
-const tasksRoute = createRoute({
-  getParentRoute: () => shellRoute,
-  path: "/tasks",
-  component: TasksPage,
-});
+// Tasks route temporarily disabled
+// const tasksRoute = createRoute({
+//   getParentRoute: () => shellRoute,
+//   path: "/tasks",
+//   component: TasksPage,
+// });
 
 const timersRoute = createRoute({
   getParentRoute: () => shellRoute,
@@ -144,20 +145,9 @@ const onboardingRoute = createRoute({
   component: OnboardingPage,
 });
 
-import ProjectsPage from "./routes/projects/index";
-import ProjectDetailPage from "./routes/projects/$projectId";
 
-const projectsRoute = createRoute({
-  getParentRoute: () => shellRoute,
-  path: "/projects",
-  component: ProjectsPage,
-});
 
-const projectDetailRoute = createRoute({
-  getParentRoute: () => shellRoute,
-  path: "/projects/$projectId",
-  component: ProjectDetailPage,
-});
+
 
 // 3. Register Route Tree
 const routeTree = rootRoute.addChildren([
@@ -167,10 +157,9 @@ const routeTree = rootRoute.addChildren([
     workoutsRoute,
     weightRoute,
     habitsRoute,
-    tasksRoute,
+    // tasksRoute, // TEMPORARILY DISABLED
     timersRoute,
-    projectsRoute,
-    projectDetailRoute
+
   ]),
   loginRoute,
   registerRoute,

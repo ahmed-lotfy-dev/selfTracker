@@ -1,4 +1,4 @@
-import { backendUrl } from "@/lib/api"
+import axiosInstance from "@/lib/api/axiosInstance"
 import { Task } from "@/types/kanban"
 
 export interface CreateTaskDTO {
@@ -17,36 +17,20 @@ export interface UpdateTaskDTO extends Partial<CreateTaskDTO> {
 }
 
 export async function getTasks(): Promise<Task[]> {
-  const res = await fetch(`${backendUrl}/api/tasks`)
-  if (!res.ok) throw new Error("Failed to fetch tasks")
-  return res.json()
+  const res = await axiosInstance.get("/tasks")
+  return res.data
 }
 
 export async function createTask(data: CreateTaskDTO): Promise<Task> {
-  const res = await fetch(`${backendUrl}/api/tasks`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error("Failed to create task")
-  const json = await res.json()
-  return json.task
+  const res = await axiosInstance.post("/tasks", data)
+  return res.data.task
 }
 
 export async function updateTask(id: string, data: UpdateTaskDTO): Promise<Task> {
-  const res = await fetch(`${backendUrl}/api/tasks/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error("Failed to update task")
-  const json = await res.json()
-  return json.task
+  const res = await axiosInstance.patch(`/tasks/${id}`, data)
+  return res.data.task
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const res = await fetch(`${backendUrl}/api/tasks/${id}`, {
-    method: "DELETE",
-  })
-  if (!res.ok) throw new Error("Failed to delete task")
+  await axiosInstance.delete(`/tasks/${id}`)
 }

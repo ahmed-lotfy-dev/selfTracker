@@ -6,32 +6,33 @@ import { useLiveQuery } from "@tanstack/react-db"
 export function DashboardStats() {
   const collections = useCollections();
 
-  const { data: tasks = [] } = useLiveQuery(
-    (q: any) => q.from({ t: collections?.tasks })
-      .select(({ t }: any) => ({
-        completed: t.completed,
-        // Note: completedAt in schema is `completed_at` (snake_case)
-        // Check if I need to map it or access snake_case directly
-        // My other refactors mapped it. But here I can just access whatever is returned.
-        // If I select `t.completed_at` with no alias, it returns `completed_at`?
-        // In TasksPage I aliased it `id: t.id`.
-        // Let's alias here for consistency.
-        completedAt: t.completed_at
-      }))
-  ) as unknown as { data: any[] } || { data: [] };
+  if (!collections) return <div className="text-sm text-muted-foreground p-4">Loading stats...</div>
+
+  return <DashboardStatsContent collections={collections} />;
+}
+
+function DashboardStatsContent({ collections }: { collections: any }) {
+  // Tasks query temporarily disabled
+  // const { data: tasks = [] } = useLiveQuery(
+  //   (q: any) => q.from({ t: collections.tasks })
+  //     .select(({ t }: any) => ({
+  //       completed: t.completed,
+  //       completedAt: t.completed_at
+  //     }))
+  // ) as unknown as { data: any[] } || { data: [] };
+  const tasks: any[] = []; // Placeholder
 
   const { data: weightLogs = [] } = useLiveQuery(
-    (q: any) => q.from({ w: collections?.weightLogs })
+    (q: any) => q.from({ w: collections.weightLogs })
       .orderBy(({ w }: any) => w.created_at, 'DESC')
       .select(({ w }: any) => ({
         weight: w.weight,
         createdAt: w.created_at
       }))
-    // .limit(1) // Limit not always supported in client sync collection depending on adapters, but filtering results is safe
   ) as unknown as { data: any[] } || { data: [] };
 
   const { data: workoutLogs = [] } = useLiveQuery(
-    (q: any) => q.from({ wl: collections?.workoutLogs })
+    (q: any) => q.from({ wl: collections.workoutLogs })
       .select(({ wl }: any) => ({
         id: wl.id
       }))
@@ -45,8 +46,6 @@ export function DashboardStats() {
 
   const currentWeight = weightLogs[0]?.weight
   const workoutsCount = workoutLogs.length
-
-  if (!collections) return <div className="text-sm text-muted-foreground p-4">Loading stats...</div>
 
   return (
     <div className="space-y-4">

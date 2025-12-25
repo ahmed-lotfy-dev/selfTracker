@@ -124,6 +124,6 @@ export const auth = betterAuth({
     "https://selftracker.ahmedlotfy.site",
     "http://localhost:8000",
     "http://localhost:8081",
-    "http://localhost:1420"
+    "http://localhost:1420",
   ],
 })

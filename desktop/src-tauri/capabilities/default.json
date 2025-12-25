@@ -8,10 +8,13 @@
     "opener:default",
     "deep-link:default",
     "core:window:allow-hide",
+    "core:window:allow-show",
     "core:window:allow-set-always-on-top",
     "updater:default",
     "dialog:default",
     "process:default",
-    "core:window:allow-request-user-attention"
+    "core:window:allow-request-user-attention",
+    "shell:allow-open",
+    "core:window:allow-set-position"
   ]
 }

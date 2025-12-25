@@ -11,12 +11,18 @@ export function WorkoutChart() {
   const [period, setPeriod] = useState<Period>(3)
   const collections = useCollections();
 
+  // If collections is null, we are initializing.
+  const isLoading = !collections;
+
   const { data: logs = [] } = useLiveQuery(
-    (q: any) => q.from({ wl: collections?.workoutLogs })
-      .select(({ wl }: any) => ({
-        name: wl.workout_name,
-        createdAt: wl.created_at
-      }))
+    (q: any) => {
+      if (!collections?.workoutLogs) return q.from({ wl: [] }).select(() => ({}));
+      return q.from({ wl: collections.workoutLogs })
+        .select(({ wl }: any) => ({
+          name: wl.workout_name,
+          createdAt: wl.created_at
+        }));
+    }
   ) as unknown as { data: any[] } || { data: [] };
 
   const chartData = useMemo(() => {
@@ -40,9 +46,6 @@ export function WorkoutChart() {
       count
     })).sort((a, b) => b.count - a.count); // Sort by prevalence
   }, [logs, period]);
-
-  // If collections is null, we are initializing.
-  const isLoading = !collections;
 
   return (
     <Card className="col-span-1 md:col-span-2">

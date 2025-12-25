@@ -1,4 +1,4 @@
-import { backendUrl } from "@/lib/api"
+import axiosInstance from "@/lib/api/axiosInstance"
 
 export interface WeightLog {
   id: string
@@ -23,27 +23,17 @@ export async function getWeightLogs(cursor?: string, limit = 10): Promise<{ logs
   if (cursor) params.append("cursor", cursor)
   params.append("limit", limit.toString())
 
-  const res = await fetch(`${backendUrl}/api/weightLogs?${params.toString()}`)
-  if (!res.ok) throw new Error("Failed to fetch weight logs")
-  return res.json()
+  const res = await axiosInstance.get(`/weightLogs?${params.toString()}`)
+  return res.data
 }
 
 export async function createWeightLog(data: CreateWeightLogDTO): Promise<WeightLog> {
-  const res = await fetch(`${backendUrl}/api/weightLogs`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error("Failed to create weight log")
-  const json = await res.json()
-  return json.weightLog
+  const res = await axiosInstance.post("/weightLogs", data)
+  return res.data.weightLog
 }
 
 export async function deleteWeightLog(id: string): Promise<void> {
-  const res = await fetch(`${backendUrl}/api/weightLogs/${id}`, {
-    method: "DELETE",
-  })
-  if (!res.ok) throw new Error("Failed to delete weight log")
+  await axiosInstance.delete(`/weightLogs/${id}`)
 }
 
 export interface WeightChartData {
@@ -54,7 +44,6 @@ export interface WeightChartData {
 }
 
 export async function getWeightChart(month: number): Promise<WeightChartData> {
-  const res = await fetch(`${backendUrl}/api/weightLogs/chart?month=${month}`)
-  if (!res.ok) throw new Error("Failed to fetch weight chart data")
-  return res.json()
+  const res = await axiosInstance.get(`/weightLogs/chart?month=${month}`)
+  return res.data
 }
