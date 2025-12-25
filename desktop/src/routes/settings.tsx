@@ -9,6 +9,17 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { confirm } from "@tauri-apps/plugin-dialog";
 import { Sun, Moon, Monitor } from "lucide-react";
+import { getVersion } from "@tauri-apps/api/app";
+
+function AppVersionInfo() {
+  const [version, setVersion] = useState<string>("");
+
+  useEffect(() => {
+    getVersion().then(setVersion);
+  }, []);
+
+  return <p>Version: {version} (Beta)</p>;
+}
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -133,7 +144,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              <p>Version: 0.1.0 (Beta)</p>
+              <AppVersionInfo />
               <p>Build: desktop-linux-x64</p>
             </div>
             <div className="mt-4">
