@@ -62,7 +62,7 @@ export function LogWorkoutDialog() {
     setFetchError("");
 
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? "https://selftracker.ahmedlotfy.site" : "http://localhost:8000");
       const token = localStorage.getItem('bearer_token');
 
       const response = await fetch(`${backendUrl}/api/workouts`, {

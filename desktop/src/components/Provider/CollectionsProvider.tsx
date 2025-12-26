@@ -51,7 +51,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     console.log(`[CollectionsProvider] Initializing (isGuest: ${isGuest})`);
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? "https://selftracker.ahmedlotfy.site" : "http://localhost:8000");
 
     // --- "From Scratch" Local Collection Implementation ---
     const createLocalCollection = (id: string, schema: any) => {
