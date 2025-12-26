@@ -7,15 +7,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authClient } from "@/lib/auth-client";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { confirm } from "@tauri-apps/plugin-dialog";
-import { Sun, Moon, Monitor } from "lucide-react";
-import { getVersion } from "@tauri-apps/api/app";
+import { Sun, Moon, Monitor, Cloud, Database, Trash2, LogIn, UserPlus, Shield, RefreshCw } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { clearAllSampleData, hasSampleData, loadAllSampleData } from "@/lib/sample-data";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function AppVersionInfo() {
   const [version, setVersion] = useState<string>("");
 
   useEffect(() => {
-    getVersion().then(setVersion);
+    import("@tauri-apps/api/app")
+      .then(({ getVersion }) => getVersion())
+      .then(setVersion)
+      .catch(() => setVersion("1.1.0"));
   }, []);
 
   return <p>Version: {version} (Beta)</p>;
@@ -25,10 +36,12 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<any>(null);
   const isAuthenticated = !!localStorage.getItem("bearer_token");
+  const navigate = useNavigate();
+  const [clearDataDialogOpen, setClearDataDialogOpen] = useState(false);
+  const [resettingSampleData, setResettingSampleData] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
-      // Fetch user specific data if needed, or get from session
       const fetchUser = async () => {
         const { data } = await authClient.getSession();
         if (data?.user) {
@@ -50,30 +63,159 @@ export default function SettingsPage() {
 
       <div className="grid gap-6">
 
-        {/* Account Section - Only for Logged In Users */}
-        {isAuthenticated && user && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Account</CardTitle>
-              <CardDescription>Manage your account information.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={user.image} />
-                  <AvatarFallback>{user.name?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-medium">{user.name}</h3>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
+        {/* Account & Sync Section - For ALL Users */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Cloud className="w-5 h-5" />
+              Account & Sync
+            </CardTitle>
+            <CardDescription>
+              {isAuthenticated
+                ? "Manage your account and data synchronization."
+                : "Sign in to backup and sync your data across devices."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isAuthenticated && user ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={user.image} />
+                    <AvatarFallback>
+                      {user.name?.charAt(0) || user.email?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-medium">{user.name}</h3>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                  </div>
                 </div>
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Syncing with cloud</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const { confirm } = await import("@tauri-apps/plugin-dialog");
+                      const shouldLogout = await confirm(
+                        "Are you sure you want to sign out?",
+                        { title: "Sign Out", kind: "warning" }
+                      );
+                      if (shouldLogout) {
+                        await authClient.signOut();
+                        localStorage.removeItem("bearer_token");
+                        localStorage.removeItem("user_id");
+                        toast.success("Signed out successfully");
+                        window.location.href = "/";
+                      }
+                    }}
+                  >
+                    Sign Out
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
+                  <Shield className="w-10 h-10 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="font-medium">Using Local Storage</p>
+                    <p className="text-sm text-muted-foreground">
+                      Your data is stored on this device only
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <p className="text-sm text-muted-foreground">
+                    Create an account to backup and sync your data across all your devices.
+                    Your local data will be preserved and migrated.
+                  </p>
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      onClick={() => navigate({ to: "/register" })}
+                      className="flex-1 gap-2"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Create Account
+                    </Button>
+                    <Button
+                      onClick={() => navigate({ to: "/login" })}
+                      variant="outline"
+                      className="flex-1 gap-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      Log In
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Data Management Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="w-5 h-5" />
+              Data Management
+            </CardTitle>
+            <CardDescription>Manage your application data.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {hasSampleData() && (
+              <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                <div className="flex items-center gap-2">
+                  <Database className="w-5 h-5 text-primary" />
+                  <p className="font-medium">Sample Data Loaded</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  You're using sample data to explore features. You can reset or clear it anytime.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    setResettingSampleData(true);
+                    try {
+                      clearAllSampleData();
+                      const result = loadAllSampleData();
+                      toast.success(
+                        `Sample data reset! Loaded ${result.tasksCount} tasks, ${result.habitsCount} habits, and more.`
+                      );
+                    } catch (error) {
+                      toast.error("Failed to reset sample data");
+                    } finally {
+                      setResettingSampleData(false);
+                    }
+                  }}
+                  disabled={resettingSampleData}
+                  className="gap-2"
+                >
+                  <RefreshCw className={`w-4 h-4 ${resettingSampleData ? 'animate-spin' : ''}`} />
+                  Reset Sample Data
+                </Button>
               </div>
-              <div className="pt-4 border-t">
-                <Button variant="outline">Manage Profile</Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+
+            <div className="space-y-2">
+              <Button
+                variant="destructive"
+                onClick={() => setClearDataDialogOpen(true)}
+                className="w-full gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear All Data
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                This will permanently delete all your tasks, habits, weight logs, and workout logs.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Appearance Section */}
         <Card>
@@ -160,6 +302,7 @@ export default function SettingsPage() {
 
                     if (update) {
                       toast.success(`Update found: ${update.version}`);
+                      const { confirm } = await import("@tauri-apps/plugin-dialog");
                       const shouldUpdate = await confirm(`Update to ${update.version} is available!\n\nRelease notes: ${update.body}`, { title: "Update Available", kind: 'info' });
 
                       if (shouldUpdate) {
@@ -199,6 +342,54 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Clear Data Confirmation Dialog */}
+      <Dialog open={clearDataDialogOpen} onOpenChange={setClearDataDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear All Data?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete all of your:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-4">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 rounded-full bg-destructive"></div>
+              <span>Tasks and completed history</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 rounded-full bg-destructive"></div>
+              <span>Habits and streaks</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 rounded-full bg-destructive"></div>
+              <span>Weight logs and charts</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 rounded-full bg-destructive"></div>
+              <span>Workout logs and history</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setClearDataDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                clearAllSampleData();
+                setClearDataDialogOpen(false);
+                toast.success("All data cleared successfully");
+              }}
+            >
+              Clear All Data
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

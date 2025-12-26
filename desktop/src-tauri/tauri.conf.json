@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "SelfTracker",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "identifier": "com.alotfy.selftracker",
   "build": {
-    "beforeDevCommand": "bun run dev",
+    "beforeDevCommand": "/home/alotfy/.bun/bin/bun run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
+    "beforeBuildCommand": "/home/alotfy/.bun/bin/bun run build",
     "frontendDist": "../dist"
   },
   "app": {

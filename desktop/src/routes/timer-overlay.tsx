@@ -1,12 +1,8 @@
 import { useEffect, useCallback, useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { currentMonitor } from "@tauri-apps/api/window";
-import { LogicalPosition } from "@tauri-apps/api/dpi"; // Try importing from dpi
 import { useTimerStore } from "@/lib/store";
 import { Play, Pause, Maximize2, Move, Square, Pin, PinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { invoke } from "@tauri-apps/api/core";
 
 export default function TimerOverlayPage() {
   const { timeLeft, isRunning, startTimer, stopTimer, overlayPosition } = useTimerStore();
@@ -27,6 +23,7 @@ export default function TimerOverlayPage() {
 
   const handleStop = async () => {
     stopTimer();
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
     await getCurrentWindow().hide();
     import("@tauri-apps/api/event").then(({ emit }) => {
       emit("show-main-window");
@@ -34,68 +31,71 @@ export default function TimerOverlayPage() {
   };
 
   const handlePinToggle = async () => {
-    // const win = getCurrentWindow();
     const newState = !isPinned;
-    // Use Rust command for reliability on Linux
+    const { invoke } = await import("@tauri-apps/api/core");
     await invoke("toggle_pin", { pinned: newState });
     setIsPinned(newState);
   };
 
   const handleDragStart = useCallback(async (e: React.MouseEvent) => {
-    // Prevent default to avoid potential interference, but mainly trigger the rust drag
-    // e.preventDefault(); // Sometimes prevents the click, let's try without first or if needed.
-    // Actually standard way is just calling start_dragging
-    if (e.button === 0) { // Left click
+    if (e.button === 0) {
+      const { invoke } = await import("@tauri-apps/api/core");
       await invoke("start_drag");
     }
   }, []);
 
   useEffect(() => {
     const positionWindow = async () => {
-      const win = getCurrentWindow();
-      const monitor = await currentMonitor();
-      if (!monitor) return;
+      try {
+        const { getCurrentWindow, currentMonitor } = await import("@tauri-apps/api/window");
+        const { LogicalPosition } = await import("@tauri-apps/api/dpi");
 
-      const screenWidth = monitor.size.width; // Physical
-      const screenHeight = monitor.size.height; // Physical
-      const scale = monitor.scaleFactor;
+        const win = getCurrentWindow();
+        const monitor = await currentMonitor();
+        if (!monitor) return;
 
-      // Window size (Logical 300x50) -> Physical
-      const winWidth = 300 * scale;
-      const winHeight = 50 * scale;
-      const padding = 20 * scale;
+        const screenWidth = monitor.size.width;
+        const screenHeight = monitor.size.height;
+        const scale = monitor.scaleFactor;
 
-      let x = 0;
-      let y = 0;
+        const winWidth = 300 * scale;
+        const winHeight = 50 * scale;
+        const padding = 20 * scale;
 
-      switch (overlayPosition) {
-        case "top-left":
-          x = padding;
-          y = padding;
-          break;
-        case "top-center":
-          x = (screenWidth - winWidth) / 2;
-          y = padding;
-          break;
-        case "top-right":
-          x = screenWidth - winWidth - padding;
-          y = padding;
-          break;
-        case "bottom-right":
-          x = screenWidth - winWidth - padding;
-          y = screenHeight - winHeight - padding;
-          break;
-        case "bottom-center":
-          x = (screenWidth - winWidth) / 2;
-          y = screenHeight - winHeight - padding;
-          break;
-        case "bottom-left":
-          x = padding;
-          y = screenHeight - winHeight - padding;
-          break;
+        let x = 0;
+        let y = 0;
+
+        switch (overlayPosition) {
+          case "top-left":
+            x = padding;
+            y = padding;
+            break;
+          case "top-center":
+            x = (screenWidth - winWidth) / 2;
+            y = padding;
+            break;
+          case "top-right":
+            x = screenWidth - winWidth - padding;
+            y = padding;
+            break;
+          case "bottom-right":
+            x = screenWidth - winWidth - padding;
+            y = screenHeight - winHeight - padding;
+            break;
+          case "bottom-center":
+            x = (screenWidth - winWidth) / 2;
+            y = screenHeight - winHeight - padding;
+            break;
+          case "bottom-left":
+            x = padding;
+            y = screenHeight - winHeight - padding;
+            break;
+        }
+
+        await win.setPosition(new LogicalPosition(x / scale, y / scale));
+      } catch (err) {
+        console.log('Tauri window API not available');
       }
-
-      await win.setPosition(new LogicalPosition(x / scale, y / scale));
     };
 
     positionWindow();

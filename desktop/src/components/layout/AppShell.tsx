@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { LayoutDashboard, Settings, Minimize2, LogOut, LogIn, Timer, Dumbbell, Scale, CalendarCheck, ListTodo } from "lucide-react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
@@ -162,7 +162,10 @@ export function AppShell() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => getCurrentWindow().hide()}
+              onClick={async () => {
+                const { getCurrentWindow } = await import("@tauri-apps/api/window");
+                getCurrentWindow().hide();
+              }}
               title="Minimize to Tray"
               className="h-8 w-8 hover:bg-muted"
             >

@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { check } from '@tauri-apps/plugin-updater';
-import { relaunch } from '@tauri-apps/plugin-process';
 import { toast } from 'sonner';
 
 export function AppUpdater() {
@@ -11,8 +9,17 @@ export function AppUpdater() {
       if (checking) return;
 
       try {
+        if (typeof window === 'undefined' || !('__TAURI__' in window)) {
+          console.log('[Updater] Not running in Tauri environment, skipping update check');
+          return;
+        }
+
         console.log('[Updater] Checking for updates...');
         setChecking(true);
+
+        const { check } = await import('@tauri-apps/plugin-updater');
+        const { relaunch } = await import('@tauri-apps/plugin-process');
+
         const update = await check();
 
         if (update) {
@@ -75,3 +82,4 @@ export function AppUpdater() {
 
   return null;
 }
+

@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useTimerStore } from "@/lib/store";
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 export function TimerController() {
   const { tick, isRunning } = useTimerStore();
@@ -22,6 +21,7 @@ export function TimerController() {
   useEffect(() => {
     const manageWindow = async () => {
       try {
+        const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
         const overlayLabel = "timer-overlay";
         const overlay = await WebviewWindow.getByLabel(overlayLabel);
         const { isOverlayVisible } = useTimerStore.getState();

@@ -1,4 +1,3 @@
-import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 
 export async function waitForDeepLink() {
   console.log("[ExternalAuth] Waiting for deep link callback...");
@@ -7,6 +6,7 @@ export async function waitForDeepLink() {
     let unlisten: (() => void) | null = null;
 
     try {
+      const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
       unlisten = await onOpenUrl((urls) => {
         console.log("[ExternalAuth] Deep link received:", urls);
         for (const url of urls) {

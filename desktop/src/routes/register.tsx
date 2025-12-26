@@ -8,7 +8,6 @@ import { Link, useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 import { Github } from "lucide-react"
 import { waitForDeepLink } from "@/lib/external-auth"
-import { open } from "@tauri-apps/plugin-shell"
 import { API_BASE_URL } from "@/lib/api"
 
 export default function RegisterPage() {
@@ -113,6 +112,7 @@ export default function RegisterPage() {
                     });
 
                     if (result.data?.url) {
+                      const { open } = await import("@tauri-apps/plugin-shell");
                       await open(result.data.url);
                       const authResult = await waitForDeepLink();
 
@@ -160,6 +160,7 @@ export default function RegisterPage() {
                     });
 
                     if (result.data?.url) {
+                      const { open } = await import("@tauri-apps/plugin-shell");
                       await open(result.data.url);
                       const authResult = await waitForDeepLink();
 

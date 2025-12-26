@@ -8,7 +8,6 @@ import { Link } from "@tanstack/react-router"
 import { toast } from "sonner"
 import { Github } from "lucide-react"
 import { waitForDeepLink } from "@/lib/external-auth"
-import { open } from "@tauri-apps/plugin-shell"
 import { API_BASE_URL } from "@/lib/api"
 
 export default function LoginPage() {
@@ -104,6 +103,7 @@ export default function LoginPage() {
 
                     if (result.data?.url) {
                       console.log("[Login] Opening Google OAuth in system browser:", result.data.url);
+                      const { open } = await import("@tauri-apps/plugin-shell");
                       await open(result.data.url);
 
                       const authResult = await waitForDeepLink();
@@ -154,6 +154,7 @@ export default function LoginPage() {
 
                     if (result.data?.url) {
                       console.log("[Login] Opening GitHub OAuth in system browser:", result.data.url);
+                      const { open } = await import("@tauri-apps/plugin-shell");
                       await open(result.data.url);
 
                       const authResult = await waitForDeepLink();
