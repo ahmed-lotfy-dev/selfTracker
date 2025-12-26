@@ -8,6 +8,13 @@
       "when": 1766404241226,
       "tag": "0006_luxuriant_prowler",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1766762939012,
+      "tag": "0007_peaceful_bushwacker",
+      "breakpoints": true
     }
   ]
 }

@@ -15,6 +15,10 @@ import electricRouter from "./routes/electric.js"
 import desktopCallbackRouter from "./routes/desktopCallback.js"
 import { auth } from "../lib/auth.js"
 import { authMiddleware } from "./middlewares/authMiddleware.js"
+import { Scalar } from '@scalar/hono-api-reference'
+import { createMarkdownFromOpenApi } from '@scalar/openapi-to-markdown'
+import { openApiSpec } from "./docs/openapi.js"
+
 
 const app = new Hono<{
   Variables: {
@@ -71,6 +75,27 @@ app.route("/api/image", uploadRouter)
 app.route("/api/electric", electricRouter)
 
 app.route("/api", desktopCallbackRouter)
+
+// API Reference & Documentation
+app.get('/doc', (c) => c.json(openApiSpec))
+
+app.get(
+  '/scalar',
+  Scalar({
+    url: '/doc',
+    theme: 'purple',
+    pageTitle: 'SelfTracker API Reference'
+  })
+)
+
+app.get('/llms.txt', async (c) => {
+  try {
+    const markdown = await createMarkdownFromOpenApi(JSON.stringify(openApiSpec))
+    return c.text(markdown)
+  } catch (e: any) {
+    return c.text(`Error generating documentation: ${e.message}`, 500)
+  }
+})
 
 app.get("/", async (c) => {
   return c.json({ message: "Hello world" })
