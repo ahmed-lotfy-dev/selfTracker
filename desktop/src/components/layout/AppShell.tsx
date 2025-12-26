@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, Settings, Minimize2, LogOut, LogIn, Timer, Dumbbell, Scale, CalendarCheck } from "lucide-react";
+import { LayoutDashboard, Settings, Minimize2, LogOut, LogIn, Timer, Dumbbell, Scale, CalendarCheck, ListTodo } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,11 @@ export function AppShell() {
       label: "Dashboard",
       icon: LayoutDashboard,
     },
-    // Tasks temporarily disabled
-    // {
-    //   to: "/tasks",
-    //   label: "Tasks",
-    //   icon: ListTodo,
-    // },
+    {
+      to: "/tasks",
+      label: "Tasks",
+      icon: ListTodo,
+    },
     {
       to: "/timers",
       label: "Timers",
@@ -61,7 +60,7 @@ export function AppShell() {
       {/* Sidebar */}
       <aside className="w-64 border-r bg-card flex flex-col">
         <div className="h-14 flex items-center px-4 border-b">
-          <span className="font-bold text-lg tracking-tight flex items-center gap-2">
+          <span className="font-bold text-lg tracking-tight flex items-center gap-2 font-orbitron">
             <span className="bg-primary text-primary-foreground p-1 rounded">ST</span> SelfTracker
           </span>
         </div>

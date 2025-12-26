@@ -19,7 +19,7 @@ import SettingsPage from "./routes/settings";
 import WorkoutsPage from "./routes/workouts";
 import WeightPage from "./routes/weight";
 import HabitsPage from "./routes/habits";
-// import TasksPage from "./features/tasks/TasksPage"; // Temporarily disabled
+import TasksPage from "./routes/tasks";
 import TimersPage from "./routes/timers";
 import TimerOverlayPage from "./routes/timer-overlay";
 import OnboardingPage from "./routes/onboarding";
@@ -108,12 +108,11 @@ const habitsRoute = createRoute({
   component: HabitsPage,
 });
 
-// Tasks route temporarily disabled
-// const tasksRoute = createRoute({
-//   getParentRoute: () => shellRoute,
-//   path: "/tasks",
-//   component: TasksPage,
-// });
+const tasksRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/tasks",
+  component: TasksPage,
+});
 
 const timersRoute = createRoute({
   getParentRoute: () => shellRoute,
@@ -159,7 +158,7 @@ const routeTree = rootRoute.addChildren([
     workoutsRoute,
     weightRoute,
     habitsRoute,
-    // tasksRoute, // TEMPORARILY DISABLED
+    tasksRoute,
     timersRoute,
 
   ]),

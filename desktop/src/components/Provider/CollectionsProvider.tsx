@@ -1,7 +1,9 @@
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { createCollection } from '@tanstack/react-db';
 import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import { _setCollections } from '@/db/collections';
+import { useUserStore } from '@/lib/user-store';
+import { CollectionsContext } from './CollectionsContext';
 import {
   weightLogSchema,
   workoutLogSchema,
@@ -24,48 +26,103 @@ type Collections = {
   timerSessions: any;
 } | null;
 
-const CollectionsContext = createContext<Collections>(null);
-
 export function CollectionsProvider({ children }: { children: ReactNode }) {
   const [collections, setCollections] = useState<Collections>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check auth state
+    // Check auth state from our store
     const checkAuth = () => {
+      const userState = useUserStore.getState();
       const hasToken = !!localStorage.getItem("bearer_token");
-      setIsAuthenticated(hasToken);
+
+      if (hasToken && userState.isGuest) {
+        useUserStore.getState().setAuthenticated(localStorage.getItem("user_id") || "unknown");
+      } else if (!hasToken && !userState.isGuest) {
+        useUserStore.getState().setGuest();
+      }
     };
-
     checkAuth();
-
-    // Listen for storage changes (login/logout in other tabs)
     window.addEventListener('storage', checkAuth);
     return () => window.removeEventListener('storage', checkAuth);
   }, []);
 
+  const isGuest = useUserStore(state => state.isGuest);
+
   useEffect(() => {
-    console.log(`[CollectionsProvider] Initializing collections (authenticated: ${isAuthenticated})`)
+    console.log(`[CollectionsProvider] Initializing (isGuest: ${isGuest})`);
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
+    // --- "From Scratch" Local Collection Implementation ---
     const createLocalCollection = (id: string, schema: any) => {
-      console.log(`[${id}] Local-only mode`);
-      return createCollection({
+      console.log(`[${id}] Creating Local Collection (Manual Mode)`);
+      const key = `local_collection_${id}`;
+
+      // 1. Create the base collection (In-Memory)
+      const col = createCollection({
         id: id as any,
         schema: schema as any,
         getKey: (row: any) => row.id,
-        sync: {
-          sync: (params: any) => {
-            params.markReady();
-            return () => { };
+        // No sync config needed for pure local mode if we handle hydration manually clearly
+        sync: { sync: (p: any) => { p?.markReady?.(); return () => { }; } }
+      } as any);
+
+      // 2. Hydrate (Load from Disk synchronously)
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (Array.isArray(data)) {
+            // We use the internal 'upsert' to load data without triggering our own listeners if possible,
+            // or just let it be.
+            (col as any).upsert(data);
+            console.log(`[${id}] Hydrated ${data.length} items`);
           }
         }
-      } as any);
+      } catch (err) {
+        console.error(`[${id}] Failed to load local data`, err);
+      }
+
+      // 3. Override Actions (The "Action Layer")
+      // We manually wrap the methods to ensure they execute AND save.
+
+      // Capture original methods bound to the instance
+      const _insert = col.insert.bind(col);
+      const _update = col.update.bind(col);
+      // const _remove = col.remove.bind(col); // If we implement delete later
+
+      // Override INSERT
+      col.insert = (data: any) => {
+        console.log(`[${id}] Action: Insert`, data);
+
+        // A. Update In-Memory (Triggers UI)
+        const result = _insert(data);
+
+        // B. Save to Disk
+        try {
+          const currentRaw = localStorage.getItem(key);
+          const current = currentRaw ? JSON.parse(currentRaw) : [];
+          current.push(data);
+          localStorage.setItem(key, JSON.stringify(current));
+        } catch (e) { console.error(`[${id}] Failed to save insert`, e); }
+
+        return result;
+      };
+
+      // Override UPDATE
+      col.update = (keyToUpdate: any, callback: any) => {
+        console.log(`[${id}] Action: Update`, keyToUpdate);
+
+        // Just pass through to TanStack DB (for authenticated users with Electric sync)
+        // Guest mode uses Zustand stores, not this collection
+        return _update(keyToUpdate, callback);
+      };
+
+      return col;
     };
 
     const createElectricCollection = (table: string, schema: any) => {
-      console.log(`[${table}] Electric sync mode`);
+      // (Electric code logic remains similar but separated)
       return createCollection(
         electricCollectionOptions({
           id: table as any,
@@ -73,35 +130,43 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
           getKey: (row: any) => row.id,
           shapeOptions: {
             url: `${backendUrl}/api/electric/v1/shape`,
-            params: {
-              table: table,
-            },
+            params: { table },
           },
         })
       );
     };
 
-    const createCollectionFn = isAuthenticated ? createElectricCollection : createLocalCollection;
+    // Use our manual local collection if guest
+    const createFn = !isGuest ? createElectricCollection : createLocalCollection;
 
     const newCollections = {
-      tasks: createCollectionFn('tasks', taskSchema),
-      weightLogs: createCollectionFn('weight_logs', weightLogSchema),
-      workoutLogs: createCollectionFn('workout_logs', workoutLogSchema),
-      expenses: createCollectionFn('expenses', expenseSchema),
-      workouts: createCollectionFn('workouts', workoutSchema),
-      userGoals: createCollectionFn('user_goals', userGoalSchema),
-      exercises: createCollectionFn('exercises', exerciseSchema),
-      timerSessions: createCollectionFn('timer_sessions', timerSessionSchema),
+      tasks: createFn('tasks', taskSchema),
+      weightLogs: createFn('weight_logs', weightLogSchema),
+      workoutLogs: createFn('workout_logs', workoutLogSchema),
+      expenses: createFn('expenses', expenseSchema),
+      workouts: createFn('workouts', workoutSchema),
+      userGoals: createFn('user_goals', userGoalSchema),
+      exercises: createFn('exercises', exerciseSchema),
+      timerSessions: createFn('timer_sessions', timerSessionSchema),
     };
 
-    console.log('[CollectionsProvider] Collections initialized:', Object.keys(newCollections))
+    console.log('[CollectionsProvider] Collections initialized:', Object.keys(newCollections));
     setCollections(newCollections);
     _setCollections(newCollections);
-  }, [isAuthenticated]);
+
+    // Trigger Migration if we just logged in (transitioned from guest to auth)
+    if (!isGuest) {
+      const userId = useUserStore.getState().userId;
+      if (userId && userId !== 'local') {
+        import('@/lib/migration').then(({ migrateLocalData }) => {
+          // Basic check to ensure we have collections
+          if (newCollections) migrateLocalData(newCollections, userId);
+        });
+      }
+    }
+  }, [isGuest]);
 
   if (!collections) {
-    // If we're in the timer overlay, don't show the initialization splash
-    // to prevent the "new app instance" flicker.
     if (window.location.pathname === '/timer-overlay') {
       return null;
     }
@@ -121,8 +186,4 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
       {children}
     </CollectionsContext.Provider>
   );
-}
-
-export function useCollections() {
-  return useContext(CollectionsContext);
 }

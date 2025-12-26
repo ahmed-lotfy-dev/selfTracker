@@ -1,4 +1,4 @@
-export { useCollections } from '@/components/Provider/CollectionsProvider';
+export { useCollections } from '@/components/Provider/CollectionsContext';
 
 // Internal storage for collections set by provider
 

@@ -16,6 +16,7 @@ export type OverlayPosition =
 
 interface TimerState {
   timeLeft: number;
+  duration: number;
   isRunning: boolean;
   isOverlayVisible: boolean;
   mode: keyof typeof MODES;
@@ -51,16 +52,22 @@ export const useTimerStore = create<TimerState>((set, get) => {
 
   return {
     timeLeft: 25 * 60,
+    duration: 25 * 60,
     isRunning: false,
     isOverlayVisible: false,
     mode: "pomodoro",
-    overlayPosition: "top-right",
+    overlayPosition: "top-center",
 
     setTimeLeft: (timeLeft) => {
       set({ timeLeft });
     },
 
     startTimer: () => {
+      const { timeLeft, duration } = get();
+      if (timeLeft <= 0) {
+        set({ timeLeft: duration });
+        syncState({ timeLeft: duration });
+      }
       set({ isRunning: true, isOverlayVisible: true });
       syncState({ isRunning: true, isOverlayVisible: true });
     },
@@ -89,20 +96,20 @@ export const useTimerStore = create<TimerState>((set, get) => {
     resetTimer: (mode) => {
       const targetMode = mode || get().mode;
       const newTime = MODES[targetMode].minutes * 60;
-      set({ isRunning: false, timeLeft: newTime, mode: targetMode });
-      syncState({ isRunning: false, timeLeft: newTime, mode: targetMode });
+      set({ isRunning: false, timeLeft: newTime, duration: newTime, mode: targetMode });
+      syncState({ isRunning: false, timeLeft: newTime, duration: newTime, mode: targetMode });
     },
 
     setMode: (mode) => {
       const newTime = MODES[mode].minutes * 60;
-      set({ mode, timeLeft: newTime, isRunning: false });
-      syncState({ mode, timeLeft: newTime, isRunning: false });
+      set({ mode, timeLeft: newTime, duration: newTime, isRunning: false });
+      syncState({ mode, timeLeft: newTime, duration: newTime, isRunning: false });
     },
 
     setCustomTime: (minutes) => {
       const seconds = minutes * 60;
-      set({ timeLeft: seconds, isRunning: false });
-      syncState({ timeLeft: seconds, isRunning: false });
+      set({ timeLeft: seconds, duration: seconds, isRunning: false });
+      syncState({ timeLeft: seconds, duration: seconds, isRunning: false });
     },
 
     setOverlayVisible: (isOverlayVisible) => {
@@ -163,7 +170,13 @@ export const useTimerStore = create<TimerState>((set, get) => {
 
         // Show notification
         try {
-          new Notification("Timer Finished", { body: "Your focus session is complete!" });
+          import("@tauri-apps/plugin-notification").then(({ sendNotification }) => {
+            sendNotification({
+              title: "Time to Break!",
+              body: "Your focus session is finished. Take a moment to breathe.",
+              sound: "default",
+            });
+          });
         } catch (e) {
           console.error("Failed to show notification", e);
         }
