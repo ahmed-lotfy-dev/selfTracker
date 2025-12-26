@@ -141,3 +141,17 @@ export const timerSessionSchema = z.object({
   updated_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
   deleted_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
 });
+
+export const habitSchema = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  name: z.string(),
+  description: z.string().optional().nullable(),
+  streak: z.number().default(0),
+  color: z.string().default("#000000"),
+  completed_today: z.union([z.boolean(), z.number()]).transform(v => !!v).default(false),
+  last_completed_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
+  created_at: z.union([z.string(), z.number(), z.date()]),
+  updated_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
+  deleted_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
+});

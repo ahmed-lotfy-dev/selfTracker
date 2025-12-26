@@ -13,6 +13,7 @@ export let workoutCollection: any = null;
 export let projectCollection: any = null;
 export let userGoalCollection: any = null;
 export let exerciseCollection: any = null;
+export let habitCollection: any = null;
 
 // Called by CollectionsProvider to update collections
 export function _setCollections(collections: any) {
@@ -27,4 +28,5 @@ export function _setCollections(collections: any) {
   projectCollection = collections.projects;
   userGoalCollection = collections.userGoals;
   exerciseCollection = collections.exercises;
+  habitCollection = collections.habits;
 }

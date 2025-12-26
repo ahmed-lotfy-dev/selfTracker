@@ -18,7 +18,7 @@ export default function CustomDrawerContent(props: any) {
     { label: "Weights", icon: "weight", route: "/weights", type: "font-awesome-5" },
     { label: "Workouts", icon: "dumbbell", route: "/workouts", type: "font-awesome-5" },
     { label: "Tasks", icon: "check-square", route: "/tasks", type: "feather" },
-    { label: "Projects", icon: "folder", route: "/projects", type: "feather", pending: true },
+    { label: "Habits", icon: "repeat", route: "/habits", type: "feather" },
     { label: "Finances", icon: "dollar-sign", route: "/finances", type: "feather", pending: true },
     { label: "Focus Timer", icon: "clock", route: "/focus", type: "feather", pending: true },
     { label: "Profile", icon: "user", route: "/profile", type: "feather" },

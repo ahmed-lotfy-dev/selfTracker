@@ -3,13 +3,14 @@ import {
   Text,
   View,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native"
 import { Link, useRouter, Redirect } from "expo-router"
 import { useAuthStore } from "@/src/features/auth/useAuthStore"
 import { signIn } from "@/src/lib/api/authApi"
 import * as SecureStore from "expo-secure-store"
 import { signInSchema } from "@/src/types/userType"
-import { KeyboardAvoidingView } from "react-native-keyboard-controller"
+
 import { SocialLoginButtons } from "@/src/components/features/auth/SocialLoginButtons"
 import Input from "@/src/components/ui/Input"
 import Button from "@/src/components/ui/Button"

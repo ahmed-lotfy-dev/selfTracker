@@ -140,6 +140,7 @@ export const useAuth = () => {
   const user = useAuthStore((state) => state.user)
   const token = useAuthStore((state) => state.token)
   const isLoading = useAuthStore((state) => state.isLoading)
+  const logout = useAuthStore((state) => state.logout)
   const isAuthenticated = useAuthStore((state) => !!state.user && !!state.token)
 
   return {
@@ -148,6 +149,7 @@ export const useAuth = () => {
     storeId: user?.id ?? 'anonymous',
     isAuthenticated,
     isLoading,
+    logout,
   }
 }
 

@@ -3,9 +3,8 @@ module.exports = {
   // NOTE: Update this to include the paths to all of your component files.
   content: [
     "./src/app/**/*.{js,jsx,ts,tsx}",
-    "./src/app/**/*.{js,jsx,ts,tsx}",
     "./src/components/**/*.{js,jsx,ts,tsx}",
-    "./src/components/features/**/*.{js,jsx,ts,tsx}",
+    "./src/features/**/*.{js,jsx,ts,tsx}",
     "./src/*.{js,ts,jsx,tsx}",
   ],
   presets: [require("uniwind/preset")],

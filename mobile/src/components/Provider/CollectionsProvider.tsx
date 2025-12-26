@@ -15,6 +15,7 @@ import {
   userGoalSchema,
   exerciseSchema,
   timerSessionSchema,
+  habitSchema,
 } from '@/src/db/schema';
 
 const getApiBase = () => {
@@ -34,6 +35,7 @@ type Collections = {
   userGoals: any;
   exercises: any;
   timerSessions: any;
+  habits: any;
 } | null;
 
 const CollectionsContext = createContext<Collections>(null);
@@ -469,6 +471,57 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             axiosInstance.post(`${API_BASE}/timer/sessions`, apiData)
               .then(resp => console.log('[Collections] Timer sync success:', resp.data))
               .catch(error => console.warn('[Collections] Timer sync failed:', error.message))
+            return undefined;
+          }
+        })
+      ),
+      habits: createCollection(
+        electricCollectionOptions({
+          id: 'habits',
+          schema: habitSchema,
+          getKey: (row) => row.id,
+          shapeOptions: {
+            url: getUrl('/electric/habits'),
+            headers: getHeaders()
+          },
+          onInsert: async ({ transaction }) => {
+            const data: any = { ...transaction.mutations[0].modified };
+            if (!data.id) data.id = crypto.randomUUID();
+            const apiData = {
+              id: data.id,
+              userId: data.user_id,
+              name: data.name,
+              streak: data.streak,
+              color: data.color,
+              completedToday: Boolean(data.completed_today),
+              lastCompletedAt: data.last_completed_at,
+              createdAt: data.created_at,
+              updatedAt: data.updated_at,
+            };
+            axiosInstance.post(`${API_BASE}/habits`, apiData)
+              .then(resp => console.log('[Collections] Habit sync success:', resp.data))
+              .catch(error => console.warn('[Collections] Habit sync failed:', error.message))
+            return undefined;
+          },
+          onUpdate: async ({ transaction }) => {
+            const mod: any = transaction.mutations[0].modified;
+            const apiData: Record<string, any> = {};
+            if (mod.name !== undefined) apiData.name = mod.name;
+            if (mod.streak !== undefined) apiData.streak = mod.streak;
+            if (mod.completed_today !== undefined) apiData.completedToday = Boolean(mod.completed_today);
+            if (mod.last_completed_at !== undefined) apiData.lastCompletedAt = mod.last_completed_at;
+            if (mod.updated_at !== undefined) apiData.updatedAt = mod.updated_at;
+
+            axiosInstance.patch(`${API_BASE}/habits/${transaction.mutations[0].original.id}`, apiData)
+              .then(resp => console.log('[Collections] Habit update success:', resp.data))
+              .catch(error => console.warn('[Collections] Habit update failed:', error.message))
+            return undefined;
+          },
+          onDelete: async ({ transaction }) => {
+            const original = transaction.mutations[0].original;
+            axiosInstance.delete(`${API_BASE}/habits/${original.id}`)
+              .then(resp => console.log('[Collections] Habit delete success:', resp.data))
+              .catch(error => console.warn('[Collections] Habit delete failed:', error.message))
             return undefined;
           }
         })
