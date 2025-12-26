@@ -17,7 +17,7 @@ magick "$SOURCE" -resize 512x512 -define png:color-type=6 icon.png
 
 # Windows Square Logos
 magick "$SOURCE" -resize 30x30 -define png:color-type=6 Square30x30Logo.png
-magick "$SOURCE" -resize 44x44 -define png:color-type=6 Square44x44Logo.png
+magick "$SOURCE" -resize 44x44 -define png:color-type=6 Square44x44Logo.png 
 magick "$SOURCE" -resize 71x71 -define png:color-type=6 Square71x71Logo.png
 magick "$SOURCE" -resize 89x89 -define png:color-type=6 Square89x89Logo.png
 magick "$SOURCE" -resize 107x107 -define png:color-type=6 Square107x107Logo.png
