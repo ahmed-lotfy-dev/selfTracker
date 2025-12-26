@@ -38,6 +38,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: 📦 Setup Bun Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 🚇 Setup Metro Cache
+        uses: actions/cache@v4
+        with:
+          path: mobile/node_modules/.cache
+          key: ${{ runner.os }}-metro-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-metro-
+
       - name: 📦 Install dependencies
         run: bun install
 
@@ -49,6 +65,10 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           ORG_GRADLE_PROJECT_android.enableJetifier: true
           ORG_GRADLE_PROJECT_android.useAndroidX: true
+          ORG_GRADLE_PROJECT_org.gradle.caching: true
+          ORG_GRADLE_PROJECT_org.gradle.parallel: true
+          ORG_GRADLE_PROJECT_org.gradle.daemon: false
+          ORG_GRADLE_PROJECT_org.gradle.configureondemand: true
         run: |
           # Increase Gradle memory for CI
           export GRADLE_OPTS="-Xmx6g -XX:MaxMetaspaceSize=2g -XX:+HeapDumpOnOutOfMemoryError -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=2g'"
