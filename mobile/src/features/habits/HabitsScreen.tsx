@@ -75,98 +75,93 @@ export default function HabitsScreen() {
     : 0;
 
   return (
-    <View className="flex-1 bg-background px-2" style={{ backgroundColor: colors.background }}>
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="flex-1">
         {/* Header */}
         <Header
           title="Habits"
-          rightAction={
-            <Pressable
-              onPress={() => setModalVisible(true)}
-              className="w-10 h-10 bg-primary rounded-full items-center justify-center shadow-lg active:opacity-80"
-              style={{ backgroundColor: colors.primary }}
-            >
-              <Feather name="plus" size={24} color="#FFF" />
-            </Pressable>
-          }
           leftAction={<DrawerToggleButton />}
         />
 
-        {/* Progress Card */}
-        <View
-          className="bg-card border border-border p-5 rounded-2xl mb-6 shadow-sm mt-4"
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        >
-          <View className="flex-row justify-between items-center mb-4">
+        {/* Status Cards */}
+        <View className="px-4 mt-4">
+          <View
+            className="flex-row items-center justify-between p-4 rounded-2xl border mb-4 shadow-sm"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
             <View>
-              <Text className="text-xs font-bold text-placeholder uppercase tracking-widest mb-1" style={{ color: colors.placeholder }}>Daily Progress</Text>
-              <View className="flex-row items-center">
-                <Ionicons name="trophy" size={20} color="#EAB308" style={{ marginRight: 8 }} />
-                <Text className="text-3xl font-extrabold text-primary" style={{ color: colors.primary }}>{completionRate}%</Text>
+              <Text className="text-xs font-bold uppercase tracking-widest mb-1 opacity-70" style={{ color: colors.text }}>Daily Goals</Text>
+              <View className="flex-row items-baseline gap-1">
+                <Text className="text-3xl font-extrabold" style={{ color: colors.primary }}>{completionRate}%</Text>
+                <Text className="text-xs font-medium opacity-50" style={{ color: colors.text }}>completed</Text>
               </View>
             </View>
-            <View className="bg-primary/10 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${colors.primary}1A` }}>
-              <Text className="text-primary font-bold text-xs" style={{ color: colors.primary }}>
-                {habits.filter((h: any) => h.completedToday).length} / {habits.length} Done
-              </Text>
+
+            <View className="items-end">
+              <View className="flex-row items-center gap-1 bg-primary/10 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${colors.primary}15` }}>
+                <Feather name="check-circle" size={12} color={colors.primary} />
+                <Text className="text-xs font-bold" style={{ color: colors.primary }}>{habits.filter((h: any) => h.completedToday).length}/{habits.length}</Text>
+              </View>
             </View>
-          </View>
-          {/* Custom Progress Bar */}
-          <View className="h-2 bg-muted rounded-full overflow-hidden" style={{ backgroundColor: colors.border }}>
-            <View
-              className="h-full bg-primary rounded-full"
-              style={{ width: `${completionRate}%`, backgroundColor: colors.primary }}
-            />
           </View>
         </View>
 
-        {/* Habits List */}
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        {/* Habits Grid */}
+        <ScrollView
+          className="flex-1 px-4"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        >
           {habits.length === 0 ? (
-            <View className="items-center justify-center py-10 border-2 border-dashed border-border rounded-2xl bg-card/50" style={{ borderColor: colors.border, backgroundColor: `${colors.card}80` }}>
-              <View className="bg-muted p-4 rounded-full mb-4" style={{ backgroundColor: colors.border }}>
-                <Ionicons name="trophy-outline" size={32} color={colors.placeholder} />
+            <View className="items-center justify-center py-16 border-2 border-dashed rounded-2xl opacity-50" style={{ borderColor: colors.border }}>
+              <View className="w-16 h-16 rounded-full items-center justify-center mb-4" style={{ backgroundColor: `${colors.primary}10` }}>
+                <Ionicons name="sparkles" size={32} color={colors.primary} />
               </View>
-              <Text className="text-lg font-semibold text-text mb-1" style={{ color: colors.text }}>No habits yet</Text>
-              <Text className="text-placeholder text-center px-8" style={{ color: colors.placeholder }}>Create your first habit to start tracking.</Text>
+              <Text className="text-lg font-bold mb-1" style={{ color: colors.text }}>No habits yet</Text>
+              <Text className="text-sm text-center px-8 opacity-60" style={{ color: colors.text }}>Start building your streak today!</Text>
             </View>
           ) : (
-            <View className="gap-4">
+            <View className="gap-3">
               {habits.map((habit: any) => (
                 <Pressable
                   key={habit.id}
                   onPress={() => toggleHabit(habit)}
-                  className={`bg-card border p-4 rounded-xl flex-row items-center justify-between active:opacity-90 ${habit.completedToday ? 'border-primary/50 bg-primary/5' : 'border-border'}`}
+                  className="rounded-2xl border p-4 flex-row items-center justify-between"
                   style={{
-                    backgroundColor: habit.completedToday ? `${colors.primary}0D` : colors.card,
-                    borderColor: habit.completedToday ? `${colors.primary}80` : colors.border
+                    backgroundColor: colors.card,
+                    borderColor: habit.completedToday ? colors.primary : colors.border,
+                    opacity: habit.completedToday ? 0.9 : 1
                   }}
                 >
                   <View className="flex-1 mr-4">
-                    <Text className={`text-lg font-bold mb-1 ${habit.completedToday ? 'text-primary' : 'text-text'}`} style={{ color: habit.completedToday ? colors.primary : colors.text }}>
-                      {habit.name}
-                    </Text>
-                    <View className="flex-row items-center">
-                      <View
-                        className={`flex-row items-center px-2 py-0.5 rounded-full mr-2 ${habit.streak > 0 ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-muted'}`}
-                        style={{ backgroundColor: habit.streak > 0 ? '#ffedd5' : colors.border }}
-                      >
-                        <FontAwesome5 name="fire" size={10} color={habit.streak > 0 ? "#F97316" : colors.placeholder} style={{ marginRight: 4 }} />
-                        <Text className={`text-xs font-bold ${habit.streak > 0 ? 'text-orange-500' : 'text-placeholder'}`} style={{ color: habit.streak > 0 ? '#F97316' : colors.placeholder }}>
-                          {habit.streak} Day Streak
+                    <View className="flex-row items-baseline justify-between mb-2">
+                      <Text className="text-base font-bold" style={{ color: colors.text, textDecorationLine: habit.completedToday ? 'line-through' : 'none', opacity: habit.completedToday ? 0.5 : 1 }}>
+                        {habit.name}
+                      </Text>
+
+                      {/* Streak Badge */}
+                      <View className="flex-row items-center gap-1 px-2 py-0.5 rounded-md" style={{ backgroundColor: habit.streak > 0 ? '#ffedd5' : colors.border }}>
+                        <FontAwesome5 name="fire" size={10} color={habit.streak > 0 ? "#F97316" : colors.placeholder} />
+                        <Text className="text-[10px] font-bold" style={{ color: habit.streak > 0 ? '#F97316' : colors.placeholder }}>
+                          {habit.streak}
                         </Text>
                       </View>
                     </View>
+
+                    <Text className="text-xs opacity-50 line-clamp-1" style={{ color: colors.text }}>
+                      {habit.completedToday ? 'Completed today!' : 'Tap to complete'}
+                    </Text>
                   </View>
 
+                  {/* Checkbox */}
                   <View
-                    className={`h-8 w-8 rounded-full items-center justify-center border-2 ${habit.completedToday ? 'bg-primary border-primary' : 'border-placeholder bg-transparent'}`}
+                    className="w-8 h-8 rounded-full items-center justify-center border-2"
                     style={{
-                      backgroundColor: habit.completedToday ? colors.primary : 'transparent',
-                      borderColor: habit.completedToday ? colors.primary : colors.placeholder
+                      borderColor: habit.completedToday ? colors.primary : colors.border,
+                      backgroundColor: habit.completedToday ? colors.primary : 'transparent'
                     }}
                   >
-                    {habit.completedToday && <Feather name="check" size={18} color="#FFF" strokeWidth={3} />}
+                    {habit.completedToday && <Feather name="check" size={16} color="#FFF" strokeWidth={4} />}
                   </View>
                 </Pressable>
               ))}
@@ -174,49 +169,60 @@ export default function HabitsScreen() {
           )}
         </ScrollView>
 
+        {/* FAB */}
+        <Pressable
+          onPress={() => setModalVisible(true)}
+          className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center shadow-lg active:scale-95 transition-transform"
+          style={{ backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 }}
+        >
+          <Feather name="plus" size={28} color="#FFF" />
+        </Pressable>
+
         {/* Create Modal */}
         <Modal
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           visible={isModalVisible}
           onRequestClose={() => setModalVisible(false)}
         >
-          <View className="flex-1 justify-end bg-black/50">
-            <View className="bg-card rounded-t-3xl p-6 h-[40%]" style={{ backgroundColor: colors.card }}>
+          <Pressable onPress={() => setModalVisible(false)} className="flex-1 bg-black/60 justify-center px-4">
+            <Pressable onPress={(e) => e.stopPropagation()} className="bg-card rounded-3xl p-6 shadow-xl" style={{ backgroundColor: colors.card }}>
               <View className="flex-row justify-between items-center mb-6">
-                <Text className="text-xl font-bold text-text font-orbitron" style={{ color: colors.text }}>Create New Habit</Text>
-                <Pressable onPress={() => setModalVisible(false)}>
+                <Text className="text-xl font-bold font-orbitron" style={{ color: colors.text }}>New Habit</Text>
+                <Pressable onPress={() => setModalVisible(false)} className="p-2 -mr-2">
                   <Ionicons name="close" size={24} color={colors.text} />
                 </Pressable>
               </View>
 
-              <Text className="text-text font-medium mb-2" style={{ color: colors.text }}>Name</Text>
-              <TextInput
-                value={newHabitName}
-                onChangeText={setNewHabitName}
-                placeholder="e.g. Read 10 pages"
-                placeholderTextColor={colors.placeholder}
-                className="bg-muted p-4 rounded-xl text-text font-medium border border-border focus:border-primary mb-6"
-                style={{
-                  backgroundColor: colors.border, // Muted fallback
-                  color: colors.text,
-                  borderColor: colors.border
-                }}
-                autoFocus
-              />
+              <View className="mb-6">
+                <Text className="text-sm font-bold mb-2 ml-1 opacity-70" style={{ color: colors.text }}>NAME</Text>
+                <TextInput
+                  value={newHabitName}
+                  onChangeText={setNewHabitName}
+                  placeholder="e.g. Read 30 mins"
+                  placeholderTextColor={colors.placeholder}
+                  className="p-4 rounded-xl border font-medium text-base"
+                  style={{
+                    backgroundColor: colors.background,
+                    color: colors.text,
+                    borderColor: colors.border
+                  }}
+                  autoFocus
+                />
+              </View>
 
               <Pressable
                 onPress={handleCreate}
                 disabled={!newHabitName.trim()}
-                className={`w-full py-4 rounded-xl items-center ${!newHabitName.trim() ? 'bg-muted' : 'bg-primary'}`}
+                className="w-full py-4 rounded-xl items-center shadow-sm active:scale-[0.99]"
                 style={{ backgroundColor: !newHabitName.trim() ? colors.border : colors.primary }}
               >
-                <Text className={`font-bold text-lg ${!newHabitName.trim() ? 'text-placeholder' : 'text-white'}`} style={{ color: !newHabitName.trim() ? colors.placeholder : '#FFF' }}>
+                <Text className="font-bold text-base" style={{ color: !newHabitName.trim() ? colors.placeholder : '#FFF' }}>
                   Create Habit
                 </Text>
               </Pressable>
-            </View>
-          </View>
+            </Pressable>
+          </Pressable>
         </Modal>
       </View>
     </View>
