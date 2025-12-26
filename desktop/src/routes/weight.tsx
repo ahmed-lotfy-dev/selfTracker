@@ -2,33 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scale } from "lucide-react";
 import { formatLocal } from "@/lib/dateUtils";
 import { WeightChart } from "@/components/charts/WeightChart";
-import { useCollections } from "@/db/collections";
-import { useLiveQuery } from "@tanstack/react-db";
-import { LogWeightDialog } from "@/features/weight/components/LogWeightDialog";
+import { LogWeightDialog } from "@/features/weight/LogWeightDialog";
+import { useWeightLogsStore } from "@/stores/weight-logs-store";
 
 export default function WeightPage() {
-  const collections = useCollections();
+  const { weightLogs } = useWeightLogsStore();
 
-  if (!collections) return <div className="p-8">Initializing database...</div>;
+  // Sort by created_at descending (most recent first)
+  const sortedLogs = [...weightLogs].sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
-  return <WeightPageContent collections={collections} />;
-}
-
-function WeightPageContent({ collections }: { collections: any }) {
-  const { data: logs = [] } = useLiveQuery(
-    (q: any) => q.from({ w: collections.weightLogs })
-      .orderBy(({ w }: any) => w.created_at, 'DESC')
-      .select(({ w }: any) => ({
-        id: w.id,
-        weight: w.weight,
-        mood: w.mood,
-        energy: w.energy,
-        createdAt: w.created_at,
-        updatedAt: w.updated_at
-      }))
-  ) as unknown as { data: any[] } || { data: [] };
-
-  const currentWeight = logs[0]?.weight;
+  const currentWeight = sortedLogs[0]?.weight;
 
   return (
     <div className="p-8 space-y-6">
@@ -56,7 +41,7 @@ function WeightPageContent({ collections }: { collections: any }) {
             <CardTitle className="text-sm font-medium">Entries</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{logs.length}</div>
+            <div className="text-2xl font-bold">{weightLogs.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -67,7 +52,7 @@ function WeightPageContent({ collections }: { collections: any }) {
 
       <h2 className="text-xl font-semibold mt-8">Recent Logs</h2>
       <div className="space-y-4">
-        {logs.map((log: any) => (
+        {sortedLogs.map((log) => (
           <Card key={log.id}>
             <CardContent className="flex items-center justify-between p-6">
               <div>
@@ -82,12 +67,12 @@ function WeightPageContent({ collections }: { collections: any }) {
                 </div>
               </div>
               <div className="text-sm text-muted-foreground">
-                {formatLocal(log.createdAt)}
+                {formatLocal(log.created_at)}
               </div>
             </CardContent>
           </Card>
         ))}
-        {logs.length === 0 && (
+        {weightLogs.length === 0 && (
           <div className="text-center py-10 text-muted-foreground">No weight logs found.</div>
         )}
       </div>

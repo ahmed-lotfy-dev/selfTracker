@@ -2,42 +2,26 @@ import { useState, useMemo } from "react"
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PeriodSelector, type Period } from "./PeriodSelector"
-import { Loader2 } from "lucide-react"
-import { useCollections } from "@/db/collections"
-import { useLiveQuery } from "@tanstack/react-db"
 import { subMonths, isAfter, parseISO } from "date-fns"
+import { useWorkoutLogsStore } from "@/stores/workout-logs-store"
 
 export function WorkoutChart() {
   const [period, setPeriod] = useState<Period>(3)
-  const collections = useCollections();
-
-  // If collections is null, we are initializing.
-  const isLoading = !collections;
-
-  const { data: logs = [] } = useLiveQuery(
-    (q: any) => {
-      if (!collections?.workoutLogs) return q.from({ wl: [] }).select(() => ({}));
-      return q.from({ wl: collections.workoutLogs })
-        .select(({ wl }: any) => ({
-          name: wl.workout_name,
-          createdAt: wl.created_at
-        }));
-    }
-  ) as unknown as { data: any[] } || { data: [] };
+  const { workoutLogs } = useWorkoutLogsStore();
 
   const chartData = useMemo(() => {
-    if (!logs.length) return [];
+    if (!workoutLogs.length) return [];
 
     const cutoffDate = subMonths(new Date(), period);
 
-    const filtered = logs.filter((log: any) => {
-      const date = log.createdAt ? parseISO(log.createdAt) : new Date();
+    const filtered = workoutLogs.filter((log) => {
+      const date = log.created_at ? parseISO(log.created_at) : new Date();
       return isAfter(date, cutoffDate);
     });
 
     const counts: Record<string, number> = {};
-    filtered.forEach((log: any) => {
-      const name = log.name || "Unknown";
+    filtered.forEach((log) => {
+      const name = log.workout_name || "Unknown";
       counts[name] = (counts[name] || 0) + 1;
     });
 
@@ -45,7 +29,7 @@ export function WorkoutChart() {
       name,
       count
     })).sort((a, b) => b.count - a.count); // Sort by prevalence
-  }, [logs, period]);
+  }, [workoutLogs, period]);
 
   return (
     <Card className="col-span-1 md:col-span-2">
@@ -54,14 +38,10 @@ export function WorkoutChart() {
           <CardTitle>Workout Distribution</CardTitle>
           <CardDescription>Breakdown of workouts by type</CardDescription>
         </div>
-        <PeriodSelector currentPeriod={period} onSelect={setPeriod} disabled={isLoading} />
+        <PeriodSelector currentPeriod={period} onSelect={setPeriod} />
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : chartData.length === 0 ? (
+        {chartData.length === 0 ? (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
             No data for this period
           </div>

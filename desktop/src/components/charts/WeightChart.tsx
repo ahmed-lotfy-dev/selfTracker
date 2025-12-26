@@ -2,45 +2,33 @@ import { useState, useMemo } from "react"
 import { Line, LineChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PeriodSelector, type Period } from "./PeriodSelector"
-import { Loader2 } from "lucide-react"
-import { useCollections } from "@/db/collections"
-import { useLiveQuery } from "@tanstack/react-db"
 import { subMonths, isAfter, parseISO, format } from "date-fns"
+import { useWeightLogsStore } from "@/stores/weight-logs-store"
 
 export function WeightChart() {
   const [period, setPeriod] = useState<Period>(3)
-  const collections = useCollections();
-
-  // If collections is null, we are initializing.
-  const isLoading = !collections;
-
-  const { data: logs = [] } = useLiveQuery(
-    (q: any) => {
-      if (!collections?.weightLogs) return q.from({ w: [] }).select(() => ({}));
-      return q.from({ w: collections.weightLogs })
-        .orderBy(({ w }: any) => w.created_at, 'ASC')
-        .select(({ w }: any) => ({
-          weight: w.weight,
-          createdAt: w.created_at
-        }));
-    }
-  ) as unknown as { data: any[] } || { data: [] };
+  const { weightLogs } = useWeightLogsStore();
 
   const chartData = useMemo(() => {
-    if (!logs.length) return [];
+    if (!weightLogs.length) return [];
 
     const cutoffDate = subMonths(new Date(), period);
 
-    const filtered = logs.filter((log: any) => {
-      const date = log.createdAt ? parseISO(log.createdAt) : new Date();
+    // Sort by created_at ascending for chart progression
+    const sorted = [...weightLogs].sort((a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    const filtered = sorted.filter((log) => {
+      const date = log.created_at ? parseISO(log.created_at) : new Date();
       return isAfter(date, cutoffDate);
     });
 
-    return filtered.map((log: any) => ({
-      name: log.createdAt ? format(parseISO(log.createdAt), "MMM d") : "Unknown",
-      weight: log.weight
+    return filtered.map((log) => ({
+      name: log.created_at ? format(parseISO(log.created_at), "MMM d") : "Unknown",
+      weight: parseFloat(log.weight) // Convert string to number for chart
     }));
-  }, [logs, period]);
+  }, [weightLogs, period]);
 
   return (
     <Card className="col-span-1 md:col-span-2">
@@ -49,14 +37,10 @@ export function WeightChart() {
           <CardTitle>Weight Progress</CardTitle>
           <CardDescription>Track your weight over time</CardDescription>
         </div>
-        <PeriodSelector currentPeriod={period} onSelect={setPeriod} disabled={isLoading} />
+        <PeriodSelector currentPeriod={period} onSelect={setPeriod} />
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : chartData.length === 0 ? (
+        {chartData.length === 0 ? (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
             No data for this period
           </div>

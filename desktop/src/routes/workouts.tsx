@@ -2,30 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dumbbell, Calendar } from "lucide-react";
 import { formatLocal } from "@/lib/dateUtils";
 import { WorkoutChart } from "@/components/charts/WorkoutChart";
-import { useCollections } from "@/db/collections";
-import { useLiveQuery } from "@tanstack/react-db";
-import { LogWorkoutDialog } from "@/features/workouts/components/LogWorkoutDialog";
+import { LogWorkoutDialog } from "@/features/workouts/LogWorkoutDialog";
+import { useWorkoutLogsStore } from "@/stores/workout-logs-store";
 
 export default function WorkoutsPage() {
-  const collections = useCollections();
+  const { workoutLogs } = useWorkoutLogsStore();
 
-  if (!collections) return <div className="p-8">Initializing database...</div>;
-
-  return <WorkoutsPageContent collections={collections} />;
-}
-
-function WorkoutsPageContent({ collections }: { collections: any }) {
-  const { data: logs = [] } = useLiveQuery(
-    (q: any) => q.from({ wl: collections.workoutLogs })
-      .orderBy(({ wl }: any) => wl.created_at, 'DESC')
-      .select(({ wl }: any) => ({
-        id: wl.id,
-        workoutName: wl.workout_name, // Map snake_case
-        notes: wl.notes,
-        createdAt: wl.created_at, // Map snake_case
-        updatedAt: wl.updated_at
-      }))
-  ) as unknown as { data: any[] } || { data: [] };
+  // Sort by created_at descending (most recent first)
+  const sortedLogs = [...workoutLogs].sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   return (
     <div className="p-8 space-y-6">
@@ -38,7 +24,6 @@ function WorkoutsPageContent({ collections }: { collections: any }) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Statistics Cards */}
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -47,20 +32,19 @@ function WorkoutsPageContent({ collections }: { collections: any }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{logs.length}</div>
+            <div className="text-2xl font-bold">{workoutLogs.length}</div>
             <p className="text-xs text-muted-foreground">Total Workouts Logged</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Section */}
       <div className="grid gap-6 md:grid-cols-2">
         <WorkoutChart />
       </div>
 
       <h2 className="text-xl font-semibold mt-8">Recent Logs</h2>
       <div className="space-y-4">
-        {logs.map((log: any) => (
+        {sortedLogs.map((log) => (
           <Card key={log.id}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="flex items-center gap-3">
@@ -68,10 +52,10 @@ function WorkoutsPageContent({ collections }: { collections: any }) {
                   <Dumbbell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">{log.workoutName || "Workout"}</CardTitle>
+                  <CardTitle className="text-base">{log.workout_name || "Workout"}</CardTitle>
                   <CardDescription className="flex items-center gap-1 text-xs">
                     <Calendar className="h-3 w-3" />
-                    {formatLocal(log.createdAt)}
+                    {formatLocal(log.created_at)}
                   </CardDescription>
                 </div>
               </div>
@@ -81,7 +65,7 @@ function WorkoutsPageContent({ collections }: { collections: any }) {
             </CardContent>
           </Card>
         ))}
-        {logs.length === 0 && (
+        {workoutLogs.length === 0 && (
           <div className="text-center py-10 text-muted-foreground">No workouts logged yet.</div>
         )}
       </div>
