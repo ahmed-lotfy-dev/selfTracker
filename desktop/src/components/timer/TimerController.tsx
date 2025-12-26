@@ -21,22 +21,42 @@ export function TimerController() {
   // 2. Window Management Logic
   useEffect(() => {
     const manageWindow = async () => {
-      const overlayLabel = "timer-overlay";
-      const overlay = await WebviewWindow.getByLabel(overlayLabel);
-      const { isOverlayVisible } = useTimerStore.getState();
+      try {
+        const overlayLabel = "timer-overlay";
+        const overlay = await WebviewWindow.getByLabel(overlayLabel);
+        const { isOverlayVisible } = useTimerStore.getState();
 
-      if (!overlay) return;
+        if (!overlay) return;
 
-      if (isOverlayVisible) {
-        await overlay.show();
-        await overlay.setFocus();
-      } else {
-        await overlay.hide();
+        if (isOverlayVisible) {
+          await overlay.show();
+          await overlay.setFocus();
+        } else {
+          await overlay.hide();
+        }
+      } catch (err) {
+        // Tauri API not available (likely running in browser)
+        console.log('Tauri WebviewWindow API not available');
       }
     };
 
     manageWindow();
   }, [useTimerStore.getState().isOverlayVisible]);
+
+  // 3. Request Notification Permission on App Start
+  useEffect(() => {
+    import("@tauri-apps/plugin-notification")
+      .then(async ({ isPermissionGranted, requestPermission }) => {
+        const granted = await isPermissionGranted();
+        if (!granted) {
+          await requestPermission();
+        }
+      })
+      .catch(() => {
+        // Tauri notification plugin not available
+        console.log('Tauri notification plugin not available');
+      });
+  }, []);
 
   return null; // Logic only
 }

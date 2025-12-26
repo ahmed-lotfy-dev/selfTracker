@@ -8,76 +8,35 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus } from "lucide-react"
-
-// Types
-type Habit = {
-  id: string
-  name: string
-  streak: number
-  completedToday: boolean
-  color: string
-}
-
-// Mock Data / Local Persistence
-// const MOCK_HABITS: Habit[] = [
-//   { id: "1", name: "Morning Meditation", streak: 5, completedToday: true, color: "bg-blue-500" },
-//   { id: "2", name: "Read 30 mins", streak: 12, completedToday: false, color: "bg-purple-500" },
-//   { id: "3", name: "Drink 3L Water", streak: 3, completedToday: false, color: "bg-cyan-500" },
-//   { id: "4", name: "Workout", streak: 0, completedToday: false, color: "bg-orange-500" },
-// ]
+import { useHabitsStore } from "@/stores/habits-store"
+import { Kbd } from "@/components/ui/kbd"
 
 export default function HabitsPage() {
-  const [habits, setHabits] = useState<Habit[]>([])
+  const { habits, addHabit, toggleHabit } = useHabitsStore();
   const [newHabitName, setNewHabitName] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  // Load from local storage on mount
   useEffect(() => {
-    const saved = localStorage.getItem("habits")
-    if (saved) {
-      setHabits(JSON.parse(saved))
-    } else {
-      // Initialize with some defaults if empty
-      const initial = [
-        { id: "1", name: "Morning Meditation", streak: 5, completedToday: false, color: "bg-primary" },
-        { id: "2", name: "Read 30 mins", streak: 12, completedToday: false, color: "bg-primary" },
-      ]
-      setHabits(initial)
-      localStorage.setItem("habits", JSON.stringify(initial))
-    }
-  }, [])
-
-  // Persist changes
-  useEffect(() => {
-    if (habits.length > 0) {
-      localStorage.setItem("habits", JSON.stringify(habits))
-    }
-  }, [habits])
-
-  const toggleHabit = (id: string) => {
-    setHabits(prev => prev.map(habit => {
-      if (habit.id === id) {
-        const isCompleting = !habit.completedToday
-        return {
-          ...habit,
-          completedToday: isCompleting,
-          streak: isCompleting ? habit.streak + 1 : Math.max(0, habit.streak - 1)
-        }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault();
+        setIsDialogOpen(true);
       }
-      return habit
-    }))
-  }
+    };
 
-  const addHabit = () => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleAddHabit = (e?: React.FormEvent) => {
+    e?.preventDefault()
     if (!newHabitName.trim()) return
-    const newHabit: Habit = {
-      id: crypto.randomUUID(),
+
+    addHabit({
       name: newHabitName,
-      streak: 0,
-      completedToday: false,
-      color: "bg-primary" // Default or randomized
-    }
-    setHabits([...habits, newHabit])
+      color: "bg-primary"
+    })
+
     setNewHabitName("")
     setIsDialogOpen(false)
   }
@@ -98,13 +57,14 @@ export default function HabitsPage() {
           <DialogTrigger asChild>
             <Button size="lg" className="rounded-full shadow-lg hover:shadow-xl transition-all">
               <Plus className="mr-2 h-5 w-5" /> New Habit
+              <Kbd className="ml-2">Ctrl+A</Kbd>
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Habit</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <form onSubmit={handleAddHabit} className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="habit-name" className="text-right">Name</Label>
                 <Input
@@ -116,8 +76,8 @@ export default function HabitsPage() {
                   autoFocus
                 />
               </div>
-            </div>
-            <Button onClick={addHabit} disabled={!newHabitName.trim()}>Create Habit</Button>
+              <Button type="submit" disabled={!newHabitName.trim()}>Create Habit</Button>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -127,63 +87,76 @@ export default function HabitsPage() {
         <CardContent className="p-8">
           <div className="flex items-center justify-between mb-4">
             <div className="space-y-1">
-              <h3 className="text-2xl font-bold tracking-tight">Daily Goals</h3>
-              <p className="text-muted-foreground">You're <span className="text-primary font-semibold">{completionRate}%</span> done today. Keep it up!</p>
+              <p className="text-sm text-muted-foreground font-medium">Today's Progress</p>
+              <div className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                <span className="text-3xl font-bold tracking-tight">{completionRate}%</span>
+              </div>
             </div>
-            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-              <Trophy className="h-6 w-6 text-primary" />
+            <div className="text-right space-y-1">
+              <p className="text-sm text-muted-foreground">
+                {habits.filter(h => h.completedToday).length} / {habits.length} completed
+              </p>
             </div>
           </div>
-          <Progress value={completionRate} className="h-3" />
+          <Progress value={completionRate} className="h-3 rounded-full" />
         </CardContent>
       </Card>
 
       {/* Habits Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {habits.map((habit) => (
-          <div
+          <Card
             key={habit.id}
-            onClick={() => toggleHabit(habit.id)}
             className={cn(
-              "group relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:shadow-md cursor-pointer",
-              habit.completedToday
-                ? "bg-primary/5 border-primary/20"
-                : "bg-card border-border hover:border-primary/30"
+              "cursor-pointer transition-all hover:shadow-lg group border-2",
+              habit.completedToday ? "border-green-500 bg-linear-to-br from-green-50 to-transparent dark:from-green-950" : ""
             )}
+            onClick={() => toggleHabit(habit.id)}
           >
-            {/* Background Progress Fill effect could go here */}
-
-            <div className="flex items-center justify-between relative z-10">
-              <div className="space-y-1">
-                <h3 className={cn(
-                  "text-xl font-semibold transition-colors",
-                  habit.completedToday ? "text-muted-foreground line-through" : "text-foreground"
-                )}>
-                  {habit.name}
-                </h3>
-                <div className="flex items-center gap-1.5 text-sm font-medium">
-                  <Flame className={cn("h-4 w-4", habit.streak > 0 ? "fill-primary text-primary" : "text-muted-foreground")} />
-                  <span className={cn(habit.streak > 0 ? "text-primary" : "text-muted-foreground")}>
-                    {habit.streak} day streak
-                  </span>
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "h-12 w-12 rounded-full flex items-center justify-center transition-all",
+                    habit.completedToday ? "bg-green-500 scale-110" : "bg-muted group-hover:bg-primary/10"
+                  )}>
+                    {habit.completedToday ? (
+                      <Check className="h-6 w-6 text-white" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full border-4 border-muted-foreground/30" />
+                    )}
+                  </div>
                 </div>
+
+                {habit.streak > 0 && (
+                  <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-950/50">
+                    <Flame className="h-4 w-4 text-orange-500" />
+                    <span className="text-sm font-bold text-orange-700 dark:text-orange-300">
+                      {habit.streak}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <div className={cn(
-                "h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm border-2",
-                habit.completedToday
-                  ? "bg-primary border-primary scale-110"
-                  : "bg-transparent border-muted-foreground/20 group-hover:border-primary/50"
-              )}>
-                <Check className={cn(
-                  "h-6 w-6 text-primary-foreground transition-opacity duration-300",
-                  habit.completedToday ? "opacity-100" : "opacity-0"
-                )} />
+              <div>
+                <h3 className="font-semibold text-lg mb-1">{habit.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {habit.completedToday ? "Completed today!" : "Tap to complete"}
+                </p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
+
+      {habits.length === 0 && (
+        <Card className="p-12 text-center">
+          <p className="text-muted-foreground text-lg">
+            No habits yet. Create your first habit to start building consistency!
+          </p>
+        </Card>
+      )}
     </div>
   )
 }

@@ -21,7 +21,8 @@ export default function TimersPage() {
 
   const [customMinutes, setCustomMinutes] = useState("25");
 
-  const handleApplyCustomTime = () => {
+  const handleApplyCustomTime = (e?: React.FormEvent) => {
+    e?.preventDefault();
     const mins = parseInt(customMinutes);
     if (!isNaN(mins) && mins > 0) {
       setCustomTime(mins);
@@ -82,7 +83,7 @@ export default function TimersPage() {
             <Clock className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold">Custom Duration</h2>
           </div>
-          <div className="flex items-center gap-2">
+          <form onSubmit={handleApplyCustomTime} className="flex items-center gap-2">
             <div className="relative flex-1">
               <Input
                 type="number"
@@ -95,10 +96,10 @@ export default function TimersPage() {
                 min
               </span>
             </div>
-            <Button onClick={handleApplyCustomTime} variant="outline">
+            <Button type="submit" variant="outline">
               Apply
             </Button>
-          </div>
+          </form>
 
           <div className="flex gap-2">
             {(Object.keys(MODES) as Array<keyof typeof MODES>).map((m) => (
