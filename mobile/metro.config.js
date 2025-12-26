@@ -3,6 +3,13 @@ const { withUniwindConfig } = require("uniwind/metro");
 
 const config = getDefaultConfig(__dirname);
 
+// Exclude .cxx build artifacts to prevent watcher crashes
+config.resolver.blockList = [
+  ...(config.resolver.blockList || []),
+  /.*\/node_modules\/.*\.cxx\/.*/,
+  /.*\/android\/.cxx\/.*/
+];
+
 const FinalConfig = withUniwindConfig(config, {
   cssEntryFile: "./src/global.css",
   dtsFile: "./src/uniwind-types.d.ts",

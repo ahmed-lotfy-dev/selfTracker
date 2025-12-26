@@ -3,23 +3,21 @@ const { withAppBuildGradle } = require('@expo/config-plugins');
 const withDisableLinting = (config) => {
   return withAppBuildGradle(config, async (config) => {
     const buildGradle = config.modResults.contents;
-    if (buildGradle.includes('lintOptions {')) {
+
+    // Prevent duplicate injection
+    if (buildGradle.includes('checkReleaseBuilds false')) {
       return config;
     }
 
-    // Insert lintOptions inside android block
-    const pattern = /android\s*{/;
-    if (pattern.test(buildGradle)) {
-      config.modResults.contents = buildGradle.replace(
-        pattern,
-        `android {
+    config.modResults.contents = buildGradle + `
+// Added by withDisableLinting plugin
+android {
     lintOptions {
         checkReleaseBuilds false
         abortOnError false
     }
-`
-      );
-    }
+}
+`;
     return config;
   });
 };
