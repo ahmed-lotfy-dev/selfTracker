@@ -144,6 +144,30 @@ export const openApiSpec: OpenAPIV3_1.Document = {
           type: { type: 'string' },
           completed: { type: 'boolean' }
         }
+      },
+      // Habits
+      Habit: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          description: { type: ['string', 'null'] },
+          streak: { type: 'integer' },
+          color: { type: 'string' },
+          completedToday: { type: 'boolean' },
+          lastCompletedAt: { type: ['string', 'null'], format: 'date-time' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      CreateHabitInput: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          color: { type: 'string' }
+        },
+        required: ['name']
       }
     }
   },
@@ -156,6 +180,7 @@ export const openApiSpec: OpenAPIV3_1.Document = {
     { name: 'Weight Logs', description: 'Body weight tracking' },
     { name: 'Workout Logs', description: 'Workout history' },
     { name: 'Timer', description: 'Focus timer sessions' },
+    { name: 'Habits', description: 'Habit tracking and streaks' },
     { name: 'Image', description: 'Image upload and management' },
     { name: 'ElectricSQL', description: 'Data synchronization' }
   ],
@@ -350,6 +375,45 @@ export const openApiSpec: OpenAPIV3_1.Document = {
     '/api/timer/sessions': {
       get: { tags: ['Timer'], summary: 'Get timer sessions', responses: { '200': { description: 'Recent sessions' } } },
       post: { tags: ['Timer'], summary: 'Log timer session', requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/TimerSession' } } } }, responses: { '200': { description: 'Session logged' } } }
+    },
+    // --- HABITS ---
+    '/api/habits': {
+      get: {
+        tags: ['Habits'],
+        summary: 'Get all habits',
+        responses: {
+          '200': {
+            description: 'List of habits',
+            content: { 'application/json': { schema: { type: 'object', properties: { habits: { type: 'array', items: { $ref: '#/components/schemas/Habit' } } } } } }
+          }
+        }
+      },
+      post: {
+        tags: ['Habits'],
+        summary: 'Create a habit',
+        requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateHabitInput' } } } },
+        responses: {
+          '201': {
+            description: 'Habit created',
+            content: { 'application/json': { schema: { type: 'object', properties: { message: { type: 'string' }, habit: { $ref: '#/components/schemas/Habit' } } } } }
+          }
+        }
+      }
+    },
+    '/api/habits/{id}': {
+      patch: {
+        tags: ['Habits'],
+        summary: 'Update habit',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/Habit' } } } },
+        responses: { '200': { description: 'Habit updated' } }
+      },
+      delete: {
+        tags: ['Habits'],
+        summary: 'Delete habit',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Habit deleted' } }
+      }
     },
     // --- IMAGE ---
     '/api/image/upload': {
