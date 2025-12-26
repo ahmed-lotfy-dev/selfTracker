@@ -47,7 +47,13 @@ jobs:
       - name: 📱 Build APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          ORG_GRADLE_PROJECT_android.enableJetifier: true
+          ORG_GRADLE_PROJECT_android.useAndroidX: true
         run: |
+          # Increase Gradle memory for CI
+          export GRADLE_OPTS="-Xmx6g -XX:MaxMetaspaceSize=2g -XX:+HeapDumpOnOutOfMemoryError -Dorg.gradle.jvmargs='-Xmx6g -XX:MaxMetaspaceSize=2g'"
+          
+          # Build without lint checks to save memory
           eas build \
             --platform android \
             --profile production \
