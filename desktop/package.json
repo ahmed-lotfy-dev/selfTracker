@@ -8,8 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "build:linux": "tauri build",
-    "build:appimage": "NO_STRIP=1 tauri build --bundles appimage"
+    "build:linux": "set -a && source .env && set +a && NO_STRIP=1 TAURI_SIGNING_PRIVATE_KEY=\"$(cat src-tauri/keys/selfTracker.key)\" tauri build --bundles deb,rpm",
+    "build:appimage": "set -a && source .env && set +a && NO_STRIP=1 TAURI_SIGNING_PRIVATE_KEY=\"$(cat src-tauri/keys/selfTracker.key)\" tauri build --bundles appimage"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

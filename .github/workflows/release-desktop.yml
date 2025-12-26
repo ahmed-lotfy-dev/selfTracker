@@ -13,10 +13,10 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest'
-            args: '--target universal-apple-darwin'  # Universal binary
-          - platform: 'ubuntu-22.04' # for Linux
+            args: ''
+          - platform: 'ubuntu-22.04'
             args: '--bundles deb,rpm,appimage'
-          - platform: 'windows-latest' # for Windows
+          - platform: 'windows-latest'
             args: ''
 
     runs-on: ${{ matrix.platform }}
@@ -49,14 +49,6 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './desktop/src-tauri -> target'
-
-      - name: install rust target
-        if: matrix.args != ''
-        run: |
-          if [[ "${{ matrix.args }}" == *"--target"* ]]; then
-            TARGET=$(echo "${{ matrix.args }}" | grep -o 'target [^ ]*' | cut -d ' ' -f 2)
-            rustup target add $TARGET
-          fi
 
       - uses: tauri-apps/tauri-action@v0
         env:
