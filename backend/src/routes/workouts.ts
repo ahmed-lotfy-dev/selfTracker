@@ -6,26 +6,21 @@ import { getCache, setCache } from "../../lib/redis"
 const workoutsRouter = new Hono()
 
 workoutsRouter.get("/", async (c) => {
-  const user = c.get("user" as any)
+  // Workout templates are public - they're just training split names
+  const user = c.get("user" as any);
+  const cacheKey = user ? `workouts:${user.id}` : 'workouts:public';
 
-  if (!user) return c.json({ message: "Unauthorized" }, 401)
-  const cached = await getCache(`workouts:${user.id}`)
-
+  const cached = await getCache(cacheKey);
   if (cached) {
-    return c.json({ workouts: cached })
-  }
-  const userWorkouts = await db.query.workouts.findMany()
-
-  if (userWorkouts.length === 0) {
-    return c.json({ message: "No workouts found" }, 404)
+    return c.json(cached);
   }
 
-  await setCache(`workouts:${user.id}`, 3600, userWorkouts)
-  const response = {
-    workouts: userWorkouts,
-  }
+  // Return all workout templates (these are global, not user-specific)
+  const allWorkouts = await db.query.workouts.findMany();
 
-  return c.json({ workouts: userWorkouts })
+  await setCache(cacheKey, 3600, allWorkouts);
+
+  return c.json(allWorkouts);
 })
 
 export default workoutsRouter

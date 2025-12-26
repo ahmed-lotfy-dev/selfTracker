@@ -10,7 +10,6 @@ import weightsLogsRouter from "./routes/weightLogs.js"
 import workoutsRouter from "./routes/workouts.js"
 import workoutLogsRouter from "./routes/workoutsLogs.js"
 import uploadRouter from "./routes/image.js"
-import projectsRouter from "./routes/projects.js"
 import timerRouter from "./routes/timer.js"
 import electricRouter from "./routes/electric.js"
 import desktopCallbackRouter from "./routes/desktopCallback.js"
@@ -49,7 +48,10 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 
 app.use(loggerMiddleware)
 
-// Auth middleware for all API routes (except /api/auth/*)
+// Public routes (before auth middleware)
+app.route("/api/workouts", workoutsRouter) // Workout templates are public
+
+// Auth middleware for all other API routes (except /api/auth/*)
 app.use("/api/*", authMiddleware)
 
 app.route("/api/users", userRouter)
@@ -60,11 +62,7 @@ app.route("/api/tasks", tasksRouter)
 
 app.route("/api/weightLogs", weightsLogsRouter)
 
-app.route("/api/workouts", workoutsRouter)
-
 app.route("/api/workoutLogs", workoutLogsRouter)
-
-app.route("/api/projects", projectsRouter)
 
 app.route("/api/timer", timerRouter)
 
