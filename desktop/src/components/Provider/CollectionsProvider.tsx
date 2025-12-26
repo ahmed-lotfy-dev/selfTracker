@@ -157,10 +157,13 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     // Trigger Migration if we just logged in (transitioned from guest to auth)
     if (!isGuest) {
       const userId = useUserStore.getState().userId;
-      if (userId && userId !== 'local') {
+      if (userId && userId !== 'local' && userId !== 'unknown') {
         import('@/lib/migration').then(({ migrateLocalData }) => {
-          // Basic check to ensure we have collections
-          if (newCollections) migrateLocalData(newCollections, userId);
+          if (newCollections) {
+            // giving it a small delay to ensure collections are ready? 
+            // actually they are just objects, should be fine.
+            migrateLocalData(newCollections, userId);
+          }
         });
       }
     }
