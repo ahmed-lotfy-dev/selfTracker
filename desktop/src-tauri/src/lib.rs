@@ -40,7 +40,7 @@ pub fn run() {
     #[cfg(debug_assertions)]
     let devtools = tauri_plugin_devtools::init();
 
-    let mut builder = tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
                 // Hides the window instead of closing it
@@ -138,12 +138,13 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![greet, toggle_overlay, start_drag, toggle_pin]);
 
     #[cfg(debug_assertions)]
-    {
-        builder = builder.plugin(devtools);
-    }
+    let builder = {
+        builder.plugin(devtools)
+    };
 
     builder
         .run(tauri::generate_context!())

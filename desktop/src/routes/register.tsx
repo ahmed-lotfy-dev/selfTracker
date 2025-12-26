@@ -23,7 +23,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { error } = await authClient.signUp.email({
+      const { data, error } = await authClient.signUp.email({
         email,
         password,
         name,
@@ -31,6 +31,9 @@ export default function RegisterPage() {
       if (error) {
         toast.error(error.message || "Registration failed")
       } else {
+        if (data?.user?.id) {
+          localStorage.setItem("user_id", data.user.id);
+        }
         toast.success("Registration successful")
         navigate({ to: "/" })
       }
@@ -115,6 +118,14 @@ export default function RegisterPage() {
 
                       if (authResult?.token) {
                         localStorage.setItem("bearer_token", authResult.token);
+
+                        try {
+                          const session = await authClient.getSession();
+                          if (session.data?.user?.id) {
+                            localStorage.setItem("user_id", session.data.user.id);
+                          }
+                        } catch (e) { console.error("Failed to fetch session after social signup", e); }
+
                         toast.success("Registration successful");
                         window.location.href = "/";
                       }
@@ -154,6 +165,14 @@ export default function RegisterPage() {
 
                       if (authResult?.token) {
                         localStorage.setItem("bearer_token", authResult.token);
+
+                        try {
+                          const session = await authClient.getSession();
+                          if (session.data?.user?.id) {
+                            localStorage.setItem("user_id", session.data.user.id);
+                          }
+                        } catch (e) { console.error("Failed to fetch session after social signup", e); }
+
                         toast.success("Registration successful");
                         window.location.href = "/";
                       }

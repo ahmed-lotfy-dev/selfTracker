@@ -21,13 +21,16 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { error } = await authClient.signIn.email({
+      const { data, error } = await authClient.signIn.email({
         email,
         password,
       })
       if (error) {
         toast.error(error.message || "Login failed")
       } else {
+        if (data?.user?.id) {
+          localStorage.setItem("user_id", data.user.id);
+        }
         toast.success("Login successful")
         window.location.href = "/"
       }
@@ -107,6 +110,15 @@ export default function LoginPage() {
 
                       if (authResult?.token) {
                         localStorage.setItem("bearer_token", authResult.token);
+
+                        // Fetch user session to get ID for migration
+                        try {
+                          const session = await authClient.getSession();
+                          if (session.data?.user?.id) {
+                            localStorage.setItem("user_id", session.data.user.id);
+                          }
+                        } catch (e) { console.error("Failed to fetch session after social login", e); }
+
                         toast.success("Login successful");
                         window.location.href = "/";
                       }
@@ -148,6 +160,14 @@ export default function LoginPage() {
 
                       if (authResult?.token) {
                         localStorage.setItem("bearer_token", authResult.token);
+
+                        try {
+                          const session = await authClient.getSession();
+                          if (session.data?.user?.id) {
+                            localStorage.setItem("user_id", session.data.user.id);
+                          }
+                        } catch (e) { console.error("Failed to fetch session after social login", e); }
+
                         toast.success("Login successful");
                         window.location.href = "/";
                       }

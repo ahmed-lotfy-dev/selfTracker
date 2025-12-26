@@ -17,6 +17,7 @@
     "shell:allow-open",
     "core:window:allow-set-position",
     "core:window:allow-set-focus",
-    "process:allow-restart"
+    "process:allow-restart",
+    "notification:default"
   ]
 }
