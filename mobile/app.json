@@ -61,7 +61,8 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-sqlite"
+      "expo-sqlite",
+      "./plugins/withDisableLinting"
     ],
     "experiments": {
       "typedRoutes": true
