@@ -1,50 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, Dumbbell, Scale } from "lucide-react"
-import { useCollections } from "@/db/collections"
-import { useLiveQuery } from "@tanstack/react-db"
+import { useTasksStore } from "@/stores/tasks-store"
+import { useWeightLogsStore } from "@/stores/weight-logs-store"
+import { useWorkoutLogsStore } from "@/stores/workout-logs-store"
 
 export function DashboardStats() {
-  const collections = useCollections();
-
-  if (!collections) return <div className="text-sm text-muted-foreground p-4">Loading stats...</div>
-
-  return <DashboardStatsContent collections={collections} />;
-}
-
-function DashboardStatsContent({ collections }: { collections: any }) {
-  // Tasks query temporarily disabled
-  // const { data: tasks = [] } = useLiveQuery(
-  //   (q: any) => q.from({ t: collections.tasks })
-  //     .select(({ t }: any) => ({
-  //       completed: t.completed,
-  //       completedAt: t.completed_at
-  //     }))
-  // ) as unknown as { data: any[] } || { data: [] };
-  const tasks: any[] = []; // Placeholder
-
-  const { data: weightLogs = [] } = useLiveQuery(
-    (q: any) => q.from({ w: collections.weightLogs })
-      .orderBy(({ w }: any) => w.created_at, 'DESC')
-      .select(({ w }: any) => ({
-        weight: w.weight,
-        createdAt: w.created_at
-      }))
-  ) as unknown as { data: any[] } || { data: [] };
-
-  const { data: workoutLogs = [] } = useLiveQuery(
-    (q: any) => q.from({ wl: collections.workoutLogs })
-      .select(({ wl }: any) => ({
-        id: wl.id
-      }))
-  ) as unknown as { data: any[] } || { data: [] };
+  const { tasks } = useTasksStore();
+  const { weightLogs } = useWeightLogsStore();
+  const { workoutLogs } = useWorkoutLogsStore();
 
   // Calculate daily stats
   const today = new Date().toDateString()
-  // tasks items could have string or null date
-  const tasksCompletedToday = tasks.filter((t: any) => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === today).length
-  const tasksPending = tasks.filter((t: any) => !t.completed).length
+  const tasksCompletedToday = tasks.filter((t) => t.completed && t.completed_at && new Date(t.completed_at).toDateString() === today).length
+  const tasksPending = tasks.filter((t) => !t.completed).length
 
-  const currentWeight = weightLogs[0]?.weight
+  // Sort weight logs by created_at descending
+  const sortedWeightLogs = [...weightLogs].sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+  const currentWeight = sortedWeightLogs[0]?.weight
   const workoutsCount = workoutLogs.length
 
   return (

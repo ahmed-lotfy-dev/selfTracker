@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Check, Flame, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -7,67 +7,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Link } from "@tanstack/react-router"
-
-type Habit = {
-  id: string
-  name: string
-  streak: number
-  completedToday: boolean
-  color: string
-}
+import { useHabitsStore } from "@/stores/habits-store"
 
 export function HabitsWidget() {
-  const [habits, setHabits] = useState<Habit[]>([])
+  const { habits, addHabit, toggleHabit } = useHabitsStore();
   const [newHabitName, setNewHabitName] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  // Load from local storage on mount (Sync with HabitsPage)
-  useEffect(() => {
-    const saved = localStorage.getItem("habits")
-    if (saved) {
-      setHabits(JSON.parse(saved))
-    } else {
-      // Init default if empty (same as HabitsPage to avoid desync)
-      const initial = [
-        { id: "1", name: "Morning Meditation", streak: 5, completedToday: false, color: "bg-primary" },
-        { id: "2", name: "Read 30 mins", streak: 12, completedToday: false, color: "bg-primary" },
-      ]
-      setHabits(initial)
-      localStorage.setItem("habits", JSON.stringify(initial))
-    }
-  }, [])
-
-  // Persist changes
-  useEffect(() => {
-    if (habits.length > 0) {
-      localStorage.setItem("habits", JSON.stringify(habits))
-    }
-  }, [habits])
-
-  const toggleHabit = (id: string) => {
-    setHabits(prev => prev.map(habit => {
-      if (habit.id === id) {
-        const isCompleting = !habit.completedToday
-        return {
-          ...habit,
-          completedToday: isCompleting,
-          streak: isCompleting ? habit.streak + 1 : Math.max(0, habit.streak - 1)
-        }
-      }
-      return habit
-    }))
-  }
-
-  const addHabit = () => {
+  const handleAddHabit = () => {
     if (!newHabitName.trim()) return
-    const newHabit: Habit = {
-      id: crypto.randomUUID(),
+    addHabit({
       name: newHabitName,
-      streak: 0,
-      completedToday: false,
       color: "bg-primary"
-    }
-    setHabits([...habits, newHabit])
+    })
     setNewHabitName("")
     setIsDialogOpen(false)
   }
@@ -105,7 +57,7 @@ export function HabitsWidget() {
                   />
                 </div>
               </div>
-              <Button onClick={addHabit} disabled={!newHabitName.trim()}>Create Habit</Button>
+              <Button onClick={handleAddHabit} disabled={!newHabitName.trim()}>Create Habit</Button>
             </DialogContent>
           </Dialog>
           <Link to="/habits" className="text-xs text-muted-foreground hover:text-primary">

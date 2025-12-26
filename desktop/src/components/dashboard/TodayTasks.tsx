@@ -1,68 +1,34 @@
-import { useCollections } from "@/db/collections";
-import { useLiveQuery } from "@tanstack/react-db";
 import { CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTasksStore } from "@/stores/tasks-store";
 
 export function TodayTasks() {
-  const collections = useCollections();
+  const { tasks, updateTask } = useTasksStore();
 
-  if (!collections) return <div className="py-8 text-center text-sm text-muted-foreground">Loading tasks...</div>;
+  // Filter for uncompleted tasks
+  const pendingTasks = tasks.filter(t => !t.completed);
 
-  return <TodayTasksList collections={collections} />;
-}
-
-function TodayTasksList({ collections }: { collections: any }) {
-  const { data: tasks = [] } = useLiveQuery(
-    (q: any) => {
-      // Simple filter: Not completed OR completed today
-      // In a real app we'd filter for "due today" or similar, 
-      // but for "Today's Focus" showing all active tasks is a good start.
-      // We can refine this to "pinned" or "today" later.
-      return q.from({ tasks: collections.tasks })
-        // IMPORTANT: Filter must be applied BEFORE orderBy for correct query generation
-        .filter(({ tasks }: any) => {
-          // For now, show uncompleted tasks. 
-          // Ideally we filter by date, but keeping it simple first.
-          return tasks.completed.eq(false)
-        })
-        .orderBy(({ tasks }: any) => tasks.created_at, 'DESC')
-        .select(({ tasks }: any) => ({
-          id: tasks.id,
-          title: tasks.title,
-          completed: tasks.completed,
-          completed_at: tasks.completed_at
-        }))
-    }
-  ) || { data: [] };
-
-  const toggleTask = async (task: any) => {
-    try {
-      await collections.tasks.update({
-        where: { id: task.id },
-        data: {
-          completed: !task.completed,
-          completed_at: !task.completed ? new Date().toISOString() : null
-        }
-      });
-    } catch (e) {
-      console.error("Failed to toggle task", e);
-    }
+  const toggleTask = (task: any) => {
+    updateTask(task.id, {
+      completed: !task.completed,
+      completed_at: !task.completed ? new Date().toISOString() : undefined
+    });
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-lg">Today's Focus</h3>
-        <span className="text-xs text-muted-foreground">{tasks.length} pending</span>
+        <span className="text-xs text-muted-foreground">{pendingTasks.length} pending</span>
       </div>
 
       <div className="space-y-2">
-        {tasks.length === 0 ? (
+        {pendingTasks.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg border border-dashed">
             <p>No tasks remaining. Enjoy your day!</p>
           </div>
         ) : (
-          tasks.map((task: any) => (
+          pendingTasks.map((task) => (
             <div
               key={task.id}
               className={cn(
