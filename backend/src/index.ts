@@ -80,13 +80,13 @@ app.route("/api/habits", habitsRouter)
 app.route("/api", desktopCallbackRouter)
 
 // API Reference & Documentation
-app.get('/doc', (c) => c.json(openApiSpec))
+app.get('/openapi.json', (c) => c.json(openApiSpec))
 
 app.get(
-  '/scalar',
+  '/docs',
   Scalar({
-    url: '/doc',
-    theme: 'purple',
+    url: '/openapi.json',
+    theme: 'alternate',
     pageTitle: 'SelfTracker API Reference'
   })
 )
