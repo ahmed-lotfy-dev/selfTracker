@@ -1,41 +1,55 @@
-import { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
-  children: ReactNode;
+  children?: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
   hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
+  error?: Error;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+  public state: State = {
+    hasError: false
+  };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, errorInfo: null };
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-    this.setState({ error, errorInfo });
-  }
-
-  render() {
+  public render() {
     if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
       return (
-        <div style={{ padding: '20px', fontFamily: 'monospace' }}>
-          <h1 style={{ color: 'red' }}>Something went wrong!</h1>
-          <details style={{ whiteSpace: 'pre-wrap' }}>
-            <summary>Click for error details</summary>
-            <p><strong>Error:</strong> {this.state.error?.toString()}</p>
-            <p><strong>Stack:</strong> {this.state.error?.stack}</p>
-            <p><strong>Component Stack:</strong> {this.state.errorInfo?.componentStack}</p>
-          </details>
+        <div className="h-screen w-full flex items-center justify-center bg-background text-foreground p-8">
+          <div className="max-w-md w-full p-6 bg-destructive/10 border border-destructive/20 rounded-lg space-y-4">
+            <h2 className="text-xl font-bold text-destructive flex items-center gap-2">
+              <span>⚠️</span> Something went wrong
+            </h2>
+            <div className="p-4 bg-background rounded border font-mono text-xs overflow-auto max-h-[300px]">
+              <p className="font-bold mb-2">{this.state.error?.name}: {this.state.error?.message}</p>
+              <pre className="text-muted-foreground whitespace-pre-wrap">
+                {this.state.error?.stack}
+              </pre>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 text-sm font-medium"
+              >
+                Reload App
+              </button>
+            </div>
+          </div>
         </div>
       );
     }

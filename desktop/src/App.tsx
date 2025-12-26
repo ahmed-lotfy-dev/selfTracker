@@ -43,10 +43,20 @@ function RootLayout() {
   // Handle deep link authentication from social OAuth providers
   useDeepLinkHandler();
 
+  if (window.location.pathname === '/timer-overlay') {
+    return (
+      <>
+        <TimerController />
+        <Outlet />
+        <Toaster />
+      </>
+    );
+  }
+
   return (
     <>
       <AppUpdater />
-      <TimerController /> {/* Global Timer Logic runs everywhere */}
+      <TimerController />
       <DataSyncReminder />
       <Outlet />
       <Toaster />
@@ -179,15 +189,21 @@ declare module "@tanstack/react-router" {
 }
 
 function App() {
+  const isOverlay = window.location.pathname === '/timer-overlay';
+
   return (
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{ persister }}
     >
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <CollectionsProvider>
+        {isOverlay ? (
           <RouterProvider router={router} />
-        </CollectionsProvider>
+        ) : (
+          <CollectionsProvider>
+            <RouterProvider router={router} />
+          </CollectionsProvider>
+        )}
       </ThemeProvider>
     </PersistQueryClientProvider>
   );
