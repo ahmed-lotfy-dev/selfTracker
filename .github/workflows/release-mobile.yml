@@ -79,7 +79,7 @@ jobs:
           # Build without lint checks to save memory
           eas build \
             --platform android \
-            --profile production \
+            --profile production-ci \
             --local \
             --non-interactive \
             --output selfTracker.apk

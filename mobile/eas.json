@@ -26,6 +26,12 @@
       },
       "autoIncrement": true,
       "channel": "production"
+    },
+    "production-ci": {
+      "extends": "production",
+      "android": {
+        "gradleCommand": ":app:assembleRelease -x lint"
+      }
     }
   },
   "submit": {
