@@ -290,6 +290,15 @@ export default function OnboardingScreen() {
         scrollEventThrottle={16}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewConfig}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        onMomentumScrollEnd={(event) => {
+          const index = Math.round(event.nativeEvent.contentOffset.x / width)
+          setCurrentIndex(index)
+        }}
       />
 
       <View className="h-32 px-8 flex-row items-center justify-between pb-5">

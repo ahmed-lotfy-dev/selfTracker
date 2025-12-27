@@ -6,7 +6,8 @@ import { COLORS } from "@/src/constants/Colors"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import OTPInput from "@/src/components/ui/OTPInput"
 import ActivitySpinner from "@/src/components/ActivitySpinner"
-import { KeyboardAvoidingView } from "react-native-keyboard-controller"
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
+
 
 export default function VerifyEmail() {
   const [otp, setOtp] = useState("")
@@ -49,10 +50,13 @@ export default function VerifyEmail() {
     }
   }
 
+
+  // ... imports
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, justifyContent: "center", padding: 20 }}
+    <KeyboardAwareScrollView
+      bottomOffset={62}
+      contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 20 }}
       className="bg-background"
     >
       <Text className="font-bold text-xl mb-4 text-center text-text">
@@ -84,6 +88,6 @@ export default function VerifyEmail() {
       {isLoading && (
         <Text className="mt-4 text-placeholder">Checking verification status...</Text>
       )}
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   )
 }

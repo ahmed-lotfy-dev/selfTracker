@@ -35,6 +35,7 @@ export default function TabsLayout() {
         <Label>Home</Label>
         <Icon src={<VectorIcon family={Ionicons} name="home" />} />,
       </NativeTabs.Trigger>
+
       <NativeTabs.Trigger
         name="weights"
         options={{
@@ -47,6 +48,7 @@ export default function TabsLayout() {
         <Label>Weight</Label>
         <Icon src={<VectorIcon family={Ionicons} name="scale" />} />,
       </NativeTabs.Trigger>
+
       <NativeTabs.Trigger
         name="workouts"
         options={{
@@ -59,6 +61,20 @@ export default function TabsLayout() {
         <Label>Workout</Label>
         <Icon src={<VectorIcon family={FontAwesome5} name="dumbbell" />} />,
       </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger
+        name="habits"
+        options={{
+          labelStyle: {
+            color: colors.primary,
+            fontWeight: 700,
+          },
+        }}
+      >
+        <Label>Habits</Label>
+        <Icon src={<VectorIcon family={FontAwesome5} name="fire" />} />,
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger
         name="tasks"
         options={{
@@ -71,6 +87,7 @@ export default function TabsLayout() {
         <Label>Tasks</Label>
         <Icon src={<VectorIcon family={FontAwesome5} name="tasks" />} />,
       </NativeTabs.Trigger>
+
       <NativeTabs.Trigger
         name="profile"
         options={{
@@ -86,4 +103,3 @@ export default function TabsLayout() {
     </NativeTabs>
   )
 }
-

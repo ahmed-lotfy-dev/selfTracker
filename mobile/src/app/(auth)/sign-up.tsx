@@ -10,7 +10,8 @@ import { useAuthStore, useAuth } from "@/src/features/auth/useAuthStore"
 import { signUp } from "@/src/lib/api/authApi"
 import * as SecureStore from "expo-secure-store"
 import { signUpSchema } from "@/src/types/userType"
-import { KeyboardAvoidingView } from "react-native-keyboard-controller"
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
+
 import { SocialLoginButtons } from "@/src/components/features/auth/SocialLoginButtons"
 import Input from "@/src/components/ui/Input"
 import Button from "@/src/components/ui/Button"
@@ -85,9 +86,9 @@ export default function SignUp() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, justifyContent: "center", padding: 24 }}
+    <KeyboardAwareScrollView
+      bottomOffset={62}
+      contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
       className="bg-background"
     >
       <View className="mb-8">
@@ -157,6 +158,6 @@ export default function SignUp() {
           <Text className="text-primary font-bold">Sign In</Text>
         </Link>
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   )
 }

@@ -3,8 +3,9 @@ import {
   Text,
   View,
   Platform,
-  KeyboardAvoidingView,
 } from "react-native"
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
+
 import { Link, useRouter, Redirect } from "expo-router"
 import { useAuthStore } from "@/src/features/auth/useAuthStore"
 import { signIn } from "@/src/lib/api/authApi"
@@ -87,9 +88,9 @@ export default function SignIn() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, justifyContent: "center", padding: 24 }}
+    <KeyboardAwareScrollView
+      bottomOffset={62}
+      contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
       className="bg-background"
     >
       <View className="mb-8">
@@ -154,6 +155,7 @@ export default function SignIn() {
           <Text className="text-primary font-bold">Sign Up</Text>
         </Link>
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   )
 }
+

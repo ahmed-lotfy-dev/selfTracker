@@ -13,7 +13,6 @@ export const openApiSpec: OpenAPIV3_1.Document = {
     }
   },
   servers: [
-    { url: 'http://localhost:8000', description: 'Local Development' },
     { url: 'https://selftracker.ahmedlotfy.site', description: 'Production' }
   ],
   components: {

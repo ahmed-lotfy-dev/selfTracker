@@ -22,7 +22,7 @@
       },
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lint"
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a -x lint"
       },
       "autoIncrement": true,
       "channel": "production"

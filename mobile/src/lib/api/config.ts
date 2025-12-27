@@ -1,6 +1,10 @@
 import Constants, { ExecutionEnvironment } from "expo-constants";
 
-export const API_BASE_URL = "https://selftracker.ahmedlotfy.site";
+import { Platform } from "react-native";
+
+const DEV_API_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
+
+export const API_BASE_URL = __DEV__ ? DEV_API_URL : "https://selftracker.ahmedlotfy.site";
 
 /**
  * The scheme used for authentication redirects.

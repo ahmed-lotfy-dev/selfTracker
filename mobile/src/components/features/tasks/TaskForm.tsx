@@ -10,7 +10,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema } from "@/src/types/taskType"
 import { useUser } from "@/src/features/auth/useAuthStore"
 import { useCollections } from "@/src/db/collections"
-import { KeyboardAvoidingView } from "react-native-keyboard-controller"
+import { KeyboardAvoidingView } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 
 export default function TaskForm() {

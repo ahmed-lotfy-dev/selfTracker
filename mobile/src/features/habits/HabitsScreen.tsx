@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Modal, ActivityIndicator } from 'react-native';
-import { useCollections } from '@/src/components/Provider/CollectionsProvider'; // Correct import for mobile
+import { View, Text, ScrollView, Pressable, TextInput, Modal, LayoutAnimation, Platform, UIManager } from 'react-native';
+
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
+import { useCollections } from '@/src/components/Provider/CollectionsProvider';
 import { useLiveQuery } from '@tanstack/react-db';
 import { useAuth } from '@/src/features/auth/useAuthStore';
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
@@ -15,7 +21,6 @@ export default function HabitsScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
   const [newHabitName, setNewHabitName] = useState("");
 
-  // Explicit field selection to match mobile pattern
   const { data: habits = [] } = useLiveQuery((q: any) => {
     if (!collections?.habits) return null;
     return q.from({ habits: collections.habits })
@@ -61,12 +66,13 @@ export default function HabitsScreen() {
       ? (habit.streak || 0) + 1
       : Math.max(0, (habit.streak || 0) - 1);
 
-    await collections.habits.update({
-      id: habit.id,
-      completed_today: isCompleting ? 1 : 0,
-      streak: newStreak,
-      last_completed_at: isCompleting ? new Date().toISOString() : habit.lastCompletedAt,
-      updated_at: new Date().toISOString(),
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+    await collections.habits.update(habit.id, (draft: any) => {
+      draft.completed_today = isCompleting ? 1 : 0;
+      draft.streak = newStreak;
+      draft.last_completed_at = isCompleting ? new Date().toISOString() : habit.lastCompletedAt;
+      draft.updated_at = new Date().toISOString();
     });
   };
 
@@ -77,94 +83,157 @@ export default function HabitsScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="flex-1">
-        {/* Header */}
+        {/* Header - No Back Button, showing Drawer Toggle */}
         <Header
           title="Habits"
-          leftAction={<DrawerToggleButton />}
         />
 
-        {/* Status Cards */}
-        <View className="px-4 mt-4">
+        <ScrollView
+          className="flex-1 px-4 pt-4"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 150 }}
+        >
+          {/* Progress Section - Matching Desktop "Daily Progress" */}
           <View
-            className="flex-row items-center justify-between p-4 rounded-2xl border mb-4 shadow-sm"
-            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            className="p-5 rounded-2xl border mb-6 shadow-sm overflow-hidden"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: `${colors.border}80` // slightly transparent border
+            }}
           >
-            <View>
-              <Text className="text-xs font-bold uppercase tracking-widest mb-1 opacity-70" style={{ color: colors.text }}>Daily Goals</Text>
-              <View className="flex-row items-baseline gap-1">
-                <Text className="text-3xl font-extrabold" style={{ color: colors.primary }}>{completionRate}%</Text>
-                <Text className="text-xs font-medium opacity-50" style={{ color: colors.text }}>completed</Text>
+            {/* Background decoration */}
+            <View className="absolute right-0 top-0 w-32 h-32 rounded-full -mr-10 -mt-10 opacity-5" style={{ backgroundColor: colors.primary }} />
+
+            <View className="flex-row items-center justify-between mb-3">
+              <View>
+                <Text className="text-xs font-bold uppercase tracking-widest mb-1 opacity-60" style={{ color: colors.text }}>Daily Progress</Text>
+                <View className="flex-row items-baseline gap-2">
+                  <FontAwesome5 name="trophy" size={16} color="#EAB308" />
+                  <Text className="text-4xl font-extrabold" style={{ color: colors.text }}>{completionRate}%</Text>
+                </View>
+              </View>
+              <View className="items-end">
+                <View className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${colors.primary}15` }}>
+                  <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                    {habits.filter((h: any) => h.completedToday).length} / {habits.length} Done
+                  </Text>
+                </View>
               </View>
             </View>
 
-            <View className="items-end">
-              <View className="flex-row items-center gap-1 bg-primary/10 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${colors.primary}15` }}>
-                <Feather name="check-circle" size={12} color={colors.primary} />
-                <Text className="text-xs font-bold" style={{ color: colors.primary }}>{habits.filter((h: any) => h.completedToday).length}/{habits.length}</Text>
-              </View>
+            {/* Progress Bar */}
+            <View className="h-2 rounded-full w-full bg-black/5 dark:bg-white/5 overflow-hidden">
+              <View
+                className="h-full rounded-full"
+                style={{
+                  width: `${completionRate}%`,
+                  backgroundColor: colors.primary
+                }}
+              />
             </View>
           </View>
-        </View>
 
-        {/* Habits Grid */}
-        <ScrollView
-          className="flex-1 px-4"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        >
+          {/* Habits Grid */}
+          <Text className="text-lg font-bold mb-4 ml-1" style={{ color: colors.text }}>Your Habits</Text>
+
           {habits.length === 0 ? (
-            <View className="items-center justify-center py-16 border-2 border-dashed rounded-2xl opacity-50" style={{ borderColor: colors.border }}>
-              <View className="w-16 h-16 rounded-full items-center justify-center mb-4" style={{ backgroundColor: `${colors.primary}10` }}>
-                <Ionicons name="sparkles" size={32} color={colors.primary} />
+            <View className="items-center justify-center py-16 border-2 border-dashed rounded-3xl opacity-50 mb-8" style={{ borderColor: colors.border }}>
+              <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/5 dark:bg-white/5">
+                <FontAwesome5 name="trophy" size={24} color={colors.text} style={{ opacity: 0.5 }} />
               </View>
               <Text className="text-lg font-bold mb-1" style={{ color: colors.text }}>No habits yet</Text>
-              <Text className="text-sm text-center px-8 opacity-60" style={{ color: colors.text }}>Start building your streak today!</Text>
+              <Text className="text-sm text-center px-8 opacity-60" style={{ color: colors.text }}>
+                Start small. Create your first habit to begin your journey towards consistency.
+              </Text>
             </View>
           ) : (
-            <View className="gap-3">
-              {habits.map((habit: any) => (
-                <Pressable
-                  key={habit.id}
-                  onPress={() => toggleHabit(habit)}
-                  className="rounded-2xl border p-4 flex-row items-center justify-between"
-                  style={{
-                    backgroundColor: colors.card,
-                    borderColor: habit.completedToday ? colors.primary : colors.border,
-                    opacity: habit.completedToday ? 0.9 : 1
-                  }}
-                >
-                  <View className="flex-1 mr-4">
-                    <View className="flex-row items-baseline justify-between mb-2">
-                      <Text className="text-base font-bold" style={{ color: colors.text, textDecorationLine: habit.completedToday ? 'line-through' : 'none', opacity: habit.completedToday ? 0.5 : 1 }}>
-                        {habit.name}
-                      </Text>
+            <View className="gap-4">
+              {habits.map((habit: any) => {
+                const isCompleted = habit.completedToday;
+                return (
+                  <Pressable
+                    key={habit.id}
+                    onPress={() => toggleHabit(habit)}
+                    className="group relative overflow-hidden rounded-2xl border p-5 transition-all active:scale-[0.99]"
+                    style={{
+                      backgroundColor: colors.card,
+                      borderColor: isCompleted ? '#22c55e80' : colors.border, // Green border if completed
+                      opacity: 1
+                    }}
+                  >
+                    {/* Glow effect for completed state */}
+                    {isCompleted && (
+                      <View
+                        className="absolute inset-0 opacity-10 pointer-events-none"
+                        style={{ backgroundColor: '#22c55e' }}
+                      />
+                    )}
 
-                      {/* Streak Badge */}
-                      <View className="flex-row items-center gap-1 px-2 py-0.5 rounded-md" style={{ backgroundColor: habit.streak > 0 ? '#ffedd5' : colors.border }}>
-                        <FontAwesome5 name="fire" size={10} color={habit.streak > 0 ? "#F97316" : colors.placeholder} />
-                        <Text className="text-[10px] font-bold" style={{ color: habit.streak > 0 ? '#F97316' : colors.placeholder }}>
-                          {habit.streak}
+                    <View className="flex-row items-start justify-between">
+                      <View className="flex-1 mr-4">
+                        <Text
+                          className="text-lg font-bold mb-1 leading-tight"
+                          style={{
+                            color: isCompleted ? '#16a34a' : colors.text, // Green text if completed
+                            textDecorationLine: 'none' // Removed strikethrough to match desktop
+                          }}
+                        >
+                          {habit.name}
                         </Text>
+                        <Text className="text-xs opacity-50" style={{ color: colors.text }}>
+                          {isCompleted ? "Completed for today" : "Tap to mark done"}
+                        </Text>
+                      </View>
+
+                      {/* Checkbox / Circle */}
+                      <View
+                        className="w-10 h-10 rounded-full items-center justify-center border-2 transition-all shadow-sm"
+                        style={{
+                          borderColor: isCompleted ? '#22c55e' : `${colors.text}30`,
+                          backgroundColor: isCompleted ? '#22c55e' : 'transparent',
+                          transform: [{ scale: isCompleted ? 1.1 : 1 }]
+                        }}
+                      >
+                        {isCompleted && <Feather name="check" size={20} color="#FFF" strokeWidth={3} />}
                       </View>
                     </View>
 
-                    <Text className="text-xs opacity-50 line-clamp-1" style={{ color: colors.text }}>
-                      {habit.completedToday ? 'Completed today!' : 'Tap to complete'}
-                    </Text>
-                  </View>
-
-                  {/* Checkbox */}
-                  <View
-                    className="w-8 h-8 rounded-full items-center justify-center border-2"
-                    style={{
-                      borderColor: habit.completedToday ? colors.primary : colors.border,
-                      backgroundColor: habit.completedToday ? colors.primary : 'transparent'
-                    }}
-                  >
-                    {habit.completedToday && <Feather name="check" size={16} color="#FFF" strokeWidth={4} />}
-                  </View>
-                </Pressable>
-              ))}
+                    {/* Streak Badge */}
+                    <View className="flex-row items-center mt-4">
+                      <View
+                        className="flex-row items-center gap-1.5 px-3 py-1 rounded-full"
+                        style={{
+                          backgroundColor: isCompleted
+                            ? (habit.streak > 0 ? '#ffedd5' : `${colors.text}10`)
+                            : '#eff6ff', // Blue-50 for potential
+                        }}
+                      >
+                        <FontAwesome5
+                          name="fire"
+                          size={12}
+                          color={isCompleted
+                            ? (habit.streak > 0 ? "#ea580c" : colors.placeholder)
+                            : "#3b82f6" // Blue-500 for potential
+                          }
+                        />
+                        <Text
+                          className="text-xs font-bold"
+                          style={{
+                            color: isCompleted
+                              ? (habit.streak > 0 ? '#ea580c' : colors.placeholder)
+                              : "#3b82f6" // Blue-500
+                          }}
+                        >
+                          {isCompleted
+                            ? `${habit.streak} Day Streak`
+                            : `Reach ${habit.streak + 1} Day Streak!`
+                          }
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
           )}
         </ScrollView>

@@ -125,5 +125,6 @@ export const auth = betterAuth({
     "http://localhost:8000",
     "http://localhost:8081",
     "http://localhost:1420",
+    "exp://",
   ],
 })

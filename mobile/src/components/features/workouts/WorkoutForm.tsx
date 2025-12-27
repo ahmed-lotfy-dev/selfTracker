@@ -1,29 +1,25 @@
 import React, { useState, useMemo } from "react"
 import {
   View,
-  Text,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
 } from "react-native"
-import { Feather } from "@expo/vector-icons"
-import { Picker } from "@react-native-picker/picker"
-import DatePicker from "@/src/components/DatePicker"
-import DateDisplay from "@/src/components/DateDisplay"
 import { useRouter } from "expo-router"
 import { useSelectedWorkout } from "@/src/features/workouts/useWorkoutStore"
 import { WorkoutLogSchema } from "@/src/types/workoutLogType"
 import { useUser } from "@/src/features/auth/useAuthStore"
-import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
-import { formatLocal, formatUTC, safeParseDate } from "@/src/lib/utils/dateUtils"
+import { formatUTC } from "@/src/lib/utils/dateUtils"
 import { useLiveQuery, eq } from "@tanstack/react-db"
 import { useCollections } from "@/src/db/collections"
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
+import DateDisplay from "../../DateDisplay"
+import Feather from "@expo/vector-icons/build/Feather"
+import DatePicker from "../../DatePicker"
+import { Picker } from "@react-native-picker/picker"
 
 export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   const router = useRouter()
@@ -122,15 +118,13 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <KeyboardAwareScrollView
+      bottomOffset={62}
       className="flex-1 bg-background"
+      contentContainerStyle={{ paddingBottom: 100 }}
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        className="flex-1 px-4 pt-4"
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+      <View className="flex-1 px-4 pt-4">
 
         <Section title="Activity" error={errors.workoutId}>
           <View className="flex-row items-center py-2 px-4">
@@ -195,7 +189,7 @@ export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
           {isEditing ? "Update Workout" : "Log Workout"}
         </Button>
 
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </View>
+    </KeyboardAwareScrollView>
   )
 }
