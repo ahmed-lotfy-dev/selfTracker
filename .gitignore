@@ -35,6 +35,7 @@ lerna-debug.log*
 
 # Ignored large files and secrets
 *.apk
+/app-files
 # google-services.json
 
 # Desktop Signing Keys
