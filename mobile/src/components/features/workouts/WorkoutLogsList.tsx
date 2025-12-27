@@ -8,12 +8,14 @@ import { useRouter } from "expo-router"
 
 interface WorkoutLogsListProps {
   headerElement?: React.ReactNode
+  logs?: any[]
 }
 
-export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
+export const WorkoutLogsList = ({ headerElement, logs }: WorkoutLogsListProps) => {
   const colors = useThemeColors()
   const router = useRouter()
-  const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
+  const storeLogs = useWorkoutsStore(s => s.workoutLogs)
+  const workoutLogs = logs || storeLogs
 
   return (
     <ScrollView
