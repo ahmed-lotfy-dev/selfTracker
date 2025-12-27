@@ -1,121 +1,111 @@
-import { View, Text, Pressable } from "react-native"
-import { Stack, useLocalSearchParams, useRouter, Route } from "expo-router"
+import { View, Text, ScrollView, Alert } from "react-native"
+import { Stack, useLocalSearchParams, useRouter } from "expo-router"
 import React, { useMemo } from "react"
-import ActivitySpinner from "@/src/components/ActivitySpinner"
-import { useThemeColors } from "@/src/constants/Colors"
 import BackButton from "@/src/components/Buttons/BackButton"
+import { useThemeColors } from "@/src/constants/Colors"
+import { useWeightStore } from "@/src/stores/useWeightStore"
+import Button from "@/src/components/ui/Button"
+import { Feather, FontAwesome5 } from "@expo/vector-icons"
 import { format } from "date-fns"
-import { MaterialIcons } from "@expo/vector-icons"
-import { safeParseDate } from "@/src/lib/utils/dateUtils"
-import { useWeightLogStore } from "@/src/features/weight/useWeightStore"
-import { useLiveQuery, eq } from "@tanstack/react-db"
-import { useCollections } from "@/src/db/collections"
-import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
 export default function WeightLog() {
   const router = useRouter()
-  const { id } = useLocalSearchParams() as { id: string }
-  const { setSelectedWeight } = useWeightLogStore()
+  const { id } = useLocalSearchParams()
   const colors = useThemeColors()
-  const { showAlert } = useAlertStore()
 
-  const collections = useCollections()
-  if (!collections) return null
+  const weightLogs = useWeightStore(s => s.weightLogs)
+  const deleteWeightLog = useWeightStore(s => s.deleteWeightLog)
 
-  const { data: allLogsData = [] } = useLiveQuery((q: any) =>
-    q.from({ logs: collections.weightLogs })
-      .select(({ logs }: any) => ({
-        id: logs.id,
-        weight: logs.weight,
-        notes: logs.notes,
-        createdAt: logs.created_at,
-        userId: logs.user_id,
-      }))
-  ) ?? { data: [] }
-
-  const allLogs = useMemo(() => allLogsData || [], [allLogsData])
-  const weightLog = allLogs.find((log: any) => log.id === id)
+  const log = useMemo(() =>
+    weightLogs.find(l => l.id === id),
+    [weightLogs, id]
+  )
 
   const handleDelete = () => {
-    showAlert(
-      "Delete Weight",
-      "Are you sure you want to delete this weight log?",
-      async () => {
-        await collections.weightLogs.delete(id)
-        router.back()
-      },
-      () => { },
-      "Delete",
-      "Cancel"
+    Alert.alert(
+      "Delete Entry",
+      "Are you sure you want to delete this weight entry?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            if (typeof id === 'string') {
+              deleteWeightLog(id)
+              router.back()
+            }
+          }
+        }
+      ]
     )
   }
 
-  if (!weightLog) {
+  if (!log) {
     return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <Text className="text-error font-medium">Weight log not found.</Text>
-        <BackButton backTo="/weights" className="mt-4" />
+      <View className="flex-1 bg-background items-center justify-center">
+        <Stack.Screen options={{ headerShown: true, title: "Weight Details" }} />
+        <Text className="text-placeholder">Entry not found.</Text>
       </View>
     )
   }
-
-  const formattedDate = format(safeParseDate(weightLog.createdAt), "MMMM dd, yyyy")
 
   return (
     <View className="flex-1 bg-background">
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: "Weight Details",
+          headerLeft: () => <BackButton />,
+          headerRight: () => (
+            <Feather
+              name="edit-2"
+              size={20}
+              color={colors.primary}
+              onPress={() => router.push(`/weights/edit?id=${id}`)}
+            />
+          )
+        }}
+      />
 
-      <View className="pt-12 px-4 pb-4">
-        <BackButton backTo="/weights" />
-      </View>
+      <ScrollView className="flex-1 p-5">
 
-      <View className="flex-1 px-6">
-        <View className="items-center py-10">
-          <Text className="text-7xl font-black text-text tracking-tighter">
-            {weightLog.weight}
-          </Text>
-          <Text className="text-xl text-placeholder font-bold -mt-2 mb-8">
-            KG
-          </Text>
-
-          <View className="bg-primary/10 px-4 py-2 rounded-full">
-            <Text className="text-sm font-bold text-primary uppercase tracking-widest">
-              {formattedDate}
+        {/* Hero Card */}
+        <View className="bg-card rounded-3xl p-8 border border-border mb-6 items-center">
+          <Text className="text-sm text-placeholder font-medium mb-1">Recorded Weight</Text>
+          <View className="flex-row items-baseline gap-1">
+            <Text className="text-5xl font-bold text-text">{log.weight}</Text>
+            <Text className="text-xl text-placeholder">kg</Text>
+          </View>
+          <View className="mt-4 px-3 py-1 bg-muted/30 rounded-full">
+            <Text className="text-sm text-text font-medium">
+              {format(new Date(log.createdAt), "MMMM do, yyyy")}
             </Text>
           </View>
         </View>
 
-        {weightLog.notes && (
-          <View className="bg-card rounded-3xl p-6 shadow-sm border border-border mt-4">
-            <Text className="text-xs font-bold text-placeholder tracking-widest mb-3">
-              NOTES
-            </Text>
-            <Text className="text-lg text-text leading-relaxed">
-              {weightLog.notes}
-            </Text>
+        {/* Notes Card */}
+        {log.notes ? (
+          <View className="bg-card rounded-3xl p-6 border border-border mb-6">
+            <Text className="text-sm text-placeholder font-bold uppercase mb-3 tracking-wider">Notes</Text>
+            <Text className="text-base text-text leading-6">{log.notes}</Text>
+          </View>
+        ) : (
+          <View className="bg-card rounded-3xl p-6 border border-border mb-6 border-dashed opacity-70">
+            <Text className="text-center text-placeholder italic">No notes added.</Text>
           </View>
         )}
+      </ScrollView>
 
-        <View className="flex-row items-center gap-4 mt-10">
-          <Pressable
-            className="flex-1 bg-primary/10 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-primary/20"
-            onPress={() => {
-              setSelectedWeight(weightLog as any)
-              router.push(`/weights/edit` as Route)
-            }}
-          >
-            <MaterialIcons name="edit" size={20} color={colors.primary} />
-            <Text className="text-primary font-bold text-base">Edit</Text>
-          </Pressable>
-
-          <Pressable
-            className="flex-1 bg-error/10 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-error/20"
-            onPress={handleDelete}
-          >
-            <MaterialIcons name="delete-outline" size={20} color={colors.error} />
-            <Text className="text-error font-bold text-base">Delete</Text>
-          </Pressable>
-        </View>
+      <View className="p-5 pb-8 border-t border-border bg-background">
+        <Button
+          onPress={handleDelete}
+          variant="outline"
+          className="border-red-500/50"
+          textClassName="text-red-500"
+        >
+          Delete Entry
+        </Button>
       </View>
     </View>
   )

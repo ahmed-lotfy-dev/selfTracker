@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useMemo } from "react"
 import {
   View,
   Text,
@@ -17,9 +17,7 @@ import { useUpdate } from "@/src/hooks/useUpdate"
 import { User } from "@/src/types/userType"
 import LogoutButton from "@/src/components/features/auth/LogoutButton"
 import { updateUser } from "@/src/lib/api/userApi"
-import { useLiveQuery, eq } from "@tanstack/react-db"
-import { useCollections } from "@/src/db/collections"
-import Animated, { FadeInDown, LinearTransition, FadeIn, FadeOut } from "react-native-reanimated"
+import Animated, { FadeInDown } from "react-native-reanimated"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useProfileImage } from "@/src/hooks/useProfileImage"
 
@@ -29,13 +27,22 @@ import Row from "@/src/components/ui/Row"
 import Input from "@/src/components/ui/Input"
 import SyncSection from "./SyncSection"
 
+type UserGoal = {
+  id: string;
+  userId: string;
+  goalType: string;
+  targetValue: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
 export default function ProfileSettings() {
   const { user } = useAuth()
   const { updateMutation } = useUpdate({ mutationFn: updateUser })
   const { mutate: updateUserMutation, isPending } = updateMutation
   const { showAlert } = useAlertStore()
   const colors = useThemeColors()
-  const collections = useCollections()
 
   const [name, setName] = useState(user?.name || "")
   const [weight, setWeight] = useState(user?.weight?.toString() || "")
@@ -56,22 +63,8 @@ export default function ProfileSettings() {
   const [newGoalType, setNewGoalType] = useState<"loseWeight" | "gainWeight" | "bodyFat" | "muscleMass">("loseWeight")
   const [newGoalTarget, setNewGoalTarget] = useState("")
 
-  const { data: goalsData = [] } = useLiveQuery((q: any) =>
-    collections?.userGoals ? q.from({ goals: collections.userGoals })
-      .where(({ goals }: any) => eq(goals.user_id, user?.id || ""))
-      .select(({ goals }: any) => ({
-        id: goals.id,
-        userId: goals.user_id,
-        goalType: goals.goal_type,
-        targetValue: goals.target_value,
-        createdAt: goals.created_at,
-        updatedAt: goals.updated_at,
-        deletedAt: goals.deleted_at,
-      })) : { data: [] }
-  ) ?? { data: [] }
-
-  const goals = useMemo(() => goalsData || [], [goalsData])
-  const isLoadingGoals = goalsData === undefined
+  const goals: any[] = []
+  const isLoadingGoals = false
 
   const handleSave = () => {
     if (!user?.id) return
@@ -107,30 +100,7 @@ export default function ProfileSettings() {
   }
 
   const handleAddGoal = async () => {
-    if (!user?.id) return
-    if (!newGoalTarget) {
-      showAlert("Error", "Please enter a target value", () => { }, undefined, "OK", undefined)
-      return
-    }
-
-    try {
-      if (collections?.userGoals) {
-        await collections.userGoals.insert({
-          id: crypto.randomUUID(),
-          user_id: user.id,
-          goal_type: newGoalType,
-          target_value: newGoalTarget,
-          created_at: new Date(),
-          updated_at: new Date(),
-          deleted_at: null,
-        })
-        setShowAddGoal(false)
-        setNewGoalTarget("")
-        showAlert("Success", "Goal added successfully!", () => { }, undefined, "Got it", undefined)
-      }
-    } catch (e) {
-      console.error("Failed to add goal:", e)
-    }
+    showAlert("Coming Soon", "Goal tracking will be available once sync is enabled.", () => { }, undefined, "OK", undefined)
   }
 
   return (
@@ -257,16 +227,12 @@ export default function ProfileSettings() {
                         </View>
                         <Pressable onPress={() => {
                           showAlert(
-                            "Delete Goal",
-                            "Are you sure you want to delete this goal?",
-                            async () => {
-                              if (collections?.userGoals) {
-                                await collections.userGoals.delete(goal.id)
-                              }
-                            },
+                            "Coming Soon",
+                            "Goal deletion will be available once sync is enabled.",
+                            () => { },
                             undefined,
-                            "Delete",
-                            "Cancel"
+                            "OK",
+                            undefined
                           )
                         }} className="p-2">
                           <Feather name="trash-2" size={16} color={colors.error} />

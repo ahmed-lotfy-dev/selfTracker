@@ -6,41 +6,26 @@ import {
   Pressable,
   LayoutAnimation,
 } from "react-native"
-import { safeParseDate } from "@/src/lib/utils/dateUtils"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import CalendarView from "@/src/components/features/workouts/CalendarView"
 import AddButton from "@/src/components/Buttons/AddButton"
 import { WorkoutLogsList } from "@/src/components/features/workouts/WorkoutLogsList"
 import { WorkoutStatsRow } from "@/src/components/features/workouts/WorkoutStatsRow"
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated"
 
 const VIEW_TYPES = {
   LIST: "list",
   CALENDAR: "calendar",
 }
 
-import { useLiveQuery, eq } from "@tanstack/react-db"
-import { useCollections } from "@/src/db/collections"
-
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated"
+import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 
 export default function WorkoutScreen() {
   const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST)
   const colors = useThemeColors()
 
-  const collections = useCollections()
-  if (!collections) return null
-
-  const { data: workoutLogsData = [] } = useLiveQuery((q: any) =>
-    q.from({ logs: collections.workoutLogs })
-      .select(({ logs }: any) => ({
-        id: logs.id,
-        workoutName: logs.workout_name,
-        createdAt: logs.created_at,
-      }))
-  ) ?? { data: [] }
-
-  const workoutLogs = useMemo(() => workoutLogsData || [], [workoutLogsData])
+  const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
 
   const stats = useMemo(() => {
     const weekAgo = new Date()
@@ -48,21 +33,21 @@ export default function WorkoutScreen() {
     const monthAgo = new Date()
     monthAgo.setMonth(monthAgo.getMonth() - 1)
 
-    const weeklyWorkouts = workoutLogs.filter(
-      log => log.createdAt && safeParseDate(log.createdAt) > weekAgo
-    ).length
+    const weeklyWorkouts = workoutLogs.filter(w => new Date(w.createdAt) > weekAgo).length
+    const monthlyWorkouts = workoutLogs.filter(w => new Date(w.createdAt) > monthAgo).length
+    const uniqueWorkoutsThisWeek = new Set(
+      workoutLogs
+        .filter(w => new Date(w.createdAt) > weekAgo)
+        .map(w => w.workoutName)
+    ).size
 
-    const monthlyWorkouts = workoutLogs.filter(
-      log => log.createdAt && safeParseDate(log.createdAt) > monthAgo
-    ).length
-
-    return { weeklyWorkouts, monthlyWorkouts, totalWorkouts: workoutLogs.length }
+    return { weeklyWorkouts, monthlyWorkouts, uniqueWorkoutsThisWeek }
   }, [workoutLogs])
 
   const toggleView = (view: string) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setCurrentView(view);
-  };
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setCurrentView(view)
+  }
 
   const ViewSelector = () => (
     <View className="flex-row mx-2 mb-6 bg-card p-1 rounded-full h-12 border border-border">
@@ -89,7 +74,7 @@ export default function WorkoutScreen() {
         <WorkoutStatsRow
           weeklyWorkouts={stats.weeklyWorkouts}
           monthlyWorkouts={stats.monthlyWorkouts}
-          totalWorkouts={stats.totalWorkouts}
+          uniqueWorkoutsThisWeek={stats.uniqueWorkoutsThisWeek}
         />
       </View>
       <ViewSelector />

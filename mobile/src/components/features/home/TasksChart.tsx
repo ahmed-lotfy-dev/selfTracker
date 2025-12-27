@@ -1,31 +1,19 @@
 import { View, Text, Dimensions } from "react-native"
 import React, { useMemo } from "react"
 import { PieChart } from "react-native-chart-kit"
-import { COLORS, useThemeColors } from "@/src/constants/Colors"
-import { useCollections } from "@/src/db/collections"
-import { useLiveQuery } from "@tanstack/react-db"
+import { useThemeColors } from "@/src/constants/Colors"
+import { useTasksStore } from "@/src/stores/useTasksStore"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 
 export const TasksChart = () => {
   const colors = useThemeColors()
-  const collections = useCollections()
-
-  if (!collections) {
-    return null
-  }
-
-  const { data: tasks = [] } = useLiveQuery((q: any) =>
-    q.from({ tasks: collections.tasks })
-      .select(({ tasks }: any) => ({
-        id: tasks.id,
-        completed: tasks.completed,
-      }))
-  ) ?? { data: [] }
+  const tasks = useTasksStore((s) => s.tasks)
 
   const stats = useMemo(() => {
-    const pendingTasks = tasks.filter((t: any) => !t.completed).length
-    const completedTasks = tasks.filter((t: any) => t.completed).length
+    const activeTasks = tasks.filter((t) => !t.deletedAt)
+    const pendingTasks = activeTasks.filter((t) => !t.completed).length
+    const completedTasks = activeTasks.filter((t) => t.completed).length
     return { pendingTasks, completedTasks }
   }, [tasks])
 
@@ -55,32 +43,30 @@ export const TasksChart = () => {
     >
       <Text
         style={{ marginBottom: 4, fontWeight: "bold", color: colors.primary }}
-        className="text-primary"
       >
-        Tasks Status
+        Tasks Overview
       </Text>
-
       {hasData ? (
         <PieChart
           data={data}
-          width={SCREEN_WIDTH - 60}
-          height={180}
+          width={SCREEN_WIDTH - 48}
+          height={140}
           chartConfig={{
-            backgroundColor: "transparent",
             backgroundGradientFrom: colors.card,
             backgroundGradientTo: colors.card,
-            color: (opacity = 1) => colors.text,
+            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
           }}
-          accessor={"population"}
-          backgroundColor={"transparent"}
-          paddingLeft={"15"}
-          center={[10, 0]}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="15"
           absolute
         />
       ) : (
-        <Text className="mt-1 text-center pb-3 text-text-secondary">
-          No tasks available. Add some tasks!
-        </Text>
+        <View className="items-center justify-center py-8">
+          <Text className="text-placeholder text-center">
+            No tasks yet. Add some tasks to see your progress!
+          </Text>
+        </View>
       )}
     </View>
   )

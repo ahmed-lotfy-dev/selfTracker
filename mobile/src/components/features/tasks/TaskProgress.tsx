@@ -1,10 +1,8 @@
 import React from "react"
 import { View, Text } from "react-native"
-import { TaskType } from "@/src/types/taskType"
-import { COLORS } from "@/src/constants/Colors"
 
 interface TaskProgressProps {
-  tasks: TaskType[]
+  tasks: { id: string; completed: boolean }[]
 }
 
 export default function TaskProgress({ tasks }: TaskProgressProps) {

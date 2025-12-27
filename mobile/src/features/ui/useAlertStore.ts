@@ -6,6 +6,7 @@ interface AlertState {
   message: string
   confirmText?: string
   cancelText?: string
+  type: 'default' | 'error' | 'success' // Added type
   onConfirm: () => void
   onCancel?: () => void
   showAlert: (
@@ -14,7 +15,8 @@ interface AlertState {
     onConfirm: () => void,
     onCancel?: () => void,
     confirmText?: string,
-    cancelText?: string
+    cancelText?: string,
+    type?: 'default' | 'error' | 'success' // Added type arg
   ) => void
   hideAlert: () => void
 }
@@ -25,9 +27,10 @@ export const useAlertStore = create<AlertState>((set) => ({
   message: '',
   confirmText: 'Confirm',
   cancelText: 'Cancel',
+  type: 'default',
   onConfirm: () => { },
   onCancel: () => { },
-  showAlert: (title, message, onConfirm, onCancel, confirmText = 'Confirm', cancelText = 'Cancel') =>
+  showAlert: (title, message, onConfirm, onCancel, confirmText = 'Confirm', cancelText = 'Cancel', type = 'default') =>
     set({
       isOpen: true,
       title,
@@ -36,6 +39,7 @@ export const useAlertStore = create<AlertState>((set) => ({
       onCancel,
       confirmText,
       cancelText,
+      type,
     }),
   hideAlert: () => set({ isOpen: false }),
 }))

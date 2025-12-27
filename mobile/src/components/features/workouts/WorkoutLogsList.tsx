@@ -1,13 +1,10 @@
-import { View, Text } from "react-native"
-import React, { useMemo } from "react"
-import { useLiveQuery, eq } from "@tanstack/react-db"
-import { useCollections } from "@/src/db/collections"
-import WorkoutLogItem from "./WorkoutLogItem"
-import { FlashList } from "@shopify/flash-list"
-import { WorkoutChart } from "./WorkoutChart"
+import React from "react"
+import { View, Text, ScrollView, Pressable } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
-import Header from "@/src/components/Header"
-import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
+import { FontAwesome5 } from "@expo/vector-icons"
+
+import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
+import { useRouter } from "expo-router"
 
 interface WorkoutLogsListProps {
   headerElement?: React.ReactNode
@@ -15,83 +12,39 @@ interface WorkoutLogsListProps {
 
 export const WorkoutLogsList = ({ headerElement }: WorkoutLogsListProps) => {
   const colors = useThemeColors()
-
-  const collections = useCollections()
-  if (!collections) return null
-
-  const { data: allLogs = [] } = useLiveQuery((q: any) =>
-    q.from({ logs: collections.workoutLogs })
-      .select(({ logs }: any) => ({
-        id: logs.id,
-        workoutId: logs.workout_id,
-        workoutName: logs.workout_name,
-        notes: logs.notes,
-        createdAt: logs.created_at,
-        updatedAt: logs.updated_at,
-        deletedAt: logs.deleted_at,
-        userId: logs.user_id,
-      }))
-  ) ?? { data: [] }
-
-  React.useEffect(() => {
-    console.log('[WORKOUTS] Raw collection size:', collections.workoutLogs.count?.() || 'N/A')
-    console.log('[WORKOUTS] Query result:', allLogs.length, 'logs found')
-    if (allLogs.length > 0) {
-      console.log('[WORKOUTS] First log sample:', allLogs[0])
-    }
-  }, [allLogs])
-
-  const sortedLogs = useMemo(() => {
-    if (!allLogs || !Array.isArray(allLogs)) return []
-    return (allLogs as any[]).sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
-      return dateB - dateA
-    })
-  }, [allLogs])
-
-  const weeklyCount = useMemo(() => {
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return sortedLogs.filter(log => log.createdAt && new Date(log.createdAt) > weekAgo).length
-  }, [sortedLogs])
-
-  const monthlyCount = useMemo(() => {
-    const monthAgo = new Date()
-    monthAgo.setMonth(monthAgo.getMonth() - 1)
-    return sortedLogs.filter(log => log.createdAt && new Date(log.createdAt) > monthAgo).length
-  }, [sortedLogs])
-
-  const ListHeader = (
-    <View className="mb-2">
-      {headerElement}
-
-      <View className="mt-6 px-2">
-        <Text className="text-lg font-semibold text-text mb-3">Workout Types</Text>
-        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden pb-4">
-          <WorkoutChart />
-        </View>
-      </View>
-
-      <Text className="text-lg font-semibold text-text mt-6 px-4 mb-2">Recent Workouts</Text>
-    </View>
-  )
+  const router = useRouter()
+  const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
 
   return (
-    <View className="flex-1 bg-background">
-      <FlashList
-        ListHeaderComponent={ListHeader}
-        data={sortedLogs}
-        renderItem={({ item }) => <WorkoutLogItem item={item} path="/workouts" />}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <View className="flex-1 justify-center items-center py-10">
-            <Text className="text-placeholder font-medium">No workout logs yet.</Text>
+    <ScrollView
+      className="flex-1"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 150 }}
+    >
+      {headerElement}
+      {workoutLogs.length === 0 ? (
+        <View className="items-center justify-center py-16 border-2 border-dashed rounded-3xl mx-2 opacity-50" style={{ borderColor: colors.border }}>
+          <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/5 dark:bg-white/5">
+            <FontAwesome5 name="dumbbell" size={24} color={colors.text} style={{ opacity: 0.5 }} />
           </View>
-        }
-      />
-    </View>
+          <Text className="text-lg font-bold mb-1 text-text">No workouts yet</Text>
+          <Text className="text-sm text-center px-8 text-placeholder">
+            Workout tracking will be available once sync is enabled.
+          </Text>
+        </View>
+      ) : (
+        Array.from(new Map(workoutLogs.map((item: any) => [item.id, item])).values()).map((log: any) => (
+          <Pressable
+            key={log.id}
+            onPress={() => router.push(`/workouts/${log.id}`)}
+            className="p-4 bg-card rounded-xl mb-2 mx-2 border border-border"
+          >
+            <Text className="text-text font-medium">{log.workoutName}</Text>
+            {log.notes && <Text className="text-sm text-placeholder mt-1" numberOfLines={1}>{log.notes}</Text>}
+            <Text className="text-xs text-placeholder mt-2">{new Date(log.createdAt).toLocaleDateString()}</Text>
+          </Pressable>
+        ))
+      )}
+    </ScrollView>
   )
 }

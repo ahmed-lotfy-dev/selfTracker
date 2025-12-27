@@ -2,7 +2,7 @@ import "react-native-random-uuid"
 import "@/src/polyfills/crypto"
 import React, { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
-import {  Stack } from "expo-router"
+import { Stack } from "expo-router"
 import { checkForUpdates, onAppStateChange } from "@/src/lib/lib"
 import { useOnlineManager } from "@/src/hooks/useOnlineManager"
 import { useAppState } from "@/src/hooks/useAppState"
@@ -24,8 +24,10 @@ import {
 } from "@expo/vector-icons"
 import { Colors } from "../constants/Colors"
 import CustomAlert from "@/src/components/ui/CustomAlert"
+
 import Toast from "@/src/components/ui/Toast"
 import { useAuth } from "@/src/features/auth/useAuthStore"
+import { SyncManager } from "@/src/services/SyncManager"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -58,6 +60,12 @@ function RootLayout() {
     return () => { } // Return an empty cleanup function for web
   }, [])
 
+  useEffect(() => {
+    if (isAuthenticated && appIsReady) {
+      SyncManager.startSync()
+    }
+  }, [isAuthenticated, appIsReady])
+
   console.log("[RootLayout] Render", { loaded, appIsReady })
 
   useEffect(() => {
@@ -66,6 +74,10 @@ function RootLayout() {
       if (!appIsReady) {
         console.log("[RootLayout] Preparing App (Bypassing font check)...")
         checkForUpdates()
+
+        // Initialize Sync Layer (Pull from DB -> MMKV)
+        await SyncManager.initialize()
+
         SplashScreen.hide()
         setAppIsReady(true)
       }

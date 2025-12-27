@@ -1,19 +1,26 @@
 import { View, Text, Pressable, TextInput } from "react-native"
 import Animated, { FadeIn, FadeOutRight, LinearTransition } from "react-native-reanimated"
-import { TaskType } from "@/src/types/taskType"
 import React, { useState, useRef } from "react"
 import { MaterialIcons, Ionicons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { Swipeable } from "react-native-gesture-handler"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
-import { useCollections } from "@/src/db/collections"
+import { useTasksStore } from "@/src/stores/useTasksStore"
 
-interface TaskListItemProps {
-  task: TaskType
-  index?: number
+type TaskItem = {
+  id: string
+  title: string
+  completed: boolean
+  category?: string
 }
 
-export default function TaskListItem({ task, index = 0 }: TaskListItemProps) {
+interface TaskListItemProps {
+  task: TaskItem
+  index?: number
+  onToggle?: () => void
+}
+
+export default function TaskListItem({ task, index = 0, onToggle }: TaskListItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState(task.title)
   const inputRef = useRef<TextInput>(null)
@@ -21,22 +28,13 @@ export default function TaskListItem({ task, index = 0 }: TaskListItemProps) {
   const colors = useThemeColors()
   const { showAlert } = useAlertStore()
 
-  const collections = useCollections()
+  const updateTask = useTasksStore((s) => s.updateTask)
+  const deleteTask = useTasksStore((s) => s.deleteTask)
 
-  const toggleTask = async () => {
-    console.log('[TaskListItem] toggleTask - current state:', task.completed, 'new state:', !task.completed)
-    if (!isEditing && collections) {
-      try {
-        const now = new Date().toISOString()
-        console.log('[TaskListItem] Updating collection for task:', task.id)
-        await collections.tasks.update(task.id, (draft: any) => {
-          draft.completed = !task.completed
-          draft.completed_at = !task.completed ? now : null
-          draft.updated_at = now
-        })
-      } catch (e) {
-        console.error('[TaskListItem] Failed to toggle task:', e)
-      }
+  const handleToggle = () => {
+    if (isEditing) return
+    if (onToggle) {
+      onToggle()
     }
   }
 
@@ -47,17 +45,10 @@ export default function TaskListItem({ task, index = 0 }: TaskListItemProps) {
     setTimeout(() => inputRef.current?.focus(), 100)
   }
 
-  const saveEdit = async () => {
+  const saveEdit = () => {
     const trimmed = editedTitle.trim()
-    if (trimmed && trimmed !== task.title && collections) {
-      try {
-        await collections.tasks.update(task.id, (draft: any) => {
-          draft.title = trimmed
-          draft.updated_at = new Date().toISOString()
-        })
-      } catch (e) {
-        console.error('[TaskListItem] Failed to update task:', e)
-      }
+    if (trimmed && trimmed !== task.title) {
+      updateTask(task.id, { title: trimmed })
     }
     setIsEditing(false)
   }
@@ -72,15 +63,7 @@ export default function TaskListItem({ task, index = 0 }: TaskListItemProps) {
     showAlert(
       "Delete Task",
       "Are you sure you want to delete this task?",
-      async () => {
-        try {
-          if (collections) {
-            await collections.tasks.delete(task.id)
-          }
-        } catch (e) {
-          console.error('[TaskListItem] Failed to delete task:', e)
-        }
-      },
+      () => deleteTask(task.id),
       () => { },
       "Delete",
       "Cancel"
@@ -121,13 +104,13 @@ export default function TaskListItem({ task, index = 0 }: TaskListItemProps) {
         <Pressable
           className={`flex-row items-center p-4 bg-card rounded-2xl shadow-sm border ${task.completed ? "border-border bg-background/50" : "border-border"
             }`}
-          onPress={toggleTask}
+          onPress={handleToggle}
           onLongPress={startEditing}
         >
           <Pressable
             onPress={(e) => {
               e.stopPropagation()
-              toggleTask()
+              handleToggle()
             }}
             className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-4 ${task.completed ? "bg-primary border-primary" : "border-placeholder bg-card"
               }`}

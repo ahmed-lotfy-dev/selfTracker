@@ -1,195 +1,214 @@
 import React, { useState, useMemo } from "react"
 import {
   View,
+  Text,
   TextInput,
   Pressable,
+  Platform,
 } from "react-native"
+import { Feather, MaterialIcons } from "@expo/vector-icons"
+import { Picker } from "@react-native-picker/picker"
+import DatePicker from "@/src/components/DatePicker"
+import DateDisplay from "@/src/components/DateDisplay"
 import { useRouter } from "expo-router"
-import { useSelectedWorkout } from "@/src/features/workouts/useWorkoutStore"
-import { WorkoutLogSchema } from "@/src/types/workoutLogType"
-import { useUser } from "@/src/features/auth/useAuthStore"
 import { useThemeColors } from "@/src/constants/Colors"
 import { formatUTC } from "@/src/lib/utils/dateUtils"
-import { useLiveQuery, eq } from "@tanstack/react-db"
-import { useCollections } from "@/src/db/collections"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 
 import Button from "@/src/components/ui/Button"
-import { Section } from "@/src/components/ui/Section"
-import DateDisplay from "../../DateDisplay"
-import Feather from "@expo/vector-icons/build/Feather"
-import DatePicker from "../../DatePicker"
-import { Picker } from "@react-native-picker/picker"
+import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
+import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
-export default function WorkoutForm({ isEditing }: { isEditing?: boolean }) {
+export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean; logId?: string }) {
   const router = useRouter()
-  const user = useUser()
-  const selectedWorkout = useSelectedWorkout()
   const colors = useThemeColors()
-  const collections = useCollections()
-  if (!collections) return null
+  const { showAlert } = useAlertStore()
 
-  const { data: allWorkoutsData = [] } = useLiveQuery((q: any) =>
-    q.from({ workouts: collections.workouts })
-      .select(({ workouts }: any) => ({
-        id: workouts.id,
-        name: workouts.name,
-      }))
-  ) ?? { data: [] }
+  const workouts = useWorkoutsStore(s => s.workouts)
+  const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
+  const addWorkoutLog = useWorkoutsStore(s => s.addWorkoutLog)
+  const updateWorkoutLog = useWorkoutsStore(s => s.updateWorkoutLog)
+  const addWorkout = useWorkoutsStore(s => s.addWorkout)
 
-  const allWorkouts = useMemo(() => allWorkoutsData || [], [allWorkoutsData])
+  // Find existing log if editing
+  const existingLog = useMemo(() => {
+    if (logId) return workoutLogs.find(l => l.id === logId)
+    return null
+  }, [logId, workoutLogs])
 
-  const defaultWorkouts = useMemo(() => {
-    if (allWorkouts.length > 0) return allWorkouts
-    return [
-      { id: 'push', name: 'Push Day' },
-      { id: 'pull', name: 'Pull Day' },
-      { id: 'legs', name: 'Leg Day' },
-      { id: 'upper', name: 'Upper Body' },
-      { id: 'lower', name: 'Lower Body' },
-      { id: 'cardio', name: 'Cardio' },
-      { id: 'full', name: 'Full Body' },
-    ]
-  }, [allWorkouts])
-
-  const [workoutId, setWorkoutId] = useState(
-    isEditing ? selectedWorkout?.workoutId || "" : ""
-  )
-  const [notes, setNotes] = useState(
-    isEditing ? selectedWorkout?.notes || "" : ""
-  )
-  const [createdAt, setCreatedAt] = useState(() => {
-    return formatUTC(isEditing && selectedWorkout?.createdAt ? selectedWorkout.createdAt : new Date())
-  })
-
+  // State
+  // Initialize from existing log if found
+  const [workoutId, setWorkoutId] = useState<string>(existingLog?.workoutId || "")
+  const [workoutName, setWorkoutName] = useState(existingLog?.workoutName || "")
+  const [notes, setNotes] = useState(existingLog?.notes || "")
+  const [createdAt, setCreatedAt] = useState(existingLog ? new Date(existingLog.createdAt) : new Date())
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [showDate, setShowDate] = useState(false)
+
+  // Computed
+  const isToday = useMemo(() => {
+    const today = new Date()
+    return createdAt.getDate() === today.getDate() &&
+      createdAt.getMonth() === today.getMonth() &&
+      createdAt.getFullYear() === today.getFullYear()
+  }, [createdAt])
+
+  // Memoized list for picker
+  const pickerItems = useMemo(() => {
+    return [
+      { label: "Select a workout...", value: "" },
+      ...workouts.map(w => ({ label: w.name, value: w.id })),
+      { label: "Create New Workout", value: "new" }
+    ]
+  }, [workouts])
 
   const handleSubmit = async () => {
-    const workoutName = defaultWorkouts.find((w) => w.id === workoutId)?.name || ""
-
-    const formData = {
-      userId: user?.id,
-      workoutId,
-      workoutName,
-      notes,
-      createdAt,
-    }
-
-    const result = WorkoutLogSchema.safeParse(formData)
-
-    if (!result.success) {
-      const newErrors: Record<string, string> = {}
-      for (const issue of result.error.issues) {
-        newErrors[issue.path[0]] = issue.message
-      }
-      setErrors(newErrors)
+    // Validation
+    if ((workoutId === "new" || !workoutId) && !workoutName.trim()) {
+      showAlert("Error", "Please select a workout or enter a name", () => { }, undefined, "OK", undefined)
       return
     }
 
     setIsSubmitting(true)
     try {
-      if (isEditing && selectedWorkout) {
-        await collections.workoutLogs.update(selectedWorkout.id!, (draft: any) => {
-          draft.workout_id = workoutId
-          draft.workout_name = workoutName
-          draft.notes = notes
-          draft.created_at = formatUTC(createdAt)
-          draft.updated_at = new Date()
+      let finalWorkoutId = workoutId
+      let finalWorkoutName = workoutName
+
+      // If existing workout selected from picker
+      if (workoutId && workoutId !== "new") {
+        const w = workouts.find(w => w.id === workoutId)
+        finalWorkoutName = w?.name || "Unknown Workout"
+      }
+      // If "new" selected or user typed custom name
+      else if (workoutName.trim()) {
+        // Create new template first
+        const newTemplateId = crypto.randomUUID()
+        finalWorkoutId = newTemplateId
+        addWorkout({
+          name: workoutName,
+          userId: "user_local",
+          isPublic: false,
+        } as any)
+      }
+
+      if (isEditing && logId) {
+        // UPDATE EXISTING LOG
+        updateWorkoutLog(logId, {
+          workoutId: finalWorkoutId,
+          workoutName: finalWorkoutName,
+          notes: notes || null,
+          createdAt: formatUTC(createdAt)
         })
       } else {
-        await collections.workoutLogs.insert({
-          id: crypto.randomUUID(),
-          user_id: user?.id || "",
-          workout_id: workoutId,
-          workout_name: workoutName,
-          notes,
-          created_at: formatUTC(createdAt),
-          deleted_at: null,
+        // CREATE NEW LOG
+        addWorkoutLog({
+          workoutId: finalWorkoutId,
+          workoutName: finalWorkoutName,
+          notes: notes || null,
+          userId: "user_local",
+          createdAt: formatUTC(createdAt) // Persist the selected date
         })
       }
-      router.push("/workouts")
+
+      router.back()
     } catch (e) {
-      console.error("Failed to save workout log:", e)
-    } finally {
+      console.error(e)
       setIsSubmitting(false)
     }
   }
 
   return (
     <KeyboardAwareScrollView
-      bottomOffset={62}
+      bottomOffset={20}
       className="flex-1 bg-background"
       contentContainerStyle={{ paddingBottom: 100 }}
       keyboardShouldPersistTaps="handled"
     >
-      <View className="flex-1 px-4 pt-4">
+      <View className="flex-1 px-5 pt-6 gap-6">
 
-        <Section title="Activity" error={errors.workoutId}>
-          <View className="flex-row items-center py-2 px-4">
-            <View className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full items-center justify-center mr-3">
-              <Feather name="layers" size={20} color={colors.primary} />
-            </View>
-            <View className="flex-1 -my-2 -mr-3">
+        {/* --- Activity Section --- */}
+        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+          <View className="bg-muted/30 px-4 py-3 border-b border-border flex-row items-center gap-2">
+            <MaterialIcons name="fitness-center" size={18} color={colors.primary} />
+            <Text className="text-sm font-bold uppercase text-placeholder tracking-wider">Workout Details</Text>
+          </View>
+
+          <View className="p-2">
+            <View className={`rounded-xl ${Platform.OS === 'ios' ? 'bg-transparent' : 'border border-border bg-background'}`}>
               <Picker
                 selectedValue={workoutId}
-                onValueChange={(val) => setWorkoutId(val)}
-                dropdownIconColor={colors.placeholder}
+                onValueChange={(itemValue) => setWorkoutId(itemValue)}
                 style={{ color: colors.text }}
-                itemStyle={{ color: colors.text }}
+                dropdownIconColor={colors.text}
+                itemStyle={{ color: colors.text, fontSize: 16 }}
               >
-                <Picker.Item label="Select Workout Type" value="" />
-                {defaultWorkouts.map((w) => (
-                  <Picker.Item key={w.id} label={w.name} value={w.id} />
+                {pickerItems.map((item) => (
+                  <Picker.Item key={item.value} label={item.label} value={item.value} />
                 ))}
               </Picker>
             </View>
+
+            {(workoutId === "new" || !workoutId) && (
+              <View className="mt-2 mx-2 mb-2 p-3 bg-background rounded-xl border border-border flex-row items-center gap-3">
+                <Feather name="edit-2" size={18} color={colors.placeholder} />
+                <TextInput
+                  className="flex-1 text-base font-medium"
+                  style={{ color: colors.text }}
+                  placeholder="Enter custom workout name"
+                  placeholderTextColor={colors.placeholder}
+                  value={workoutName}
+                  onChangeText={setWorkoutName}
+                  autoFocus={workoutId === "new"}
+                />
+              </View>
+            )}
           </View>
-        </Section>
+        </View>
 
-        <Section title="Date" error={errors.createdAt}>
-          <Pressable onPress={() => setShowDate(!showDate)} className="flex-row items-center py-3 px-4">
-            <View className="w-8 items-center justify-center mr-3">
-              <Feather name="calendar" size={20} color={colors.placeholder} />
-            </View>
-            <View className="flex-1">
-              <DateDisplay date={createdAt} />
-            </View>
-          </Pressable>
-          {showDate && (
-            <View className="mt-2 px-4 bg-card">
-              <DatePicker
-                date={createdAt}
-                setDate={setCreatedAt}
-                showDate={showDate}
-                setShowDate={setShowDate}
-              />
-            </View>
-          )}
-        </Section>
-
-        <Section title="Notes" error={errors.notes}>
+        {/* --- Notes Section --- */}
+        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden p-4">
           <TextInput
+            className="text-base leading-6"
+            style={{ color: colors.text, minHeight: 80, textAlignVertical: 'top' }}
+            placeholder="Notes (optional)..."
+            placeholderTextColor={colors.placeholder}
             value={notes}
             onChangeText={setNotes}
-            placeholder="Details about your session..."
             multiline
-            className="text-base text-text min-h-[100px] py-2 px-4"
-            style={{ textAlignVertical: "top" }}
-            placeholderTextColor="#9ca3af"
           />
-        </Section>
+        </View>
+
+        {/* --- Date Toggle --- */}
+        <View className="flex-row items-center justify-between px-2">
+          <Pressable
+            onPress={() => setIsDatePickerVisible(true)}
+            className="flex-row items-center gap-2 py-2 px-3 rounded-full bg-muted/30"
+          >
+            <Feather name="calendar" size={14} color={!isToday ? colors.primary : colors.placeholder} />
+            <Text className={`text-xs font-medium ${!isToday ? 'text-primary' : 'text-placeholder'}`}>
+              {!isToday ? <DateDisplay date={createdAt} /> : "Today"}
+            </Text>
+            <Feather name="chevron-down" size={12} color={colors.placeholder} />
+          </Pressable>
+        </View>
 
         <Button
           onPress={handleSubmit}
           loading={isSubmitting}
-          className={`mb-16 ${!isSubmitting ? "bg-primary" : ""}`}
+          className="mt-2 shadow-md"
+          size="lg"
         >
-          {isEditing ? "Update Workout" : "Log Workout"}
+          {isEditing ? "Update Log" : "Log Workout"}
         </Button>
 
       </View>
+
+      <DatePicker
+        visible={isDatePickerVisible}
+        date={createdAt}
+        onClose={() => setIsDatePickerVisible(false)}
+        onChange={setCreatedAt}
+      />
     </KeyboardAwareScrollView>
   )
 }

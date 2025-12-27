@@ -5,24 +5,20 @@ import {
   TextInput,
   Pressable,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { TaskSchema } from "@/src/types/taskType"
 import { useUser } from "@/src/features/auth/useAuthStore"
-import { useCollections } from "@/src/db/collections"
-import { KeyboardAvoidingView } from "react-native"
-import { useThemeColors } from "@/src/constants/Colors"
+import { useTasksStore } from "@/src/stores/useTasksStore"
 
 export default function TaskForm() {
   const user = useUser()
-  const collections = useCollections()
-  const colors = useThemeColors()
+  const addTask = useTasksStore((s) => s.addTask)
 
   const [title, setTitle] = useState("")
   const [titleError, setTitleError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  if (!collections) return null
 
   const handleSubmit = async () => {
     const result = TaskSchema.shape.title.safeParse(title.trim())
@@ -36,18 +32,19 @@ export default function TaskForm() {
     setIsSubmitting(true)
 
     try {
-      const now = new Date().toISOString()
-      await collections.tasks.insert({
-        id: crypto.randomUUID(),
-        user_id: user?.id || "",
+      addTask({
+        userId: user?.id || "",
         title: title.trim(),
         category: "general",
         completed: false,
-        created_at: now,
-        updated_at: now,
-        deleted_at: null,
+        dueDate: null,
+        description: null,
+        projectId: null,
+        columnId: null,
+        priority: "medium",
+        order: 0,
+        completedAt: null,
       })
-
       setTitle("")
     } catch (e) {
       console.error("[TaskForm] Failed to add task:", e)

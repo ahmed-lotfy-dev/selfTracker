@@ -4,7 +4,7 @@ import { useAlertStore } from "@/src/features/ui/useAlertStore";
 import { useThemeColors } from "@/src/constants/Colors"
 
 export default function CustomAlert() {
-  const { isOpen, title, message, onConfirm, onCancel, confirmText, cancelText, hideAlert } =
+  const { isOpen, title, message, onConfirm, onCancel, confirmText, cancelText, hideAlert, type } =
     useAlertStore()
   const colors = useThemeColors()
 
@@ -45,9 +45,12 @@ export default function CustomAlert() {
 
                 <Pressable
                   onPress={handleConfirm}
-                  className="flex-1 py-3.5 rounded-xl bg-error items-center justify-center active:opacity-90 shadow-sm"
+                  className={`flex-1 py-3.5 rounded-xl items-center justify-center active:opacity-90 shadow-sm ${type === 'error' ? 'bg-transparent border border-red-500' : 'bg-emerald-500'}`}
+                  style={type === 'error' ? { borderColor: colors.error } : { backgroundColor: colors.primary }}
                 >
-                  <Text className="font-bold text-white">{confirmText}</Text>
+                  <Text className={`font-bold ${type === 'error' ? 'text-red-500' : 'text-zinc-900'}`} style={{ color: type === 'error' ? colors.error : '#000000' }}>
+                    {confirmText}
+                  </Text>
                 </Pressable>
               </View>
             </View>

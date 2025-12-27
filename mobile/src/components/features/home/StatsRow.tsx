@@ -2,9 +2,9 @@ import { View, Text, ScrollView } from "react-native"
 import React, { useMemo } from "react"
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
-import { useCollections } from "@/src/db/collections"
-import { useLiveQuery } from "@tanstack/react-db"
-import { safeParseDate } from "@/src/lib/utils/dateUtils"
+import { useTasksStore } from "@/src/stores/useTasksStore"
+import { useHabitsStore } from "@/src/stores/useHabitsStore"
+import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 
 interface StatCardProps {
   label: string
@@ -15,18 +15,10 @@ interface StatCardProps {
 }
 
 const getBgClass = (colorClass: string) => {
-  const map: Record<string, string> = {
-    "text-statPrimary": "bg-statPrimary/10",
-    "text-statSecondary": "bg-statSecondary/10",
-    "text-statTertiary": "bg-statTertiary/10",
-    "text-statQuaternary": "bg-statQuaternary/10",
-  }
-
   if (colorClass.includes("statPrimary")) return "bg-statPrimary/10"
   if (colorClass.includes("statSecondary")) return "bg-statSecondary/10"
   if (colorClass.includes("statTertiary")) return "bg-statTertiary/10"
   if (colorClass.includes("statQuaternary")) return "bg-statQuaternary/10"
-
   return "bg-background"
 }
 
@@ -45,82 +37,66 @@ const StatCard = ({ label, value, subLabel, icon, colorClass }: StatCardProps) =
 
 export const StatsRow = () => {
   const colors = useThemeColors()
-  const collections = useCollections()
-
-  if (!collections) {
-    return null
-  }
-
-  const { data: workoutLogs = [] } = useLiveQuery((q: any) =>
-    q.from({ logs: collections.workoutLogs })
-      .select(({ logs }: any) => ({
-        id: logs.id,
-        createdAt: logs.created_at,
-      }))
-  ) ?? { data: [] }
-
-  const { data: weightLogs = [] } = useLiveQuery((q: any) =>
-    q.from({ logs: collections.weightLogs })
-      .select(({ logs }: any) => ({
-        id: logs.id,
-        weight: logs.weight,
-        createdAt: logs.created_at,
-      }))
-  ) ?? { data: [] }
+  const tasks = useTasksStore((s) => s.tasks)
+  const habits = useHabitsStore((s) => s.habits)
+  const workouts = useWorkoutsStore((s) => s.workoutLogs)
 
   const stats = useMemo(() => {
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    const monthAgo = new Date()
-    monthAgo.setMonth(monthAgo.getMonth() - 1)
+    const activeTasks = tasks.filter((t) => !t.deletedAt)
+    const activeHabits = habits.filter((h) => !h.deletedAt)
 
-    const weeklyWorkouts = workoutLogs.filter(
-      (log: any) => log.createdAt && safeParseDate(log.createdAt) > weekAgo
-    ).length
+    const pendingTasks = activeTasks.filter((t) => !t.completed).length
+    const todayHabits = activeHabits.filter((h) => h.completedToday).length
+    const totalHabits = activeHabits.length
+    const totalStreak = activeHabits.reduce((sum, h) => sum + h.streak, 0)
 
-    const monthlyWorkouts = workoutLogs.filter(
-      (log: any) => log.createdAt && safeParseDate(log.createdAt) > monthAgo
-    ).length
+    const workoutsThisWeek = workouts.filter((w) => {
+      const date = new Date(w.createdAt)
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      return date > weekAgo
+    }).length
 
-    const sortedWeights = [...weightLogs]
-      .filter((w: any) => w.createdAt)
-      .sort((a: any, b: any) => safeParseDate(b.createdAt).getTime() - safeParseDate(a.createdAt).getTime())
-
-    const latestWeight = sortedWeights[0]?.weight
-    const previousWeight = sortedWeights[1]?.weight
-    const weightChange = latestWeight && previousWeight
-      ? (parseFloat(latestWeight) - parseFloat(previousWeight)).toFixed(1)
-      : ""
-
-    return { weeklyWorkouts, monthlyWorkouts, weightChange }
-  }, [workoutLogs, weightLogs])
+    return {
+      pendingTasks,
+      habitsToday: `${todayHabits}/${totalHabits}`,
+      totalStreak,
+      workoutsThisWeek,
+    }
+  }, [tasks, habits, workouts])
 
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      className="flex-row py-2"
-      contentContainerStyle={{ paddingRight: 20 }}
+      className="mt-3 -mx-2 px-2"
+      contentContainerStyle={{ paddingRight: 16 }}
     >
       <StatCard
-        label="Weekly Workouts"
-        value={stats.weeklyWorkouts}
-        icon={<FontAwesome5 name="dumbbell" size={16} color={colors.statPrimary} />}
+        label="Pending Tasks"
+        value={stats.pendingTasks}
+        icon={<MaterialIcons name="check-circle" size={20} color={colors.statPrimary} />}
         colorClass="text-statPrimary"
       />
-
       <StatCard
-        label="Monthly Workouts"
-        value={stats.monthlyWorkouts}
-        icon={<MaterialIcons name="calendar-today" size={16} color={colors.statSecondary} />}
+        label="Habits Today"
+        value={stats.habitsToday}
+        icon={<FontAwesome5 name="fire" size={18} color={colors.statSecondary} />}
         colorClass="text-statSecondary"
       />
-
       <StatCard
-        label="Weight Change"
-        value={stats.weightChange || "N/A"}
-        icon={<MaterialIcons name="monitor-weight" size={18} color={colors.statSecondary} />}
-        colorClass="text-statSecondary"
+        label="Total Streak"
+        value={stats.totalStreak}
+        subLabel="days"
+        icon={<FontAwesome5 name="trophy" size={18} color={colors.statTertiary} />}
+        colorClass="text-statTertiary"
+      />
+      <StatCard
+        label="Workouts"
+        value={stats.workoutsThisWeek}
+        subLabel="this week"
+        icon={<MaterialIcons name="fitness-center" size={20} color={colors.statQuaternary} />}
+        colorClass="text-statQuaternary"
       />
     </ScrollView>
   )

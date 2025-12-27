@@ -34,17 +34,13 @@ const StatCard = ({ label, value, icon, colorClass }: StatCardProps) => (
   </View>
 )
 
-interface WorkoutStatsRowProps {
+export interface WorkoutStatsRowProps {
   weeklyWorkouts: number
   monthlyWorkouts: number
-  totalWorkouts: number
+  uniqueWorkoutsThisWeek: number
 }
 
-export const WorkoutStatsRow = ({
-  weeklyWorkouts,
-  monthlyWorkouts,
-  totalWorkouts,
-}: WorkoutStatsRowProps) => {
+export function WorkoutStatsRow({ weeklyWorkouts, monthlyWorkouts, uniqueWorkoutsThisWeek }: WorkoutStatsRowProps) {
   const colors = useThemeColors()
 
   return (
@@ -69,8 +65,8 @@ export const WorkoutStatsRow = ({
       />
 
       <StatCard
-        label="All Time"
-        value={totalWorkouts}
+        label="Unique Types"
+        value={uniqueWorkoutsThisWeek}
         icon={<MaterialIcons name="fitness-center" size={18} color="#a855f7" />}
         colorClass="text-purple-500"
       />

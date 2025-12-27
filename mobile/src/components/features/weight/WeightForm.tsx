@@ -1,206 +1,147 @@
 import React, { useState } from "react"
-import { Pressable, TextInput, View, Text } from "react-native"
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+} from "react-native"
+import { Feather, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons"
+import DatePicker from "@/src/components/DatePicker"
+import DateDisplay from "@/src/components/DateDisplay"
 import { useRouter } from "expo-router"
-import { useSelectedWeight } from "@/src/features/weight/useWeightStore"
-import { WeightLogSchema } from "@/src/types/weightLogType"
-import { useUser } from "@/src/features/auth/useAuthStore"
 import { useThemeColors } from "@/src/constants/Colors"
 import { formatUTC } from "@/src/lib/utils/dateUtils"
-import { useCollections } from "@/src/db/collections"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 
 import Button from "@/src/components/ui/Button"
-import { Section } from "@/src/components/ui/Section"
-import Feather from "@expo/vector-icons/build/Feather"
-import DatePicker from "../../DatePicker"
-import DateDisplay from "../../DateDisplay"
-import { Picker } from "@react-native-picker/picker"
+import { useWeightStore } from "@/src/stores/useWeightStore"
 
-export default function WeightForm({ isEditing }: { isEditing?: boolean }) {
+export default function WeightForm({ isEditing, logId }: { isEditing?: boolean; logId?: string }) {
   const router = useRouter()
-  const user = useUser()
-  const selectedWeight = useSelectedWeight()
   const colors = useThemeColors()
-  const collections = useCollections()
+
+  const addWeightLog = useWeightStore(s => s.addWeightLog)
+  const updateWeightLog = useWeightStore(s => s.updateWeightLog)
+  const weightLogs = useWeightStore(s => s.weightLogs)
+
+  // Find existing log if editing
+  const existingLog = React.useMemo(() => {
+    if (logId) return weightLogs.find(l => l.id === logId)
+    return null
+  }, [logId, weightLogs])
+
+  const [weight, setWeight] = useState(existingLog?.weight || "")
+  const [notes, setNotes] = useState(existingLog?.notes || "")
+  const [createdAt, setCreatedAt] = useState(existingLog ? new Date(existingLog.createdAt) : new Date())
   const [showDate, setShowDate] = useState(false)
-
-  const [weight, setWeight] = useState(
-    isEditing && selectedWeight ? String(selectedWeight.weight) : ""
-  )
-  const [energy, setEnergy] = useState(isEditing && selectedWeight ? selectedWeight.energy || "Okay" : "Okay")
-  const [mood, setMood] = useState(isEditing && selectedWeight ? selectedWeight.mood || "Medium" : "Medium")
-
-  const [notes, setNotes] = useState(isEditing && selectedWeight ? selectedWeight.notes || "" : "")
-  const [createdAt, setCreatedAt] = useState(() => {
-    return formatUTC(isEditing && selectedWeight ? selectedWeight.createdAt : new Date())
-  })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleSubmit = async () => {
+    if (!weight) return
+
     setIsSubmitting(true)
-
-    const formData = {
-      userId: user?.id || "",
-      weight: Number(weight),
-      mood: mood as "Low" | "Medium" | "High",
-      energy: energy as "Low" | "Okay" | "Good" | "Great",
-      notes,
-      createdAt,
-    }
-
-    const result = WeightLogSchema.safeParse(formData)
-    if (!result.success) {
-      const newErrors: Record<string, string> = {}
-      for (const issue of result.error.issues) {
-        newErrors[issue.path[0]] = issue.message
-      }
-      setErrors(newErrors)
-      setIsSubmitting(false)
-      return
-    }
-
     try {
-      if (isEditing && selectedWeight) {
-        await collections.weightLogs.update(selectedWeight.id!, (draft: any) => {
-          draft.weight = String(weight)
-          draft.mood = mood
-          draft.energy = energy
-          draft.notes = notes
-          draft.created_at = formatUTC(createdAt)
-          draft.updated_at = new Date()
+      if (isEditing && logId) {
+        updateWeightLog(logId, {
+          weight: String(weight),
+          notes: notes || null,
+          createdAt: formatUTC(createdAt)
         })
       } else {
-        await collections.weightLogs.insert({
-          id: crypto.randomUUID(),
-          user_id: user?.id || "",
+        addWeightLog({
+          userId: "user_local",
           weight: String(weight),
-          mood,
-          energy,
-          notes,
-          created_at: formatUTC(createdAt),
-          deleted_at: null,
+          notes: notes || null,
+          createdAt: formatUTC(createdAt) // Persist date
         })
       }
-
-      setIsSubmitting(false)
-      router.push("/weights")
+      router.back()
     } catch (e) {
-      console.error("Failed to save weight log:", e)
+      console.error(e)
       setIsSubmitting(false)
     }
   }
 
   return (
     <KeyboardAwareScrollView
-      bottomOffset={62}
+      bottomOffset={20}
       className="flex-1 bg-background"
       contentContainerStyle={{ paddingBottom: 100 }}
       keyboardShouldPersistTaps="handled"
     >
-      <View className="flex-1 px-4 pt-4">
+      <View className="flex-1 px-5 pt-6 gap-6">
 
-        <Section title="Measurements" error={errors.weight}>
-          <View className="flex-row items-center py-2 px-4">
-            <View className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full items-center justify-center mr-3">
-              <Feather name="activity" size={20} color={colors.primary} />
-            </View>
-            <View className="flex-1">
-              <Text className="text-gray-500 text-xs">Current Weight</Text>
-              <View className="flex-row items-end">
-                <TextInput
-                  className="text-2xl font-bold text-text p-0 mr-1"
-                  keyboardType="numeric"
-                  value={weight}
-                  onChangeText={setWeight}
-                  placeholder="0.0"
-                  placeholderTextColor="#d1d5db"
-                />
-                <Text className="text-gray-400 font-medium mb-1.5">kg</Text>
-              </View>
-            </View>
+        {/* --- Main Measurement --- */}
+        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+          <View className="bg-muted/30 px-4 py-3 border-b border-border flex-row items-center gap-2">
+            <FontAwesome5 name="weight" size={16} color={colors.primary} />
+            <Text className="text-sm font-bold uppercase text-placeholder tracking-wider">Measurement</Text>
           </View>
-        </Section>
 
-        <Section title="Date" error={errors.createdAt}>
-          <Pressable onPress={() => setShowDate(!showDate)} className="flex-row items-center py-3 px-4">
-            <View className="w-8 items-center justify-center mr-3">
-              <Feather name="calendar" size={20} color={colors.placeholder} />
-            </View>
-            <View className="flex-1">
-              <DateDisplay date={createdAt} />
-            </View>
-          </Pressable>
-          {showDate && (
-            <View className="mt-2 px-4">
-              <DatePicker
-                date={createdAt}
-                setDate={setCreatedAt}
-                showDate={showDate}
-                setShowDate={setShowDate}
+          <View className="p-6 items-center justify-center">
+            <View className="flex-row items-end gap-2">
+              <TextInput
+                className="text-5xl font-bold p-0"
+                style={{ color: colors.text, includeFontPadding: false }}
+                placeholder="00.0"
+                placeholderTextColor={colors.placeholder + '40'}
+                keyboardType="decimal-pad"
+                value={weight}
+                onChangeText={setWeight}
+                maxLength={5}
+                textAlign="center"
+                autoFocus
               />
+              <Text className="text-xl font-medium text-placeholder mb-2">kg</Text>
             </View>
-          )}
-        </Section>
-
-        <Section title="Details">
-          <View className="py-2 border-b border-gray-100 dark:border-gray-800 px-4">
-            <Text className="text-gray-500 text-xs mb-1">Mood</Text>
-            <View className="-ml-3 -my-2">
-              <Picker
-                selectedValue={mood}
-                onValueChange={setMood}
-                dropdownIconColor="#6b7280"
-                style={{ color: colors.text }}
-                itemStyle={{ color: colors.text }}
-              >
-                <Picker.Item label="High" value="High" />
-                <Picker.Item label="Medium" value="Medium" />
-                <Picker.Item label="Low" value="Low" />
-              </Picker>
-            </View>
+            <Text className="text-xs text-placeholder mt-2">Enter your current weight</Text>
           </View>
+        </View>
 
-          <View className="py-2 mt-1 px-4">
-            <Text className="text-gray-500 text-xs mb-1">Energy</Text>
-            <View className="-ml-3 -my-2">
-              <Picker
-                selectedValue={energy}
-                onValueChange={setEnergy}
-                dropdownIconColor="#6b7280"
-                style={{ color: colors.text }}
-                itemStyle={{ color: colors.text }}
-              >
-                <Picker.Item label="Great" value="Great" />
-                <Picker.Item label="Good" value="Good" />
-                <Picker.Item label="Okay" value="Okay" />
-                <Picker.Item label="Low" value="Low" />
-              </Picker>
-            </View>
-          </View>
-        </Section>
-
-        <Section title="Notes">
+        {/* --- Notes --- */}
+        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden p-4">
           <TextInput
+            className="text-base leading-6"
+            style={{ color: colors.text, minHeight: 80, textAlignVertical: 'top' }}
+            placeholder="How are you feeling? Track mood, energy, or diet..."
+            placeholderTextColor={colors.placeholder}
             value={notes}
             onChangeText={setNotes}
-            placeholder="Add any additional notes..."
             multiline
-            className="text-base text-text min-h-[80px] py-2 px-4"
-            style={{ textAlignVertical: "top" }}
-            placeholderTextColor="#9ca3af"
           />
-        </Section>
+        </View>
+
+        {/* --- Date Toggle --- */}
+        <View className="flex-row items-center justify-between px-2">
+          <Pressable
+            onPress={() => setShowDate(!showDate)}
+            className="flex-row items-center gap-2 py-2 px-3 rounded-full bg-muted/30"
+          >
+            <Feather name="calendar" size={14} color={showDate ? colors.primary : colors.placeholder} />
+            <Text className={`text-xs font-medium ${showDate ? 'text-primary' : 'text-placeholder'}`}>
+              {showDate ? <DateDisplay date={createdAt} /> : "Today"}
+            </Text>
+            {!showDate && <Feather name="chevron-down" size={12} color={colors.placeholder} />}
+          </Pressable>
+        </View>
 
         <Button
           onPress={handleSubmit}
           loading={isSubmitting}
-          className={`mb-16 ${!isSubmitting ? "bg-primary" : ""}`}
+          className="mt-2 shadow-md"
+          size="lg"
         >
           {isEditing ? "Update Entry" : "Save Entry"}
         </Button>
 
       </View>
+
+      <DatePicker
+        visible={showDate}
+        date={createdAt}
+        onClose={() => setShowDate(false)}
+        onChange={setCreatedAt}
+      />
     </KeyboardAwareScrollView>
   )
 }

@@ -7,30 +7,32 @@ import { format } from "date-fns"
 import React from "react"
 
 type DatePickerProps = {
-  date: string
-  setDate: React.Dispatch<React.SetStateAction<string>>
-  showDate: boolean
-  setShowDate: React.Dispatch<React.SetStateAction<boolean>>
+  date: Date
+  onChange: (date: Date) => void
+  visible: boolean
+  onClose: () => void
 }
 
 export default function DatePicker({
   date,
-  setDate,
-  showDate,
-  setShowDate,
+  onChange,
+  visible,
+  onClose,
 }: DatePickerProps) {
   const defaultClassNames = useDefaultClassNames()
   const colors = useThemeColors()
+
+  if (!visible) return null
 
   return (
     <View className="border border-primary/70 rounded-lg mb-4 bg-card">
       <DateTimePicker
         mode="single"
         date={date}
-        onChange={({ date }: any) => {
-          if (date) {
-            setDate(date.toISOString())
-            setShowDate(false)
+        onChange={({ date: newDate }: any) => {
+          if (newDate) {
+            onChange(new Date(newDate))
+            onClose()
           }
         }}
 

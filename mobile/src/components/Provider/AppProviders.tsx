@@ -1,17 +1,13 @@
-import React, { ReactNode, useMemo, useState, useEffect } from "react"
-import { Text, ActivityIndicator, View, unstable_batchedUpdates as batchUpdates, StyleSheet } from "react-native"
+import React, { ReactNode } from "react"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { KeyboardProvider } from "react-native-keyboard-controller"
-import { Feather } from "@expo/vector-icons"
-import { useThemeColors } from "@/src/constants/Colors"
 import { LoadingIndicator, LoadingOverlay } from "../ui/Loading"
 
 import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/src/lib/react-query"
 import { ToastProvider } from "@/src/hooks/useToast"
 import { useAuth, useHasHydrated } from "@/src/features/auth/useAuthStore"
-import { CollectionsProvider } from "./CollectionsProvider"
 
 export { queryClient }
 
@@ -19,14 +15,10 @@ interface AppProvidersProps {
   children: ReactNode
 }
 
-
-
 export function AppProviders({ children }: AppProvidersProps) {
-  const { storeId, isLoading } = useAuth()
+  const { isLoading } = useAuth()
   const hasHydrated = useHasHydrated()
 
-
-  // 1. Storage Hydration
   if (!hasHydrated) {
     return (
       <SafeAreaProvider>
@@ -35,7 +27,6 @@ export function AppProviders({ children }: AppProvidersProps) {
     )
   }
 
-  // 2. Auth Stabilization
   if (isLoading) {
     return (
       <SafeAreaProvider>
@@ -50,12 +41,10 @@ export function AppProviders({ children }: AppProvidersProps) {
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
             <KeyboardProvider>
-              <CollectionsProvider>
-                <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
-                  {isLoading && <LoadingOverlay />}
-                  {children}
-                </SafeAreaView>
-              </CollectionsProvider>
+              <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
+                {isLoading && <LoadingOverlay />}
+                {children}
+              </SafeAreaView>
             </KeyboardProvider>
           </ToastProvider>
         </QueryClientProvider>
@@ -63,5 +52,3 @@ export function AppProviders({ children }: AppProvidersProps) {
     </SafeAreaProvider>
   )
 }
-
-const LoadingOverlayComponent = () => <LoadingOverlay />

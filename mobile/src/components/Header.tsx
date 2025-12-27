@@ -21,6 +21,8 @@ export default function Header({ title, className, backTo, leftAction, rightActi
     "/workouts",
     "/profile",
     "/home",
+    "/habits",
+    "/habits/add",
   ]
   const shouldShowBackButton = !noBackButtonPaths.includes(pathname)
   const isLargeTitle = !shouldShowBackButton
@@ -28,10 +30,10 @@ export default function Header({ title, className, backTo, leftAction, rightActi
 
   return (
     <View
-      className={`w-full ${className} ${shouldShowBackButton || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"} ml-1 pt-3`}
+      className={`w-full ${className} ${shouldShowBackButton || backTo || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"} ml-1 pt-3`}
     >
       {/* Left Section */}
-      {shouldShowBackButton && (
+      {(shouldShowBackButton || backTo) && (
         <BackButton backTo={backTo} className="mr-3" />
       )}
       {leftAction && (

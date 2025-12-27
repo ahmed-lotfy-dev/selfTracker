@@ -1,110 +1,121 @@
-import { View, Text, Pressable } from "react-native"
+import { View, Text, ScrollView, Alert } from "react-native"
 import { Stack, useLocalSearchParams, useRouter } from "expo-router"
 import React, { useMemo } from "react"
 import BackButton from "@/src/components/Buttons/BackButton"
-import { format } from "date-fns"
 import { useThemeColors } from "@/src/constants/Colors"
-import { MaterialIcons } from "@expo/vector-icons"
-import { safeParseDate } from "@/src/lib/utils/dateUtils"
-import { useWorkoutActions } from "@/src/features/workouts/useWorkoutStore"
-import { useLiveQuery, eq } from "@tanstack/react-db"
-import { useCollections } from "@/src/db/collections"
-import { useAlertStore } from "@/src/features/ui/useAlertStore"
+import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
+import Button from "@/src/components/ui/Button"
+import { Feather, FontAwesome5 } from "@expo/vector-icons"
+import { format } from "date-fns"
 
 export default function WorkoutLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
-  const { setSelectedWorkout } = useWorkoutActions()
   const colors = useThemeColors()
-  const { showAlert } = useAlertStore()
 
-  const collections = useCollections()
-  if (!collections) return null
+  const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
+  const deleteWorkoutLog = useWorkoutsStore(s => s.deleteWorkoutLog)
 
-  const { data: allLogsData = [] } = useLiveQuery((q: any) =>
-    q.from({ logs: collections.workoutLogs })
-      .select(({ logs }: any) => ({
-        id: logs.id,
-        workoutName: logs.workout_name,
-        notes: logs.notes,
-        createdAt: logs.created_at,
-        userId: logs.user_id,
-      }))
-  ) ?? { data: [] }
-
-  const allLogs = useMemo(() => allLogsData || [], [allLogsData])
-  const workoutLog = allLogs.find((log: any) => log.id === id)
+  const log = useMemo(() =>
+    workoutLogs.find(l => l.id === id),
+    [workoutLogs, id]
+  )
 
   const handleDelete = () => {
-    showAlert(
+    Alert.alert(
       "Delete Workout",
-      "Are you sure you want to delete this workout?",
-      async () => {
-        await collections.workoutLogs.delete(String(id))
-        router.back()
-      },
-      () => { },
-      "Delete",
-      "Cancel"
+      "Are you sure you want to delete this workout log?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            if (typeof id === 'string') {
+              deleteWorkoutLog(id)
+              router.back()
+            }
+          }
+        }
+      ]
     )
   }
 
-  if (!workoutLog) {
+  if (!log) {
     return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <Text className="text-error font-medium">Workout log not found.</Text>
-        <BackButton backTo="/workouts" className="mt-4" />
+      <View className="flex-1 bg-background items-center justify-center">
+        <Stack.Screen options={{ headerShown: true, title: "Workout Details" }} />
+        <Text className="text-placeholder">Log not found.</Text>
       </View>
     )
   }
-
-  const formattedDate = format(safeParseDate(workoutLog.createdAt), "EEEE, MMMM dd, yyyy")
 
   return (
     <View className="flex-1 bg-background">
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: "Workout Details",
+          headerLeft: () => <BackButton />,
+          headerRight: () => (
+            <Feather
+              name="edit-2"
+              size={20}
+              color={colors.primary}
+              onPress={() => router.push(`/workouts/edit?id=${id}`)}
+            />
+          )
+        }}
+      />
 
-      <View className="pt-12 px-4 pb-4">
-        <BackButton backTo="/workouts" />
-      </View>
+      <ScrollView className="flex-1 p-5">
 
-      <View className="px-6 mt-2">
-        <Text className="text-4xl font-extrabold text-text leading-tight">
-          {workoutLog.workoutName}
-        </Text>
-        <Text className="text-base text-placeholder font-medium mt-2 mb-8 uppercase tracking-wide">
-          {formattedDate}
-        </Text>
+        {/* Header Card */}
+        <View className="bg-card rounded-3xl p-6 border border-border mb-6">
+          <View className="flex-row items-center gap-3 mb-2">
+            <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
+              <FontAwesome5 name="dumbbell" size={18} color={colors.primary} />
+            </View>
+            <View>
+              <Text className="text-sm text-placeholder font-medium">Workout</Text>
+              <Text className="text-xl font-bold text-text">{log.workoutName}</Text>
+            </View>
+          </View>
 
-        <View className="bg-card rounded-3xl p-6 shadow-sm border border-border">
-          <Text className="text-xs font-bold text-placeholder tracking-widest mb-4">
-            NOTES
-          </Text>
-          <Text className="text-lg text-text leading-relaxed">
-            {workoutLog.notes || "No notes added for this workout."}
+          <View className="mt-4 pt-4 border-t border-border flex-row items-center gap-2">
+            <Feather name="calendar" size={16} color={colors.placeholder} />
+            <Text className="text-base text-text font-medium">
+              {format(new Date(log.createdAt), "EEEE, MMMM do, yyyy")}
+            </Text>
+          </View>
+          <Text className="text-xs text-placeholder mt-1 ml-6">
+            {format(new Date(log.createdAt), "h:mm a")}
           </Text>
         </View>
 
-        <View className="flex-row items-center gap-4 mt-10">
-          <Pressable
-            className="flex-1 bg-primary/10 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-primary/20"
-            onPress={() => {
-              setSelectedWorkout(workoutLog as any)
-              router.push(`/workouts/edit`)
-            }}
-          >
-            <MaterialIcons name="edit" size={20} color={colors.primary} />
-            <Text className="text-primary font-bold text-base">Edit</Text>
-          </Pressable>
+        {/* Notes Card */}
+        {log.notes ? (
+          <View className="bg-card rounded-3xl p-6 border border-border mb-6">
+            <Text className="text-sm text-placeholder font-bold uppercase mb-3 tracking-wider">Notes</Text>
+            <Text className="text-base text-text leading-6">{log.notes}</Text>
+          </View>
+        ) : (
+          <View className="bg-card rounded-3xl p-6 border border-border mb-6 border-dashed opacity-70">
+            <Text className="text-center text-placeholder italic">No notes for this workout.</Text>
+          </View>
+        )}
 
-          <Pressable
-            className="flex-1 bg-error/10 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-error/20"
-            onPress={handleDelete}
-          >
-            <MaterialIcons name="delete-outline" size={20} color={colors.error} />
-            <Text className="text-error font-bold text-base">Delete</Text>
-          </Pressable>
-        </View>
+      </ScrollView>
+
+      <View className="p-5 pb-8 border-t border-border bg-background">
+        <Button
+          onPress={handleDelete}
+          variant="outline"
+          className="border-red-500/50"
+          textClassName="text-red-500"
+        >
+          Delete Workout
+        </Button>
       </View>
     </View>
   )

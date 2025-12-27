@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, ActivityIndicator } from "react-native"
+import { View, Text, ScrollView } from "react-native"
 import React from "react"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import { TasksChart } from "@/src/components/features/home/TasksChart"
@@ -6,22 +6,8 @@ import UserProfile from "@/src/components/features/profile/UserProfile"
 import ActionButtons from "@/src/components/features/home/ActionButtons"
 import { StatsRow } from "@/src/components/features/home/StatsRow"
 import Header from "@/src/components/Header"
-import { useUser } from "@/src/features/auth/useAuthStore"
-import { useCollections } from "@/src/db/collections"
 
 export default function HomeScreen() {
-  const user = useUser()
-  const collections = useCollections()
-
-  if (!user || !collections) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#10B981" />
-        <Text className="mt-4 text-placeholder text-sm">Preparing your workspace...</Text>
-      </View>
-    )
-  }
-
   return (
     <View className="flex-1 bg-background px-2">
       <Header
