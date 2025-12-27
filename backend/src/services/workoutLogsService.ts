@@ -107,6 +107,17 @@ export const createWorkoutLog = async (userId: string, fields: any) => {
           notes: fields.notes,
           createdAt: fields.createdAt || new Date(),
           updatedAt: fields.updatedAt || new Date(),
+          deletedAt: fields.deletedAt,
+        })
+        .onConflictDoUpdate({
+          target: workoutLogs.id,
+          set: {
+            workoutId: fields.workoutId,
+            workoutName: fields.workoutName,
+            notes: fields.notes,
+            updatedAt: new Date(),
+            deletedAt: fields.deletedAt,
+          }
         })
         .returning()
 

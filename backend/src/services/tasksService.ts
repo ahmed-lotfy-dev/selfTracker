@@ -30,6 +30,22 @@ export const createTask = async (userId: string, fields: any) => {
         createdAt: fields.createdAt || new Date(),
         updatedAt: fields.updatedAt || new Date(),
         completedAt: fields.completedAt,
+        deletedAt: fields.deletedAt,
+      })
+      .onConflictDoUpdate({
+        target: tasks.id,
+        set: {
+          title: fields.title,
+          description: fields.description,
+          completed: fields.completed,
+          dueDate: fields.dueDate,
+          priority: fields.priority,
+          order: fields.order,
+          category: fields.category,
+          updatedAt: new Date(),
+          completedAt: fields.completedAt,
+          deletedAt: fields.deletedAt,
+        }
       })
       .returning()
 

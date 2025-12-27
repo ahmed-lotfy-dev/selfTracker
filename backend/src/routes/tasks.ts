@@ -15,7 +15,7 @@ const tasksRouter = new Hono()
 const createTaskSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
-  completed: z.boolean().optional(),
+  completed: z.boolean().optional().nullable(),
   dueDate: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),
   category: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -23,9 +23,10 @@ const createTaskSchema = z.object({
   columnId: z.string().optional().nullable(),
   priority: z.enum(["low", "medium", "high"]).optional().nullable(),
   order: z.number().int().optional().nullable(),
-  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  createdAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
   completedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),
+  deletedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),
 })
 
 const updateTaskSchema = z.object({
@@ -38,8 +39,8 @@ const updateTaskSchema = z.object({
   columnId: z.string().optional().nullable(),
   priority: z.enum(["low", "medium", "high"]).optional().nullable(),
   order: z.number().int().optional().nullable(),
-  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  createdAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
   completedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),
 })
 

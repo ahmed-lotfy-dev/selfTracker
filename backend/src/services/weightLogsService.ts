@@ -61,6 +61,18 @@ export const createWeightLog = async (userId: string, fields: any) => {
         notes: fields.notes,
         createdAt: fields.createdAt || new Date(),
         updatedAt: fields.updatedAt || new Date(),
+        deletedAt: fields.deletedAt,
+      })
+      .onConflictDoUpdate({
+        target: weightLogs.id,
+        set: {
+          weight: String(fields.weight),
+          mood: fields.mood,
+          energy: fields.energy,
+          notes: fields.notes,
+          updatedAt: new Date(),
+          deletedAt: fields.deletedAt,
+        }
       })
       .returning()
 

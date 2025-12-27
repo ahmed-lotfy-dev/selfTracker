@@ -14,23 +14,24 @@ const createHabitSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   description: z.string().optional().nullable(),
-  color: z.string().optional(),
-  streak: z.number().optional(),
-  completedToday: z.boolean().optional(),
-  lastCompletedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  color: z.string().optional().nullable(),
+  streak: z.number().optional().nullable(),
+  completedToday: z.boolean().optional().nullable(),
+  lastCompletedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  createdAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  deletedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),
 })
 
 const updateHabitSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional().nullable(),
-  color: z.string().optional(),
-  streak: z.number().optional(),
-  completedToday: z.boolean().optional(),
-  lastCompletedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  color: z.string().optional().nullable(),
+  streak: z.number().optional().nullable(),
+  completedToday: z.boolean().optional().nullable(),
+  lastCompletedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  createdAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
 })
 
 // GET /api/habits
@@ -83,6 +84,20 @@ habitsRouter.post("/", zValidator("json", createHabitSchema), async (c) => {
         lastCompletedAt: body.lastCompletedAt,
         createdAt: body.createdAt || new Date(),
         updatedAt: body.updatedAt || new Date(),
+        deletedAt: body.deletedAt,
+      })
+      .onConflictDoUpdate({
+        target: habits.id,
+        set: {
+          name: body.name,
+          description: body.description,
+          color: body.color,
+          streak: body.streak,
+          completedToday: body.completedToday,
+          lastCompletedAt: body.lastCompletedAt,
+          updatedAt: new Date(),
+          deletedAt: body.deletedAt,
+        },
       })
       .returning()
 

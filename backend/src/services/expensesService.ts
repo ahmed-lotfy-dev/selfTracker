@@ -23,6 +23,17 @@ export const createExpense = async (userId: string, fields: any) => {
         category: fields.category,
         createdAt: fields.createdAt || new Date(),
         updatedAt: fields.updatedAt || new Date(),
+        deletedAt: fields.deletedAt,
+      })
+      .onConflictDoUpdate({
+        target: expenses.id,
+        set: {
+          description: fields.description,
+          amount: String(fields.amount),
+          category: fields.category,
+          updatedAt: new Date(),
+          deletedAt: fields.deletedAt,
+        }
       })
       .returning()
 

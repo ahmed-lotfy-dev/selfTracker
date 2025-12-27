@@ -13,8 +13,6 @@ const ALLOWED_TABLES = [
   "weight_logs",
   "tasks",
   "workouts",
-  "projects",
-  "project_columns",
   "user_goals",
   "exercises",
   "training_splits",
@@ -62,7 +60,7 @@ electricRouter.get("/:table", async (c) => {
   // Tenant isolation: only show data for the current user
   const tablesWithUserId = [
     "task_items", "workout_logs", "weight_logs", "workouts",
-    "projects", "user_goals", "expenses", "timer_sessions", "habits"
+    "user_goals", "expenses", "timer_sessions", "habits"
   ];
 
   if (tablesWithUserId.includes(electricTable)) {

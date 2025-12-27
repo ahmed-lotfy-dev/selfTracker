@@ -22,8 +22,9 @@ const createWeightLogSchema = z.object({
   energy: z.enum(["Low", "Okay", "Good", "Great"]),
   mood: z.enum(["Low", "Medium", "High"]),
   notes: z.string().optional(),
-  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  createdAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  deletedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),
 })
 
 const updateWeightLogSchema = z.object({

@@ -38,7 +38,8 @@ timerRouter.get("/sessions", async (c) => {
 timerRouter.post("/sessions", async (c) => {
   const user = c.get("user")!
   try {
-    const { id, taskId, startTime, endTime, duration, type, completed, createdAt, updatedAt } = await c.req.json()
+    const body = await c.req.json()
+    const { id, taskId, startTime, endTime, duration, type, completed, createdAt, updatedAt } = body
 
     // Ensure startTime is valid date object/string
     const start = new Date(startTime)
@@ -57,6 +58,20 @@ timerRouter.post("/sessions", async (c) => {
         completed: completed ?? true,
         createdAt: createdAt ? new Date(createdAt) : new Date(),
         updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
+        deletedAt: body.deletedAt ? new Date(body.deletedAt) : null
+      })
+      .onConflictDoUpdate({
+        target: timerSessions.id,
+        set: {
+          taskId: taskId || null,
+          startTime: start,
+          endTime: end,
+          duration: duration || 0,
+          type: type || "focus",
+          completed: completed ?? true,
+          updatedAt: new Date(),
+          deletedAt: body.deletedAt ? new Date(body.deletedAt) : null,
+        }
       })
       .returning()
 

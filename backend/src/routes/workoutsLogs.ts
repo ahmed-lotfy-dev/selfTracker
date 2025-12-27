@@ -23,8 +23,9 @@ const createWorkoutLogSchema = z.object({
   workoutId: z.string().min(1, "Workout ID is required"),
   workoutName: z.string().min(1, "Workout Name is required"),
   notes: z.string().optional().nullable(),
-  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  createdAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  deletedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),
 })
 
 const updateWorkoutLogSchema = z.object({

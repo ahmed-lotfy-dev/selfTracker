@@ -250,7 +250,8 @@ userRouter.post("/goals", async (c) => {
 
   try {
     await clearCache(`userHomeData:${user.id}`)
-    const { id, goalType, targetValue, deadline, createdAt, updatedAt } = await c.req.json()
+    const body = await c.req.json()
+    const { id, goalType, targetValue, deadline, createdAt, updatedAt } = body
 
     if (!goalType || !targetValue) {
       return c.json({ message: "All fields are required" }, 400)
@@ -287,6 +288,17 @@ userRouter.post("/goals", async (c) => {
         deadline: deadline ? new Date(deadline) : null,
         createdAt: createdAt ? new Date(createdAt) : new Date(),
         updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
+        deletedAt: body.deletedAt ? new Date(body.deletedAt) : null,
+      })
+      .onConflictDoUpdate({
+        target: userGoals.id,
+        set: {
+          goalType,
+          targetValue,
+          deadline: deadline ? new Date(deadline) : null,
+          updatedAt: new Date(),
+          deletedAt: body.deletedAt ? new Date(body.deletedAt) : null,
+        }
       })
       .returning()
 

@@ -19,8 +19,9 @@ const createExpenseSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.string().or(z.number()).transform((val) => String(val)),
   category: z.string().min(1, "Category is required"),
-  createdAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-  updatedAt: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+  createdAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  updatedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : undefined),
+  deletedAt: z.string().or(z.date()).optional().nullable().transform(val => val ? new Date(val) : null),
 })
 
 const updateExpenseSchema = z.object({

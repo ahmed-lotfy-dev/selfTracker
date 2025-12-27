@@ -20,11 +20,11 @@ export const workouts = pgTable("workouts", {
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(), // e.g., "Push Day"
   trainingSplitId: text("training_split_id")
-    .references(() => trainingSplits.id, { onDelete: "cascade" })
-    .notNull(),
+    .references(() => trainingSplits.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   deletedAt: timestamp("deleted_at"),
+  isPublic: boolean("is_public").default(false),
 })
 
 export const workoutRelations = relations(workouts, ({ many, one }) => ({
