@@ -3,14 +3,14 @@ import { Scale } from "lucide-react";
 import { formatLocal } from "@/lib/dateUtils";
 import { WeightChart } from "@/components/charts/WeightChart";
 import { LogWeightDialog } from "@/features/weight/LogWeightDialog";
-import { useWeightLogsStore } from "@/stores/weight-logs-store";
+import { useWeightStore } from "@/stores/useWeightStore";
 
 export default function WeightPage() {
-  const { weightLogs } = useWeightLogsStore();
+  const { weightLogs } = useWeightStore();
 
   // Sort by created_at descending (most recent first)
   const sortedLogs = [...weightLogs].sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   const currentWeight = sortedLogs[0]?.weight;
@@ -61,13 +61,13 @@ export default function WeightPage() {
                   {log.weight} kg
                 </div>
                 <div className="text-xs text-muted-foreground flex gap-2 mt-1">
-                  <span>Mood: {log.mood}</span>
+                  <span>Mood: {log.mood || '-'}</span>
                   <span>•</span>
-                  <span>Energy: {log.energy}</span>
+                  <span>Energy: {log.energy || '-'}</span>
                 </div>
               </div>
               <div className="text-sm text-muted-foreground">
-                {formatLocal(log.created_at)}
+                {formatLocal(log.createdAt)}
               </div>
             </CardContent>
           </Card>

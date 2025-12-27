@@ -1,8 +1,8 @@
 import { db } from "../src/db/index"
 import {
   tasks, weightLogs, workoutLogs, userGoals,
-  projects, exercises, expenses, trainingSplits,
-  workoutExercises, workouts, timerSessions, projectColumns
+  exercises, expenses, trainingSplits,
+  workoutExercises, workouts, timerSessions,
 } from "../src/db/schema"
 import * as fs from "fs"
 import * as path from "path"
@@ -123,31 +123,6 @@ async function generateSeedV2() {
     })
   })
 
-  // 5. Workouts (Definitions)
-  // Assuming there's a v1.WorkoutCreated event or we treat them as generic
-  // We'll skip if no event exists, but usually there isn't one for definitions in default schema
-  // Based on schema.ts (mobile), there is NO v1.WorkoutCreated event exposed in `events`.
-  // Wait, let's verify schema.ts for WorkoutCreated.
-  // schema.ts has: workoutLogCreated, weightLogCreated, taskCreated, goalCreated.
-  // It DOES NOT have events for Projects, Expenses, Exercises, etc.
-  // So we can ONLY seed what the mobile app syncs: Tasks, Weights, WorkoutLogs, Goals.
-
-  // BUT: The user said "they were 375 why now theyre 371".
-  // If the mobile app only syncs these 4 entities, then the 375 were only these 4 entities + sync overhead (maybe).
-  // Or maybe there are deleted items.
-
-  // Let's assume the 375 included everything. 
-  // However, forcing events for tables that don't have a corresponding Materializer in mobile is useless for the mobile app.
-  // But for the backend `livestoreEvents` count, it matters.
-
-  // If we want to preserve ALL data, we should add materializers for them or just accept they are backend-only for now.
-  // Given urgency, we focus on the core 4 that drive the Home Screen: Tasks, Weights, Workouts, Goals.
-
-  // If we missed 4 events, they might be:
-  // - Valid items that were deleted? (Deleted items aren't in current tables)
-  // - Items with null userId? (We filter by valid userId usually)
-
-  // Let's double check if we missed anything obvious.
 
   console.log(`\nGenerated count breakdown:`)
   console.log(`- Tasks: ${allTasks.length}`)

@@ -3,11 +3,11 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Toolti
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PeriodSelector, type Period } from "./PeriodSelector"
 import { subMonths, isAfter, parseISO } from "date-fns"
-import { useWorkoutLogsStore } from "@/stores/workout-logs-store"
+import { useWorkoutsStore } from "@/stores/useWorkoutsStore"
 
 export function WorkoutChart() {
   const [period, setPeriod] = useState<Period>(3)
-  const { workoutLogs } = useWorkoutLogsStore();
+  const { workoutLogs } = useWorkoutsStore();
 
   const chartData = useMemo(() => {
     if (!workoutLogs.length) return [];
@@ -15,13 +15,13 @@ export function WorkoutChart() {
     const cutoffDate = subMonths(new Date(), period);
 
     const filtered = workoutLogs.filter((log) => {
-      const date = log.created_at ? parseISO(log.created_at) : new Date();
+      const date = log.createdAt ? parseISO(log.createdAt) : new Date();
       return isAfter(date, cutoffDate);
     });
 
     const counts: Record<string, number> = {};
     filtered.forEach((log) => {
-      const name = log.workout_name || "Unknown";
+      const name = log.workoutName || "Unknown";
       counts[name] = (counts[name] || 0) + 1;
     });
 

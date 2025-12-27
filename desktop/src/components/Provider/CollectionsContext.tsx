@@ -9,6 +9,7 @@ type Collections = {
   userGoals: any;
   exercises: any;
   timerSessions: any;
+  habits: any;
 } | null;
 
 export const CollectionsContext = createContext<Collections>(null);

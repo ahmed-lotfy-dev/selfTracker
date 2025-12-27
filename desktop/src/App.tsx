@@ -9,7 +9,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { TimerController } from "@/components/timer/TimerController";
 import { AppUpdater } from "@/components/updater/AppUpdater";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
-import { CollectionsProvider } from "@/components/Provider/CollectionsProvider";
+import { AppProviders } from "@/components/Provider/AppProviders";
+
 import { DataSyncReminder } from "@/components/ui/DataSyncReminder";
 import { ThemeProvider } from "@/components/Provider/ThemeProvider";
 import DashboardPage from "@/features/dashboard/DashboardPage";
@@ -200,9 +201,9 @@ function App() {
         {isOverlay ? (
           <RouterProvider router={router} />
         ) : (
-          <CollectionsProvider>
+          <AppProviders>
             <RouterProvider router={router} />
-          </CollectionsProvider>
+          </AppProviders>
         )}
       </ThemeProvider>
     </PersistQueryClientProvider>

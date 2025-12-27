@@ -4,15 +4,18 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useTasksStore } from "@/stores/tasks-store";
+import { useTasksStore, useActiveTasks } from "@/stores/useTasksStore";
 import { Kbd } from "@/components/ui/kbd";
+import { useUserStore } from "@/lib/user-store";
 
 export default function TasksPage() {
   return <TasksList />;
 }
 
 function TasksList() {
-  const { tasks, addTask, updateTask } = useTasksStore();
+  const tasks = useActiveTasks();
+  const { addTask, toggleComplete } = useTasksStore();
+  const userId = useUserStore(state => state.userId);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -38,6 +41,15 @@ function TasksList() {
     addTask({
       title: newTaskTitle,
       priority: "medium",
+      userId: userId || 'local',
+      category: 'general',
+      completed: false,
+      description: null,
+      dueDate: null,
+      projectId: null,
+      columnId: null,
+      order: 0,
+      completedAt: null
     });
 
     setIsOpen(false);
@@ -45,13 +57,7 @@ function TasksList() {
   };
 
   const toggleTask = (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    updateTask(taskId, {
-      completed: !task.completed,
-      completed_at: !task.completed ? new Date().toISOString() : undefined,
-    });
+    toggleComplete(taskId);
   };
 
   return (

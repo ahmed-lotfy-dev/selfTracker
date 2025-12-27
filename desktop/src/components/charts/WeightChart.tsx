@@ -3,11 +3,11 @@ import { Line, LineChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tool
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PeriodSelector, type Period } from "./PeriodSelector"
 import { subMonths, isAfter, parseISO, format } from "date-fns"
-import { useWeightLogsStore } from "@/stores/weight-logs-store"
+import { useWeightStore } from "@/stores/useWeightStore"
 
 export function WeightChart() {
   const [period, setPeriod] = useState<Period>(3)
-  const { weightLogs } = useWeightLogsStore();
+  const { weightLogs } = useWeightStore();
 
   const chartData = useMemo(() => {
     if (!weightLogs.length) return [];
@@ -16,16 +16,16 @@ export function WeightChart() {
 
     // Sort by created_at ascending for chart progression
     const sorted = [...weightLogs].sort((a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
     const filtered = sorted.filter((log) => {
-      const date = log.created_at ? parseISO(log.created_at) : new Date();
+      const date = log.createdAt ? parseISO(log.createdAt) : new Date();
       return isAfter(date, cutoffDate);
     });
 
     return filtered.map((log) => ({
-      name: log.created_at ? format(parseISO(log.created_at), "MMM d") : "Unknown",
+      name: log.createdAt ? format(parseISO(log.createdAt), "MMM d") : "Unknown",
       weight: parseFloat(log.weight) // Convert string to number for chart
     }));
   }, [weightLogs, period]);

@@ -3,14 +3,14 @@ import { Dumbbell, Calendar } from "lucide-react";
 import { formatLocal } from "@/lib/dateUtils";
 import { WorkoutChart } from "@/components/charts/WorkoutChart";
 import { LogWorkoutDialog } from "@/features/workouts/LogWorkoutDialog";
-import { useWorkoutLogsStore } from "@/stores/workout-logs-store";
+import { useWorkoutsStore } from "@/stores/useWorkoutsStore";
 
 export default function WorkoutsPage() {
-  const { workoutLogs } = useWorkoutLogsStore();
+  const { workoutLogs } = useWorkoutsStore();
 
   // Sort by created_at descending (most recent first)
   const sortedLogs = [...workoutLogs].sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   return (
@@ -52,10 +52,10 @@ export default function WorkoutsPage() {
                   <Dumbbell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">{log.workout_name || "Workout"}</CardTitle>
+                  <CardTitle className="text-base">{log.workoutName || "Workout"}</CardTitle>
                   <CardDescription className="flex items-center gap-1 text-xs">
                     <Calendar className="h-3 w-3" />
-                    {formatLocal(log.created_at)}
+                    {formatLocal(log.createdAt)}
                   </CardDescription>
                 </div>
               </div>

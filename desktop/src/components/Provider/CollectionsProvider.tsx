@@ -13,6 +13,7 @@ import {
   exerciseSchema,
   timerSessionSchema,
   taskSchema,
+  habitSchema,
 } from '@/db/schema';
 
 type Collections = {
@@ -23,6 +24,7 @@ type Collections = {
   workouts: any;
   userGoals: any;
   exercises: any;
+  habits: any;
   timerSessions: any;
 } | null;
 
@@ -140,6 +142,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
         expenses: createFn('expenses', expenseSchema),
         workouts: createFn('workouts', workoutSchema),
         userGoals: createFn('user_goals', userGoalSchema),
+        habits: createFn('habits', habitSchema),
         exercises: createFn('exercises', exerciseSchema),
         timerSessions: createFn('timer_sessions', timerSessionSchema),
       };

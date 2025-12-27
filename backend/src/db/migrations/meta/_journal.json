@@ -15,6 +15,13 @@
       "when": 1766762939012,
       "tag": "0007_peaceful_bushwacker",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1766857008052,
+      "tag": "0008_clean_boom_boom",
+      "breakpoints": true
     }
   ]
 }

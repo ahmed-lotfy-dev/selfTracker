@@ -19,30 +19,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Dumbbell, Loader2, AlertCircle } from "lucide-react";
-import { useWorkoutLogsStore } from "@/stores/workout-logs-store";
-import { useWorkoutsStore } from "@/stores/workouts-store";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Plus, Dumbbell } from "lucide-react";
+import { useWorkoutsStore } from "@/stores/useWorkoutsStore";
 import { Kbd } from "@/components/ui/kbd";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useUserStore } from "@/lib/user-store";
 
 export function LogWorkoutDialog() {
   const [open, setOpen] = useState(false);
   const [selectedWorkoutId, setSelectedWorkoutId] = useState("");
   const [customName, setCustomName] = useState("");
   const [notes, setNotes] = useState("");
-  const [fetchError, setFetchError] = useState("");
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  const { addWorkoutLog } = useWorkoutLogsStore();
-  const { workouts, isLoading, setWorkouts, setLoading } = useWorkoutsStore();
-
-  // Fetch workouts on dialog open
-  useEffect(() => {
-    if (open) {
-      fetchWorkouts();
-    }
-  }, [open]);
+  const { addWorkoutLog, workouts } = useWorkoutsStore();
+  const userId = useUserStore(state => state.userId);
 
   // Keyboard shortcut listener
   useEffect(() => {
@@ -57,34 +48,6 @@ export function LogWorkoutDialog() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const fetchWorkouts = async () => {
-    setLoading(true);
-    setFetchError("");
-
-    try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? "https://selftracker.ahmedlotfy.site" : "http://localhost:8000");
-      const token = localStorage.getItem('bearer_token');
-
-      const response = await fetch(`${backendUrl}/api/workouts`, {
-        headers: token ? {
-          'Authorization': `Bearer ${token}`,
-        } : {},
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setWorkouts(data);
-      } else {
-        throw new Error('Failed to fetch workouts');
-      }
-    } catch (error) {
-      console.error('Error fetching workouts:', error);
-      setFetchError('Using cached workouts (offline)');
-      // Fall back to cached workouts (already in store from persist)
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -94,10 +57,11 @@ export function LogWorkoutDialog() {
     if (!workoutName.trim()) return;
 
     addWorkoutLog({
-      workout_name: workoutName,
-      workout_id: selectedWorkoutId || "custom",
-      notes,
-      created_at: date?.toISOString() || new Date().toISOString(),
+      userId: userId || 'local',
+      workoutName: workoutName,
+      workoutId: selectedWorkoutId === "custom" ? null : selectedWorkoutId,
+      notes: notes,
+      createdAt: date?.toISOString() || new Date().toISOString(),
     });
 
     setOpen(false);
@@ -134,15 +98,6 @@ export function LogWorkoutDialog() {
           </div>
         </DialogHeader>
 
-        {fetchError && (
-          <Alert variant="default" className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
-            <AlertCircle className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800 dark:text-orange-200">
-              {fetchError}
-            </AlertDescription>
-          </Alert>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -152,10 +107,9 @@ export function LogWorkoutDialog() {
               <Select
                 value={selectedWorkoutId}
                 onValueChange={setSelectedWorkoutId}
-                disabled={isLoading}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={isLoading ? "Loading workouts..." : "Choose a workout"} />
+                  <SelectValue placeholder="Choose a workout" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="custom">
@@ -168,20 +122,11 @@ export function LogWorkoutDialog() {
                     <SelectItem key={workout.id} value={workout.id}>
                       <div className="flex flex-col">
                         <span className="font-medium">{workout.name}</span>
-                        {workout.description && (
-                          <span className="text-xs text-muted-foreground">{workout.description}</span>
-                        )}
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {isLoading && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>Fetching latest workouts...</span>
-                </div>
-              )}
             </div>
 
             {isCustomWorkout && (

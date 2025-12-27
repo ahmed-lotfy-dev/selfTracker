@@ -4,6 +4,7 @@ import { LayoutDashboard, Settings, Minimize2, LogOut, LogIn, Timer, Dumbbell, S
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { useUserStore } from "@/lib/user-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -48,10 +49,19 @@ export function AppShell() {
   ];
 
   const handleLogout = async () => {
-    await authClient.signOut();
-    localStorage.removeItem("bearer_token");
-    await queryClient.invalidateQueries({ queryKey: ["session"] });
-    navigate({ to: "/login" });
+    try {
+      await authClient.signOut();
+    } catch (err) {
+      console.error("Logout error", err);
+    } finally {
+      // Always cleanup locally
+      localStorage.removeItem("bearer_token");
+      localStorage.removeItem("user_id");
+      useUserStore.getState().logout(); // Reset to guest
+      await queryClient.invalidateQueries({ queryKey: ["session"] });
+      queryClient.clear(); // Clear all cache
+      navigate({ to: "/login" });
+    }
   };
 
 

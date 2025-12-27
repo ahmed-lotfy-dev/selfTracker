@@ -21,7 +21,8 @@ import {
 import { Plus } from "lucide-react";
 import { Kbd } from "@/components/ui/kbd";
 import { DatePicker } from "@/components/ui/date-picker";
-import { useWeightLogsStore } from "@/stores/weight-logs-store";
+import { useWeightStore } from "@/stores/useWeightStore";
+import { useUserStore } from "@/lib/user-store";
 
 export function LogWeightDialog() {
   const [open, setOpen] = useState(false)
@@ -29,7 +30,9 @@ export function LogWeightDialog() {
   const [mood, setMood] = useState("Medium")
   const [energy, setEnergy] = useState("Okay")
   const [date, setDate] = useState<Date | undefined>(new Date())
-  const { addWeightLog } = useWeightLogsStore()
+
+  const { addWeightLog } = useWeightStore()
+  const userId = useUserStore(state => state.userId)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,10 +51,12 @@ export function LogWeightDialog() {
     if (!weight) return
 
     addWeightLog({
+      userId: userId || 'local',
       weight,
       mood,
       energy,
-      created_at: date?.toISOString() || new Date().toISOString(),
+      notes: null,
+      createdAt: date?.toISOString() || new Date().toISOString(),
     })
 
     setOpen(false)
@@ -105,8 +110,8 @@ export function LogWeightDialog() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="High">High 😄</SelectItem>
-                  <SelectItem value="Medium">Medium �</SelectItem>
-                  <SelectItem value="Low">Low �</SelectItem>
+                  <SelectItem value="Medium">Medium </SelectItem>
+                  <SelectItem value="Low">Low </SelectItem>
                 </SelectContent>
               </Select>
             </div>

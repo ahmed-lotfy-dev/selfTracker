@@ -18,6 +18,8 @@
     "core:window:allow-set-position",
     "core:window:allow-set-focus",
     "process:allow-restart",
-    "notification:default"
+    "notification:default",
+    "sql:default",
+    "store:default"
   ]
 }

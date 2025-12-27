@@ -12,7 +12,8 @@ export async function migrateLocalData(collections: any, userId: string) {
     'workouts',
     'user_goals',
     'exercises',
-    'timer_sessions'
+    'timer_sessions',
+    'habits'
   ];
 
   let migratedCount = 0;
