@@ -51,28 +51,6 @@ export const workoutSchema = z.object({
   deleted_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
 });
 
-export const projectSchema = z.object({
-  id: z.string(),
-  user_id: z.string(),
-  name: z.string(),
-  color: z.string().default('#000000'),
-  is_archived: z.union([z.boolean(), z.number()]).transform(v => !!v).default(false),
-  created_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-  updated_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-  deleted_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-});
-
-export const projectColumnSchema = z.object({
-  id: z.string(),
-  project_id: z.string(),
-  name: z.string(),
-  order: z.number().default(0),
-  type: z.string().default('todo'),
-  created_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-  updated_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-  deleted_at: z.union([z.string(), z.number(), z.date()]).optional().nullable(),
-});
-
 export const userGoalSchema = z.object({
   id: z.string(),
   user_id: z.string(),
