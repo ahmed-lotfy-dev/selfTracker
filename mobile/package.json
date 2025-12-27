@@ -1,7 +1,7 @@
 {
   "name": "mobile",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "scripts": {
     "start": "expo start",
     "build:android:local": "eas build --profile production --platform android --local",
@@ -83,7 +83,7 @@
     "react-native-random-uuid": "^0.1.4",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.19.0",
+    "react-native-screens": "^4.19.0",
     "react-native-svg": "15.12.1",
     "react-native-ui-datepicker": "^3.1.2",
     "react-native-web": "^0.21.0",

@@ -2,7 +2,7 @@
   "expo": {
     "name": "selfTracker",
     "slug": "selftracker",
-    "version": "1.1.0",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/images/splash-screen.png",
     "scheme": ["selftracker", "exp+selftracker"],
@@ -76,7 +76,7 @@
       }
     },
     "owner": "ahmed-lotfy",
-    "runtimeVersion": "1.1.0",
+    "runtimeVersion": "1.1.2",
     "updates": {
       "url": "https://u.expo.dev/6cb0f186-29d6-46d3-baa5-af88fdccee50"
     },
