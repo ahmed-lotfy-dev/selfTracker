@@ -9,6 +9,7 @@ export default defineConfig(async ({ mode }) => {
   const host = env.TAURI_DEV_HOST;
 
   return {
+    base: "./",
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
