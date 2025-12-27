@@ -126,7 +126,10 @@ pub fn run() {
             #[cfg(any(windows, target_os = "linux"))]
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
-                app.deep_link().register("selftracker")?;
+                match app.deep_link().register("selftracker") {
+                    Ok(_) => {},
+                    Err(e) => eprintln!("Deep link registration failed: {}", e),
+                }
             }
 
             Ok(())
