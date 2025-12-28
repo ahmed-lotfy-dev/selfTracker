@@ -9,27 +9,46 @@
   <script>
     // Prevent window from closing on error
     window.addEventListener('error', function (e) {
-      console.error('GLOBAL ERROR:', e.error);
-      e.preventDefault();
-      document.body.innerHTML = '<div style="padding:20px;font-family:monospace"><h1 style="color:red">ERROR!</h1><pre>' + e.error?.stack + '</pre></div>';
+      console.error('GLOBAL ERROR:', e);
+      var msg = '';
+      if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+        msg = 'Resource load failure: ' + (e.target.src || e.target.href);
+      } else {
+        msg = e.message || (e.error && e.error.message) || String(e);
+      }
+
+      document.body.innerHTML = '<div style="padding:20px;font-family:monospace;background:#333;color:#fff;height:100vh;overflow:auto">' +
+        '<h1 style="color:red">CRITICAL STARTUP ERROR</h1>' +
+        '<p>The application failed to start.</p>' +
+        '<pre style="color:#ffaaaa">' + msg + '</pre>' +
+        (e.error && e.error.stack ? '<pre>' + e.error.stack + '</pre>' : '') +
+        '</div>';
       return false;
-    });
+    }, true); // TRUE = Capture phase to catch resource loading errors (scripts/css)
 
     window.addEventListener('unhandledrejection', function (e) {
       console.error('UNHANDLED PROMISE REJECTION:', e.reason);
       e.preventDefault();
-      document.body.innerHTML = '<div style="padding:20px;font-family:monospace"><h1 style="color:red">PROMISE ERROR!</h1><pre>' + JSON.stringify(e.reason, null, 2) + '</pre></div>';
+      document.body.innerHTML = '<div style="padding:20px;font-family:monospace;background:#333;color:#fff;height:100vh;overflow:auto">' +
+        '<h1 style="color:red">PROMISE REJECTION</h1>' +
+        '<pre>' + (typeof e.reason === 'object' ? JSON.stringify(e.reason, null, 2) : String(e.reason)) + '</pre>' +
+        '</div>';
     });
   </script>
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div
+      style="display:flex;justify-content:center;align-items:center;height:100vh;background:#222;color:#fff;font-family:sans-serif;">
+      <h1>Loading SelfTracker...</h1>
+    </div>
+  </div>
   <script>
     // Remove overlay when React mounts (optional, but good to check)
     // We expect the React app to eventually cover this or remove it, but let's leave it for now since the app is broken.
   </script>
-  <script type="module" src="/src/main.tsx"></script>
+  <script type="module" src="src/main.tsx"></script>
 </body>
 
 </html>

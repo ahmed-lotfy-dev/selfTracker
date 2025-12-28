@@ -24,6 +24,8 @@ import TasksPage from "./routes/tasks";
 import TimersPage from "./routes/timers";
 import TimerOverlayPage from "./routes/timer-overlay";
 import OnboardingPage from "./routes/onboarding";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { DebugConsole } from "@/components/DebugConsole";
 
 // Create a client with persistence settings
 const queryClient = new QueryClient({
@@ -198,13 +200,16 @@ function App() {
       persistOptions={{ persister }}
     >
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        {isOverlay ? (
-          <RouterProvider router={router} />
-        ) : (
-          <AppProviders>
+        <DebugConsole />
+        <ErrorBoundary>
+          {isOverlay ? (
             <RouterProvider router={router} />
-          </AppProviders>
-        )}
+          ) : (
+            <AppProviders>
+              <RouterProvider router={router} />
+            </AppProviders>
+          )}
+        </ErrorBoundary>
       </ThemeProvider>
     </PersistQueryClientProvider>
   );
