@@ -1,6 +1,4 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { createCollection } from '@tanstack/react-db';
-import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import { _setCollections } from '@/db/collections';
 import { useUserStore } from '@/lib/user-store';
 import { CollectionsContext } from './CollectionsContext';
@@ -52,123 +50,109 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
   const isGuest = useUserStore(state => state.isGuest);
 
   useEffect(() => {
-    try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? "https://selftracker.ahmedlotfy.site" : "http://localhost:8000");
+    const initCollections = async () => {
+      try {
+        const { createCollection } = await import('@tanstack/react-db');
+        const { electricCollectionOptions } = await import('@tanstack/electric-db-collection');
 
-      const createLocalCollection = (id: string, schema: any) => {
-        const key = `local_collection_${id}`;
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? "https://selftracker.ahmedlotfy.site" : "http://localhost:8000");
 
-        const col = createCollection({
-          id: id as any,
-          schema: schema as any,
-          getKey: (row: any) => row.id,
-          sync: { sync: (p: any) => { p?.markReady?.(); return () => { }; } }
-        } as any);
+        const createLocalCollection = (id: string, schema: any) => {
+          const key = `local_collection_${id}`;
 
-        // 2. Hydrate (Load from Disk synchronously)
-        try {
-          const raw = localStorage.getItem(key);
-          if (raw) {
-            const data = JSON.parse(raw);
-            if (Array.isArray(data)) {
-              // We use the internal 'upsert' to load data without triggering our own listeners if possible,
-              // or just let it be.
-              (col as any).upsert(data);
-              console.log(`[${id}] Hydrated ${data.length} items`);
-            }
-          }
-        } catch (err) {
-          console.error(`[${id}] Failed to load local data`, err);
-        }
-
-        // 3. Override Actions (The "Action Layer")
-        // We manually wrap the methods to ensure they execute AND save.
-
-        // Capture original methods bound to the instance
-        const _insert = col.insert.bind(col);
-        const _update = col.update.bind(col);
-        // const _remove = col.remove.bind(col); // If we implement delete later
-
-        // Override INSERT
-        col.insert = (data: any) => {
-          console.log(`[${id}] Action: Insert`, data);
-
-          // A. Update In-Memory (Triggers UI)
-          const result = _insert(data);
-
-          // B. Save to Disk
-          try {
-            const currentRaw = localStorage.getItem(key);
-            const current = currentRaw ? JSON.parse(currentRaw) : [];
-            current.push(data);
-            localStorage.setItem(key, JSON.stringify(current));
-          } catch (e) { }
-
-          return result;
-        };
-
-        // Override UPDATE
-        col.update = (keyToUpdate: any, callback: any) => {
-          console.log(`[${id}] Action: Update`, keyToUpdate);
-
-          // Just pass through to TanStack DB (for authenticated users with Electric sync)
-          // Guest mode uses Zustand stores, not this collection
-          return _update(keyToUpdate, callback);
-        };
-
-        return col;
-      };
-
-      const createElectricCollection = (table: string, schema: any) => {
-        return createCollection(
-          electricCollectionOptions({
-            id: table as any,
+          const col = createCollection({
+            id: id as any,
             schema: schema as any,
             getKey: (row: any) => row.id,
-            shapeOptions: {
-              url: `${backendUrl}/api/electric/v1/shape`,
-              params: { table },
-            },
-          })
-        );
-      };
+            sync: { sync: (p: any) => { p?.markReady?.(); return () => { }; } }
+          } as any);
 
-      const createFn = !isGuest ? createElectricCollection : createLocalCollection;
-
-      const newCollections = {
-        tasks: createFn('tasks', taskSchema),
-        weightLogs: createFn('weight_logs', weightLogSchema),
-        workoutLogs: createFn('workout_logs', workoutLogSchema),
-        expenses: createFn('expenses', expenseSchema),
-        workouts: createFn('workouts', workoutSchema),
-        userGoals: createFn('user_goals', userGoalSchema),
-        habits: createFn('habits', habitSchema),
-        exercises: createFn('exercises', exerciseSchema),
-        timerSessions: createFn('timer_sessions', timerSessionSchema),
-      };
-
-      setCollections(newCollections);
-      _setCollections(newCollections);
-
-      if (!isGuest) {
-        const userId = useUserStore.getState().userId;
-        if (userId && userId !== 'local' && userId !== 'unknown') {
-          import('@/lib/migration').then(({ migrateLocalData }) => {
-            if (newCollections) {
-              // giving it a small delay to ensure collections are ready? 
-              // actually they are just objects, should be fine.
-              migrateLocalData(newCollections, userId).catch(err => {
-                console.error('[CollectionsProvider] Migration failed:', err);
-                // Don't crash the app for migration failure, but log it
-              });
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const data = JSON.parse(raw);
+              if (Array.isArray(data)) {
+                (col as any).upsert(data);
+                console.log(`[${id}] Hydrated ${data.length} items`);
+              }
             }
-          });
+          } catch (err) {
+            console.error(`[${id}] Failed to load local data`, err);
+          }
+
+          const _insert = col.insert.bind(col);
+          const _update = col.update.bind(col);
+
+          col.insert = (data: any) => {
+            console.log(`[${id}] Action: Insert`, data);
+            const result = _insert(data);
+            try {
+              const currentRaw = localStorage.getItem(key);
+              const current = currentRaw ? JSON.parse(currentRaw) : [];
+              current.push(data);
+              localStorage.setItem(key, JSON.stringify(current));
+            } catch (e) { }
+            return result;
+          };
+
+          col.update = (keyToUpdate: any, callback: any) => {
+            console.log(`[${id}] Action: Update`, keyToUpdate);
+            return _update(keyToUpdate, callback);
+          };
+
+          return col;
+        };
+
+        const createElectricCollection = (table: string, schema: any) => {
+          return createCollection(
+            electricCollectionOptions({
+              id: table as any,
+              schema: schema as any,
+              getKey: (row: any) => row.id,
+              shapeOptions: {
+                url: `${backendUrl}/api/electric/v1/shape`,
+                params: { table },
+              },
+            })
+          );
+        };
+
+        const createFn = !isGuest ? createElectricCollection : createLocalCollection;
+
+        const newCollections = {
+          tasks: createFn('tasks', taskSchema),
+          weightLogs: createFn('weight_logs', weightLogSchema),
+          workoutLogs: createFn('workout_logs', workoutLogSchema),
+          expenses: createFn('expenses', expenseSchema),
+          workouts: createFn('workouts', workoutSchema),
+          userGoals: createFn('user_goals', userGoalSchema),
+          habits: createFn('habits', habitSchema),
+          exercises: createFn('exercises', exerciseSchema),
+          timerSessions: createFn('timer_sessions', timerSessionSchema),
+        };
+
+        setCollections(newCollections);
+        _setCollections(newCollections);
+
+        if (!isGuest) {
+          const userId = useUserStore.getState().userId;
+          if (userId && userId !== 'local' && userId !== 'unknown') {
+            import('@/lib/migration').then(({ migrateLocalData }) => {
+              if (newCollections) {
+                migrateLocalData(newCollections, userId).catch(err => {
+                  console.error('[CollectionsProvider] Migration failed:', err);
+                });
+              }
+            });
+          }
         }
+      } catch (err: any) {
+        console.error('[CollectionsProvider] Critical Initialization Error:', err);
+        throw err;
       }
-    } catch (err: any) {
-      console.error('[CollectionsProvider] Critical Initialization Error:', err);
-      throw err;
-    }
+    };
+
+    initCollections();
   }, [isGuest]);
 
   if (!collections) {

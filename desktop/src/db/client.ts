@@ -1,4 +1,3 @@
-import { ShapeStream, Message } from '@electric-sql/client'
 import { API_BASE_URL } from '../lib/api/axiosInstance'
 
 type DatabaseType = Awaited<ReturnType<typeof import("@tauri-apps/plugin-sql").default.load>>;
@@ -85,6 +84,8 @@ export class ElectricSync {
     console.log(`[ElectricSync] Syncing ${tableName} with token: ${token ? 'PRESENT' : 'MISSING'} (${token?.substring(0, 10)}...)`);
 
     try {
+      const { ShapeStream } = await import('@electric-sql/client')
+
       const url = `${API_BASE_URL}/api/electric/${tableName}?offset=-1`;
       console.log(`[ElectricSync] Connecting to Proxy: ${url}`);
 
@@ -93,8 +94,8 @@ export class ElectricSync {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
 
-      const unsubscribe = stream.subscribe((messages) => {
-        this.applyMessages(tableName, messages as Message[])
+      const unsubscribe = stream.subscribe((messages: any[]) => {
+        this.applyMessages(tableName, messages)
       })
       this.subscriptions.push(unsubscribe)
 
@@ -111,7 +112,7 @@ export class ElectricSync {
 
   private dbLock = Promise.resolve()
 
-  private async applyMessages(tableName: string, messages: Message[]) {
+  private async applyMessages(tableName: string, messages: any[]) {
     this.dbLock = this.dbLock.then(async () => {
       const hasControl = messages.some((m: any) => m.headers?.control)
       const dataMessages = messages.filter((m: any) => m.value)
