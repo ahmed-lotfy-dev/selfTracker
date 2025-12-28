@@ -1,9 +1,10 @@
-import Database from "@tauri-apps/plugin-sql"
 import { ShapeStream, Message } from '@electric-sql/client'
 import { API_BASE_URL } from '../lib/api/axiosInstance'
 
+type DatabaseType = Awaited<ReturnType<typeof import("@tauri-apps/plugin-sql").default.load>>;
+
 export class TauriSQLiteAdapter {
-  private db: Database | null = null
+  private db: DatabaseType | null = null
   private dbName: string
 
   constructor(dbName: string) {
@@ -12,6 +13,7 @@ export class TauriSQLiteAdapter {
 
   async init() {
     if (!this.db) {
+      const { default: Database } = await import("@tauri-apps/plugin-sql")
       this.db = await Database.load(this.dbName)
     }
   }

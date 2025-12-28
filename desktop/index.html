@@ -5,9 +5,75 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tauri + React + TS</title>
+  <title>SelfTracker</title>
+  <style>
+    #loading-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      background: #0f172a;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+      margin: 0;
+      padding: 0;
+    }
+
+    #loading-screen .loading-logo {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 24px;
+      animation: loading-pulse 2s ease-in-out infinite;
+    }
+
+    #loading-screen .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(16, 185, 129, 0.2);
+      border-top-color: #10B981;
+      border-radius: 50%;
+      animation: loading-spin 1s linear infinite;
+    }
+
+    @keyframes loading-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes loading-pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.8;
+        transform: scale(0.98);
+      }
+    }
+
+    .error-container {
+      padding: 20px;
+      font-family: monospace;
+      background: #dc2626;
+      color: white;
+      height: 100vh;
+      overflow: auto;
+      z-index: 99999;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+    }
+  </style>
   <script>
-    // Prevent window from closing on error
     window.addEventListener('error', function (e) {
       console.error('GLOBAL ERROR:', e);
       var msg = '';
@@ -16,38 +82,28 @@
       } else {
         msg = e.message || (e.error && e.error.message) || String(e);
       }
-
-      document.body.innerHTML = '<div style="padding:20px;font-family:monospace;background:#333;color:#fff;height:100vh;overflow:auto">' +
-        '<h1 style="color:red">CRITICAL STARTUP ERROR</h1>' +
-        '<p>The application failed to start.</p>' +
-        '<pre style="color:#ffaaaa">' + msg + '</pre>' +
-        (e.error && e.error.stack ? '<pre>' + e.error.stack + '</pre>' : '') +
+      document.body.innerHTML = '<div class="error-container">' +
+        '<h1 style="font-size:32px;margin-bottom:16px;">Application Error</h1>' +
+        '<pre style="background:#1f2937;padding:12px;border-radius:8px;">' + msg + '</pre>' +
+        (e.error && e.error.stack ? '<pre style="margin-top:12px;opacity:0.8;">' + e.error.stack + '</pre>' : '') +
         '</div>';
       return false;
-    }, true); // TRUE = Capture phase to catch resource loading errors (scripts/css)
+    }, true);
 
     window.addEventListener('unhandledrejection', function (e) {
       console.error('UNHANDLED PROMISE REJECTION:', e.reason);
       e.preventDefault();
-      document.body.innerHTML = '<div style="padding:20px;font-family:monospace;background:#333;color:#fff;height:100vh;overflow:auto">' +
-        '<h1 style="color:red">PROMISE REJECTION</h1>' +
-        '<pre>' + (typeof e.reason === 'object' ? JSON.stringify(e.reason, null, 2) : String(e.reason)) + '</pre>' +
-        '</div>';
     });
   </script>
 </head>
 
 <body>
   <div id="root">
-    <div
-      style="display:flex;justify-content:center;align-items:center;height:100vh;background:#222;color:#fff;font-family:sans-serif;">
-      <h1>Loading SelfTracker...</h1>
+    <div id="loading-screen">
+      <img src="/ic_loading.png" alt="SelfTracker" class="loading-logo" />
+      <div class="spinner"></div>
     </div>
   </div>
-  <script>
-    // Remove overlay when React mounts (optional, but good to check)
-    // We expect the React app to eventually cover this or remove it, but let's leave it for now since the app is broken.
-  </script>
   <script type="module" src="src/main.tsx"></script>
 </body>
 
