@@ -20,6 +20,7 @@
     "process:allow-restart",
     "notification:default",
     "sql:default",
+    "sql:allow-execute",
     "store:default"
   ]
 }
