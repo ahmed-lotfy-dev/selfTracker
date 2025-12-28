@@ -9,8 +9,12 @@ export function AppUpdater() {
       if (checking) return;
 
       try {
-        if (typeof window === 'undefined' || !('__TAURI__' in window)) {
-          console.log('[Updater] Not running in Tauri environment, skipping update check');
+        // In Tauri v2, we don't rely on window.__TAURI__
+        // We will just try to import the core plugin. If it fails, we are not in Tauri.
+        const { getTauriVersion } = await import('@tauri-apps/api/app').catch(() => ({ getTauriVersion: null }));
+
+        if (!getTauriVersion) {
+          console.log('[Updater] Tauri API not available, skipping update check');
           return;
         }
 

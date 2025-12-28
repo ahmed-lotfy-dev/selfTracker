@@ -6,6 +6,20 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 // --- DEBUG CONSOLE FOR PRODUCTION ---
 function DebugConsole() {
   const [logs, setLogs] = useState<string[]>([]);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Toggle on Ctrl+Shift+D
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+        e.preventDefault();
+        setIsVisible(prev => !prev);
+        console.log("Debug console toggled");
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const originalLog = console.log;
@@ -47,7 +61,7 @@ function DebugConsole() {
     };
   }, []);
 
-  if (logs.length === 0) return null;
+  if (!isVisible || logs.length === 0) return null;
 
   return (
     <div style={{
@@ -76,7 +90,7 @@ try {
   const rootElement = document.getElementById("root");
   if (!rootElement) throw new Error("Root element not found");
 
-  ReactDOM.createRoot(rootElement).render(
+  ReactDOM.createRoot(rootElement!).render(
     <React.StrictMode>
       <DebugConsole />
       <ErrorBoundary>
