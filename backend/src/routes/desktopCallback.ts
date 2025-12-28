@@ -22,6 +22,12 @@ desktopCallbackRouter.get("/desktop-success", async (c) => {
   }
 
   const token = session.session.token
+  const redirect = c.req.query("redirect")
+
+  if (redirect && redirect.startsWith("http://localhost:")) {
+    const redirectUrl = `${redirect}?token=${token}`
+    return c.redirect(redirectUrl)
+  }
 
   return c.html(`
     <!DOCTYPE html>
@@ -37,7 +43,7 @@ desktopCallbackRouter.get("/desktop-success", async (c) => {
             justify-content: center;
             height: 100vh;
             margin: 0;
-            background-color: #09090b; /* Match App's Dark Mode */
+            background-color: #09090b;
             color: #ffffff;
             overflow: hidden;
           }
@@ -76,12 +82,10 @@ desktopCallbackRouter.get("/desktop-success", async (c) => {
           const deepLink = "selftracker://auth?token=${token}";
           window.location.href = deepLink;
           
-          // Try to close immediately
           setTimeout(() => {
             window.close();
           }, 300);
 
-          // Fallback if window.close is blocked
           setTimeout(() => {
             document.querySelector("p").innerText = "You can now safely return to the SelfTracker app.";
           }, 3000);
@@ -92,3 +96,4 @@ desktopCallbackRouter.get("/desktop-success", async (c) => {
 })
 
 export default desktopCallbackRouter
+
