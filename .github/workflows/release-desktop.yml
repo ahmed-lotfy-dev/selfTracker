@@ -83,3 +83,38 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Create Linux tar.gz bundle for AUR
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          VERSION=$(grep '"version"' desktop/src-tauri/tauri.conf.json | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
+          BINARY_NAME="desktop"
+          BUNDLE_NAME="SelfTracker_${VERSION}_linux_x86_64"
+          
+          mkdir -p "${BUNDLE_NAME}"
+          cp "desktop/src-tauri/target/release/${BINARY_NAME}" "${BUNDLE_NAME}/selftracker"
+          chmod +x "${BUNDLE_NAME}/selftracker"
+          
+          cat > "${BUNDLE_NAME}/selftracker.desktop" << EOF
+          [Desktop Entry]
+          Name=SelfTracker
+          Comment=Track your habits, tasks, and workouts
+          Exec=/usr/bin/selftracker
+          Icon=selftracker
+          Type=Application
+          Categories=Utility;Office;
+          Terminal=false
+          EOF
+          
+          cp desktop/src-tauri/icons/256.png "${BUNDLE_NAME}/selftracker.png" 2>/dev/null || true
+          
+          tar -czvf "${BUNDLE_NAME}.tar.gz" "${BUNDLE_NAME}"
+          echo "Created ${BUNDLE_NAME}.tar.gz"
+
+      - name: Upload Linux tar.gz to release
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: SelfTracker_*_linux_x86_64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
