@@ -128,4 +128,15 @@ export const auth = betterAuth({
     "exp://",
     "tauri://localhost",
   ],
+  advanced: {
+    cookies: {
+      oauth_state: {
+        name: "better_auth_oauth_state",
+        options: {
+          sameSite: "none" as const,
+          secure: true,
+        }
+      }
+    }
+  }
 })

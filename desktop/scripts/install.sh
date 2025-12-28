@@ -68,17 +68,23 @@ install_appimage() {
   chmod +x "$INSTALL_DIR/$APP_NAME.AppImage"
   ln -sf "$INSTALL_DIR/$APP_NAME.AppImage" /usr/local/bin/selftracker
   
+  mkdir -p /usr/share/icons/hicolor/256x256/apps/
+  ICON_URL="https://raw.githubusercontent.com/ahmed-lotfy-dev/selfTracker/main/desktop/src-tauri/icons/256.png"
+  curl -sL "$ICON_URL" -o /usr/share/icons/hicolor/256x256/apps/selftracker.png 2>/dev/null || true
+  
   cat > "$DESKTOP_FILE" << EOF
 [Desktop Entry]
 Name=$APP_NAME
 Comment=Track your habits, tasks, and workouts
 Exec=$INSTALL_DIR/$APP_NAME.AppImage
-Icon=selftracker
+Icon=/usr/share/icons/hicolor/256x256/apps/selftracker.png
 Type=Application
 Categories=Utility;Office;
 Terminal=false
+StartupWMClass=SelfTracker
 EOF
   update-desktop-database /usr/share/applications/ 2>/dev/null || true
+  gtk-update-icon-cache /usr/share/icons/hicolor/ 2>/dev/null || true
   echo -e "${GREEN}✅ $APP_NAME v${version} installed as AppImage!${NC}"
 }
 
@@ -130,29 +136,29 @@ install_tarball() {
   chmod +x "$INSTALL_DIR/$APP_NAME"
   ln -sf "$INSTALL_DIR/$APP_NAME" /usr/local/bin/selftracker
   
-  DESKTOP_SRC=$(find "$TEMP_DIR" -name "*.desktop" -type f 2>/dev/null | head -1)
-  if [ -n "$DESKTOP_SRC" ]; then
-    cp "$DESKTOP_SRC" "$DESKTOP_FILE"
+  mkdir -p /usr/share/icons/hicolor/256x256/apps/
+  ICON_SRC=$(find "$TEMP_DIR" -name "*.png" -type f 2>/dev/null | head -1)
+  if [ -n "$ICON_SRC" ]; then
+    cp "$ICON_SRC" /usr/share/icons/hicolor/256x256/apps/selftracker.png
   else
-    cat > "$DESKTOP_FILE" << EOF
+    ICON_URL="https://raw.githubusercontent.com/ahmed-lotfy-dev/selfTracker/main/desktop/src-tauri/icons/256.png"
+    curl -sL "$ICON_URL" -o /usr/share/icons/hicolor/256x256/apps/selftracker.png 2>/dev/null || true
+  fi
+  
+  cat > "$DESKTOP_FILE" << EOF
 [Desktop Entry]
 Name=$APP_NAME
 Comment=Track your habits, tasks, and workouts
 Exec=/usr/local/bin/selftracker
-Icon=selftracker
+Icon=/usr/share/icons/hicolor/256x256/apps/selftracker.png
 Type=Application
 Categories=Utility;Office;
 Terminal=false
+StartupWMClass=SelfTracker
 EOF
-  fi
-  
-  ICON_SRC=$(find "$TEMP_DIR" -name "*.png" -type f 2>/dev/null | head -1)
-  if [ -n "$ICON_SRC" ]; then
-    mkdir -p /usr/share/icons/hicolor/256x256/apps/
-    cp "$ICON_SRC" /usr/share/icons/hicolor/256x256/apps/selftracker.png
-  fi
   
   update-desktop-database /usr/share/applications/ 2>/dev/null || true
+  gtk-update-icon-cache /usr/share/icons/hicolor/ 2>/dev/null || true
   rm -rf "$TEMP_DIR"
   echo -e "${GREEN}✅ $APP_NAME v${version} installed from tar.gz!${NC}"
 }
