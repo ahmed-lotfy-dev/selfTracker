@@ -47,8 +47,9 @@ class SyncManagerService {
       // Load whatever local data we have immediately
       await this.pullFromDB()
 
-    } catch (e) {
+    } catch (e: any) {
       console.error("[SyncManager] Initialization failed:", e)
+      throw new Error(`DB Init Failed: ${e.message || String(e)}`)
     }
   }
 
