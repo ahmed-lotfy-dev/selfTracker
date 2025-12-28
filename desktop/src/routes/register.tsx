@@ -104,25 +104,31 @@ export default function RegisterPage() {
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    console.log("[Register] Opening Google OAuth in system browser via backend");
-                    const { open } = await import("@tauri-apps/plugin-shell");
+                    const result = await authClient.signIn.social({
+                      provider: "google",
+                      callbackURL: `${API_BASE_URL}/api/desktop-success`,
+                      // @ts-ignore
+                      disableRedirect: true
+                    });
 
-                    const oauthUrl = `${API_BASE_URL}/api/auth/sign-in/social?provider=google&callbackURL=${encodeURIComponent(`${API_BASE_URL}/api/desktop-success`)}`;
-                    await open(oauthUrl);
-                    const authResult = await waitForDeepLink();
+                    if (result.data?.url) {
+                      const { open } = await import("@tauri-apps/plugin-shell");
+                      await open(result.data.url);
+                      const authResult = await waitForDeepLink();
 
-                    if (authResult?.token) {
-                      localStorage.setItem("bearer_token", authResult.token);
+                      if (authResult?.token) {
+                        localStorage.setItem("bearer_token", authResult.token);
 
-                      try {
-                        const session = await authClient.getSession();
-                        if (session.data?.user?.id) {
-                          localStorage.setItem("user_id", session.data.user.id);
-                        }
-                      } catch (e) { console.error("Failed to fetch session after social signup", e); }
+                        try {
+                          const session = await authClient.getSession();
+                          if (session.data?.user?.id) {
+                            localStorage.setItem("user_id", session.data.user.id);
+                          }
+                        } catch (e) { console.error("Failed to fetch session after social signup", e); }
 
-                      toast.success("Registration successful");
-                      window.location.href = "/";
+                        toast.success("Registration successful");
+                        window.location.href = "/";
+                      }
                     }
                   } catch (err: any) {
                     console.error("Google signup error:", err);
@@ -146,25 +152,31 @@ export default function RegisterPage() {
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    console.log("[Register] Opening GitHub OAuth in system browser via backend");
-                    const { open } = await import("@tauri-apps/plugin-shell");
+                    const result = await authClient.signIn.social({
+                      provider: "github",
+                      callbackURL: `${API_BASE_URL}/api/desktop-success`,
+                      // @ts-ignore
+                      disableRedirect: true
+                    });
 
-                    const oauthUrl = `${API_BASE_URL}/api/auth/sign-in/social?provider=github&callbackURL=${encodeURIComponent(`${API_BASE_URL}/api/desktop-success`)}`;
-                    await open(oauthUrl);
-                    const authResult = await waitForDeepLink();
+                    if (result.data?.url) {
+                      const { open } = await import("@tauri-apps/plugin-shell");
+                      await open(result.data.url);
+                      const authResult = await waitForDeepLink();
 
-                    if (authResult?.token) {
-                      localStorage.setItem("bearer_token", authResult.token);
+                      if (authResult?.token) {
+                        localStorage.setItem("bearer_token", authResult.token);
 
-                      try {
-                        const session = await authClient.getSession();
-                        if (session.data?.user?.id) {
-                          localStorage.setItem("user_id", session.data.user.id);
-                        }
-                      } catch (e) { console.error("Failed to fetch session after social signup", e); }
+                        try {
+                          const session = await authClient.getSession();
+                          if (session.data?.user?.id) {
+                            localStorage.setItem("user_id", session.data.user.id);
+                          }
+                        } catch (e) { console.error("Failed to fetch session after social signup", e); }
 
-                      toast.success("Registration successful");
-                      window.location.href = "/";
+                        toast.success("Registration successful");
+                        window.location.href = "/";
+                      }
                     }
                   } catch (err: any) {
                     console.error("GitHub signup error:", err);
