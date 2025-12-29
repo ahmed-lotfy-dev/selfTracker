@@ -3,19 +3,32 @@ import { db } from "../db"
 import { foodLogs, nutritionGoals } from "../db/schema"
 import type { FoodItem } from "../db/schema/foodLogs"
 
-export const getUserFoodLogs = async (userId: string, date?: Date) => {
-  const query = db.query.foodLogs.findMany({
-    where: date
-      ? and(
-        eq(foodLogs.userId, userId),
-        gte(foodLogs.loggedAt, new Date(date.setHours(0, 0, 0, 0))),
-        lte(foodLogs.loggedAt, new Date(date.setHours(23, 59, 59, 999)))
-      )
-      : eq(foodLogs.userId, userId),
+type MealType = "breakfast" | "lunch" | "dinner" | "snack"
+
+export const getUserFoodLogs = async (
+  userId: string,
+  date?: Date,
+  mealType?: MealType
+) => {
+  const conditions = [eq(foodLogs.userId, userId)]
+
+  if (date) {
+    const startOfDay = new Date(date)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(date)
+    endOfDay.setHours(23, 59, 59, 999)
+    conditions.push(gte(foodLogs.loggedAt, startOfDay))
+    conditions.push(lte(foodLogs.loggedAt, endOfDay))
+  }
+
+  if (mealType) {
+    conditions.push(eq(foodLogs.mealType, mealType))
+  }
+
+  return await db.query.foodLogs.findMany({
+    where: and(...conditions),
     orderBy: desc(foodLogs.loggedAt),
   })
-
-  return await query
 }
 
 export const createFoodLog = async (

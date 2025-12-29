@@ -513,7 +513,10 @@ When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter
       get: {
         tags: ['Nutrition'],
         summary: 'Get food logs',
-        parameters: [{ name: 'date', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Filter by date (YYYY-MM-DD)' }],
+        parameters: [
+          { name: 'date', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Filter by date (YYYY-MM-DD)' },
+          { name: 'mealType', in: 'query', schema: { type: 'string', enum: ['breakfast', 'lunch', 'dinner', 'snack'] }, description: 'Filter by meal type' }
+        ],
         responses: {
           '200': {
             description: 'List of food logs',

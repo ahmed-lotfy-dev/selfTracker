@@ -84,16 +84,17 @@ nutritionRouter.get("/logs", async (c) => {
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
   const dateParam = c.req.query("date")
+  const mealTypeParam = c.req.query("mealType") as "breakfast" | "lunch" | "dinner" | "snack" | undefined
   const date = dateParam ? new Date(dateParam) : undefined
 
   try {
-    const cacheKey = `foodLogs:${user.id}:${dateParam || "all"}`
+    const cacheKey = `foodLogs:${user.id}:${dateParam || "all"}:${mealTypeParam || "all"}`
     const cached = await getCache(cacheKey)
     if (cached) {
       return c.json({ foodLogs: cached })
     }
 
-    const logs = await getUserFoodLogs(user.id, date)
+    const logs = await getUserFoodLogs(user.id, date, mealTypeParam)
     await setCache(cacheKey, 1800, logs)
 
     return c.json({ foodLogs: logs })
