@@ -4,6 +4,7 @@ import { Calendar, DateData } from "react-native-calendars"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import { WorkoutLogsList } from "./WorkoutLogsList"
+import { format } from "date-fns"
 
 interface CalendarViewProps {
   headerElement?: React.ReactNode
@@ -61,7 +62,7 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
       */}
       <WorkoutLogsList
         logs={selectedDayLogs}
-        headerElement={
+        ListHeaderComponent={
           <View>
             {headerElement}
             <View className="mx-2 mb-4 bg-card rounded-2xl overflow-hidden border border-border shadow-sm">
@@ -94,7 +95,7 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
             </View>
             <View className="px-4 mb-2">
               <Text className="text-lg font-bold text-text">
-                {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                {format(new Date(selectedDate), "dd/MM/yyyy")}
               </Text>
               <Text className="text-sm text-placeholder">
                 {selectedDayLogs.length} workout{selectedDayLogs.length !== 1 ? 's' : ''}
