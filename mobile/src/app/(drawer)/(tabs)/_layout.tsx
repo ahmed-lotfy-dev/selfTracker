@@ -76,6 +76,19 @@ export default function TabsLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger
+        name="nutrition"
+        options={{
+          labelStyle: {
+            color: colors.primary,
+            fontWeight: 700,
+          },
+        }}
+      >
+        <Label>Food</Label>
+        <Icon src={<VectorIcon family={Ionicons} name="nutrition" />} />,
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger
         name="tasks"
         options={{
           labelStyle: {

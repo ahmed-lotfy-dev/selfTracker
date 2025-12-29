@@ -23,6 +23,9 @@ export default function Header({ title, className, backTo, leftAction, rightActi
     "/home",
     "/habits",
     "/habits/add",
+    "/nutrition",
+    "/nutrition/log",
+    "/nutrition/goals",
   ]
   const shouldShowBackButton = !noBackButtonPaths.includes(pathname)
   const isLargeTitle = !shouldShowBackButton
