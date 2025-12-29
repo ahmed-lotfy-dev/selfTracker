@@ -5,8 +5,27 @@ export const openApiSpec: OpenAPIV3_1.Document = {
   openapi: '3.1.0',
   info: {
     title: 'SelfTracker API',
-    version: '1.0.0',
-    description: 'Comprehensive API documentation for the SelfTracker application.',
+    version: '1.1.0',
+    description: `Comprehensive API documentation for the SelfTracker application.
+
+## Rate Limiting
+
+Certain endpoints are rate-limited to prevent abuse. Rate limit headers are included in responses:
+
+| Header | Description |
+|--------|-------------|
+| \`X-RateLimit-Limit\` | Maximum requests allowed |
+| \`X-RateLimit-Remaining\` | Requests remaining in window |
+| \`X-RateLimit-Reset\` | Unix timestamp when limit resets |
+
+### Rate Limit Tiers
+
+| Endpoint | Limit |
+|----------|-------|
+| \`/api/nutrition/analyze\` | 10 requests/minute, 100 requests/day |
+| \`/api/image/upload\` | 10 requests/minute |
+
+When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter\` field.`,
     contact: {
       name: 'Support',
       email: 'support@selftracker.app'
