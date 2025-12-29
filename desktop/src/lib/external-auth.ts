@@ -24,7 +24,6 @@ export async function waitForDeepLink() {
         }
       });
 
-      // 5 minutes timeout
       setTimeout(() => {
         if (unlisten) unlisten();
         reject(new Error("Authentication timed out"));
