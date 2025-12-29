@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo } from "react"
 import { View, Text, FlatList, Pressable } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 
@@ -10,7 +10,14 @@ export const WeightLogsList = () => {
   const router = useRouter()
   const weightLogs = useWeightStore(s => s.weightLogs)
 
-  if (weightLogs.length === 0) {
+  const sortedLogs = useMemo(() =>
+    [...weightLogs].sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ),
+    [weightLogs]
+  )
+
+  if (sortedLogs.length === 0) {
     return (
       <View className="flex-1 items-center justify-center py-16">
         <Text className="text-lg font-bold mb-2" style={{ color: colors.text }}>
@@ -25,7 +32,7 @@ export const WeightLogsList = () => {
 
   return (
     <FlatList
-      data={weightLogs}
+      data={sortedLogs}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <Pressable
@@ -42,3 +49,4 @@ export const WeightLogsList = () => {
     />
   )
 }
+

@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo } from "react"
-import { View, ScrollView, Pressable } from "react-native"
-import { useRouter } from "expo-router"
+import { View, ScrollView } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
-import { Ionicons } from "@expo/vector-icons"
+import AddButton from "@/src/components/Buttons/AddButton"
 import { useNutritionStore, getTodaysFoodLogs, getTodaysCalories } from "@/src/stores/useNutritionStore"
 import DailyIntakeCard from "@/src/features/nutrition/DailyIntakeCard"
 import MealSection from "@/src/features/nutrition/MealSection"
@@ -13,7 +12,6 @@ import type { FoodLog } from "@/src/types/nutrition"
 
 export default function NutritionScreen() {
   const colors = useThemeColors()
-  const router = useRouter()
   const foodLogs = useNutritionStore((s) => s.foodLogs)
   const goals = useNutritionStore((s) => s.goals)
   const setFoodLogs = useNutritionStore((s) => s.setFoodLogs)
@@ -38,12 +36,8 @@ export default function NutritionScreen() {
     loadData()
   }, [])
 
-  const handleAddFood = () => {
-    router.push("/nutrition/log")
-  }
-
   const handleOpenGoals = () => {
-    router.push("/nutrition/goals")
+    // Router is handled via AddButton path pattern
   }
 
   const goalCalories = goals?.dailyCalories || 2000
@@ -72,16 +66,11 @@ export default function NutritionScreen() {
         <MealSection title="Dinner" mealType="dinner" logs={dinnerLogs} />
         <MealSection title="Snacks" mealType="snack" logs={snackLogs} />
 
-        <View className="h-24" />
       </ScrollView>
 
-      <Pressable
-        onPress={handleAddFood}
-        className="absolute bottom-28 right-6 w-14 h-14 rounded-full items-center justify-center shadow-lg bg-primary"
-      >
-        <Ionicons name="camera" size={28} color="white" />
-      </Pressable>
+      <AddButton path="/nutrition" icon="camera" iconFamily="ionicons" />
     </View>
   )
 }
+
 

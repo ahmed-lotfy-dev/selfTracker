@@ -38,9 +38,9 @@ export default function HabitsScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="flex-1">
         <Header
-        className='px-2'
+          className='px-2'
           title="Habits"
-          rightAction={<DrawerToggleButton/>}
+          rightAction={<DrawerToggleButton />}
         />
 
         <ScrollView
@@ -111,9 +111,7 @@ export default function HabitsScreen() {
           )}
         </ScrollView>
 
-        <View className="absolute bottom-4 -right-2">
-          <AddButton path="/habits" />
-        </View>
+        <AddButton path="/habits" />
       </View>
     </View>
   )

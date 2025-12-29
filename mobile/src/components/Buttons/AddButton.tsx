@@ -1,23 +1,26 @@
-import { View, Text, Pressable } from "react-native"
+import { Pressable } from "react-native"
 import Entypo from "@expo/vector-icons/Entypo"
-import { Route, usePathname, useRouter } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
+import { Route, useRouter } from "expo-router"
 import React from "react"
-import { COLORS } from "@/src/constants/Colors"
 
 interface AddButtonProps {
   path: string
+  icon?: string
+  iconFamily?: "entypo" | "ionicons"
 }
 
-const BG_COLOR = COLORS.primary
-export default function AddButton({  path }: AddButtonProps) {
+export default function AddButton({ path, icon = "plus", iconFamily = "entypo" }: AddButtonProps) {
   const router = useRouter()
+
+  const IconComponent = iconFamily === "ionicons" ? Ionicons : Entypo
 
   return (
     <Pressable
       onPress={() => router.push(`${path}/add` as Route)}
-      className={`rounded-full absolute right-10 bottom-28 w-12 h-12 justify-center items-center bg-green-950 hover:bg-green-950 border`}
+      className="absolute bottom-28 right-6 w-14 h-14 rounded-full items-center justify-center shadow-lg bg-primary border border-primary/20"
     >
-      <Entypo name="plus" size={24} color="white" />
+      <IconComponent name={icon as any} size={28} color="white" />
     </Pressable>
   )
 }

@@ -14,7 +14,7 @@ export default function NutritionLayout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen
-        name="log"
+        name="add"
         options={{
           presentation: "modal",
           animation: "slide_from_bottom"

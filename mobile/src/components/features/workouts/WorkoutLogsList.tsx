@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo } from "react"
 import { View, Text, ScrollView, Pressable } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 import { FontAwesome5 } from "@expo/vector-icons"
@@ -15,7 +15,14 @@ export const WorkoutLogsList = ({ headerElement, logs }: WorkoutLogsListProps) =
   const colors = useThemeColors()
   const router = useRouter()
   const storeLogs = useWorkoutsStore(s => s.workoutLogs)
-  const workoutLogs = logs || storeLogs
+  const rawLogs = logs || storeLogs
+
+  const sortedLogs = useMemo(() => {
+    const uniqueLogs = Array.from(new Map(rawLogs.map((item: any) => [item.id, item])).values())
+    return uniqueLogs.sort((a: any, b: any) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }, [rawLogs])
 
   return (
     <ScrollView
@@ -24,7 +31,7 @@ export const WorkoutLogsList = ({ headerElement, logs }: WorkoutLogsListProps) =
       contentContainerStyle={{ paddingBottom: 150 }}
     >
       {headerElement}
-      {workoutLogs.length === 0 ? (
+      {sortedLogs.length === 0 ? (
         <View className="items-center justify-center py-16 border-2 border-dashed rounded-3xl mx-2 opacity-50" style={{ borderColor: colors.border }}>
           <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/5 dark:bg-white/5">
             <FontAwesome5 name="dumbbell" size={24} color={colors.text} style={{ opacity: 0.5 }} />
@@ -35,7 +42,7 @@ export const WorkoutLogsList = ({ headerElement, logs }: WorkoutLogsListProps) =
           </Text>
         </View>
       ) : (
-        Array.from(new Map(workoutLogs.map((item: any) => [item.id, item])).values()).map((log: any) => (
+        sortedLogs.map((log: any) => (
           <Pressable
             key={log.id}
             onPress={() => router.push(`/workouts/${log.id}`)}
@@ -50,3 +57,4 @@ export const WorkoutLogsList = ({ headerElement, logs }: WorkoutLogsListProps) =
     </ScrollView>
   )
 }
+
