@@ -33,41 +33,19 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: install frontend dependencies
-        working-directory: ./desktop
-        run: bun install
 
-      - name: Build frontend
-        working-directory: ./desktop
-        env:
-          VITE_BACKEND_URL: "https://selftracker.ahmedlotfy.site"
-        run: bun run build
-      
-      - name: Debug - Verify frontend build
-        if: matrix.platform == 'ubuntu-22.04'
-        working-directory: ./desktop
-        run: |
-          echo "=== Checking dist folder ==="
-          ls -la dist/
-          echo "=== Checking index.html ==="
-          head -30 dist/index.html
-          echo "=== Checking assets ==="
-          ls -la dist/assets/ | head -10
-          echo "=== Checking ic_loading.png ==="
-          ls -la dist/ic_loading.png || echo "ic_loading.png not found!"
+
 
       - name: Cache Rust dependencies
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './desktop/src-tauri -> target'
+          workspaces: './desktop/src-tauri'
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -87,12 +65,27 @@ jobs:
       - name: Create Linux tar.gz bundle for AUR
         if: matrix.platform == 'ubuntu-22.04'
         run: |
-          VERSION=$(grep '"version"' desktop/src-tauri/tauri.conf.json | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
+          # Use bun to safely extract version from JSON
+          VERSION=$(bun -e "console.log(require('./desktop/src-tauri/tauri.conf.json').version)")
+          echo "Detected version: $VERSION"
+          
           BINARY_NAME="desktop"
           BUNDLE_NAME="SelfTracker_${VERSION}_linux_x86_64"
+          TARGET_DIR="desktop/src-tauri/target/release"
+          
+          echo "Looking for binary in $TARGET_DIR"
+          ls -la $TARGET_DIR || echo "Target directory not found"
+          
+          # Check if binary exists
+          if [ ! -f "$TARGET_DIR/$BINARY_NAME" ]; then
+            echo "Error: Binary '$BINARY_NAME' not found in $TARGET_DIR"
+            echo "Contents of $TARGET_DIR:"
+            ls -la $TARGET_DIR
+            exit 1
+          fi
           
           mkdir -p "${BUNDLE_NAME}"
-          cp "desktop/src-tauri/target/release/${BINARY_NAME}" "${BUNDLE_NAME}/selftracker"
+          cp "$TARGET_DIR/$BINARY_NAME" "${BUNDLE_NAME}/selftracker"
           chmod +x "${BUNDLE_NAME}/selftracker"
           
           cat > "${BUNDLE_NAME}/selftracker.desktop" << EOF
