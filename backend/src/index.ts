@@ -14,6 +14,7 @@ import timerRouter from "./routes/timer.js"
 import electricRouter from "./routes/electric.js"
 import desktopCallbackRouter from "./routes/desktopCallback.js"
 import habitsRouter from "./routes/habits.js"
+import nutritionRouter from "./routes/nutrition.js"
 import { auth } from "../lib/auth.js"
 import { authMiddleware } from "./middlewares/authMiddleware.js"
 import { Scalar } from '@scalar/hono-api-reference'
@@ -76,6 +77,8 @@ app.route("/api/image", uploadRouter)
 app.route("/api/electric", electricRouter)
 
 app.route("/api/habits", habitsRouter)
+
+app.route("/api/nutrition", nutritionRouter)
 
 app.route("/api", desktopCallbackRouter)
 

@@ -167,6 +167,53 @@ export const openApiSpec: OpenAPIV3_1.Document = {
           color: { type: 'string' }
         },
         required: ['name']
+      },
+      FoodItem: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          quantity: { type: 'number' },
+          unit: { type: 'string' },
+          calories: { type: 'number' },
+          protein: { type: 'number' },
+          carbs: { type: 'number' },
+          fat: { type: 'number' }
+        }
+      },
+      FoodLog: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          loggedAt: { type: 'string', format: 'date-time' },
+          mealType: { type: 'string', enum: ['breakfast', 'lunch', 'dinner', 'snack'] },
+          foodItems: { type: 'array', items: { $ref: '#/components/schemas/FoodItem' } },
+          totalCalories: { type: 'integer' },
+          totalProtein: { type: 'integer' },
+          totalCarbs: { type: 'integer' },
+          totalFat: { type: 'integer' },
+          createdAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      NutritionGoals: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          dailyCalories: { type: 'integer' },
+          proteinGrams: { type: 'integer' },
+          carbsGrams: { type: 'integer' },
+          fatGrams: { type: 'integer' }
+        }
+      },
+      FoodAnalysisResult: {
+        type: 'object',
+        properties: {
+          foods: { type: 'array', items: { $ref: '#/components/schemas/FoodItem' } },
+          totalCalories: { type: 'integer' },
+          totalProtein: { type: 'integer' },
+          totalCarbs: { type: 'integer' },
+          totalFat: { type: 'integer' },
+          confidence: { type: 'number' }
+        }
       }
     }
   },
@@ -180,6 +227,7 @@ export const openApiSpec: OpenAPIV3_1.Document = {
     { name: 'Workout Logs', description: 'Workout history' },
     { name: 'Timer', description: 'Focus timer sessions' },
     { name: 'Habits', description: 'Habit tracking and streaks' },
+    { name: 'Nutrition', description: 'AI-powered food recognition and calorie tracking' },
     { name: 'Image', description: 'Image upload and management' },
     { name: 'ElectricSQL', description: 'Data synchronization' }
   ],
@@ -412,6 +460,86 @@ export const openApiSpec: OpenAPIV3_1.Document = {
         summary: 'Delete habit',
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: { '200': { description: 'Habit deleted' } }
+      }
+    },
+    // --- NUTRITION ---
+    '/api/nutrition/analyze': {
+      post: {
+        tags: ['Nutrition'],
+        summary: 'Analyze food image with AI',
+        description: 'Send a base64-encoded food image to Gemini AI for calorie and macro analysis.',
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  image: { type: 'string', description: 'Base64-encoded image data' }
+                },
+                required: ['image']
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Food analysis result',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/FoodAnalysisResult' } } }
+          },
+          '500': { description: 'AI analysis failed' }
+        }
+      }
+    },
+    '/api/nutrition/logs': {
+      get: {
+        tags: ['Nutrition'],
+        summary: 'Get food logs',
+        parameters: [{ name: 'date', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Filter by date (YYYY-MM-DD)' }],
+        responses: {
+          '200': {
+            description: 'List of food logs',
+            content: { 'application/json': { schema: { type: 'object', properties: { foodLogs: { type: 'array', items: { $ref: '#/components/schemas/FoodLog' } } } } } }
+          }
+        }
+      },
+      post: {
+        tags: ['Nutrition'],
+        summary: 'Create food log',
+        requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/FoodLog' } } } },
+        responses: { '200': { description: 'Food log created' } }
+      }
+    },
+    '/api/nutrition/logs/{id}': {
+      patch: {
+        tags: ['Nutrition'],
+        summary: 'Update food log',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/FoodLog' } } } },
+        responses: { '200': { description: 'Food log updated' } }
+      },
+      delete: {
+        tags: ['Nutrition'],
+        summary: 'Delete food log',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Food log deleted' } }
+      }
+    },
+    '/api/nutrition/goals': {
+      get: {
+        tags: ['Nutrition'],
+        summary: 'Get nutrition goals',
+        responses: {
+          '200': {
+            description: 'User nutrition goals',
+            content: { 'application/json': { schema: { type: 'object', properties: { goals: { $ref: '#/components/schemas/NutritionGoals' } } } } }
+          }
+        }
+      },
+      put: {
+        tags: ['Nutrition'],
+        summary: 'Set/update nutrition goals',
+        requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/NutritionGoals' } } } },
+        responses: { '200': { description: 'Goals updated' } }
       }
     },
     // --- IMAGE ---
