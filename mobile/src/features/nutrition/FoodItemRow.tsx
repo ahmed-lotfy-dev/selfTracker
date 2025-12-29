@@ -1,14 +1,16 @@
 import React from "react"
-import { View, Text } from "react-native"
+import { View, Text, Pressable } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
+import { Ionicons } from "@expo/vector-icons"
 import type { FoodItem } from "@/src/types/nutrition"
 
 type Props = {
   item: FoodItem
   isLast?: boolean
+  onDelete?: () => void
 }
 
-export default function FoodItemRow({ item, isLast = false }: Props) {
+export default function FoodItemRow({ item, isLast = false, onDelete }: Props) {
   const colors = useThemeColors()
 
   return (
@@ -24,9 +26,17 @@ export default function FoodItemRow({ item, isLast = false }: Props) {
           {item.quantity} {item.unit} • P: {item.protein}g • C: {item.carbs}g • F: {item.fat}g
         </Text>
       </View>
-      <Text className="text-base font-semibold ml-2" style={{ color: colors.primary }}>
-        {item.calories}
-      </Text>
+      <View className="flex-row items-center">
+        <Text className="text-base font-semibold mr-3" style={{ color: colors.primary }}>
+          {item.calories}
+        </Text>
+        {onDelete && (
+          <Pressable onPress={onDelete} className="p-1">
+            <Ionicons name="trash-outline" size={18} color="#ef4444" />
+          </Pressable>
+        )}
+      </View>
     </View>
   )
 }
+
