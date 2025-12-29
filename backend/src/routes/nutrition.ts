@@ -11,6 +11,7 @@ import {
   upsertNutritionGoals,
 } from "../services/nutritionService"
 import { analyzeFoodImage } from "../services/geminiVisionService"
+import { rateLimitPresets } from "../middlewares/rateLimitMiddleware"
 
 const nutritionRouter = new Hono()
 
@@ -58,20 +59,25 @@ const nutritionGoalsSchema = z.object({
   fatGrams: z.number().optional(),
 })
 
-nutritionRouter.post("/analyze", zValidator("json", analyzeImageSchema), async (c) => {
-  const user = c.get("user" as any)
-  if (!user) return c.json({ message: "Unauthorized" }, 401)
+nutritionRouter.post(
+  "/analyze",
+  rateLimitPresets.ai,
+  rateLimitPresets.aiDaily,
+  zValidator("json", analyzeImageSchema),
+  async (c) => {
+    const user = c.get("user" as any)
+    if (!user) return c.json({ message: "Unauthorized" }, 401)
 
-  const { image } = c.req.valid("json")
+    const { image } = c.req.valid("json")
 
-  try {
-    const result = await analyzeFoodImage(image)
-    return c.json(result)
-  } catch (error) {
-    console.error("Error analyzing food image:", error)
-    return c.json({ message: "Failed to analyze image", error: (error as Error).message }, 500)
-  }
-})
+    try {
+      const result = await analyzeFoodImage(image)
+      return c.json(result)
+    } catch (error) {
+      console.error("Error analyzing food image:", error)
+      return c.json({ message: "Failed to analyze image", error: (error as Error).message }, 500)
+    }
+  })
 
 nutritionRouter.get("/logs", async (c) => {
   const user = c.get("user" as any)

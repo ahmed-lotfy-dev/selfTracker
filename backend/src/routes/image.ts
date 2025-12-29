@@ -4,6 +4,7 @@ import { v2 as cloudinary } from "cloudinary"
 import { db } from "../db"
 import { eq } from "drizzle-orm"
 import { users } from "../db/schema/index"
+import { rateLimitPresets } from "../middlewares/rateLimitMiddleware"
 
 const imageRouter = new Hono()
 
@@ -16,7 +17,7 @@ imageRouter.use(async (_c, next) => {
   await next()
 })
 
-imageRouter.post("/upload", async (c) => {
+imageRouter.post("/upload", rateLimitPresets.upload, async (c) => {
   const body = await c.req.json()
   const image = body["image"]
   if (!image) {
