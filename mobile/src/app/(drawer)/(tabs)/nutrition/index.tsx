@@ -3,6 +3,7 @@ import { View, ScrollView, Pressable } from "react-native"
 import { useRouter } from "expo-router"
 import { useThemeColors } from "@/src/constants/Colors"
 import Header from "@/src/components/Header"
+import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import { Ionicons } from "@expo/vector-icons"
 import { useNutritionStore, getTodaysFoodLogs, getTodaysCalories } from "@/src/stores/useNutritionStore"
 import DailyIntakeCard from "@/src/features/nutrition/DailyIntakeCard"
@@ -53,10 +54,13 @@ export default function NutritionScreen() {
   const snackLogs = useMemo(() => todaysLogs.filter((l: FoodLog) => l.mealType === "snack"), [todaysLogs])
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Nutrition" />
+    <View className="flex-1 bg-background px-2">
+      <Header
+        title="Nutrition"
+        rightAction={<DrawerToggleButton />}
+      />
 
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-2" contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
         <DailyIntakeCard
           consumed={totalCalories}
           goal={goalCalories}
@@ -73,8 +77,7 @@ export default function NutritionScreen() {
 
       <Pressable
         onPress={handleAddFood}
-        className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center shadow-lg"
-        style={{ backgroundColor: colors.primary }}
+        className="absolute bottom-28 right-6 w-14 h-14 rounded-full items-center justify-center shadow-lg bg-primary"
       >
         <Ionicons name="camera" size={28} color="white" />
       </Pressable>

@@ -62,7 +62,7 @@ export default function TabsLayout() {
         <Icon src={<VectorIcon family={FontAwesome5} name="dumbbell" />} />,
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger
+      {/* <NativeTabs.Trigger
         name="habits"
         options={{
           labelStyle: {
@@ -73,7 +73,7 @@ export default function TabsLayout() {
       >
         <Label>Habits</Label>
         <Icon src={<VectorIcon family={FontAwesome5} name="fire" />} />,
-      </NativeTabs.Trigger>
+      </NativeTabs.Trigger> */}
 
       <NativeTabs.Trigger
         name="nutrition"

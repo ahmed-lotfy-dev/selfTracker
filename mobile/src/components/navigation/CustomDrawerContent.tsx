@@ -17,6 +17,7 @@ export default function CustomDrawerContent(props: any) {
     { label: "Home", icon: "home", route: "/home", type: "feather" },
     { label: "Weights", icon: "weight", route: "/weights", type: "font-awesome-5" },
     { label: "Workouts", icon: "dumbbell", route: "/workouts", type: "font-awesome-5" },
+    { label: "Nutrition", icon: "nutrition", route: "/nutrition", type: "ionicon" },
     { label: "Tasks", icon: "check-square", route: "/tasks", type: "feather" },
     { label: "Habits", icon: "repeat", route: "/habits", type: "feather" },
     { label: "Finances", icon: "dollar-sign", route: "/finances", type: "feather", pending: true },
