@@ -18,6 +18,7 @@ Whether you're lifting weights, tracking your budget, or building new habits, Se
 -   **🔐 Secure Authentication**: Integrated with **Better Auth** for secure and session management.
 -   **💪 Weights & Workouts**: comprehensive workout logging, custom routines, and progress visualization.
 -   **📅 Tasks Tracking**: Daily tasks monitoring adding editing removing
+-   **🍎 AI Nutrition Tracking**: Snap a photo of your meal and let **Gemini AI** automatically identify foods, calories, and macros.
 -   **📅 Habit Tracking**: Daily habit monitoring with streak analytics.
 -   **💰 Expense Manager**: Track your spending and categorize expenses.
 -   **📈 Data Visualization**: Interactive charts and statistics for all your tracked metrics.

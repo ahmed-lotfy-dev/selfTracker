@@ -33,6 +33,7 @@ A workout tracker needs to work in the gym, where signal is often weak or non-ex
 *   **Unified Auth:** Seamless authentication using **Better Auth**, providing a secure and simple login experience across mobile and potential future web interfaces.
 *   **Native Aesthetics:** Custom UI using **NativeWind** (Tailwind CSS for Native) to create a beautiful, dark-mode focused interface that respects safe areas and platform specifics without fighting the styling engine.
 *   **Integrated Productivity:** A dedicated tasks section integrated alongside physical health metrics, providing a holistic view of self-improvement in one app.
+*   **🤖 AI-Powered Nutrition:** Integrated **Gemini Vision AI** to revolutionize food logging. Users simply snap a photo, and the app identifies ingredients, estimates portions, and calculates calories/macros instantly—removing the friction of manual entry.
 
 ## 4. What I Learned
 Expanding from web to mobile brought unique challenges and learning opportunities.
