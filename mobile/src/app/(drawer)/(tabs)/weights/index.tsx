@@ -1,8 +1,9 @@
-import { View, Text } from "react-native"
+import { View } from "react-native"
 import AddButton from "@/src/components/Buttons/AddButton"
 import React, { useMemo } from "react"
 import { WeightLogsList } from "@/src/components/features/weight/WeightLogsList"
 import { WeightStatsRow } from "@/src/components/features/weight/WeightStatsRow"
+import { WeightChart } from "@/src/components/features/weight/WeightChart"
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import { useWeightStore } from "@/src/stores/useWeightStore"
@@ -11,11 +12,11 @@ export default function WeightsScreen() {
   const weightLogs = useWeightStore(s => s.weightLogs)
 
   const stats = useMemo(() => {
-    // Assumptions: logs are not guaranteed to be sorted by date in store, 
-    // but typically they might be. We should sort to be safe.
-    const sortedLogs = [...weightLogs].sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    const sortedLogs = [...weightLogs]
+      .filter(l => !l.deletedAt)
+      .sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
 
     const currentLog = sortedLogs[0]
     const currentWeight = currentLog ? parseFloat(currentLog.weight) : null
@@ -39,12 +40,8 @@ export default function WeightsScreen() {
     }
   }, [weightLogs])
 
-  return (
-    <View className="flex-1 bg-background px-3">
-      <Header
-        title="Weights"
-        rightAction={<DrawerToggleButton />}
-      />
+  const ListHeader = () => (
+    <View className="pt-2">
       <View className="mb-4">
         <WeightStatsRow
           currentWeight={stats.currentWeight}
@@ -53,7 +50,19 @@ export default function WeightsScreen() {
           goalWeight={stats.goalWeight}
         />
       </View>
-      <WeightLogsList />
+      <View className="mb-4">
+        <WeightChart />
+      </View>
+    </View>
+  )
+
+  return (
+    <View className="flex-1 bg-background px-1">
+      <Header
+        title="Weights"
+        rightAction={<DrawerToggleButton />}
+      />
+      <WeightLogsList ListHeaderComponent={<ListHeader />} />
       <AddButton path="/weights" />
     </View>
   )
