@@ -150,7 +150,7 @@ def analyze_image(image_path):
         # is safer for a script. But let's try to stick to user request if possible.
         # Actually, "nateraw/food" maps to Food-101 which is what the user description matches.
         
-        classifier = pipeline("image-classification", model=model_name)
+        classifier = pipeline("image-classification", model=model_name, trust_remote_code=True)
         
         results = classifier(image_path, top_k=3)
         
