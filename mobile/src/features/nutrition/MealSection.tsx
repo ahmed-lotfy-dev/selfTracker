@@ -29,11 +29,11 @@ export default function MealSection({ title, mealType, logs }: Props) {
   const totalCalories = logs.reduce((sum, l) => sum + l.totalCalories, 0)
 
   const handleDeleteItem = (log: FoodLog, itemIndex: number) => {
+    const itemToDelete = log.foodItems[itemIndex]
     const newFoodItems = log.foodItems.filter((_, idx) => idx !== itemIndex)
 
     if (newFoodItems.length === 0) {
-      // If no items left, delete the whole log
-      // If no items left, delete the whole log
+      // If no items left, ask to delete the whole log
       showAlert(
         "Remove Meal",
         "This was the last item. Remove the entire meal entry?",
@@ -46,17 +46,26 @@ export default function MealSection({ title, mealType, logs }: Props) {
       return
     }
 
-    // Recalculate totals
-    const deletedItem = log.foodItems[itemIndex]
-    const updates = {
-      foodItems: newFoodItems,
-      totalCalories: log.totalCalories - deletedItem.calories,
-      totalProtein: (log.totalProtein || 0) - (deletedItem.protein || 0),
-      totalCarbs: (log.totalCarbs || 0) - (deletedItem.carbs || 0),
-      totalFat: (log.totalFat || 0) - (deletedItem.fat || 0),
-    }
-
-    updateFoodLog(log.id, updates)
+    // Show confirmation for deleting individual item
+    showAlert(
+      "Remove Item",
+      `Remove ${itemToDelete.name} from this meal?`,
+      () => {
+        // Recalculate totals
+        const updates = {
+          foodItems: newFoodItems,
+          totalCalories: log.totalCalories - itemToDelete.calories,
+          totalProtein: (log.totalProtein || 0) - (itemToDelete.protein || 0),
+          totalCarbs: (log.totalCarbs || 0) - (itemToDelete.carbs || 0),
+          totalFat: (log.totalFat || 0) - (itemToDelete.fat || 0),
+        }
+        updateFoodLog(log.id, updates)
+      },
+      undefined,
+      "Remove",
+      "Cancel",
+      "error"
+    )
   }
 
   const handleDeleteLog = (id: string) => {
