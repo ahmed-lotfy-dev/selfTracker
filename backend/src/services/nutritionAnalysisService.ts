@@ -1,4 +1,4 @@
-import { analyzeFoodImage as analyzeWithGemini, type FoodAnalysisResult } from "./geminiVisionService";
+import { analyzeFoodImage as analyzeWithGroq, type FoodAnalysisResult } from "./groqVisionService";
 
 export type { FoodAnalysisResult };
 
@@ -20,7 +20,7 @@ export async function analyzeFoodImageProxy(base64Image: string): Promise<FoodAn
     };
   }
 
-  // 2. Use Gemini Vision AI (Cloud)
-  console.log("[AI Proxy] Using Gemini Vision AI...");
-  return await analyzeWithGemini(base64Image);
+  // 2. Use Groq Vision AI (Cloud)
+  console.log("[AI Proxy] Using Groq Vision AI...");
+  return await analyzeWithGroq(base64Image);
 }

@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 
 export type FoodAnalysisResult = {
   foods: {
@@ -18,16 +18,19 @@ export type FoodAnalysisResult = {
 };
 
 export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysisResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY not configured");
+    throw new Error("GROQ_API_KEY not configured");
   }
 
-  // Use the new SDK initialization
-  const ai = new GoogleGenAI({ apiKey });
+  const groq = new Groq({ apiKey });
 
-  // Strip data URI prefix if present (e.g., "data:image/jpeg;base64,")
-  const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+  // Ensure base64 string includes the data URI scheme if not present
+  // Groq/Llama expect a data URL or a URL. For base64, data URL format is safest.
+  let imageUrl = base64Image;
+  if (!base64Image.startsWith('data:image')) {
+    imageUrl = `data:image/jpeg;base64,${base64Image}`;
+  }
 
   const prompt = `Analyze this food image and provide nutritional information in the following JSON format. Be as accurate as possible:
 {
@@ -46,35 +49,42 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
 
 Return ONLY valid JSON, no markdown or explanation.`;
 
-  // Use the new SDK generateContent method
-  // We explicitly use "gemini-1.5-flash" as it's the stable model with free tier
-  const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
-    contents: [
+  const chatCompletion = await groq.chat.completions.create({
+    messages: [
       {
         role: "user",
-        parts: [
-          { text: prompt },
+        content: [
           {
-            inlineData: {
-              data: cleanBase64,
-              mimeType: "image/jpeg",
+            type: "text",
+            text: prompt,
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: imageUrl,
             },
           },
         ],
       },
     ],
+    model: "llama-3.2-11b-vision-preview",
+    temperature: 0.1,
+    max_tokens: 1024,
+    top_p: 1,
+    stream: false,
+    stop: null,
   });
 
-  const content = response.text;
+  const content = chatCompletion.choices[0]?.message?.content;
+
   if (!content) {
-    throw new Error("No response from Gemini API");
+    throw new Error("No response from Groq API");
   }
 
   // Extract JSON from potential markdown code blocks
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error("Failed to extract JSON from Gemini response");
+    throw new Error("Failed to extract JSON from Groq response");
   }
 
   const parsed = JSON.parse(jsonMatch[0]);
@@ -91,6 +101,6 @@ Return ONLY valid JSON, no markdown or explanation.`;
     totalProtein,
     totalCarbs,
     totalFat,
-    confidence: 0.95, // Gemini is generally very confident
+    confidence: 0.95,
   };
 }
