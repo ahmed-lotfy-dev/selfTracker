@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { zustandMMKVStorage } from '@/src/lib/storage/mmkv'
+import { SyncManager } from '@/src/services/SyncManager'
 import type { FoodLog, NutritionGoals } from '@/src/types/nutrition'
 
 type NutritionState = {
@@ -23,19 +24,30 @@ export const useNutritionStore = create<NutritionState>()(
 
       setFoodLogs: (foodLogs) => set({ foodLogs, isLoaded: true }),
 
-      addFoodLog: (log) => set((state) => ({
-        foodLogs: [log, ...state.foodLogs]
-      })),
+      addFoodLog: (log) => {
+        set((state) => ({
+          foodLogs: [log, ...state.foodLogs]
+        }))
+        SyncManager.pushFoodLog(log)
+      },
 
-      updateFoodLog: (id, updates) => set((state) => ({
-        foodLogs: state.foodLogs.map((l) =>
-          l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l
-        )
-      })),
+      updateFoodLog: (id, updates) => {
+        set((state) => {
+          const updatedLogs = state.foodLogs.map((l) =>
+            l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l
+          )
+          const updatedLog = updatedLogs.find(l => l.id === id)
+          if (updatedLog) SyncManager.pushFoodLog(updatedLog)
+          return { foodLogs: updatedLogs }
+        })
+      },
 
-      deleteFoodLog: (id) => set((state) => ({
-        foodLogs: state.foodLogs.filter((l) => l.id !== id)
-      })),
+      deleteFoodLog: (id) => {
+        set((state) => ({
+          foodLogs: state.foodLogs.filter((l) => l.id !== id)
+        }))
+        SyncManager.deleteFoodLog(id)
+      },
 
       setGoals: (goals) => set({ goals }),
     }),

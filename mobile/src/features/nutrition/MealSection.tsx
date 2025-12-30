@@ -1,9 +1,10 @@
 import React from "react"
-import { View, Text, Pressable, Alert } from "react-native"
+import { View, Text, Pressable } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 import { Ionicons } from "@expo/vector-icons"
 import type { FoodLog, MealType } from "@/src/types/nutrition"
 import { useNutritionStore } from "@/src/stores/useNutritionStore"
+import { useAlertStore } from "@/src/features/ui/useAlertStore"
 import FoodItemRow from "./FoodItemRow"
 
 type Props = {
@@ -23,6 +24,7 @@ export default function MealSection({ title, mealType, logs }: Props) {
   const colors = useThemeColors()
   const deleteFoodLog = useNutritionStore(s => s.deleteFoodLog)
   const updateFoodLog = useNutritionStore(s => s.updateFoodLog)
+  const showAlert = useAlertStore(s => s.showAlert)
 
   const totalCalories = logs.reduce((sum, l) => sum + l.totalCalories, 0)
 
@@ -31,13 +33,15 @@ export default function MealSection({ title, mealType, logs }: Props) {
 
     if (newFoodItems.length === 0) {
       // If no items left, delete the whole log
-      Alert.alert(
+      // If no items left, delete the whole log
+      showAlert(
         "Remove Meal",
         "This was the last item. Remove the entire meal entry?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Remove", style: "destructive", onPress: () => deleteFoodLog(log.id) }
-        ]
+        () => deleteFoodLog(log.id),
+        undefined,
+        "Remove",
+        "Cancel",
+        "error"
       )
       return
     }
@@ -56,13 +60,14 @@ export default function MealSection({ title, mealType, logs }: Props) {
   }
 
   const handleDeleteLog = (id: string) => {
-    Alert.alert(
+    showAlert(
       "Remove Meal Entry",
       "Are you sure you want to remove this entire meal entry?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Remove", style: "destructive", onPress: () => deleteFoodLog(id) }
-      ]
+      () => deleteFoodLog(id),
+      undefined,
+      "Remove",
+      "Cancel",
+      "error"
     )
   }
 

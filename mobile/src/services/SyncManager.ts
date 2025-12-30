@@ -3,6 +3,7 @@ import { useTasksStore } from "@/src/stores/useTasksStore"
 import { useHabitsStore } from "@/src/stores/useHabitsStore"
 import { useWorkoutsStore, WorkoutLog, Workout } from "@/src/stores/useWorkoutsStore"
 import { useWeightStore, WeightLog } from "@/src/stores/useWeightStore"
+import { useNutritionStore } from "@/src/stores/useNutritionStore"
 import { ElectricSync } from "@/src/db/client"
 import axiosInstance from '@/src/lib/api/axiosInstance'
 
@@ -40,6 +41,11 @@ class SyncManagerService {
           id TEXT PRIMARY KEY, user_id TEXT, weight TEXT, notes TEXT, 
           created_at TEXT, updated_at TEXT, deleted_at TEXT, energy TEXT, mood TEXT
         );
+        CREATE TABLE IF NOT EXISTS food_logs (
+          id TEXT PRIMARY KEY, user_id TEXT, meal_type TEXT, food_items TEXT, total_calories INTEGER,
+          total_protein INTEGER, total_carbs INTEGER, total_fat INTEGER, logged_at TEXT,
+          created_at TEXT, updated_at TEXT, deleted_at TEXT
+        );
       `)
 
       this.isInitialized = true
@@ -74,6 +80,7 @@ class SyncManagerService {
     electric.syncTable('workouts')
     electric.syncTable('workout_logs')
     electric.syncTable('weight_logs')
+    electric.syncTable('food_logs')
   }
 
   async pullFromDB() {
@@ -160,6 +167,24 @@ class SyncManagerService {
       }))
       if (weightLogs.length > 0) useWeightStore.getState().setWeightLogs(weightLogs)
 
+      // --- FOOD LOGS ---
+      const foodLogsResult = await this.db.getAllAsync('SELECT * FROM food_logs WHERE deleted_at IS NULL') as any[]
+      const foodLogs = foodLogsResult.map(f => ({
+        id: f.id,
+        userId: f.user_id,
+        mealType: f.meal_type,
+        foodItems: JSON.parse(f.food_items || '[]'),
+        totalCalories: f.total_calories,
+        totalProtein: f.total_protein || 0,
+        totalCarbs: f.total_carbs || 0,
+        totalFat: f.total_fat || 0,
+        loggedAt: f.logged_at,
+        createdAt: f.created_at,
+        updatedAt: f.updated_at,
+        deletedAt: f.deleted_at
+      }))
+      if (foodLogs.length > 0) useNutritionStore.getState().setFoodLogs(foodLogs)
+
     } catch (e) {
       console.error("[SyncManager] Pull failed:", e)
     }
@@ -231,6 +256,46 @@ class SyncManagerService {
 
     } catch (e) { console.error("Push weight failed:", e) }
   }
+
+  async pushFoodLog(log: any) {
+    if (!this.db) return
+    try {
+      await this.db.runAsync(`
+        INSERT OR REPLACE INTO food_logs (id, user_id, meal_type, food_items, total_calories, total_protein, total_carbs, total_fat, logged_at, created_at, updated_at, deleted_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        log.id,
+        log.userId,
+        log.mealType,
+        JSON.stringify(log.foodItems),
+        log.totalCalories,
+        log.totalProtein || 0,
+        log.totalCarbs || 0,
+        log.totalFat || 0,
+        log.loggedAt,
+        log.createdAt,
+        log.updatedAt,
+        log.deletedAt
+      ])
+
+      await axiosInstance.post('/api/nutrition/log', log)
+
+    } catch (e) { console.error("Push food log failed:", e) }
+  }
+
+  async deleteFoodLog(id: string) {
+    if (!this.db) return
+    try {
+      const deletedAt = new Date().toISOString()
+      await this.db.runAsync(`
+        UPDATE food_logs SET deleted_at = ? WHERE id = ?
+      `, [deletedAt, id])
+
+      await axiosInstance.delete(`/api/nutrition/logs/${id}`)
+
+    } catch (e) { console.error("Delete food log failed:", e) }
+  }
 }
+
 
 export const SyncManager = new SyncManagerService()

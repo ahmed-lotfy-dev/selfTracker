@@ -23,11 +23,9 @@ export default function NutritionScreen() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [logs, nutritionGoals] = await Promise.all([
-          getFoodLogs(),
+        const [nutritionGoals] = await Promise.all([
           getNutritionGoals()
         ])
-        setFoodLogs(logs)
         setGoals(nutritionGoals)
       } catch (error) {
         console.error("Failed to load nutrition data:", error)
