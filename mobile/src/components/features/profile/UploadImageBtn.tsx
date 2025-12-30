@@ -6,20 +6,14 @@ import { useState } from "react"
 import { View, Text, Pressable, Button } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
-import { useUpdate } from "@/src/hooks/useUpdate"
 import { useAuthActions } from "@/src/features/auth/useAuthStore"
 import Foundation from "@expo/vector-icons/Foundation"
 
 export default function UploadImageBtn({ className }: { className?: string }) {
-  const { user, refetch } = useAuth()
+  const { user } = useAuth()
   const { setUser } = useAuthActions()
   const [imageFile, setImageFile] =
     useState<ImagePicker.ImagePickerAsset | null>(null)
-
-  const { updateMutation } = useUpdate({
-    mutationFn: updateUser,
-    onSuccessInvalidate: [{ queryKey: ["userData"] }],
-  })
 
   const pickImageAndUpload = async () => {
     try {
@@ -58,15 +52,10 @@ export default function UploadImageBtn({ className }: { className?: string }) {
         imageFile?.mimeType ?? ""
       )
 
-      updateMutation.mutate(
-        { id: user?.id, image: imageUrl },
-        {
-          onSuccess: () => {
-            refetch()
-            setUser({ ...user, image: imageUrl })
-          },
-        }
-      )
+      // Update User
+      await updateUser({ id: user?.id!, image: imageUrl })
+      setUser({ ...user, image: imageUrl })
+
     } catch (error) {
       console.error("Error during image selection or upload:", error)
     }

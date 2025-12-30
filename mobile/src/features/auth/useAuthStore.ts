@@ -4,7 +4,6 @@ import { API_BASE_URL } from "@/src/lib/api/config"
 import * as SecureStore from "expo-secure-store"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Uniwind } from 'uniwind'
-import { queryClient } from "@/src/lib/react-query"
 
 type AuthState = {
   user: any | null
@@ -78,9 +77,6 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
-        // Clear React Query cache
-        queryClient.clear()
-
         // Clear auth state
         set({ user: null, token: null })
 

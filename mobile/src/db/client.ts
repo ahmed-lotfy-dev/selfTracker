@@ -16,16 +16,16 @@ export class ElectricSync {
   private subscriptions: (() => void)[] = []
 
   async syncTable(tableName: string) {
-    console.log(`[ElectricSync] Starting sync for table: ${tableName}`)
+    // console.log(`[ElectricSync] Starting sync for table: ${tableName}`)
 
     const token = useAuthStore.getState().token;
-    console.log(`[ElectricSync] Syncing ${tableName} with token: ${token ? 'PRESENT' : 'MISSING'} (${token?.substring(0, 10)}...)`);
+    // console.log(`[ElectricSync] Syncing ${tableName} with token: ${token ? 'PRESENT' : 'MISSING'} (${token?.substring(0, 10)}...)`);
 
     try {
       // Use Backend Proxy: [API_BASE_URL]/api/electric/[tableName]
       // The backend adds the auth token check and injects the 'where user_id=...' clause.
       const url = `${API_BASE_URL}/api/electric/${tableName}?offset=-1`;
-      console.log(`[ElectricSync] Connecting to Proxy: ${url}`);
+      // console.log(`[ElectricSync] Connecting to Proxy: ${url}`);
 
       const stream = new ShapeStream({
         url,
@@ -43,7 +43,7 @@ export class ElectricSync {
   }
 
   stop() {
-    console.log('[ElectricSync] Stopping all active sync streams...')
+    // console.log('[ElectricSync] Stopping all active sync streams...')
     this.subscriptions.forEach(unsub => unsub())
     this.subscriptions = []
   }
@@ -58,15 +58,15 @@ export class ElectricSync {
       const dataMessages = messages.filter((m: any) => m.value)
 
       if (dataMessages.length > 0) {
-        console.log(`[ElectricSync] 🟢 ${tableName}: Received ${dataMessages.length} data rows`)
+        // console.log(`[ElectricSync] 🟢 ${tableName}: Received ${dataMessages.length} data rows`)
       } else if (hasControl) {
-        console.log(`[ElectricSync] ⚪ ${tableName}: Up to date (No new data)`)
+        // console.log(`[ElectricSync] ⚪ ${tableName}: Up to date (No new data)`)
         return // Don't process empty transaction
       } else {
         return
       }
 
-      console.log(`[ElectricSync] First message sample:`, JSON.stringify(messages[0]));
+      // console.log(`[ElectricSync] First message sample:`, JSON.stringify(messages[0]));
 
       // Batch operations
       try {
@@ -77,7 +77,7 @@ export class ElectricSync {
 
             if (m.headers?.control === 'up-to-date') {
               // Sync caught up
-              console.log(`[ElectricSync] ${tableName} is up to date.`)
+              // console.log(`[ElectricSync] ${tableName} is up to date.`)
               continue
             }
 
@@ -87,7 +87,7 @@ export class ElectricSync {
             if (!operation && !value) continue // control message?
 
             if (operation === 'insert' || operation === 'update') {
-              console.log(`[ElectricSync] 📥 Syncing Row to SQLite (${tableName}):`, JSON.stringify(value))
+              // console.log(`[ElectricSync] 📥 Syncing Row to SQLite (${tableName}):`, JSON.stringify(value))
               await this.upsert(tableName, value)
             } else if (operation === 'delete') {
               await this.delete(tableName, value.id)

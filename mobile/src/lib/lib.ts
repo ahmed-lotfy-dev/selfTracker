@@ -1,7 +1,5 @@
 import * as Updates from "expo-updates"
 import { Alert, AppStateStatus, Platform } from "react-native"
-import { focusManager } from "@tanstack/react-query"
-import NetInfo from "@react-native-community/netinfo"
 
 export const checkForUpdates = async () => {
   try {
@@ -21,9 +19,7 @@ export const checkForUpdates = async () => {
 }
 
 export function onAppStateChange(status: AppStateStatus) {
-  if (Platform.OS !== "web") {
-    focusManager.setFocused(status === "active")
-  }
+  // Focus management removed
 }
 
 export const showAlert = (

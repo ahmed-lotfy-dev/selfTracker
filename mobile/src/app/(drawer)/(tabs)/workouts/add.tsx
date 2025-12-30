@@ -1,7 +1,6 @@
 import { ScrollView, View } from "react-native"
 import WorkoutForm from "@/src/components/features/workouts/WorkoutForm"
 import { useRouter } from "expo-router"
-import { useQueryClient } from "@tanstack/react-query"
 import React from "react"
 import Header from "@/src/components/Header"
 

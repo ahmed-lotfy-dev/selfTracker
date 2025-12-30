@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, Pressable, Image, ScrollView, ActivityIndicator } from "react-native"
+import { View, Text, Pressable, Image, ScrollView, ActivityIndicator, Alert } from "react-native"
 import { useState } from "react"
 import { useRouter } from "expo-router"
 import { useThemeColors } from "@/src/constants/Colors"
@@ -61,8 +61,10 @@ export default function LogFoodScreen() {
       const result = await analyzeFoodImage(`data:image/jpeg;base64,${base64Image}`)
       setAnalysisResult(result)
       setShowResults(true)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Analysis failed:", error)
+      const message = error.response?.data?.message || "Failed to analyze image"
+      Alert.alert("Analysis Failed", message)
     } finally {
       setIsAnalyzing(false)
     }

@@ -6,8 +6,6 @@ import { useToast } from '@/src/hooks/useToast';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/src/constants/Colors';
 import { authClient } from '@/src/lib/auth-client';
-import { clearAllUserData } from '@/src/lib/storage';
-import { queryClient } from '@/src/lib/react-query';
 
 export default function HeaderMenu() {
   const [visible, setVisible] = useState(false);
@@ -22,8 +20,6 @@ export default function HeaderMenu() {
   const handleSignOut = async () => {
     closeMenu();
     try {
-      await clearAllUserData();
-      queryClient.removeQueries();
       await authClient.signOut();
 
       setUser(null);

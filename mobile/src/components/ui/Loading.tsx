@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, ActivityIndicator } from "react-native"
+import { View, Text, ActivityIndicator, Image } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useThemeColors } from "@/src/constants/Colors"
 
@@ -27,6 +27,34 @@ export const LoadingIndicator = ({ message }: LoadingProps) => {
           {message}
         </Text>
       )}
+    </SafeAreaView>
+  )
+}
+
+/**
+ * Branded loading screen with app icon for initial app load
+ */
+export const BrandedLoadingScreen = ({ message = "Loading..." }: LoadingProps) => {
+  const colors = useThemeColors()
+  return (
+    <SafeAreaView
+      className="flex-1 justify-center items-center px-6"
+      style={{ backgroundColor: colors.background }}
+    >
+      <Image
+        source={require('@/assets/images/icon.png')}
+        className="w-32 h-32 mb-10 rounded-3xl"
+      />
+
+      <ActivityIndicator
+        size="large"
+        color={colors.primary}
+        className="my-6"
+      />
+
+      <Text className="text-xl font-semibold mt-4 text-center" style={{ color: colors.text }}>
+        {message}
+      </Text>
     </SafeAreaView>
   )
 }

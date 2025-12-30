@@ -68,12 +68,10 @@ electricRouter.get("/:table", async (c) => {
     origin.searchParams.set("where", `user_id='${user.id}' OR user_id IS NULL`);
   }
 
-  console.log(`[ElectricRouter] Proxying sync | Path Table: ${table} | Target Table: ${electricTable} | User ID: ${user.id} | WHERE: ${origin.searchParams.get("where")}`);
+
 
   origin.searchParams.set("source_id", SOURCE_ID);
   origin.searchParams.set("secret", SOURCE_SECRET);
-
-  console.log(`[ElectricRouter] Proxying sync for table: ${table} | User: ${user?.id} | URL: ${origin.toString()}`);
 
   const res = await fetch(origin.toString());
   const headers = new Headers(res.headers);

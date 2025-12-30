@@ -2,7 +2,6 @@ import React from "react"
 import { ScrollView, View } from "react-native"
 import WeightForm from "@/src/components/features/weight/WeightForm"
 import { useRouter, useLocalSearchParams } from "expo-router"
-import { useQueryClient } from "@tanstack/react-query"
 import Header from "@/src/components/Header"
 
 export default function EditWeight() {

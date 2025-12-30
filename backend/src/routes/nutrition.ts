@@ -10,7 +10,7 @@ import {
   updateFoodLog,
   upsertNutritionGoals,
 } from "../services/nutritionService"
-import { analyzeFoodImage } from "../services/geminiVisionService"
+import { analyzeFoodImageProxy as analyzeFoodImage } from "../services/nutritionAnalysisService"
 import { rateLimitPresets } from "../middlewares/rateLimitMiddleware"
 
 const nutritionRouter = new Hono()
@@ -73,9 +73,15 @@ nutritionRouter.post(
     try {
       const result = await analyzeFoodImage(image)
       return c.json(result)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error analyzing food image:", error)
-      return c.json({ message: "Failed to analyze image", error: (error as Error).message }, 500)
+      const message = (error as Error).message || "Failed to analyze image"
+
+      if (message.includes("429") || message.includes("Quota exceeded")) {
+        return c.json({ message: "AI Quota Exceeded. Please try again later." }, 429)
+      }
+
+      return c.json({ message: "Failed to analyze image", error: message }, 500)
     }
   })
 

@@ -174,7 +174,7 @@ workoutLogsRouter.get("/calendar", async (c) => {
     const logs = await getWorkoutLogsCalendar(user.id, +year, +month)
 
     await setCache(calendarKey, 3600, logs)
-    console.log(logs)
+
     return c.json(logs)
   } catch (error) {
     console.error("Error fetching calendar logs:", error)
@@ -215,7 +215,7 @@ workoutLogsRouter.post("/", zValidator("json", createWorkoutLogSchema), async (c
   }
 
   const body = c.req.valid("json")
-  console.log(body)
+
 
   try {
     await clearCache([

@@ -55,20 +55,15 @@ class SyncManagerService {
 
   async startSync() {
     if (!this.db || !this.isInitialized) {
-      console.log("[SyncManager] Cannot start sync: DB not initialized")
       return
     }
 
     if (this.currentSync) {
-      console.log("[SyncManager] Stopping previous sync instance...")
       this.currentSync.stop()
       this.currentSync = null
     }
 
-    console.log("[SyncManager] Starting Electric Sync (with Auth)...")
-
     const electric = new ElectricSync(this.db, (table) => {
-      console.log(`[SyncManager] Updates received for ${table}, refreshing store...`)
       this.pullFromDB()
     })
     this.currentSync = electric
@@ -180,8 +175,6 @@ class SyncManagerService {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [task.id, task.userId, task.title, task.completed ? 1 : 0, task.createdAt, task.updatedAt, task.deletedAt, task.category || 'general', task.priority || 'medium'])
 
-      // Remote Write
-      console.log('[Sync] Pushing task:', task.title);
       await axiosInstance.post('/api/tasks', task)
 
     } catch (e) { console.error("Push task failed:", e) }
@@ -189,16 +182,12 @@ class SyncManagerService {
 
   async pushHabit(habit: any) {
     if (!this.db) return
-    console.log('[SyncManager] Pushing habit:', JSON.stringify(habit)) // Debug Log
     try {
-      // Local Write
       await this.db.runAsync(`
         INSERT OR REPLACE INTO habits (id, user_id, name, description, streak, color, completed_today, last_completed_at, created_at, updated_at, deleted_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt])
 
-      // Remote Write
-      console.log('[Sync] Pushing habit:', habit.name);
       await axiosInstance.post('/api/habits', habit)
 
     } catch (e) { console.error("Push habit failed:", e) }
@@ -207,14 +196,11 @@ class SyncManagerService {
   async pushWorkout(workout: any) {
     if (!this.db) return
     try {
-      // Local Write
       await this.db.runAsync(`
          INSERT OR REPLACE INTO workouts (id, name, training_split_id, user_id, created_at, updated_at, is_public, deleted_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        `, [workout.id, workout.name, workout.trainingSplitId, workout.userId, workout.createdAt, workout.updatedAt, workout.isPublic ? 1 : 0, workout.deletedAt])
 
-      // Remote Write
-      console.log('[Sync] Pushing workout:', workout.name);
       await axiosInstance.post('/api/workouts', workout)
 
     } catch (e) { console.error("Push workout template failed:", e) }
@@ -223,14 +209,11 @@ class SyncManagerService {
   async pushWorkoutLog(log: WorkoutLog) {
     if (!this.db) return
     try {
-      // Local Write
       await this.db.runAsync(`
         INSERT OR REPLACE INTO workout_logs (id, user_id, workout_id, workout_name, notes, created_at, updated_at, deleted_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `, [log.id, log.userId, log.workoutId || 'unknown', log.workoutName, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
 
-      // Remote Write
-      console.log('[Sync] Pushing workout log:', log.workoutName);
       await axiosInstance.post('/api/workoutLogs', log)
 
     } catch (e) { console.error("Push workout failed:", e) }
@@ -239,14 +222,11 @@ class SyncManagerService {
   async pushWeightLog(log: WeightLog) {
     if (!this.db) return
     try {
-      // Local Write
       await this.db.runAsync(`
         INSERT OR REPLACE INTO weight_logs (id, user_id, weight, notes, created_at, updated_at, deleted_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `, [log.id, log.userId, log.weight, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
 
-      // Remote Write
-      console.log('[Sync] Pushing weight log:', log.weight);
       await axiosInstance.post('/api/weightLogs', log)
 
     } catch (e) { console.error("Push weight failed:", e) }

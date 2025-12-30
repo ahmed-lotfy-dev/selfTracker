@@ -13,7 +13,6 @@ import DateTimePicker from "@react-native-community/datetimepicker"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useAuthStore } from "@/src/features/auth/useAuthStore"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
-import { useUpdate } from "@/src/hooks/useUpdate"
 import { User } from "@/src/types/userType"
 import LogoutButton from "@/src/components/features/auth/LogoutButton"
 import { updateUser } from "@/src/lib/api/userApi"
@@ -38,11 +37,11 @@ type UserGoal = {
 }
 
 export default function ProfileSettings() {
-  const { user } = useAuth()
-  const { updateMutation } = useUpdate({ mutationFn: updateUser })
-  const { mutate: updateUserMutation, isPending } = updateMutation
+  const { user, setUser } = useAuthStore() // Use store directly to update local state optimistically or after success
   const { showAlert } = useAlertStore()
   const colors = useThemeColors()
+
+  const [isPending, setIsPending] = useState(false)
 
   const [name, setName] = useState(user?.name || "")
   const [weight, setWeight] = useState(user?.weight?.toString() || "")
@@ -66,7 +65,7 @@ export default function ProfileSettings() {
   const goals: any[] = []
   const isLoadingGoals = false
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user?.id) return
 
     const updatedFields: Partial<User> = {
@@ -82,15 +81,17 @@ export default function ProfileSettings() {
       dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().split("T")[0] : null,
     }
 
-    updateUserMutation(
-      { id: user.id, ...updatedFields },
-      {
-        onSuccess: () => {
-          showAlert("Saved", "Profile updated successfully!", () => { }, undefined, "Got it", undefined)
-        },
-        onError: (e) => showAlert("Error", e.message, () => { }, undefined, "OK", undefined),
-      }
-    )
+    try {
+      setIsPending(true)
+      const updatedUser = await updateUser({ id: user.id, ...updatedFields })
+      setUser({ ...user, ...updatedUser })
+      showAlert("Saved", "Profile updated successfully!", () => { }, undefined, "Got it", undefined)
+    } catch (e: any) {
+      console.error(e)
+      showAlert("Error", e.message || "Failed to update profile", () => { }, undefined, "OK", undefined)
+    } finally {
+      setIsPending(false)
+    }
   }
 
   const handleDateChange = (event: any, selectedDate?: Date) => {

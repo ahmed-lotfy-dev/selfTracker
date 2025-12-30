@@ -94,7 +94,7 @@ export const getSingleWorkoutLog = async (logId: string) => {
 }
 
 export const createWorkoutLog = async (userId: string, fields: any) => {
-  console.log('[WorkoutLogsService] Creating log for user:', userId, 'with fields:', JSON.stringify(fields));
+
   try {
     return await db.transaction(async (tx) => {
       const [created] = await tx
@@ -121,7 +121,7 @@ export const createWorkoutLog = async (userId: string, fields: any) => {
         })
         .returning()
 
-      console.log('[WorkoutLogsService] Insert successful, fetching txid...');
+
       const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
       const rows = (res.rows || []) as { txid: string }[]
       const txid = rows[0]?.txid || "0"

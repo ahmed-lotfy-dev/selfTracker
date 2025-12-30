@@ -2,21 +2,15 @@
 import { useState } from "react"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useAuthActions } from "@/src/features/auth/useAuthStore"
-import { useUpdate } from "@/src/hooks/useUpdate"
 import { updateUser } from "@/src/lib/api/userApi"
 import { deleteImage, uploadImage } from "@/src/lib/api/imageApi"
 import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
 
 export function useProfileImage() {
-  const { user, refetch } = useAuth()
+  const { user } = useAuth()
   const { setUser } = useAuthActions()
   const [isUploading, setIsUploading] = useState(false)
-
-  const { updateMutation } = useUpdate({
-    mutationFn: updateUser,
-    onSuccessInvalidate: [{ queryKey: ["userData"] }],
-  })
 
   const pickAndUploadImage = async (onSuccess?: () => void) => {
     try {
@@ -66,20 +60,12 @@ export function useProfileImage() {
       }
 
       // 5. Update user profile
-      updateMutation.mutate(
-        { id: user?.id, image: imageUrl },
-        {
-          onSuccess: () => {
-            refetch()
-            setUser({ ...user, image: imageUrl })
-            setIsUploading(false)
-            if (onSuccess) onSuccess()
-          },
-          onError: () => {
-            setIsUploading(false)
-          }
-        }
-      )
+      await updateUser({ id: user?.id!, image: imageUrl })
+
+      setUser({ ...user, image: imageUrl })
+      setIsUploading(false)
+      if (onSuccess) onSuccess()
+
     } catch (error) {
       console.error("Error in profile image upload flow:", error)
       setIsUploading(false)

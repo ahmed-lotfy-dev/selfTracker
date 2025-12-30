@@ -3,7 +3,6 @@ import { View, Text, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthActions, useAuthStore } from '@/src/features/auth/useAuthStore';
 import { useToast } from '@/src/hooks/useToast';
-import { queryClient } from '@/src/lib/react-query';
 import { useAuth } from '@/src/features/auth/useAuthStore';
 import { authClient } from '@/src/lib/auth-client';
 import * as SecureStore from 'expo-secure-store';
@@ -42,8 +41,6 @@ export default function AuthCallback() {
         useAuthStore.setState({ user: session.user, token, isLoading: false });
 
         showToast(`Welcome back, ${session.user?.name?.split(" ")[0]}!`, "success");
-
-        await queryClient.invalidateQueries();
 
         // Navigate immediately to avoid flickering
         router.replace('/home');
