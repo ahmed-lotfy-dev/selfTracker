@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { zustandMMKVStorage } from '@/src/lib/storage/mmkv'
-import { SyncManager } from '@/src/services/SyncManager'
+import { createFoodLog, deleteFoodLog as deleteFoodLogApi, updateFoodLog as updateFoodLogApi } from '@/src/lib/api/nutritionApi'
 import type { FoodLog, NutritionGoals } from '@/src/types/nutrition'
 
 type NutritionState = {
@@ -28,7 +28,17 @@ export const useNutritionStore = create<NutritionState>()(
         set((state) => ({
           foodLogs: [log, ...state.foodLogs]
         }))
-        SyncManager.pushFoodLog(log)
+        const apiData = {
+          id: log.id,
+          loggedAt: new Date(log.loggedAt),
+          mealType: log.mealType,
+          foodItems: log.foodItems,
+          totalCalories: log.totalCalories,
+          totalProtein: log.totalProtein ?? undefined,
+          totalCarbs: log.totalCarbs ?? undefined,
+          totalFat: log.totalFat ?? undefined
+        }
+        createFoodLog(apiData).catch(err => console.error('[Nutrition Store] Failed to create food log:', err))
       },
 
       updateFoodLog: (id, updates) => {
@@ -37,7 +47,13 @@ export const useNutritionStore = create<NutritionState>()(
             l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l
           )
           const updatedLog = updatedLogs.find(l => l.id === id)
-          if (updatedLog) SyncManager.pushFoodLog(updatedLog)
+          if (updatedLog) {
+            const apiUpdates: any = { ...updates }
+            if (apiUpdates.loggedAt) {
+              apiUpdates.loggedAt = new Date(apiUpdates.loggedAt)
+            }
+            updateFoodLogApi(id, apiUpdates).catch(err => console.error('[Nutrition Store] Failed to update food log:', err))
+          }
           return { foodLogs: updatedLogs }
         })
       },
@@ -46,7 +62,7 @@ export const useNutritionStore = create<NutritionState>()(
         set((state) => ({
           foodLogs: state.foodLogs.filter((l) => l.id !== id)
         }))
-        SyncManager.deleteFoodLog(id)
+        deleteFoodLogApi(id).catch(err => console.error('[Nutrition Store] Failed to delete food log:', err))
       },
 
       setGoals: (goals) => set({ goals }),
