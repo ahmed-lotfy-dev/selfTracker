@@ -64,6 +64,9 @@ Return ONLY valid JSON, no markdown or explanation.`;
   });
 
   const content = response.text;
+  if (!content) {
+    throw new Error("No response from Gemini API");
+  }
 
   // Extract JSON from potential markdown code blocks
   const jsonMatch = content.match(/\{[\s\S]*\}/);
