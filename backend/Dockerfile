@@ -13,8 +13,10 @@ RUN apt-get update && apt-get install -y \
 
 # 2. Create Virtual Environment & Install AI Deps
 # We utilize a venv to avoid PEP 668 issues and install CPU-only torch to save space (150MB vs 800MB)
-RUN python3 -m venv /app/venv
-ENV PATH="/app/venv/bin:$PATH"
+# Create virtual environment in /opt/venv (safe from vol mounts)
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install dependencies:
 # - torch (CPU version)
