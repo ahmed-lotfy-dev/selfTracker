@@ -1,26 +1,9 @@
-import { analyzeWithLocalModel } from "./localAiService";
-// import type { FoodAnalysisResult } from "./geminiVisionService"; // Removing dependency
+import { analyzeFoodImage as analyzeWithGemini, type FoodAnalysisResult } from "./geminiVisionService";
 
-// Define result type locally since we deleted the other file
-export type FoodAnalysisResult = {
-  foods: {
-    name: string;
-    quantity: number;
-    unit: string;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  }[];
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-  confidence: number;
-};
+export type { FoodAnalysisResult };
 
 export async function analyzeFoodImageProxy(base64Image: string): Promise<FoodAnalysisResult> {
-  // 1. Check for Mock Mode FIRST (for UI testing)
+  // 1. Check for Mock Mode (for UI testing without API calls)
   if (process.env.MOCK_AI === "true") {
     console.log("[AI Proxy] MOCK_AI is enabled. Returning mock data.");
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -37,7 +20,7 @@ export async function analyzeFoodImageProxy(base64Image: string): Promise<FoodAn
     };
   }
 
-  // 2. Default/Only Option: Local AI
-  console.log("[AI Proxy] Using Local AI Model...");
-  return await analyzeWithLocalModel(base64Image) as FoodAnalysisResult;
+  // 2. Use Gemini Vision AI (Cloud)
+  console.log("[AI Proxy] Using Gemini Vision AI...");
+  return await analyzeWithGemini(base64Image);
 }
