@@ -6,7 +6,7 @@ import { useThemeColors } from "@/src/constants/Colors"
 import Header from "@/src/components/Header"
 import { Ionicons } from "@expo/vector-icons"
 import * as ImagePicker from "expo-image-picker"
-import { analyzeFoodImage, createFoodLog } from "@/src/lib/api/nutritionApi"
+import { analyzeFoodImage } from "@/src/lib/api/nutritionApi"
 import { useNutritionStore } from "@/src/stores/useNutritionStore"
 import type { FoodItem, MealType, FoodAnalysisResult } from "@/src/types/nutrition"
 import FoodResultsSheet from "@/src/features/nutrition/FoodResultsSheet"
@@ -81,21 +81,27 @@ export default function LogFoodScreen() {
     const totalCarbs = foods.reduce((sum, f) => sum + f.carbs, 0)
     const totalFat = foods.reduce((sum, f) => sum + f.fat, 0)
 
-    try {
-      const newLog = await createFoodLog({
-        loggedAt: new Date(),
-        mealType,
-        foodItems: foods,
-        totalCalories,
-        totalProtein,
-        totalCarbs,
-        totalFat,
-      })
-      addFoodLog(newLog)
-      router.back()
-    } catch (error) {
-      console.error("Failed to create food log:", error)
+    const now = new Date()
+    const tempLog = {
+      id: `temp_${Date.now()}`,
+      userId: 'current_user',
+      loggedAt: now.toISOString(),
+      mealType,
+      foodItems: foods,
+      totalCalories,
+      totalProtein,
+      totalCarbs,
+      totalFat,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      deletedAt: null
     }
+
+    // Optimistic update - add immediately to store
+    addFoodLog(tempLog)
+
+    // Navigate back immediately for instant UX
+    router.replace('/nutrition')
   }
 
   const mealTypes: { value: MealType; label: string; icon: string }[] = [
