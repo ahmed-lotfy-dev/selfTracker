@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Image, ScrollView } from "react-native"
+import { View, Text, Pressable, Image, ScrollView, Linking } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import React from "react"
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer"
@@ -6,12 +6,20 @@ import { useRouter, usePathname } from "expo-router"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { Ionicons, MaterialIcons, FontAwesome5, Feather } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
+import Constants from "expo-constants"
 
 export default function CustomDrawerContent(props: any) {
   const router = useRouter()
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const colors = useThemeColors()
+
+  const appVersion = Constants.expoConfig?.version || "1.0.0"
+  const githubReleasesUrl = "https://github.com/ahmed-lotfy-dev/selfTracker/releases"
+
+  const handleVersionPress = () => {
+    Linking.openURL(githubReleasesUrl)
+  }
 
   const menuItems = [
     { label: "Home", icon: "home", route: "/home", type: "feather" },
@@ -111,9 +119,14 @@ export default function CustomDrawerContent(props: any) {
               <MaterialIcons name="logout" size={20} color={colors.error} />
               <Text className="ml-2 font-semibold" style={{ color: colors.error }}>Sign Out</Text>
             </Pressable>
-            <Text className="text-center text-[10px] text-placeholder mt-4">
-              v1.0.0 • SelfTracker
-            </Text>
+            <Pressable onPress={handleVersionPress} className="mt-4 active:opacity-60">
+              <Text className="text-center text-[10px] text-placeholder">
+                v{appVersion} • SelfTracker
+              </Text>
+              <Text className="text-center text-[8px] text-placeholder/60 mt-0.5">
+                Tap for changelog
+              </Text>
+            </Pressable>
           </View>
         </View>
       </View>
