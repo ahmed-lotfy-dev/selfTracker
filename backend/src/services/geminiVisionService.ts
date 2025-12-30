@@ -46,7 +46,7 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
 Return ONLY valid JSON, no markdown or explanation.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "models/gemini-1.5-flash-latest",
     contents: [
       {
         role: "user",
