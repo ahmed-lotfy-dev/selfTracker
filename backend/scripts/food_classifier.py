@@ -143,14 +143,14 @@ def analyze_image(image_path):
         # The user requested "BinhQuocNguyen/food-recognition-model", we'll try it.
         # If it fails, we fall back to "nateraw/food" which is very stable.
         
-        # model_name = "nateraw/food" # This one is known to work well with standard pipeline
-        model_name = "BinhQuocNguyen/food-recognition-model" # User suggested, but might need custom code
+        model_name = "nateraw/food" # This one is known to work well with standard pipeline
+        # model_name = "BinhQuocNguyen/food-recognition-model" # User suggested, but might need custom code
         
         # NOTE: Using a known stable Vitaliy's or nateraw's model for generic 'food' pipeline 
         # is safer for a script. But let's try to stick to user request if possible.
         # Actually, "nateraw/food" maps to Food-101 which is what the user description matches.
         
-        classifier = pipeline("image-classification", model=model_name, trust_remote_code=True)
+        classifier = pipeline("image-classification", model=model_name)
         
         results = classifier(image_path, top_k=3)
         
