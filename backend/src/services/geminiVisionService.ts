@@ -26,6 +26,9 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+  // Strip data URI prefix if present (e.g., "data:image/jpeg;base64,")
+  const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+
   const prompt = `Analyze this food image and provide nutritional information in the following JSON format. Be as accurate as possible:
 {
   "foods": [
@@ -47,7 +50,7 @@ Return ONLY valid JSON, no markdown or explanation.`;
     prompt,
     {
       inlineData: {
-        data: base64Image,
+        data: cleanBase64,
         mimeType: "image/jpeg",
       },
     },

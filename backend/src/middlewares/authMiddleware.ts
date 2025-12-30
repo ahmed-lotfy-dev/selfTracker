@@ -42,7 +42,6 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
       }
     }
 
-    console.log(`[AuthMiddleware] Request Path: ${c.req.path} | Has Token: ${!!sessionToken}`);
 
     if (!sessionToken) {
       console.warn(`[AuthMiddleware] No session token found for request to ${c.req.path}`);
