@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 export type FoodAnalysisResult = {
   foods: {
@@ -23,8 +23,7 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
     throw new Error("GEMINI_API_KEY not configured");
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+  const ai = new GoogleGenAI({ apiKey });
 
   // Strip data URI prefix if present (e.g., "data:image/jpeg;base64,")
   const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
@@ -46,20 +45,28 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
 
 Return ONLY valid JSON, no markdown or explanation.`;
 
-  const result = await model.generateContent([
-    prompt,
-    {
-      inlineData: {
-        data: cleanBase64,
-        mimeType: "image/jpeg",
+  const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: prompt },
+          {
+            inlineData: {
+              data: cleanBase64,
+              mimeType: "image/jpeg",
+            },
+          },
+        ],
       },
-    },
-  ]);
+    ],
+  });
 
-  const response = result.response.text();
+  const content = response.text;
 
   // Extract JSON from potential markdown code blocks
-  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     throw new Error("Failed to extract JSON from Gemini response");
   }
