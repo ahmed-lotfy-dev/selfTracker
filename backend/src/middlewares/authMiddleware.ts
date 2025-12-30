@@ -72,7 +72,6 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     }
 
     const { session, user } = sessionResult[0];
-    console.log(`[AuthMiddleware] ✓ Session found for user: ${user.email} (${user.id})`);
 
     c.set("user" as any, user);
     c.set("session", session);
