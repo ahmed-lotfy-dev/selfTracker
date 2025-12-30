@@ -24,8 +24,13 @@ export default function LogFoodScreen() {
   const [showResults, setShowResults] = useState(false)
 
   const handlePickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!permission.granted) {
+      Alert.alert("Permission", "Please allow access to photos.")
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       quality: 0.8,
       base64: true,

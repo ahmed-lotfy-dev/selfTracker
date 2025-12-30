@@ -14,8 +14,12 @@ export async function analyzeWithLocalModel(base64Image: string) {
   // 2. Spawn Python Process
   const scriptPath = path.resolve(process.cwd(), "scripts/food_classifier.py");
 
+  // Check for venv python (Docker/Server) vs System python (Local)
+  const venvPython = path.resolve(process.cwd(), "venv/bin/python");
+  const pythonExecutable = (await fs.stat(venvPython).catch(() => null)) ? venvPython : "python3";
+
   return new Promise((resolve, reject) => {
-    const python = spawn("python3", [scriptPath, tempPath]);
+    const python = spawn(pythonExecutable, [scriptPath, tempPath]);
 
     let stdout = "";
     let stderr = "";
