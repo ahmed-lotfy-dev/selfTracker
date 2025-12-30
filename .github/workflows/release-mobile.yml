@@ -63,6 +63,14 @@ jobs:
       - name: 🚀 Install EAS CLI
         run: npm install -g eas-cli
 
+      - name: 🏷️ Extract version from tag
+        id: version
+        run: |
+          # Extract version from tag (mobile-v1.1.4 -> 1.1.4)
+          VERSION=${GITHUB_REF#refs/tags/mobile-v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
       - name: 📱 Build APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -82,13 +90,13 @@ jobs:
             --profile production-ci \
             --local \
             --non-interactive \
-            --output selfTracker.apk
+            --output selfTracker-${{ steps.version.outputs.version }}.apk
 
       - name: 📤 Upload Release Asset
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: mobile/selfTracker.apk
+          files: mobile/selfTracker-${{ steps.version.outputs.version }}.apk
           draft: false
           prerelease: false
           generate_release_notes: true
