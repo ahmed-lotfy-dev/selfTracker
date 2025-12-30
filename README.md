@@ -18,8 +18,9 @@ Whether you're lifting weights, tracking your budget, or building new habits, Se
 -   **🔐 Secure Authentication**: Integrated with **Better Auth** for secure and session management.
 -   **💪 Weights & Workouts**: comprehensive workout logging, custom routines, and progress visualization.
 -   **📅 Tasks Tracking**: Daily tasks monitoring adding editing removing
--   **🍎 AI Nutrition Tracking**: Snap a photo of your meal and let **Gemini AI** automatically identify foods, calories, and macros.
+-   **🍎 AI Nutrition Tracking**: Snap a photo of your meal and let **Groq AI (Llama 3.2 Vision)** automatically identify foods, calories, and macros with lightning-fast inference.
 -   **📅 Habit Tracking**: Daily habit monitoring with streak analytics.
+-   **⚡ Optimistic Updates**: Instant UI responses with background API sync for seamless UX across all features.
 -   **💰 Expense Manager**: Track your spending and categorize expenses.
 -   **📈 Data Visualization**: Interactive charts and statistics for all your tracked metrics.
 -   **🔄 Background Sync**: Seamless data synchronization between local device storage (SQLite/MMKV) and the central Postgres database.
@@ -38,6 +39,7 @@ A high-performance API server managing authentication, data synchronization, and
 -   **ORM**: [Drizzle ORM](https://orm.drizzle.team)
 -   **Sync Engine**: [ElectricSQL](https://electric-sql.com)
 -   **Authentication**: [Better Auth](https://www.better-auth.com)
+-   **AI Vision**: [Groq Cloud](https://groq.com) with Llama 3.2 Vision
 
 ### 🖥️ Desktop (`/desktop`)
 A blazing fast, native-feeling desktop application.
