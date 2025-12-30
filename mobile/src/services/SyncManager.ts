@@ -3,7 +3,6 @@ import { useTasksStore } from "@/src/stores/useTasksStore"
 import { useHabitsStore } from "@/src/stores/useHabitsStore"
 import { useWorkoutsStore, WorkoutLog, Workout } from "@/src/stores/useWorkoutsStore"
 import { useWeightStore, WeightLog } from "@/src/stores/useWeightStore"
-import { useNutritionStore } from "@/src/stores/useNutritionStore"
 import { ElectricSync } from "@/src/db/client"
 import axiosInstance from '@/src/lib/api/axiosInstance'
 
@@ -169,21 +168,33 @@ class SyncManagerService {
 
       // --- NUTRITION ---
       const foodLogsResult = await this.db.getAllAsync('SELECT * FROM food_logs WHERE deleted_at IS NULL') as any[]
-      const foodLogs = foodLogsResult.map(f => ({
-        id: f.id,
-        userId: f.user_id,
-        loggedAt: f.logged_at,
-        mealType: f.meal_type,
-        foodItems: JSON.parse(f.food_items || '[]'),
-        totalCalories: f.total_calories,
-        totalProtein: f.total_protein,
-        totalCarbs: f.total_carbs,
-        totalFat: f.total_fat,
-        createdAt: f.created_at,
-        updatedAt: f.updated_at,
-        deletedAt: f.deleted_at
-      }))
-      if (foodLogs.length > 0) useNutritionStore.getState().setFoodLogs(foodLogs)
+      const foodLogs = foodLogsResult.map(f => {
+        try {
+          return {
+            id: f.id,
+            userId: f.user_id,
+            loggedAt: f.logged_at,
+            mealType: f.meal_type,
+            foodItems: typeof f.food_items === 'string' ? JSON.parse(f.food_items) : (f.food_items || []),
+            totalCalories: f.total_calories,
+            totalProtein: f.total_protein,
+            totalCarbs: f.total_carbs,
+            totalFat: f.total_fat,
+            createdAt: f.created_at,
+            updatedAt: f.updated_at,
+            deletedAt: f.deleted_at
+          }
+        } catch (e) {
+          console.error(`[SyncManager] Skipping corrupted food log ${f.id}:`, e)
+          return null
+        }
+      }).filter((log): log is NonNullable<typeof log> => log !== null)
+
+      if (foodLogs.length > 0) {
+        // Lazy import to avoid circular dependency
+        const { useNutritionStore } = await import('@/src/stores/useNutritionStore')
+        useNutritionStore.getState().setFoodLogs(foodLogs)
+      }
 
     } catch (e) {
       console.error("[SyncManager] Pull failed:", e)
