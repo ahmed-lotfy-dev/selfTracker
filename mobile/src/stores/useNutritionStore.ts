@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { zustandMMKVStorage } from '@/src/lib/storage/mmkv'
 import { createFoodLog, deleteFoodLog as deleteFoodLogApi, updateFoodLog as updateFoodLogApi } from '@/src/lib/api/nutritionApi'
+import { SyncManager } from '@/src/services/SyncManager'
 import type { FoodLog, NutritionGoals } from '@/src/types/nutrition'
 
 type NutritionState = {
@@ -25,20 +26,18 @@ export const useNutritionStore = create<NutritionState>()(
       setFoodLogs: (foodLogs) => set({ foodLogs, isLoaded: true }),
 
       addFoodLog: (log) => {
+        // 1. Update MMKV immediately (instant UI)
         set((state) => ({
           foodLogs: [log, ...state.foodLogs]
         }))
-        const apiData = {
-          id: log.id,
-          loggedAt: new Date(log.loggedAt),
-          mealType: log.mealType,
-          foodItems: log.foodItems,
-          totalCalories: log.totalCalories,
-          totalProtein: log.totalProtein ?? undefined,
-          totalCarbs: log.totalCarbs ?? undefined,
-          totalFat: log.totalFat ?? undefined
-        }
-        createFoodLog(apiData).catch(err => console.error('[Nutrition Store] Failed to create food log:', err))
+
+        // 2. Write to SQLite + sync
+        SyncManager.pushFoodLog({
+          ...log,
+          userId: log.userId || 'unknown',
+          createdAt: log.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        })
       },
 
       updateFoodLog: (id, updates) => {
@@ -48,11 +47,11 @@ export const useNutritionStore = create<NutritionState>()(
           )
           const updatedLog = updatedLogs.find(l => l.id === id)
           if (updatedLog) {
-            const apiUpdates: any = { ...updates }
-            if (apiUpdates.loggedAt) {
-              apiUpdates.loggedAt = new Date(apiUpdates.loggedAt)
-            }
-            updateFoodLogApi(id, apiUpdates).catch(err => console.error('[Nutrition Store] Failed to update food log:', err))
+            // Push to sync
+            SyncManager.pushFoodLog({
+              ...updatedLog,
+              userId: updatedLog.userId || 'unknown'
+            })
           }
           return { foodLogs: updatedLogs }
         })
@@ -62,7 +61,12 @@ export const useNutritionStore = create<NutritionState>()(
         set((state) => ({
           foodLogs: state.foodLogs.filter((l) => l.id !== id)
         }))
-        deleteFoodLogApi(id).catch(err => console.error('[Nutrition Store] Failed to delete food log:', err))
+
+        // Mark as deleted in SQLite
+        SyncManager.pushFoodLog({
+          id,
+          deletedAt: new Date().toISOString()
+        })
       },
 
       setGoals: (goals) => set({ goals }),
