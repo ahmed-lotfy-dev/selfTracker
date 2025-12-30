@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo } from "react"
-import { View, ScrollView } from "react-native"
+import { View, ScrollView, Text, Pressable } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 import Header from "@/src/components/Header"
+import { Ionicons } from "@expo/vector-icons"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import AddButton from "@/src/components/Buttons/AddButton"
 import { useNutritionStore, getTodaysFoodLogs, getTodaysCalories } from "@/src/stores/useNutritionStore"
@@ -17,8 +18,19 @@ export default function NutritionScreen() {
   const setFoodLogs = useNutritionStore((s) => s.setFoodLogs)
   const setGoals = useNutritionStore((s) => s.setGoals)
 
-  const todaysLogs = useMemo(() => getTodaysFoodLogs(foodLogs), [foodLogs])
-  const totalCalories = useMemo(() => getTodaysCalories(foodLogs), [foodLogs])
+  const [selectedDate, setSelectedDate] = React.useState(new Date())
+
+  // Filter logs for the selected date
+  const todaysLogs = useMemo(() => {
+    return foodLogs.filter(log => {
+      const logDate = new Date(log.loggedAt)
+      return logDate.toDateString() === selectedDate.toDateString()
+    })
+  }, [foodLogs, selectedDate])
+
+  const totalCalories = useMemo(() => {
+    return todaysLogs.reduce((sum, log) => sum + log.totalCalories, 0)
+  }, [todaysLogs])
 
   useEffect(() => {
     const loadData = async () => {
@@ -26,6 +38,7 @@ export default function NutritionScreen() {
         const [nutritionGoals] = await Promise.all([
           getNutritionGoals()
         ])
+        console.log('[Nutrition] Loaded goals:', nutritionGoals)
         setGoals(nutritionGoals)
       } catch (error) {
         console.error("Failed to load nutrition data:", error)
@@ -53,6 +66,30 @@ export default function NutritionScreen() {
       />
 
       <ScrollView className="flex-1 px-2" contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
+
+        {/* Date Navigation */}
+        <View className="flex-row items-center justify-between py-4 mb-2">
+          <Pressable onPress={() => {
+            const d = new Date(selectedDate)
+            d.setDate(d.getDate() - 1)
+            setSelectedDate(d)
+          }} className="p-2">
+            <Ionicons name="chevron-back" size={24} color={colors.primary} />
+          </Pressable>
+
+          <Text className="text-lg font-bold" style={{ color: colors.text }}>
+            {selectedDate.toDateString() === new Date().toDateString() ? "Today" : selectedDate.toDateString()}
+          </Text>
+
+          <Pressable onPress={() => {
+            const d = new Date(selectedDate)
+            d.setDate(d.getDate() + 1)
+            setSelectedDate(d)
+          }} className="p-2">
+            <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+          </Pressable>
+        </View>
+
         <DailyIntakeCard
           consumed={totalCalories}
           goal={goalCalories}
@@ -66,7 +103,12 @@ export default function NutritionScreen() {
 
       </ScrollView>
 
-      <AddButton path="/nutrition" icon="camera" iconFamily="ionicons" />
+      {/* Pass selected date to add screen so it defaults to the view date */}
+      <AddButton
+        path={`/nutrition/add?date=${selectedDate ? selectedDate.toISOString() : new Date().toISOString()}`}
+        icon="camera"
+        iconFamily="ionicons"
+      />
     </View>
   )
 }

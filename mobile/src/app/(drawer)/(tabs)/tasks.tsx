@@ -24,6 +24,8 @@ export default function TaskScreen() {
     })
   }, [tasks])
 
+
+
   const ListHeader = (
     <Animated.View entering={FadeIn.duration(600).springify()}>
       <Header

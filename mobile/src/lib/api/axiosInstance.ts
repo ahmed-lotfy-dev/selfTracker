@@ -21,21 +21,25 @@ axiosInstance.interceptors.request.use(
       // Send as both Bearer and Cookie for maximum compatibility
       config.headers.Authorization = `Bearer ${token}`
       config.headers.Cookie = `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-
+      // console.log(`[Axios] 🔑 Authenticated Request to ${config.url}`)
     } else {
+      console.warn(`[Axios] ⚠️ No token found for request to ${config.url}`)
     }
     return config
   },
   (error) => {
+    console.error('[Axios] ❌ Request Error:', error)
     return Promise.reject(error)
   }
 )
 
 axiosInstance.interceptors.response.use(
   (response) => {
+    // console.log(`[Axios] ✅ Response form ${response.config.url}: ${response.status}`)
     return response
   },
   async (error) => {
+    console.error(`[Axios] ❌ Response Error for ${error.config?.url}:`, error.message, error.response?.status, error.response?.data)
     return Promise.reject(error)
   }
 )

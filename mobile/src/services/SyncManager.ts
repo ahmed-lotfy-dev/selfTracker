@@ -8,8 +8,9 @@ import axiosInstance from '@/src/lib/api/axiosInstance'
 
 class SyncManagerService {
   private db: SQLite.SQLiteDatabase | null = null
-  private dbName = "self_tracker_db_v4.db"
+  private dbName = "self_tracker_db.db"
   private isInitialized = false
+
 
   async initialize() {
     if (this.db) return
@@ -17,6 +18,9 @@ class SyncManagerService {
     try {
       console.log(`[SyncManager] Initializing Local DB: ${this.dbName}`)
       this.db = await SQLite.openDatabaseAsync(this.dbName)
+
+      // Enable WAL mode for concurrency (prevents "database locked" errors)
+      await this.db.execAsync('PRAGMA journal_mode = WAL;')
 
       await this.db.execAsync(`
         CREATE TABLE IF NOT EXISTS tasks (
@@ -42,8 +46,8 @@ class SyncManagerService {
         );
         CREATE TABLE IF NOT EXISTS food_logs (
           id TEXT PRIMARY KEY, user_id TEXT, logged_at TEXT, meal_type TEXT, 
-          food_items TEXT, total_calories REAL, total_protein REAL, total_carbs REAL, 
-          total_fat REAL, created_at TEXT, updated_at TEXT, deleted_at TEXT
+          food_items TEXT, total_calories INTEGER, total_protein INTEGER, total_carbs INTEGER, 
+          total_fat INTEGER, created_at TEXT, updated_at TEXT, deleted_at TEXT
         );
       `)
 
@@ -69,113 +73,192 @@ class SyncManagerService {
     }
 
     const electric = new ElectricSync(this.db, (table) => {
-      this.pullFromDB()
+      this.pullFromDB(table)
     })
     this.currentSync = electric
 
-    // Start syncs (non-blocking) - ElectricSync will now pick up the token internally
-    electric.syncTable('tasks')
+    // Calculate date filters for Partial Sync (Recent Data Only)
+    // This reduces initial sync from 3+ minutes to <10 seconds
+    const now = new Date()
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString()
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+    console.log('[SyncManager] Starting Partial Sync (Recent Data Only)...')
+
+    // Start syncs (non-blocking)
+    // Heavy tables: Sync only recent history
+    electric.syncTable('food_logs', { where: `logged_at >= '${thirtyDaysAgo}'` })
+    electric.syncTable('workout_logs', { where: `created_at >= '${thirtyDaysAgo}'` })
+    electric.syncTable('weight_logs', { where: `created_at >= '${ninetyDaysAgo}'` })
+
+    // Tasks: Sync active tasks OR recently completed
+    // Note: completed is INTEGER (0/1) in SQLite/Electric
+    electric.syncTable('tasks', { where: `completed = 0 OR completed_at >= '${sevenDaysAgo}'` })
+
+    // Config tables: Sync full history (low volume)
     electric.syncTable('habits')
     electric.syncTable('workouts')
-    electric.syncTable('workout_logs')
-    electric.syncTable('weight_logs')
-    electric.syncTable('food_logs')
+
+    console.log('[SyncManager] ✅ Sync started with date filters')
   }
 
-  async pullFromDB() {
+  async clearDatabase() {
+    try {
+      console.log('[SyncManager] Clearing database...')
+
+      // Stop ElectricSQL sync first
+      if (this.currentSync) {
+        this.currentSync.stop()
+        this.currentSync = null
+      }
+
+      // Close database
+      if (this.db) {
+        await this.db.closeAsync()
+        this.db = null
+      }
+
+      // Wait a bit for connections to fully close
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Delete the database file
+      await SQLite.deleteDatabaseAsync(this.dbName)
+
+      this.isInitialized = false
+      console.log('[SyncManager] ✅ Database cleared successfully')
+    } catch (e) {
+      console.error('[SyncManager] Failed to clear database:', e)
+      // Even if deletion fails, mark as not initialized
+      this.isInitialized = false
+      this.db = null
+      this.currentSync = null
+    }
+  }
+
+  async pullFromDB(tableName?: string) {
     if (!this.db) return
+
+    console.log(`[SyncManager] 🔄 Pulling data from SQLite... ${tableName ? `(${tableName})` : '(ALL)'}`)
 
     try {
       // --- TASKS ---
-      const tasksResult = await this.db.getAllAsync('SELECT * FROM tasks WHERE deleted_at IS NULL') as any[]
-      const tasks = tasksResult.map(t => ({
-        id: t.id,
-        userId: t.user_id || 'user_local',
-        title: t.title,
-        completed: !!t.completed,
-        category: t.category || 'general',
-        createdAt: t.created_at || new Date().toISOString(),
-        updatedAt: t.updated_at || new Date().toISOString(),
-        deletedAt: t.deleted_at,
-        dueDate: null,
-        description: null,
-        projectId: null,
-        columnId: null,
-        priority: t.priority || 'medium',
-        order: 0,
-        completedAt: t.completed ? (t.updated_at || new Date().toISOString()) : null
-      }))
-      if (tasks.length > 0 || true) useTasksStore.getState().setTasks(tasks)
+      if (!tableName || tableName === 'tasks') {
+        const tasksResult = await this.db.getAllAsync('SELECT * FROM tasks WHERE deleted_at IS NULL') as any[]
+        // console.log(`[SyncManager] Found ${tasksResult.length} tasks in SQLite`)
+        const tasks = tasksResult.map(t => ({
+          id: t.id,
+          userId: t.user_id || 'user_local',
+          title: t.title,
+          completed: !!t.completed,
+          category: t.category || 'general',
+          createdAt: t.created_at || new Date().toISOString(),
+          updatedAt: t.updated_at || new Date().toISOString(),
+          deletedAt: t.deleted_at,
+          dueDate: null,
+          description: null,
+          projectId: null,
+          columnId: null,
+          priority: t.priority || 'medium',
+          order: 0,
+          completedAt: t.completed ? (t.updated_at || new Date().toISOString()) : null
+        }))
+        useTasksStore.getState().setTasks(tasks)
+      }
 
       // --- HABITS ---
-      const habitsResult = await this.db.getAllAsync('SELECT * FROM habits WHERE deleted_at IS NULL') as any[]
-      const habits = habitsResult.map(h => ({
-        id: h.id,
-        userId: h.user_id,
-        name: h.name,
-        description: h.description,
-        streak: h.streak,
-        color: h.color,
-        completedToday: !!h.completed_today,
-        lastCompletedAt: h.last_completed_at,
-        createdAt: h.created_at,
-        updatedAt: h.updated_at,
-        deletedAt: h.deleted_at
-      }))
-      if (habits.length > 0) useHabitsStore.getState().setHabits(habits)
+      if (!tableName || tableName === 'habits') {
+        const habitsResult = await this.db.getAllAsync('SELECT * FROM habits WHERE deleted_at IS NULL') as any[]
+        const habits = habitsResult.map(h => ({
+          id: h.id,
+          userId: h.user_id,
+          name: h.name,
+          description: h.description,
+          streak: h.streak,
+          color: h.color,
+          completedToday: !!h.completed_today,
+          lastCompletedAt: h.last_completed_at,
+          createdAt: h.created_at,
+          updatedAt: h.updated_at,
+          deletedAt: h.deleted_at
+        }))
+        useHabitsStore.getState().setHabits(habits)
+      }
 
       // --- WORKOUTS (Templates) ---
-      const workoutsResult = await this.db.getAllAsync('SELECT * FROM workouts WHERE deleted_at IS NULL') as any[]
-      const workouts = workoutsResult.map(w => ({
-        id: w.id,
-        name: w.name,
-        trainingSplitId: w.training_split_id,
-        userId: w.user_id,
-        createdAt: w.created_at,
-        updatedAt: w.updated_at,
-        isPublic: !!w.is_public,
-        deletedAt: w.deleted_at
-      }))
-      if (workouts.length > 0) useWorkoutsStore.getState().setWorkouts(workouts)
-
+      if (!tableName || tableName === 'workouts') {
+        const workoutsResult = await this.db.getAllAsync('SELECT * FROM workouts WHERE deleted_at IS NULL') as any[]
+        const workouts = workoutsResult.map(w => ({
+          id: w.id,
+          name: w.name,
+          trainingSplitId: w.training_split_id,
+          userId: w.user_id,
+          createdAt: w.created_at,
+          updatedAt: w.updated_at,
+          isPublic: !!w.is_public,
+          deletedAt: w.deleted_at
+        }))
+        useWorkoutsStore.getState().setWorkouts(workouts)
+      }
 
       // --- WORKOUT LOGS ---
-      const workoutLogsResult = await this.db.getAllAsync('SELECT * FROM workout_logs WHERE deleted_at IS NULL') as any[]
-      const workoutLogs: WorkoutLog[] = workoutLogsResult.map(w => ({
-        id: w.id,
-        userId: w.user_id,
-        workoutId: w.workout_id,
-        workoutName: w.workout_name,
-        notes: w.notes,
-        createdAt: w.created_at,
-        updatedAt: w.updated_at,
-        deletedAt: w.deleted_at
-      }))
-      if (workoutLogs.length > 0 || true) useWorkoutsStore.getState().setWorkoutLogs(workoutLogs)
+      if (!tableName || tableName === 'workout_logs') {
+        const workoutLogsResult = await this.db.getAllAsync('SELECT * FROM workout_logs WHERE deleted_at IS NULL') as any[]
+        const workoutLogs: WorkoutLog[] = workoutLogsResult.map(w => ({
+          id: w.id,
+          userId: w.user_id,
+          workoutId: w.workout_id,
+          workoutName: w.workout_name,
+          notes: w.notes,
+          createdAt: w.created_at,
+          updatedAt: w.updated_at,
+          deletedAt: w.deleted_at
+        }))
+        useWorkoutsStore.getState().setWorkoutLogs(workoutLogs)
+      }
 
       // --- WEIGHTS ---
-      const weightsResult = await this.db.getAllAsync('SELECT * FROM weight_logs WHERE deleted_at IS NULL') as any[]
-      const weightLogs: WeightLog[] = weightsResult.map(w => ({
-        id: w.id,
-        userId: w.user_id,
-        weight: w.weight,
-        notes: w.notes,
-        createdAt: w.created_at,
-        updatedAt: w.updated_at,
-        deletedAt: w.deleted_at
-      }))
-      if (weightLogs.length > 0) useWeightStore.getState().setWeightLogs(weightLogs)
+      if (!tableName || tableName === 'weight_logs') {
+        const weightsResult = await this.db.getAllAsync('SELECT * FROM weight_logs WHERE deleted_at IS NULL') as any[]
+        const weightLogs: WeightLog[] = weightsResult.map(w => ({
+          id: w.id,
+          userId: w.user_id,
+          weight: w.weight,
+          notes: w.notes,
+          createdAt: w.created_at,
+          updatedAt: w.updated_at,
+          deletedAt: w.deleted_at
+        }))
+        useWeightStore.getState().setWeightLogs(weightLogs)
+      }
 
       // --- NUTRITION ---
-      const foodLogsResult = await this.db.getAllAsync('SELECT * FROM food_logs WHERE deleted_at IS NULL') as any[]
-      const foodLogs = foodLogsResult.map(f => {
-        try {
+      if (!tableName || tableName === 'food_logs') {
+        const foodLogsResult = await this.db.getAllAsync('SELECT * FROM food_logs WHERE deleted_at IS NULL') as any[]
+        const foodLogs = foodLogsResult.map(f => {
+          let parsedItems = []
+          try {
+            if (typeof f.food_items === 'string') {
+              if (f.food_items === 'undefined' || f.food_items === '[object Object]') {
+                parsedItems = []
+              } else {
+                parsedItems = JSON.parse(f.food_items)
+              }
+            } else {
+              parsedItems = f.food_items || []
+            }
+          } catch (e) {
+            // Fail safe: If items are corrupted, still load the log with empty items to preserve history
+            // console.log(`[SyncManager] 🛠️ Auto-repaired corrupted food items for log ${f.id}`)
+            parsedItems = []
+          }
+
           return {
             id: f.id,
             userId: f.user_id,
             loggedAt: f.logged_at,
             mealType: f.meal_type,
-            foodItems: typeof f.food_items === 'string' ? JSON.parse(f.food_items) : (f.food_items || []),
+            foodItems: parsedItems,
             totalCalories: f.total_calories,
             totalProtein: f.total_protein,
             totalCarbs: f.total_carbs,
@@ -184,16 +267,17 @@ class SyncManagerService {
             updatedAt: f.updated_at,
             deletedAt: f.deleted_at
           }
-        } catch (e) {
-          console.error(`[SyncManager] Skipping corrupted food log ${f.id}:`, e)
-          return null
-        }
-      }).filter((log): log is NonNullable<typeof log> => log !== null)
+        }).filter((log): log is NonNullable<typeof log> => log !== null)
 
-      if (foodLogs.length > 0) {
+        console.log(`[SyncManager] Found ${foodLogs.length} food logs`)
+
         // Lazy import to avoid circular dependency
         const { useNutritionStore } = await import('@/src/stores/useNutritionStore')
         useNutritionStore.getState().setFoodLogs(foodLogs)
+      }
+
+      if (!tableName) {
+        console.log('[SyncManager] ✅ Full initial load complete')
       }
 
     } catch (e) {
@@ -211,7 +295,11 @@ class SyncManagerService {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [task.id, task.userId, task.title, task.completed ? 1 : 0, task.createdAt, task.updatedAt, task.deletedAt, task.category || 'general', task.priority || 'medium'])
 
-      await axiosInstance.post('/api/tasks', task)
+      if (task.deletedAt) {
+        await axiosInstance.delete(`/api/tasks/${task.id}`)
+      } else {
+        await axiosInstance.post('/api/tasks', task)
+      }
 
     } catch (e) { console.error("Push task failed:", e) }
   }
@@ -224,7 +312,11 @@ class SyncManagerService {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt])
 
-      await axiosInstance.post('/api/habits', habit)
+      if (habit.deletedAt) {
+        await axiosInstance.delete(`/api/habits/${habit.id}`)
+      } else {
+        await axiosInstance.post('/api/habits', habit)
+      }
 
     } catch (e) { console.error("Push habit failed:", e) }
   }
@@ -237,7 +329,11 @@ class SyncManagerService {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        `, [workout.id, workout.name, workout.trainingSplitId, workout.userId, workout.createdAt, workout.updatedAt, workout.isPublic ? 1 : 0, workout.deletedAt])
 
-      await axiosInstance.post('/api/workouts', workout)
+      if (workout.deletedAt) {
+        await axiosInstance.delete(`/api/workouts/${workout.id}`)
+      } else {
+        await axiosInstance.post('/api/workouts', workout)
+      }
 
     } catch (e) { console.error("Push workout template failed:", e) }
   }
@@ -250,7 +346,11 @@ class SyncManagerService {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `, [log.id, log.userId, log.workoutId || 'unknown', log.workoutName, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
 
-      await axiosInstance.post('/api/workoutLogs', log)
+      if (log.deletedAt) {
+        await axiosInstance.delete(`/api/workoutLogs/${log.id}`)
+      } else {
+        await axiosInstance.post('/api/workoutLogs', log)
+      }
 
     } catch (e) { console.error("Push workout failed:", e) }
   }
@@ -263,13 +363,22 @@ class SyncManagerService {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `, [log.id, log.userId, log.weight, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
 
-      await axiosInstance.post('/api/weightLogs', log)
+      if (log.deletedAt) {
+        await axiosInstance.delete(`/api/weightLogs/${log.id}`)
+      } else {
+        await axiosInstance.post('/api/weightLogs', log)
+      }
 
     } catch (e) { console.error("Push weight failed:", e) }
   }
 
   async pushFoodLog(log: any) {
-    if (!this.db) return
+    if (!this.db) {
+      console.error('[SyncManager] ❌ pushFoodLog called but DB is not initialized')
+      return
+    }
+    console.log('[SyncManager] 💾 Pushing food log:', JSON.stringify(log))
+
     try {
       await this.db.runAsync(`
         INSERT OR REPLACE INTO food_logs (
@@ -292,12 +401,23 @@ class SyncManagerService {
         log.updatedAt || new Date().toISOString(),
         log.deletedAt || null
       ])
+      console.log(`[SyncManager] ✅ Food log ${log.id} saved to SQLite`)
 
-      if (!log.deletedAt) {
-        await axiosInstance.post('/api/nutrition', log)
+      // If deleted, use DELETE endpoint. Otherwise use POST (Create/Update)
+      if (log.deletedAt) {
+        await axiosInstance.delete(`/api/nutrition/logs/${log.id}`)
+        console.log(`[SyncManager] 🗑️ Food log ${log.id} deleted from API`)
+      } else {
+        await axiosInstance.post('/api/nutrition/logs', log)
+        console.log(`[SyncManager] ☁️ Food log ${log.id} pushed to API`)
       }
 
-    } catch (e) { console.error("Push food log failed:", e) }
+    } catch (e: any) {
+      console.error("[SyncManager] ❌ Push food log failed:", e.message)
+      if (e.response) {
+        console.error("[SyncManager] ⚠️ Server Response:", e.response.status, e.response.data)
+      }
+    }
   }
 
 

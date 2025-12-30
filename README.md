@@ -18,7 +18,7 @@ Whether you're lifting weights, tracking your budget, or building new habits, Se
 -   **🔐 Secure Authentication**: Integrated with **Better Auth** for secure and session management.
 -   **💪 Weights & Workouts**: comprehensive workout logging, custom routines, and progress visualization.
 -   **📅 Tasks Tracking**: Daily tasks monitoring adding editing removing
--   **🍎 AI Nutrition Tracking**: Snap a photo of your meal and let **Groq AI (Llama 3.2 Vision)** automatically identify foods, calories, and macros with lightning-fast inference.
+-   **🍎 AI Nutrition Tracking**: Snap a photo of your meal and let **Groq AI (Llama 3.2 Vision)** automatically identify foods. Includes smart **Date Context** (log for yesterday seamlessly) and robust offline support.
 -   **📅 Habit Tracking**: Daily habit monitoring with streak analytics.
 -   **⚡ Optimistic Updates**: Instant UI responses with background API sync for seamless UX across all features.
 -   **💰 Expense Manager**: Track your spending and categorize expenses.
@@ -148,7 +148,8 @@ The backend serves as the source of truth and manages authentication.
 **SelfTracker** utilizes a sophisticated synchronization strategy to ensure data consistency without sacrificing user experience.
 
 -   **Reads**: The application reads directly from the local database (SQLite on Mobile/Desktop) using **drizzle** and **electric-sql/client**, providing 0-latency data access.
--   **Writes**: Writes are optimistically applied to the local store and then queued for synchronization with the backend via the ElectricSQL protocol.
+-   **Writes**: Writes follow a **Write-Through** pattern: optimistic updates to the local store + immediate background API calls to ensure data persistence.
+-   **Optimized Sync**: Uses a **Partial Sync** strategy (last 30 days for heavy tables) to ensure sub-second startup times vs downloading full history.
 -   **Conflict Resolution**: Handled automatically by the sync engine (Last-Write-Wins or custom logic where defined).
 
 ---

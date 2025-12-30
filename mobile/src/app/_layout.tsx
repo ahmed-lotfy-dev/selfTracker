@@ -60,9 +60,13 @@ function RootLayout() {
   }, [])
 
   useEffect(() => {
-    if (isAuthenticated && appIsReady) {
-      SyncManager.startSync()
+    const initAndSync = async () => {
+      if (isAuthenticated && appIsReady) {
+        await SyncManager.initialize()
+        await SyncManager.startSync()
+      }
     }
+    initAndSync()
   }, [isAuthenticated, appIsReady])
 
   useEffect(() => {

@@ -15,7 +15,7 @@ export class ElectricSync {
 
   private subscriptions: (() => void)[] = []
 
-  async syncTable(tableName: string) {
+  async syncTable(tableName: string, options?: { where?: string }) {
     // console.log(`[ElectricSync] Starting sync for table: ${tableName}`)
 
     const token = useAuthStore.getState().token;
@@ -24,7 +24,12 @@ export class ElectricSync {
     try {
       // Use Backend Proxy: [API_BASE_URL]/api/electric/[tableName]
       // The backend adds the auth token check and injects the 'where user_id=...' clause.
-      const url = `${API_BASE_URL}/api/electric/${tableName}?offset=-1`;
+      let url = `${API_BASE_URL}/api/electric/${tableName}?offset=-1`;
+
+      if (options?.where) {
+        url += `&where=${encodeURIComponent(options.where)}`;
+      }
+
       // console.log(`[ElectricSync] Connecting to Proxy: ${url}`);
 
       const stream = new ShapeStream({
@@ -60,43 +65,66 @@ export class ElectricSync {
       if (dataMessages.length > 0) {
         // console.log(`[ElectricSync] 🟢 ${tableName}: Received ${dataMessages.length} data rows`)
       } else if (hasControl) {
-        // console.log(`[ElectricSync] ⚪ ${tableName}: Up to date (No new data)`)
         return // Don't process empty transaction
       } else {
         return
       }
 
-      // console.log(`[ElectricSync] First message sample:`, JSON.stringify(messages[0]));
+      // Retry loop for "database is locked" errors
+      const MAX_RETRIES = 5;
+      let attempt = 0;
 
-      // Batch operations
-      try {
-        await this.db.withTransactionAsync(async () => {
-          for (const msg of messages) {
-            // Type assertion to handle generic message structure
-            const m = msg as any
+      while (attempt < MAX_RETRIES) {
+        try {
+          await this.db.withTransactionAsync(async () => {
+            for (const msg of messages) {
+              // Type assertion to handle generic message structure
+              const m = msg as any
 
-            if (m.headers?.control === 'up-to-date') {
-              // Sync caught up
-              // console.log(`[ElectricSync] ${tableName} is up to date.`)
-              continue
+              if (m.headers?.control === 'up-to-date') {
+                continue
+              }
+
+              const operation = m.headers?.operation
+              const value = m.value
+
+              if (!operation && !value) continue // control message?
+
+              if (operation === 'insert' || operation === 'update') {
+                await this.upsert(tableName, value)
+              } else if (operation === 'delete') {
+                await this.delete(tableName, value.id)
+              }
             }
+          })
 
-            const operation = m.headers?.operation
-            const value = m.value
+          this.onBatchApplied?.(tableName)
+          return; // Success, exit retry loop
 
-            if (!operation && !value) continue // control message?
+        } catch (e: any) {
+          // Robust check for locked database using string representation to catch nested causes
+          const errStr = String(e) + (e?.message || '');
+          const isLocked = errStr.includes('database is locked') || errStr.includes('database locked') || errStr.includes('SQLITE_BUSY');
 
-            if (operation === 'insert' || operation === 'update') {
-              // console.log(`[ElectricSync] 📥 Syncing Row to SQLite (${tableName}):`, JSON.stringify(value))
-              await this.upsert(tableName, value)
-            } else if (operation === 'delete') {
-              await this.delete(tableName, value.id)
+          if (isLocked && attempt < MAX_RETRIES - 1) {
+            attempt++;
+            const delay = Math.random() * 250 + (attempt * 100); // Random backoff 100-600ms
+
+            // Only warn on later attempts to reduce log noise
+            if (attempt > 1) {
+              console.warn(`[ElectricSync] 🛑 DB Locked for ${tableName}. Retrying (${attempt}/${MAX_RETRIES}) in ${delay.toFixed(0)}ms...`);
             }
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            if (!isLocked) {
+              // Log non-lock errors clearly
+              console.log(`[ElectricSync] ❌ Sync Error (${tableName}): ${errStr}`);
+            } else {
+              console.error(`[ElectricSync] 💥 Failed to apply batch to ${tableName} after ${attempt + 1} attempts due to lock.`);
+            }
+            throw e // Give up
           }
-        })
-        this.onBatchApplied?.(tableName)
-      } catch (e) {
-        console.error(`[ElectricSync] Failed to apply batch to ${tableName}`, e)
+        }
       }
     }).catch(err => {
       // Catch any error in the chain itself to prevent breaking the lock for future tasks
@@ -134,7 +162,11 @@ export class ElectricSync {
 
     // console.log(`[ElectricSync] Upserting into ${tableName}:`, keys) // Debug log
 
-    const safeValues = values.map(v => (typeof v === 'boolean' ? (v ? 1 : 0) : v))
+    const safeValues = values.map(v => {
+      if (v === undefined) return null
+      if (typeof v === 'boolean') return v ? 1 : 0
+      return v
+    })
 
     try {
       await this.db.runAsync(query, safeValues as any[])

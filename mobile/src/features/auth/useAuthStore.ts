@@ -83,6 +83,29 @@ export const useAuthStore = create<AuthStore>()(
         // Clear SecureStore
         await SecureStore.deleteItemAsync("selftracker.better-auth.session_token")
         await SecureStore.deleteItemAsync("selftracker.session_token")
+
+        // Clear all Zustand stores
+        try {
+          const { useTasksStore } = await import('@/src/stores/useTasksStore')
+          const { useHabitsStore } = await import('@/src/stores/useHabitsStore')
+          const { useWorkoutsStore } = await import('@/src/stores/useWorkoutsStore')
+          const { useWeightStore } = await import('@/src/stores/useWeightStore')
+          const { useNutritionStore } = await import('@/src/stores/useNutritionStore')
+
+          useTasksStore.setState({ tasks: [] })
+          useHabitsStore.setState({ habits: [] })
+          useWorkoutsStore.setState({ workouts: [], workoutLogs: [] })
+          useWeightStore.setState({ weightLogs: [] })
+          useNutritionStore.setState({ foodLogs: [], goals: null })
+
+          // Clear SQLite database
+          const { SyncManager } = await import('@/src/services/SyncManager')
+          await SyncManager.clearDatabase()
+
+          console.log('[AUTH] ✅ All local data cleared on logout')
+        } catch (e) {
+          console.error('[AUTH] Failed to clear stores:', e)
+        }
       }
     }),
     {

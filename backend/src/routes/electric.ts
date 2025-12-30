@@ -66,7 +66,15 @@ electricRouter.get("/:table", async (c) => {
 
   if (tablesWithUserId.includes(electricTable)) {
     // Include user-specific data OR global data (null userId)
-    origin.searchParams.set("where", `user_id='${user.id}' OR user_id IS NULL`);
+    let whereClause = `user_id='${user.id}' OR user_id IS NULL`;
+
+    // If client requested specific filtering (e.g. date ranges), combine with AND
+    const clientWhere = url.searchParams.get("where");
+    if (clientWhere) {
+      whereClause = `(${whereClause}) AND (${clientWhere})`;
+    }
+
+    origin.searchParams.set("where", whereClause);
   }
 
 
