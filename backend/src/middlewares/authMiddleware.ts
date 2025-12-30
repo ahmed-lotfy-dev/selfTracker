@@ -42,14 +42,9 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
       }
     }
 
-
     if (!sessionToken) {
-      console.warn(`[AuthMiddleware] No session token found for request to ${c.req.path}`);
       return c.json({ error: "Unauthorized" }, 401);
     }
-
-    console.log(`[AuthMiddleware] Session token: ${sessionToken.substring(0, 20)}... (length: ${sessionToken.length})`);
-
 
     // Query session directly from database
     const sessionResult = await db
@@ -72,12 +67,10 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
 
 
     if (sessionResult.length === 0) {
-      console.log(`[AuthMiddleware] ❌ Session NOT FOUND or EXPIRED for token ${sessionToken.substring(0, 20)}...`);
       return c.json({ error: "Unauthorized" }, 401);
     }
 
     const { session, user } = sessionResult[0];
-    console.log(`[AuthMiddleware] ✓ Session found for user: ${user.email} (${user.id})`);
 
     c.set("user" as any, user);
     c.set("session", session);

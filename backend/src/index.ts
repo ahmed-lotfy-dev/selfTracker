@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
-import { loggerMiddleware } from "./middlewares/loggerMiddleware.js"
+import { requestLogger } from "./middlewares/requestLogger.js"
 import type { Logger } from "pino"
 
 import userRouter from "./routes/users.js"
@@ -52,7 +52,7 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
 });
 
-app.use(loggerMiddleware)
+app.use(requestLogger);
 
 // Public routes (before auth middleware)
 app.route("/api/workouts", workoutsRouter) // Workout templates are public

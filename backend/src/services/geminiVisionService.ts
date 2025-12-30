@@ -24,7 +24,7 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
   // Strip data URI prefix if present (e.g., "data:image/jpeg;base64,")
   const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
