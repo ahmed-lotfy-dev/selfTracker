@@ -31,22 +31,30 @@ jobs:
         with:
           bun-version: latest
 
-      - name: 🐘 Setup Gradle Cache
+      - name: 🐘 Setup Gradle Build Cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('mobile/**/*.gradle*', 'mobile/**/gradle-wrapper.properties') }}
+            ~/.gradle/build-cache
+            mobile/android/.gradle
+            mobile/android/app/build/intermediates
+            mobile/android/app/build/generated
+          key: ${{ runner.os }}-gradle-${{ hashFiles('mobile/android/**/*.gradle*', 'mobile/android/gradle-wrapper.properties', 'mobile/app.json') }}
           restore-keys: |
+            ${{ runner.os }}-gradle-${{ hashFiles('mobile/android/**/*.gradle*', 'mobile/android/gradle-wrapper.properties') }}
             ${{ runner.os }}-gradle-
 
       - name: 📦 Setup Bun Cache
         uses: actions/cache@v4
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          path: |
+            ~/.bun/install/cache
+            mobile/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('mobile/bun.lock', 'mobile/package.json') }}
           restore-keys: |
+            ${{ runner.os }}-bun-${{ hashFiles('mobile/bun.lock') }}
             ${{ runner.os }}-bun-
 
       - name: 🚇 Setup Metro Cache
@@ -70,6 +78,12 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/mobile-v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
+
+      - name: 🔨 Prebuild Android
+        run: |
+          cd mobile
+          # Generate native Android code (can be cached)
+          bunx expo prebuild --platform android --clean
 
       - name: 📱 Build APK
         env:
