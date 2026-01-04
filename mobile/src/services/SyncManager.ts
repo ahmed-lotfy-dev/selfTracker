@@ -94,7 +94,7 @@ class SyncManagerService {
 
     // Tasks: Sync active tasks OR recently completed
     // Note: completed is INTEGER (0/1) in SQLite/Electric
-    electric.syncTable('tasks', { where: `completed = 0 OR completed_at >= '${sevenDaysAgo}'` })
+    electric.syncTable('tasks', { where: `completed = false OR completed_at >= '${sevenDaysAgo}'` })
 
     // Config tables: Sync full history (low volume)
     electric.syncTable('habits')

@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from "react"
-import { View, Text } from "react-native"
+import React, { useState, useMemo, useEffect, useCallback } from "react"
+import { View, Text, ActivityIndicator } from "react-native"
 import { Calendar, DateData } from "react-native-calendars"
 import { useThemeColors } from "@/src/constants/Colors"
-import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
+import { useWorkoutsStore, WorkoutLog } from "@/src/stores/useWorkoutsStore"
 import { WorkoutLogsList } from "./WorkoutLogsList"
 import { format } from "date-fns"
 
@@ -14,13 +14,52 @@ interface CalendarViewProps {
 export default function CalendarView({ headerElement, workoutLogs: propLogs }: CalendarViewProps) {
   const colors = useThemeColors()
   const storeLogs = useWorkoutsStore(s => s.workoutLogs)
-  const workoutLogs = propLogs || storeLogs
+  const [calendarLogs, setCalendarLogs] = useState<WorkoutLog[]>([])
+  const [isLoadingMonth, setIsLoadingMonth] = useState(false)
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+
+  const allLogs = useMemo(() => {
+    const combined = [...storeLogs, ...calendarLogs]
+    const uniqueMap = new Map(combined.map(log => [log.id, log]))
+    return Array.from(uniqueMap.values())
+  }, [storeLogs, calendarLogs])
+
+  const workoutLogs = propLogs || allLogs
+
+  const fetchMonthData = useCallback(async (year: number, month: number) => {
+    setIsLoadingMonth(true)
+    try {
+      const { getWorkoutLogsForMonth } = await import('@/src/lib/api/workoutLogsApi')
+      const logs = await getWorkoutLogsForMonth(year, month)
+      setCalendarLogs(prev => {
+        const combined = [...prev, ...logs]
+        const uniqueMap = new Map(combined.map(log => [log.id, log]))
+        return Array.from(uniqueMap.values())
+      })
+    } catch (e) {
+      console.error('Failed to fetch calendar month data:', e)
+    } finally {
+      setIsLoadingMonth(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchMonthData(currentYear, currentMonth)
+  }, [])
+
+  const handleMonthChange = useCallback((date: DateData) => {
+    const year = date.year
+    const month = date.month
+    setCurrentYear(year)
+    setCurrentMonth(month)
+    fetchMonthData(year, month)
+  }, [fetchMonthData])
 
   const markedDates = useMemo(() => {
     const marks: Record<string, any> = {}
 
-    // Mark days with workouts
     workoutLogs.forEach(log => {
       const date = new Date(log.createdAt).toISOString().split('T')[0]
       if (!marks[date]) {
@@ -31,7 +70,6 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
       }
     })
 
-    // Highlight selected date
     marks[selectedDate] = {
       ...(marks[selectedDate] || {}),
       selected: true,
@@ -51,24 +89,22 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
 
   return (
     <View className="flex-1">
-      {/* 
-        We wrap the content in a fragment-like structure for WorkoutLogsList 
-        because WorkoutLogsList typically handles the ScrollView. 
-        However, WorkoutLogsList expects to control the ScrollView.
-        We can pass the calendar as a headerElement to reused WorkoutLogsList?
-        
-        The current WorkoutLogsList takes a headerElement and renders it inside its ScrollView.
-        So we can construct the specific Calendar header and pass it.
-      */}
       <WorkoutLogsList
         logs={selectedDayLogs}
+        disablePagination
         ListHeaderComponent={
           <View>
             {headerElement}
             <View className="mx-2 mb-4 bg-card rounded-2xl overflow-hidden border border-border shadow-sm">
+              {isLoadingMonth && (
+                <View className="absolute top-2 right-2 z-10">
+                  <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              )}
               <Calendar
                 current={selectedDate}
                 onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
+                onMonthChange={handleMonthChange}
                 markedDates={markedDates}
                 theme={{
                   backgroundColor: colors.card,
@@ -107,3 +143,4 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
     </View>
   )
 }
+

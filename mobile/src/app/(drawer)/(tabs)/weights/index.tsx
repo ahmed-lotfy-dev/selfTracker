@@ -1,6 +1,6 @@
 import { View } from "react-native"
 import AddButton from "@/src/components/Buttons/AddButton"
-import React, { useMemo } from "react"
+import React, { useMemo, useEffect } from "react"
 import { WeightLogsList } from "@/src/components/features/weight/WeightLogsList"
 import { WeightStatsRow } from "@/src/components/features/weight/WeightStatsRow"
 import { WeightChart } from "@/src/components/features/weight/WeightChart"
@@ -10,6 +10,11 @@ import { useWeightStore } from "@/src/stores/useWeightStore"
 
 export default function WeightsScreen() {
   const weightLogs = useWeightStore(s => s.weightLogs)
+  const fetchWeightLogs = useWeightStore(s => s.fetchWeightLogs)
+
+  useEffect(() => {
+    fetchWeightLogs()
+  }, [])
 
   const stats = useMemo(() => {
     const sortedLogs = [...weightLogs]

@@ -3,76 +3,70 @@ import { View, Text, Dimensions, Pressable } from "react-native"
 import { BarChart } from "react-native-chart-kit"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
-import { format, subMonths, subYears, eachDayOfInterval, isSameDay, isAfter, startOfDay } from "date-fns"
+import { subMonths, subDays, subYears, isAfter } from "date-fns"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 
-type Range = "1W" | "1M" | "3M" | "6M"
+type Range = "1W" | "1M" | "3M" | "6M" | "1Y"
+
+const parseDate = (dateStr: string): Date => {
+  if (!dateStr) return new Date()
+  const normalized = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T')
+  const date = new Date(normalized)
+  return isNaN(date.getTime()) ? new Date() : date
+}
 
 export const WorkoutChart = () => {
   const colors = useThemeColors()
   const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
-  const [range, setRange] = useState<Range>("1W")
+  const [range, setRange] = useState<Range>("1M")
 
   const chartData = useMemo(() => {
     let startDate: Date
-    let intervalDays: number
 
     switch (range) {
       case "1W":
-        startDate = subMonths(new Date(), 0); // Logic fix: 7 days
-        startDate.setDate(new Date().getDate() - 6);
-        intervalDays = 7;
+        startDate = subDays(new Date(), 7)
         break
       case "1M":
-        startDate = subMonths(new Date(), 1);
-        intervalDays = 30;
+        startDate = subMonths(new Date(), 1)
         break
       case "3M":
-        startDate = subMonths(new Date(), 3);
-        intervalDays = 90;
+        startDate = subMonths(new Date(), 3)
         break
       case "6M":
-        startDate = subMonths(new Date(), 6);
-        intervalDays = 180;
+        startDate = subMonths(new Date(), 6)
+        break
+      case "1Y":
+        startDate = subYears(new Date(), 1)
         break
     }
 
-    // For larger ranges, grouping by week might be better, but let's stick to daily for now 
-    // or limit the number of bars shown.
-
-    const days = eachDayOfInterval({
-      start: startOfDay(startDate),
-      end: startOfDay(new Date())
-    })
-
-    // To prevent too many bars, we'll slice the days for the chart display if range is large,
-    // or aggregate. For BarChart, too many bars looks bad.
-    // Let's keep it simple: if > 14 days, we just show the last 14 for the bar chart 
-    // OR we could just show the frequency.
-
-    const displayDays = days.length > 30 ? days.slice(-30) : days
-
-    const labels = displayDays.map((day, i) =>
-      displayDays.length <= 14 || i % Math.floor(displayDays.length / 5) === 0
-        ? format(day, displayDays.length > 7 ? "dd/MM" : "EEE")
-        : ""
+    const activeLogs = workoutLogs.filter(l =>
+      !l.deletedAt && isAfter(parseDate(l.createdAt), startDate)
     )
 
-    const counts = displayDays.map(day =>
-      workoutLogs.filter(l => !l.deletedAt && isSameDay(new Date(l.createdAt), day)).length
-    )
+    if (activeLogs.length === 0) return null
 
-    const hasAnyWorkouts = counts.some(c => c > 0)
-    if (!hasAnyWorkouts) return null
+    const workoutCounts = activeLogs.reduce((acc, log) => {
+      const name = log.workoutName || 'Other'
+      acc[name] = (acc[name] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    const sorted = Object.entries(workoutCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+
+    if (sorted.length === 0) return null
 
     return {
-      labels,
-      datasets: [{ data: counts }]
+      labels: sorted.map(([name]) => name.length > 8 ? name.slice(0, 7) + '…' : name),
+      datasets: [{ data: sorted.map(([, count]) => count) }]
     }
   }, [workoutLogs, range])
 
-  const RangeButton = ({ label, value }: { label: string, value: Range }) => (
+  const RangeButton = ({ label, value }: { label: string; value: Range }) => (
     <Pressable
       onPress={() => setRange(value)}
       className={`px-3 py-1 rounded-full ${range === value ? "bg-primary" : "bg-card border border-border"}`}
@@ -87,14 +81,15 @@ export const WorkoutChart = () => {
     <View className="mb-4 bg-card rounded-2xl border border-border overflow-hidden shadow-sm mx-1">
       <View className="p-4 border-b border-border flex-row items-center justify-between">
         <View>
-          <Text className="text-lg font-bold" style={{ color: colors.text }}>Activity</Text>
-          <Text className="text-[10px] text-placeholder uppercase tracking-widest">Workout Frequency</Text>
+          <Text className="text-lg font-bold" style={{ color: colors.text }}>Workouts</Text>
+          <Text className="text-[10px] text-placeholder uppercase tracking-widest">By Type</Text>
         </View>
         <View className="flex-row gap-1">
           <RangeButton label="1W" value="1W" />
           <RangeButton label="1M" value="1M" />
           <RangeButton label="3M" value="3M" />
           <RangeButton label="6M" value="6M" />
+          <RangeButton label="1Y" value="1Y" />
         </View>
       </View>
 
@@ -108,6 +103,7 @@ export const WorkoutChart = () => {
             yAxisSuffix=""
             fromZero
             withInnerLines={false}
+            showValuesOnTopOfBars
             chartConfig={{
               backgroundColor: colors.card,
               backgroundGradientFrom: colors.card,
@@ -118,7 +114,7 @@ export const WorkoutChart = () => {
               style: {
                 borderRadius: 16
               },
-              barPercentage: 0.5,
+              barPercentage: 0.6,
             }}
             style={{
               marginVertical: 8,
@@ -128,7 +124,7 @@ export const WorkoutChart = () => {
         ) : (
           <View className="py-12 items-center px-8">
             <Text className="text-placeholder text-center text-sm">
-              Keep moving! Log your workouts to see your activity here.
+              No workouts in this period. Log some workouts!
             </Text>
           </View>
         )}

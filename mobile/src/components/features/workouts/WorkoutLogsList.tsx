@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import { View, Text, Pressable, Alert } from "react-native"
+import React, { useMemo, useCallback } from "react"
+import { View, Text, Pressable, Alert, ActivityIndicator } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 import { FontAwesome5, Ionicons } from "@expo/vector-icons"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
@@ -10,13 +10,18 @@ import { format } from "date-fns"
 interface WorkoutLogsListProps {
   ListHeaderComponent?: React.ReactElement | null
   logs?: any[]
+  disablePagination?: boolean
 }
 
-export const WorkoutLogsList = ({ ListHeaderComponent, logs }: WorkoutLogsListProps) => {
+export const WorkoutLogsList = ({ ListHeaderComponent, logs, disablePagination }: WorkoutLogsListProps) => {
   const colors = useThemeColors()
   const router = useRouter()
   const storeLogs = useWorkoutsStore(s => s.workoutLogs)
   const deleteWorkoutLog = useWorkoutsStore(s => s.deleteWorkoutLog)
+  const fetchWorkoutLogs = useWorkoutsStore(s => s.fetchWorkoutLogs)
+  const nextCursor = useWorkoutsStore(s => s.nextCursor)
+  const isLoading = useWorkoutsStore(s => s.isLoading)
+  const hasMore = useWorkoutsStore(s => s.hasMore)
   const rawLogs = logs || storeLogs
 
   const sortedLogs = useMemo(() => {
@@ -27,6 +32,13 @@ export const WorkoutLogsList = ({ ListHeaderComponent, logs }: WorkoutLogsListPr
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )
   }, [rawLogs])
+
+  const handleLoadMore = useCallback(() => {
+    if (disablePagination || logs) return
+    if (!isLoading && hasMore && nextCursor) {
+      fetchWorkoutLogs(nextCursor)
+    }
+  }, [isLoading, hasMore, nextCursor, fetchWorkoutLogs, disablePagination, logs])
 
   const handleDelete = (id: string) => {
     Alert.alert(
@@ -66,14 +78,27 @@ export const WorkoutLogsList = ({ ListHeaderComponent, logs }: WorkoutLogsListPr
     </View>
   )
 
+  const renderFooter = useCallback(() => {
+    if (disablePagination || logs) return null
+    if (!isLoading) return null
+    return (
+      <View className="py-4 items-center">
+        <ActivityIndicator size="small" color={colors.primary} />
+      </View>
+    )
+  }, [isLoading, colors.primary, disablePagination, logs])
+
   return (
     <FlashList
       data={sortedLogs}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       ListHeaderComponent={ListHeaderComponent}
+      ListFooterComponent={renderFooter}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 150 }}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.5}
       ListEmptyComponent={
         !ListHeaderComponent ? (
           <View className="items-center justify-center py-16 border-2 border-dashed rounded-3xl mx-3 opacity-50" style={{ borderColor: colors.border }}>

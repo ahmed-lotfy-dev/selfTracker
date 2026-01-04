@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import { View, Text, Pressable, Alert } from "react-native"
+import React, { useMemo, useCallback } from "react"
+import { View, Text, Pressable, Alert, ActivityIndicator } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWeightStore } from "@/src/stores/useWeightStore"
 import { useRouter } from "expo-router"
@@ -16,6 +16,10 @@ export const WeightLogsList = ({ ListHeaderComponent }: Props) => {
   const router = useRouter()
   const weightLogs = useWeightStore(s => s.weightLogs)
   const deleteWeightLog = useWeightStore(s => s.deleteWeightLog)
+  const fetchWeightLogs = useWeightStore(s => s.fetchWeightLogs)
+  const nextCursor = useWeightStore(s => s.nextCursor)
+  const isLoading = useWeightStore(s => s.isLoading)
+  const hasMore = useWeightStore(s => s.hasMore)
 
   const sortedLogs = useMemo(() =>
     [...weightLogs]
@@ -25,6 +29,12 @@ export const WeightLogsList = ({ ListHeaderComponent }: Props) => {
       ),
     [weightLogs]
   )
+
+  const handleLoadMore = useCallback(() => {
+    if (!isLoading && hasMore && nextCursor) {
+      fetchWeightLogs(nextCursor)
+    }
+  }, [isLoading, hasMore, nextCursor, fetchWeightLogs])
 
   const handleDelete = (id: string) => {
     Alert.alert(
@@ -64,6 +74,15 @@ export const WeightLogsList = ({ ListHeaderComponent }: Props) => {
     </View>
   )
 
+  const renderFooter = useCallback(() => {
+    if (!isLoading) return null
+    return (
+      <View className="py-4 items-center">
+        <ActivityIndicator size="small" color={colors.primary} />
+      </View>
+    )
+  }, [isLoading, colors.primary])
+
   if (sortedLogs.length === 0 && !ListHeaderComponent) {
     return (
       <View className="flex-1 items-center justify-center py-16">
@@ -83,8 +102,11 @@ export const WeightLogsList = ({ ListHeaderComponent }: Props) => {
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       ListHeaderComponent={ListHeaderComponent}
+      ListFooterComponent={renderFooter}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 150 }}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.5}
     />
   )
 }

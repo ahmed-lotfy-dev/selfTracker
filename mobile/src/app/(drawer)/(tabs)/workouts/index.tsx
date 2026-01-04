@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { useThemeColors } from "@/src/constants/Colors"
 import {
   View,
@@ -25,6 +25,11 @@ export default function WorkoutScreen() {
   const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST)
   const colors = useThemeColors()
   const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
+  const fetchWorkoutLogs = useWorkoutsStore(s => s.fetchWorkoutLogs)
+
+  useEffect(() => {
+    fetchWorkoutLogs()
+  }, [])
 
   const stats = useMemo(() => {
     const weekAgo = new Date()

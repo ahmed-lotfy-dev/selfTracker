@@ -23,14 +23,23 @@ const saveWeightLogs = (logs: WeightLog[]) => {
 
 type CheckWeightState = {
   weightLogs: WeightLog[]
+  nextCursor: string | null
+  isLoading: boolean
+  hasMore: boolean
   setWeightLogs: (logs: WeightLog[]) => void
   addWeightLog: (log: Omit<WeightLog, 'id' | 'updatedAt' | 'deletedAt'> & { createdAt?: string }) => void
   updateWeightLog: (id: string, updates: Partial<WeightLog>) => void
   deleteWeightLog: (id: string) => void
+  fetchWeightLogs: (cursor?: string) => Promise<void>
+  appendWeightLogs: (logs: WeightLog[], cursor: string | null) => void
+  resetPagination: () => void
 }
 
 export const useWeightStore = create<CheckWeightState>((set, get) => ({
   weightLogs: loadWeightLogs(),
+  nextCursor: null,
+  isLoading: false,
+  hasMore: true,
 
   setWeightLogs: (logs) => {
     saveWeightLogs(logs)
@@ -99,5 +108,54 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
         console.error('Failed to sync deleted weight log:', e)
       }
     }
+  },
+
+  fetchWeightLogs: async (cursor?: string) => {
+    if (get().isLoading) return
+    set({ isLoading: true })
+
+    try {
+      const { getWeightLogs } = await import('@/src/lib/api/weightLogsApi')
+      const response = await getWeightLogs(cursor, 20)
+
+      if (cursor) {
+        get().appendWeightLogs(response.logs, response.nextCursor)
+      } else {
+        const existingLogs = get().weightLogs
+        const newLogs = response.logs.filter(
+          (newLog) => !existingLogs.some((existing) => existing.id === newLog.id)
+        )
+        const merged = [...existingLogs, ...newLogs]
+        const uniqueLogs = Array.from(new Map(merged.map(l => [l.id, l])).values())
+        saveWeightLogs(uniqueLogs)
+        set({
+          weightLogs: uniqueLogs,
+          nextCursor: response.nextCursor,
+          hasMore: response.nextCursor !== null,
+        })
+      }
+    } catch (e) {
+      console.error('Failed to fetch weight logs:', e)
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  appendWeightLogs: (logs, cursor) => {
+    const existingLogs = get().weightLogs
+    const newLogs = logs.filter(
+      (newLog) => !existingLogs.some((existing) => existing.id === newLog.id)
+    )
+    const merged = [...existingLogs, ...newLogs]
+    saveWeightLogs(merged)
+    set({
+      weightLogs: merged,
+      nextCursor: cursor,
+      hasMore: cursor !== null,
+    })
+  },
+
+  resetPagination: () => {
+    set({ nextCursor: null, hasMore: true })
   },
 }))
