@@ -82,16 +82,46 @@ electricRouter.get("/:table", async (c) => {
   origin.searchParams.set("source_id", SOURCE_ID);
   origin.searchParams.set("secret", SOURCE_SECRET);
 
-  const res = await fetch(origin.toString());
-  const headers = new Headers(res.headers);
-  headers.delete("content-encoding");
-  headers.delete("content-length");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-  return new Response(res.body, {
-    status: res.status,
-    statusText: res.statusText,
-    headers,
-  });
+  try {
+    const res = await fetch(origin.toString(), { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`[ElectricProxy] Error from Electric (${res.status}): ${errorText}`);
+
+      // If it's a 503 from Electric, we should tell the client why if it's a known quota issue
+      if (res.status === 503 && errorText.includes("SOURCE_IS_ERROR")) {
+        return c.json({
+          success: false,
+          message: "ElectricSQL Source Error",
+          details: "The sync source is in an error state (likely quota exceeded or database connection issue).",
+          raw: errorText
+        }, 503);
+      }
+    }
+
+    const headers = new Headers(res.headers);
+    headers.delete("content-encoding");
+    headers.delete("content-length");
+
+    return new Response(res.body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers,
+    });
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      console.error(`[ElectricProxy] Request timed out for table: ${table}`);
+      return c.json({ message: "Request timed out", details: "ElectricSQL service took too long to respond." }, 504);
+    }
+    console.error(`[ElectricProxy] Fetch failed for table ${table}:`, error);
+    return c.json({ message: "Internal Server Error", error: error.message }, 500);
+  }
 });
 
 export default electricRouter;

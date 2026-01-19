@@ -80,16 +80,16 @@ class SyncManagerService {
     // Calculate date filters for Partial Sync (Recent Data Only)
     // This reduces initial sync from 3+ minutes to <10 seconds
     const now = new Date()
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const fiveHundredDaysAgo = new Date(now.getTime() - 500 * 24 * 60 * 60 * 1000).toISOString()
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString()
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
     console.log('[SyncManager] Starting Partial Sync (Recent Data Only)...')
 
     // Start syncs (non-blocking)
-    // Heavy tables: Sync only recent history
-    electric.syncTable('food_logs', { where: `logged_at >= '${thirtyDaysAgo}'` })
-    electric.syncTable('workout_logs', { where: `created_at >= '${thirtyDaysAgo}'` })
+    // Heavy tables: Sync range increased to 500 days to include historical logs (e.g. August 2025)
+    electric.syncTable('food_logs', { where: `logged_at >= '${fiveHundredDaysAgo}'` })
+    electric.syncTable('workout_logs', { where: `created_at >= '${fiveHundredDaysAgo}'` })
     electric.syncTable('weight_logs', { where: `created_at >= '${ninetyDaysAgo}'` })
 
     // Tasks: Sync active tasks OR recently completed
