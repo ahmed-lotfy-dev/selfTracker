@@ -69,7 +69,7 @@ jobs:
         run: bun install
 
       - name: 🚀 Install EAS CLI
-        run: npm install -g eas-cli
+        run: bun install -g eas-cli
 
       - name: 🏷️ Extract version from tag
         id: version
@@ -81,7 +81,6 @@ jobs:
 
       - name: 🔨 Prebuild Android
         run: |
-          cd mobile
           # Generate native Android code (can be cached)
           bunx expo prebuild --platform android --clean
 
