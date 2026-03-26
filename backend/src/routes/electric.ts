@@ -25,9 +25,10 @@ const ALLOWED_TABLES = [
 
 electricRouter.use("/*", authMiddleware);
 
-electricRouter.get("/:table", async (c) => {
+electricRouter.on(["GET", "POST"], "/:table", async (c) => {
   const user = c.get("user" as any);
   const table = c.req.param("table");
+  const method = c.req.method;
 
   if (!user) {
     return c.json({ message: "Unauthorized" }, 401);
@@ -38,72 +39,93 @@ electricRouter.get("/:table", async (c) => {
   }
 
   if (!SOURCE_ID || !SOURCE_SECRET) {
-    console.error("ELECTRIC_SOURCE_ID or ELECTRIC_SOURCE_SECRET not set");
+    console.error("[ElectricProxy] ❌ Configuration missing: SOURCE_ID or SOURCE_SECRET not set");
     return c.json({ message: "Electric configuration missing" }, 500);
   }
 
   const url = new URL(c.req.url);
   const origin = new URL(ELECTRIC_URL);
 
-  // Pass Electric protocol params
+  // 1. Pass through protocol params (offset, handle, live, etc.)
   url.searchParams.forEach((v, k) => {
     if (ELECTRIC_PROTOCOL_QUERY_PARAMS.includes(k)) {
       origin.searchParams.set(k, v);
     }
   });
 
-  // Determine the actual table name in the destination (Electric/DB)
+  // 2. Set the actual table name (server-side mapping)
   let electricTable = table;
   if (table === "tasks") electricTable = "task_items";
-
   origin.searchParams.set("table", electricTable);
 
-  // Tenant isolation: only show data for the current user
+  // 3. Mandatory authorization filtering (Subset WHERE)
+  // This ensures the client can ONLY see their own data.
   const tablesWithUserId = [
     "task_items", "workout_logs", "weight_logs", "workouts",
     "user_goals", "expenses", "timer_sessions", "habits", "food_logs"
   ];
 
   if (tablesWithUserId.includes(electricTable)) {
-    // Include user-specific data OR global data (null userId)
-    let whereClause = `user_id='${user.id}' OR user_id IS NULL`;
-
-    // If client requested specific filtering (e.g. date ranges), combine with AND
-    const clientWhere = url.searchParams.get("where");
-    if (clientWhere) {
-      whereClause = `(${whereClause}) AND (${clientWhere})`;
+    // Basic user isolation using parameterized query
+    // This is safer and better optimized by the sync service
+    const whereClause = `"user_id" = $1 OR "user_id" IS NULL`;
+    
+    if (method === "GET") {
+      origin.searchParams.set("where", whereClause);
+      origin.searchParams.set("params[1]", user.id);
+      
+      // Client-side filtering via query params is NOT recommended for global shapes,
+      // but if we support it, we must be careful with AND/OR precedence.
+    } else {
+      // For POST, the client might be sending its own subset filtering.
+      // Electric combines main WHERE (URL) and subset WHERE (Body) with AND.
+      origin.searchParams.set("where", whereClause);
+      origin.searchParams.set("params[1]", user.id);
     }
-
-    origin.searchParams.set("where", whereClause);
   }
 
-
-
+  // 4. Attach API Secrets
   origin.searchParams.set("source_id", SOURCE_ID);
   origin.searchParams.set("secret", SOURCE_SECRET);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for initial sync
 
   try {
-    const res = await fetch(origin.toString(), { signal: controller.signal });
+    const finalUrl = origin.toString();
+    const maskedUrl = finalUrl.replace(/secret=[^&]+/, "secret=***");
+    console.log(`[ElectricProxy] 🔄 [${method}] Forwarding to Electric: ${maskedUrl}`);
+
+    const startTime = Date.now();
+    let res: Response;
+
+    if (method === "POST") {
+      const body = await c.req.text();
+      res = await fetch(finalUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: body,
+        signal: controller.signal,
+      });
+    } else {
+      res = await fetch(finalUrl, { signal: controller.signal });
+    }
+
+    const duration = Date.now() - startTime;
     clearTimeout(timeoutId);
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`[ElectricProxy] Error from Electric (${res.status}): ${errorText}`);
-
-      // If it's a 503 from Electric, we should tell the client why if it's a known quota issue
-      if (res.status === 503 && errorText.includes("SOURCE_IS_ERROR")) {
-        return c.json({
-          success: false,
-          message: "ElectricSQL Source Error",
-          details: "The sync source is in an error state (likely quota exceeded or database connection issue).",
-          raw: errorText
-        }, 503);
+      console.error(`[ElectricProxy] ❌ Electric (${res.status}) after ${duration}ms: ${errorText}`);
+      
+      if (res.status === 401 || res.status === 403) {
+        return c.json({ error: "Auth Error", message: "Electric service rejected secrets", details: errorText }, res.status);
       }
+    } else {
+      console.log(`[ElectricProxy] ✅ Electric (OK) in ${duration}ms`);
     }
 
+    // Forward the response but clean up headers as per documentation
     const headers = new Headers(res.headers);
     headers.delete("content-encoding");
     headers.delete("content-length");
@@ -113,14 +135,15 @@ electricRouter.get("/:table", async (c) => {
       statusText: res.statusText,
       headers,
     });
+
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      console.error(`[ElectricProxy] Request timed out for table: ${table}`);
-      return c.json({ message: "Request timed out", details: "ElectricSQL service took too long to respond." }, 504);
+      console.error(`[ElectricProxy] ⏱️ Timeout for ${table} after 60s`);
+      return c.json({ error: "Gateway Timeout", message: "Electric service took too long." }, 504);
     }
-    console.error(`[ElectricProxy] Fetch failed for table ${table}:`, error);
-    return c.json({ message: "Internal Server Error", error: error.message }, 500);
+    console.error(`[ElectricProxy] 💥 System Error for ${table}:`, error.message || error);
+    return c.json({ error: "Internal Error", message: error.message }, 500);
   }
 });
 

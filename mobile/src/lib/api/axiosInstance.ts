@@ -18,10 +18,9 @@ axiosInstance.interceptors.request.use(
     }
 
     if (token) {
-      // Send as both Bearer and Cookie for maximum compatibility
+      // Standardize on Bearer token for mobile client
+      // The backend 'bearer' plugin will correctly map this to the session
       config.headers.Authorization = `Bearer ${token}`
-      config.headers.Cookie = `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
-      // console.log(`[Axios] 🔑 Authenticated Request to ${config.url}`)
     } else {
       console.warn(`[Axios] ⚠️ No token found for request to ${config.url}`)
     }
