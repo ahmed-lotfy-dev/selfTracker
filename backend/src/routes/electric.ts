@@ -83,15 +83,21 @@ electricRouter.get("/:table", async (c) => {
   origin.searchParams.set("secret", SOURCE_SECRET);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // Increased to 60s for initial sync
 
   try {
-    const res = await fetch(origin.toString(), { signal: controller.signal });
+    const finalUrl = origin.toString();
+    const maskedUrl = finalUrl.replace(/secret=[^&]+/, "secret=***");
+    console.log(`[ElectricProxy] 🔄 Fetching from Electric: ${maskedUrl}`);
+
+    const startTime = Date.now();
+    const res = await fetch(finalUrl, { signal: controller.signal });
+    const duration = Date.now() - startTime;
     clearTimeout(timeoutId);
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`[ElectricProxy] Error from Electric (${res.status}): ${errorText}`);
+      console.error(`[ElectricProxy] ❌ Error from Electric (${res.status}) after ${duration}ms: ${errorText}`);
 
       // If it's a 503 from Electric, we should tell the client why if it's a known quota issue
       if (res.status === 503 && errorText.includes("SOURCE_IS_ERROR")) {
@@ -102,6 +108,8 @@ electricRouter.get("/:table", async (c) => {
           raw: errorText
         }, 503);
       }
+    } else {
+       console.log(`[ElectricProxy] ✅ Electric responded (${res.status}) in ${duration}ms`);
     }
 
     const headers = new Headers(res.headers);
@@ -116,10 +124,10 @@ electricRouter.get("/:table", async (c) => {
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      console.error(`[ElectricProxy] Request timed out for table: ${table}`);
+      console.error(`[ElectricProxy] ⏱️ Request timed out for table: ${table} (60s exceeded)`);
       return c.json({ message: "Request timed out", details: "ElectricSQL service took too long to respond." }, 504);
     }
-    console.error(`[ElectricProxy] Fetch failed for table ${table}:`, error);
+    console.error(`[ElectricProxy] 💥 Fetch failed for table ${table}:`, error.message || error);
     return c.json({ message: "Internal Server Error", error: error.message }, 500);
   }
 });

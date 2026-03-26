@@ -1,14 +1,5 @@
-import {
-  NativeTabs,
-  Icon,
-  Label,
-  VectorIcon,
-} from "expo-router/unstable-native-tabs"
+import { NativeTabs } from "expo-router/unstable-native-tabs"
 import React from "react"
-
-import Ionicons from "@expo/vector-icons/Ionicons"
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
-
 import { useThemeColors } from "@/src/constants/Colors"
 
 export default function TabsLayout() {
@@ -18,100 +9,64 @@ export default function TabsLayout() {
     <NativeTabs
       labelVisibilityMode="labeled"
       backBehavior="initialRoute"
-      iconColor={{
-        default: colors.icon,
-        selected: colors.primary
+      tintColor={colors.primary}
+      labelStyle={{
+        default: {
+          color: colors.text,
+          fontWeight: '400',
+        },
+        selected: {
+          color: colors.primary,
+          fontWeight: '700',
+        }
       }}
     >
-      <NativeTabs.Trigger
-        name="home"
-        options={{
-          labelStyle: {
-            color: colors.primary,
-            fontWeight: 700,
-          },
-        }}
-      >
-        <Label>Home</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="home" />} />,
+      <NativeTabs.Trigger name="home">
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon 
+          sf={{ default: "house", selected: "house.fill" }} 
+          md="home" 
+        />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger
-        name="weights"
-        options={{
-          labelStyle: {
-            color: colors.primary,
-            fontWeight: 700,
-          },
-        }}
-      >
-        <Label>Weight</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="scale" />} />,
+      <NativeTabs.Trigger name="weights">
+        <NativeTabs.Trigger.Label>Weight</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon 
+          sf={{ default: "scalemass", selected: "scalemass.fill" }} 
+          md="scale" 
+        />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger
-        name="workouts"
-        options={{
-          labelStyle: {
-            color: colors.primary,
-            fontWeight: 700,
-          },
-        }}
-      >
-        <Label>Workout</Label>
-        <Icon src={<VectorIcon family={FontAwesome5} name="dumbbell" />} />,
+      <NativeTabs.Trigger name="workouts">
+        <NativeTabs.Trigger.Label>Workout</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon 
+          sf={{ default: "figure.run.square.stack", selected: "figure.run.square.stack.fill" }} 
+          md="fitness_center" 
+        />
       </NativeTabs.Trigger>
 
-      {/* <NativeTabs.Trigger
-        name="habits"
-        options={{
-          labelStyle: {
-            color: colors.primary,
-            fontWeight: 700,
-          },
-        }}
-      >
-        <Label>Habits</Label>
-        <Icon src={<VectorIcon family={FontAwesome5} name="fire" />} />,
-      </NativeTabs.Trigger> */}
-
-      <NativeTabs.Trigger
-        name="nutrition"
-        options={{
-          labelStyle: {
-            color: colors.primary,
-            fontWeight: 700,
-          },
-        }}
-      >
-        <Label>Food</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="nutrition" />} />,
+      <NativeTabs.Trigger name="nutrition">
+        <NativeTabs.Trigger.Label>Food</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon 
+          sf={{ default: "leaf", selected: "leaf.fill" }} 
+          md="nutrition" 
+        />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger
-        name="tasks"
-        options={{
-          labelStyle: {
-            color: colors.primary,
-            fontWeight: 700,
-          },
-        }}
-      >
-        <Label>Tasks</Label>
-        <Icon src={<VectorIcon family={FontAwesome5} name="tasks" />} />,
+      <NativeTabs.Trigger name="tasks">
+        <NativeTabs.Trigger.Label>Tasks</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon 
+          sf={{ default: "checklist", selected: "checklist" }} 
+          md="task" 
+        />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger
-        name="profile"
-        options={{
-          labelStyle: {
-            color: colors.primary,
-            fontWeight: 700,
-          },
-        }}
-      >
-        <Label>Settings</Label>
-        <Icon src={<VectorIcon family={Ionicons} name="settings" />} />,
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon 
+          sf={{ default: "gearshape", selected: "gearshape.fill" }} 
+          md="settings" 
+        />
       </NativeTabs.Trigger>
     </NativeTabs>
   )

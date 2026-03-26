@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthStore>()(
           // Verify Session
           const response = await fetch(`${API_BASE_URL}/api/auth/get-session`, {
             headers: {
-              'Cookie': `__Secure-better-auth.session_token=${token}`
+              'Authorization': `Bearer ${token}`
             },
           });
 

@@ -36,8 +36,7 @@ export class ElectricSync {
       const stream = new ShapeStream({
         url,
         headers: token ? { 
-          Authorization: `Bearer ${token}`,
-          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
+          Authorization: `Bearer ${token}`
         } : undefined,
       })
 
