@@ -28,14 +28,13 @@ export const PremiumCard = ({
   };
 
   return (
-    <Animated.View style={[animatedStyle, { flex: 1 }]}>
+    <Animated.View style={[animatedStyle]}>
       <Pressable
         onPress={onPress}
         onLongPress={onLongPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         className={`rounded-2xl overflow-hidden border border-white/10 ${containerStyle}`}
-        style={{ flex: 1 }}
       >
         <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill}>
           <LinearGradient
@@ -45,7 +44,7 @@ export const PremiumCard = ({
             style={StyleSheet.absoluteFill}
           />
         </BlurView>
-        <View className="p-4 flex-1">
+        <View className="p-4">
           {children}
         </View>
       </Pressable>

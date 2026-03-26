@@ -1,4 +1,5 @@
-import { View } from "react-native"
+import { View, StyleSheet } from "react-native"
+import { LinearGradient } from 'expo-linear-gradient'
 import AddButton from "@/src/components/Buttons/AddButton"
 import React, { useMemo, useEffect } from "react"
 import { WeightLogsList } from "@/src/components/features/weight/WeightLogsList"
@@ -9,8 +10,8 @@ import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggl
 import { useWeightStore } from "@/src/stores/useWeightStore"
 
 export default function WeightsScreen() {
-  const weightLogs = useWeightStore(s => s.weightLogs)
-  const fetchWeightLogs = useWeightStore(s => s.fetchWeightLogs)
+  const weightLogs = useWeightStore((s: any) => s.weightLogs)
+  const fetchWeightLogs = useWeightStore((s: any) => s.fetchWeightLogs)
 
   useEffect(() => {
     fetchWeightLogs()
@@ -18,8 +19,8 @@ export default function WeightsScreen() {
 
   const stats = useMemo(() => {
     const sortedLogs = [...weightLogs]
-      .filter(l => !l.deletedAt)
-      .sort((a, b) =>
+      .filter((l: any) => !l.deletedAt)
+      .sort((a: any, b: any) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )
 
@@ -63,13 +64,17 @@ export default function WeightsScreen() {
 
   return (
     <View className="flex-1 bg-background px-4">
+      <LinearGradient
+        colors={['rgba(99, 102, 241, 0.1)', 'transparent']}
+        style={StyleSheet.absoluteFill}
+      />
       <Header
         title="Weights"
         rightAction={<DrawerToggleButton />}
       />
       <View className="flex-1 mt-2">
         <WeightLogsList ListHeaderComponent={<ListHeader />} />
-        <AddButton path="/weights" />
+        <AddButton path="/home/weights" />
       </View>
     </View>
   )

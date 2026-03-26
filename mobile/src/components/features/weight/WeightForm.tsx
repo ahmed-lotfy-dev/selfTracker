@@ -14,6 +14,7 @@ import { formatUTC } from "@/src/lib/utils/dateUtils"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 
 import Button from "@/src/components/ui/Button"
+import { PremiumCard } from "@/src/components/ui/PremiumCard"
 import { useWeightStore } from "@/src/stores/useWeightStore"
 
 export default function WeightForm({ isEditing, logId }: { isEditing?: boolean; logId?: string }) {
@@ -72,19 +73,19 @@ export default function WeightForm({ isEditing, logId }: { isEditing?: boolean; 
       <View className="flex-1 px-5 pt-6 gap-6">
 
         {/* --- Main Measurement --- */}
-        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-          <View className="bg-muted/30 px-4 py-3 border-b border-border flex-row items-center gap-2">
+        <PremiumCard>
+          <View className="flex-row items-center gap-2 mb-4">
             <FontAwesome5 name="weight" size={16} color={colors.primary} />
-            <Text className="text-sm font-bold uppercase text-placeholder tracking-wider">Measurement</Text>
+            <Text className="text-[10px] font-bold uppercase text-white/50 tracking-widest">Measurement</Text>
           </View>
 
-          <View className="p-6 items-center justify-center">
+          <View className="items-center justify-center py-4">
             <View className="flex-row items-end gap-2">
               <TextInput
-                className="text-5xl font-bold p-0"
+                className="text-6xl font-black p-0 tracking-tighter"
                 style={{ color: colors.text, includeFontPadding: false }}
                 placeholder="00.0"
-                placeholderTextColor={colors.placeholder + '40'}
+                placeholderTextColor="rgba(255,255,255,0.2)"
                 keyboardType="decimal-pad"
                 value={weight}
                 onChangeText={setWeight}
@@ -92,39 +93,40 @@ export default function WeightForm({ isEditing, logId }: { isEditing?: boolean; 
                 textAlign="center"
                 autoFocus
               />
-              <Text className="text-xl font-medium text-placeholder mb-2">kg</Text>
+              <Text className="text-xl font-bold text-white/40 mb-2">kg</Text>
             </View>
-            <Text className="text-xs text-placeholder mt-2">Enter your current weight</Text>
+            <Text className="text-xs text-white/40 mt-2 font-medium">Enter your current weight</Text>
           </View>
-        </View>
+        </PremiumCard>
 
         {/* --- Notes --- */}
-        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden p-4">
+        <PremiumCard>
+          <View className="flex-row items-center gap-2 mb-3">
+            <Feather name="align-left" size={16} color="rgba(255,255,255,0.4)" />
+            <Text className="text-[10px] font-bold uppercase text-white/50 tracking-widest">Notes</Text>
+          </View>
           <TextInput
             className="text-base leading-6"
             style={{ color: colors.text, minHeight: 80, textAlignVertical: 'top' }}
             placeholder="How are you feeling? Track mood, energy, or diet..."
-            placeholderTextColor={colors.placeholder}
+            placeholderTextColor="rgba(255,255,255,0.3)"
             value={notes}
             onChangeText={setNotes}
             multiline
           />
-        </View>
+        </PremiumCard>
 
         {/* --- Date Toggle --- */}
-        <Pressable
-          onPress={() => setShowDate(!showDate)}
-          className="bg-card rounded-2xl shadow-sm border border-white/5 overflow-hidden p-4 flex-row justify-between items-center"
-        >
+        <PremiumCard onPress={() => setShowDate(!showDate)}>
           {(() => {
             const isToday = createdAt.getDate() === new Date().getDate() &&
               createdAt.getMonth() === new Date().getMonth() &&
               createdAt.getFullYear() === new Date().getFullYear();
             return (
-              <>
+              <View className="flex-row justify-between items-center">
                 <View className="flex-row items-center gap-3">
-                  <View className="w-10 h-10 rounded-full bg-white/5 items-center justify-center border border-white/5">
-                    <Feather name="calendar" size={18} color={isToday ? colors.placeholder : colors.primary} />
+                  <View className="w-10 h-10 rounded-xl bg-white/5 items-center justify-center border border-white/10">
+                    <Feather name="calendar" size={18} color={isToday ? "rgba(255,255,255,0.4)" : colors.primary} />
                   </View>
                   <View>
                     <Text className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-0.5">Date</Text>
@@ -134,18 +136,18 @@ export default function WeightForm({ isEditing, logId }: { isEditing?: boolean; 
                   </View>
                 </View>
                 <Feather name={showDate ? "chevron-up" : "chevron-down"} size={20} color={'rgba(255,255,255,0.2)'} />
-              </>
+              </View>
             );
           })()}
-        </Pressable>
+        </PremiumCard>
 
         <Button
           onPress={handleSubmit}
           loading={isSubmitting}
-          className="mt-2 shadow-md"
+          className="mt-4 shadow-md bg-white text-black rounded-xl py-4"
           size="lg"
         >
-          {isEditing ? "Update Entry" : "Save Entry"}
+          <Text className="text-black font-bold uppercase tracking-widest text-center w-full">{isEditing ? "Update Entry" : "Save Entry"}</Text>
         </Button>
 
       </View>

@@ -41,10 +41,10 @@ export const TasksChart = () => {
   const hasData = stats.pendingTasks > 0 || stats.completedTasks > 0
 
   return (
-    <View className="my-2">
+    <View>
       <PremiumCard 
         gradientColors={['rgba(99,102,241,0.15)', 'rgba(255,255,255,0.01)']}
-        containerStyle="border-white/5 pb-4 pt-6"
+        containerStyle="border-white/5 pt-2"
       >
         <View className="flex-row items-center justify-between mb-2">
           <View>

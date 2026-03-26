@@ -9,7 +9,7 @@ export default function AddWeight() {
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="py-8 pb-32">
-      <Header backTo="/weights" title={"Add Weight"} />
+      <Header backTo="/weights" title={"Add Weight"} className="px-5" />
       <WeightForm />
     </ScrollView>
   )

@@ -199,6 +199,7 @@ export class ElectricSync {
     const safeValues = values.map(v => {
       if (v === undefined) return null
       if (typeof v === 'boolean') return v ? 1 : 0
+      if (v !== null && typeof v === 'object') return JSON.stringify(v)
       return v
     })
 

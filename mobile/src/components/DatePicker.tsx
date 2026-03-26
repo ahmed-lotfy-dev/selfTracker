@@ -60,7 +60,10 @@ export default function DatePicker({
       mode="date"
       display="default"
       onChange={(event, selectedDate) => {
-        if (selectedDate) onChange(selectedDate)
+        if (event.type === 'set' && selectedDate) {
+          onChange(selectedDate)
+        }
+        onClose()
       }}
     />
   )

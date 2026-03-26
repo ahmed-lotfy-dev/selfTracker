@@ -42,8 +42,8 @@ export function RootProvider({ children }: RootProviderProps) {
     if (Platform.OS !== "web") {
       registerForPushNotificationsAsync()
       const cleanup = setUpNotificationListeners({
-        onReceive: () => {},
-        onResponse: () => {},
+        onReceive: () => { },
+        onResponse: () => { },
       })
       return cleanup
     }

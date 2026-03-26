@@ -268,21 +268,17 @@ class SyncManagerService {
         const foodLogs = foodLogsResult.map(f => {
           let parsedItems = []
           try {
-            const rawItems = f.food_items
+            let rawItems = f.food_items || f.foodItems
+            
             if (typeof rawItems === 'string') {
-              if (rawItems.startsWith('[object') || rawItems === 'undefined') {
-                parsedItems = []
-              } else {
+              try {
                 parsedItems = JSON.parse(rawItems)
-                // If it's still a string after one parse, parse it again (double stringification fix)
-                if (typeof parsedItems === 'string') {
-                  parsedItems = JSON.parse(parsedItems)
-                }
+              } catch (e) {
+                // Ignore parsing errors, it will fallback to empty array
+                parsedItems = []
               }
             } else if (Array.isArray(rawItems)) {
               parsedItems = rawItems
-            } else {
-              parsedItems = []
             }
           } catch (e) {
             parsedItems = []

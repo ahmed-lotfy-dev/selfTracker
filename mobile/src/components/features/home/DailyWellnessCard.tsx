@@ -4,22 +4,19 @@ import { PremiumCard } from "@/src/components/ui/PremiumCard"
 
 export const DailyWellnessCard = () => {
   return (
-    <View className="mb-6">
+    <View className="my-4">
       <PremiumCard
         gradientColors={['#10b981', '#064e3b']}
-        containerStyle="h-56 justify-center"
+        containerStyle="py-3 justify-center"
       >
         <View className="flex-row justify-between items-start">
           <View>
             <Text className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Daily Wellness</Text>
             <Text className="text-white text-4xl font-black tracking-tighter">84%</Text>
           </View>
-          <View className="bg-white/20 px-3 py-1 rounded-full items-center justify-center">
-            <Text className="text-white text-[10px] font-bold">PRO MAX</Text>
-          </View>
         </View>
 
-        <View className="mt-8">
+        <View className="mt-1">
           <View className="flex-row justify-between mb-2">
             <Text className="text-white/80 text-sm font-medium">Consistency Target</Text>
             <Text className="text-white text-sm font-bold">90%</Text>
@@ -29,7 +26,7 @@ export const DailyWellnessCard = () => {
           </View>
         </View>
 
-        <View className="flex-row mt-6 gap-4">
+        <View className="flex-row mt-4 gap-4">
           <View>
             <Text className="text-white/60 text-[10px] uppercase font-bold">Streak</Text>
             <Text className="text-white text-lg font-bold">12 Days</Text>

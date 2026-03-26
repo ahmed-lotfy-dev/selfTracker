@@ -1,6 +1,7 @@
 import React, { useMemo } from "react"
-import { Text, View } from "react-native"
+import { Text, View, StyleSheet } from "react-native"
 import Animated, { FadeIn } from "react-native-reanimated"
+import { LinearGradient } from 'expo-linear-gradient'
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import TaskForm from "@/src/components/features/tasks/TaskForm"
@@ -14,9 +15,9 @@ export default function TaskScreen() {
 
   const sortedTasks = useMemo(() => {
     // Defensive deduplication
-    const uniqueTasks = Array.from(new Map(tasks.map(t => [t.id, t])).values())
+    const uniqueTasks = Array.from(new Map(tasks.map((t: Task) => [t.id, t])).values())
 
-    return [...uniqueTasks].sort((a, b) => {
+    return [...uniqueTasks].sort((a: Task, b: Task) => {
       if (a.completed !== b.completed) {
         return Number(a.completed) - Number(b.completed)
       }
@@ -40,9 +41,13 @@ export default function TaskScreen() {
 
   return (
     <View className="flex-1 bg-background px-2">
+      <LinearGradient
+        colors={['rgba(99, 102, 241, 0.1)', 'transparent']}
+        style={StyleSheet.absoluteFill}
+      />
       <Animated.FlatList
         data={sortedTasks}
-        keyExtractor={(item, index) => item?.id?.toString() || `task-${index}`}
+        keyExtractor={(item: Task, index) => item?.id?.toString() || `task-${index}`}
         contentContainerStyle={{ paddingBottom: 100 }}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={

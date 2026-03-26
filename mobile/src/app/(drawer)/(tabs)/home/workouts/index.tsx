@@ -5,7 +5,9 @@ import {
   Text,
   Pressable,
   LayoutAnimation,
+  StyleSheet,
 } from "react-native"
+import { LinearGradient } from 'expo-linear-gradient'
 import Header from "@/src/components/Header"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
 import CalendarView from "@/src/components/features/workouts/CalendarView"
@@ -24,8 +26,8 @@ const VIEW_TYPES = {
 export default function WorkoutScreen() {
   const [currentView, setCurrentView] = useState(VIEW_TYPES.LIST)
   const colors = useThemeColors()
-  const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
-  const fetchWorkoutLogs = useWorkoutsStore(s => s.fetchWorkoutLogs)
+  const workoutLogs = useWorkoutsStore((s: any) => s.workoutLogs)
+  const fetchWorkoutLogs = useWorkoutsStore((s: any) => s.fetchWorkoutLogs)
 
   useEffect(() => {
     fetchWorkoutLogs()
@@ -37,13 +39,13 @@ export default function WorkoutScreen() {
     const monthAgo = new Date()
     monthAgo.setMonth(monthAgo.getMonth() - 1)
 
-    const activeLogs = workoutLogs.filter(w => !w.deletedAt)
-    const weeklyWorkouts = activeLogs.filter(w => new Date(w.createdAt) > weekAgo).length
-    const monthlyWorkouts = activeLogs.filter(w => new Date(w.createdAt) > monthAgo).length
+    const activeLogs = workoutLogs.filter((w: any) => !w.deletedAt)
+    const weeklyWorkouts = activeLogs.filter((w: any) => new Date(w.createdAt) > weekAgo).length
+    const monthlyWorkouts = activeLogs.filter((w: any) => new Date(w.createdAt) > monthAgo).length
     const uniqueWorkoutsThisWeek = new Set(
       activeLogs
-        .filter(w => new Date(w.createdAt) > weekAgo)
-        .map(w => w.workoutName)
+        .filter((w: any) => new Date(w.createdAt) > weekAgo)
+        .map((w: any) => w.workoutName)
     ).size
 
     return { weeklyWorkouts, monthlyWorkouts, uniqueWorkoutsThisWeek }
@@ -106,6 +108,10 @@ export default function WorkoutScreen() {
 
   return (
     <View className="flex-1 bg-background px-4">
+      <LinearGradient
+        colors={['rgba(99, 102, 241, 0.1)', 'transparent']}
+        style={StyleSheet.absoluteFill}
+      />
       <Header
         title="Workouts"
         rightAction={<DrawerToggleButton />}
@@ -113,7 +119,7 @@ export default function WorkoutScreen() {
       <View className="flex-1 mt-2">
         {renderContent()}
       </View>
-      <AddButton path="/workouts" />
+      <AddButton path="/home/workouts" />
     </View>
   )
 }

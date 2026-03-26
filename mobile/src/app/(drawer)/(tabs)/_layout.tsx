@@ -28,22 +28,6 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="weights">
-        <NativeTabs.Trigger.Label>Weight</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: "scalemass", selected: "scalemass.fill" }}
-          md="scale"
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="workouts">
-        <NativeTabs.Trigger.Label>Workout</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: "figure.run.square.stack", selected: "figure.run.square.stack.fill" }}
-          md="fitness_center"
-        />
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="nutrition">
         <NativeTabs.Trigger.Label>Food</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -52,11 +36,11 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="tasks">
-        <NativeTabs.Trigger.Label>Tasks</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="habits">
+        <NativeTabs.Trigger.Label>Habits</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf={{ default: "checklist", selected: "checklist" }}
-          md="task"
+          sf={{ default: "flame", selected: "flame.fill" }}
+          md="local_fire_department"
         />
       </NativeTabs.Trigger>
 

@@ -2,6 +2,7 @@ import React from "react"
 import { View, Text } from "react-native"
 import BackButton from "./Buttons/BackButton"
 import { usePathname, Href } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 interface HeaderProps {
   title: string
@@ -12,30 +13,33 @@ interface HeaderProps {
 }
 
 export default function Header({ title, className, backTo, leftAction, rightAction }: HeaderProps) {
-  const pathname = usePathname()
+  const pathname = usePathname().replace(/\/$/, "")
+  const insets = useSafeAreaInsets()
 
   const noBackButtonPaths = [
     "/",
     "/index",
-    "/weights",
-    "/weights/add",
-    "/tasks",
-    "/workouts",
-    "/workouts/add",
+    "/home/weights",
+    "/home/workouts",
+    "/home/tasks",
+    "/home/habits_stack",
+    "/habits",
+    "/nutrition",
     "/profile",
     "/home",
-    "/habits",
-    "/habits/add",
-    "/nutrition",
-    "/nutrition/add",
-    "/nutrition/goals",
   ]
-  const shouldShowBackButton = !noBackButtonPaths.includes(pathname)
+
+  // Robust check to handle both exact matches and variations
+  const shouldShowBackButton = !noBackButtonPaths.includes(pathname) &&
+    !pathname.endsWith('habits') &&
+    !pathname.endsWith('habits_stack')
+
   const isLargeTitle = !shouldShowBackButton
 
   return (
     <View
       className={`w-full ${className} ${shouldShowBackButton || backTo || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"}`}
+      style={{ marginTop: 12 }}
     >
       {/* Left Section */}
       {(shouldShowBackButton || backTo) && (

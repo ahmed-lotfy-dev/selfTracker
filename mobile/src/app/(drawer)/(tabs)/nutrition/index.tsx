@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo } from "react"
-import { View, ScrollView, Text, Pressable } from "react-native"
+import React, { useEffect, useMemo, useState } from "react"
+import { View, ScrollView, Text, Pressable, StyleSheet } from "react-native"
+import { LinearGradient } from 'expo-linear-gradient'
 import { useThemeColors } from "@/src/constants/Colors"
 import Header from "@/src/components/Header"
 import { Ionicons } from "@expo/vector-icons"
@@ -55,19 +56,14 @@ export default function NutritionScreen() {
 
   return (
     <View className="flex-1 bg-background px-4">
-      {/* Absolute Data Inspector for Debugging */}
-      {todaysLogs.length > 0 && (
-        <View className="bg-red-500/20 p-2">
-          <Text className="text-[6px] text-red-500 font-bold mb-1">
-            DEBUG: {todaysLogs.length} logs. FIRST LOG RAW: {JSON.stringify(todaysLogs[0])}
-          </Text>
-        </View>
-      )}
+      <LinearGradient
+        colors={['rgba(99, 102, 241, 0.1)', 'transparent']}
+        style={StyleSheet.absoluteFill}
+      />
       <Header
         title="Nutrition"
         rightAction={<DrawerToggleButton />}
       />
-
       <View className="flex-1 mt-2">
         <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
 
@@ -97,6 +93,7 @@ export default function NutritionScreen() {
           <DailyIntakeCard
             consumed={totalCalories}
             goal={goalCalories}
+            logs={todaysLogs}
             onPressGoals={handleOpenGoals}
           />
 

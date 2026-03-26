@@ -13,22 +13,22 @@ export default function DrawerLayout() {
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
           headerShown: false,
-          drawerPosition: "right", // Right side drawer
+          drawerPosition: "right",
           drawerActiveTintColor: colors.primary,
           drawerInactiveTintColor: colors.text,
           drawerStyle: {
             backgroundColor: colors.background,
-            width: '80%', // Make it wider for better look
+            width: '80%',
           },
           drawerType: "front",
           overlayColor: "rgba(0,0,0,0.5)",
-          swipeEdgeWidth: 100, // Make it easier to swipe from edge
+          swipeEdgeWidth: 100,
         }}
       >
         <Drawer.Screen
           name="(tabs)"
           options={{
-            drawerLabel: "Home",
+            drawerLabel: "Main",
           }}
         />
       </Drawer>

@@ -32,11 +32,6 @@ export default function FoodItemRow({ item, isLast = false, onDelete }: Props) {
         </View>
       </View>
       <View className="flex-row items-center">
-        <View className="bg-white/5 px-3 py-1 rounded-lg mr-3">
-          <Text className="text-sm font-black text-white tracking-tighter">
-            {item.calories} <Text className="text-[8px] text-white/40 uppercase">kcal</Text>
-          </Text>
-        </View>
         {onDelete && (
           <Pressable onPress={onDelete} className="p-2 bg-red-500/10 rounded-full">
             <Ionicons name="trash-outline" size={14} color="#ef4444" />
