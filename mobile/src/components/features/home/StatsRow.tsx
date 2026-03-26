@@ -5,6 +5,7 @@ import { useThemeColors } from "@/src/constants/Colors"
 import { useTasksStore } from "@/src/stores/useTasksStore"
 import { useHabitsStore } from "@/src/stores/useHabitsStore"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
+import { useSyncStore } from "@/src/stores/useSyncStore"
 import { PremiumCard } from "../../ui/PremiumCard"
 
 interface StatCardProps {
@@ -41,6 +42,7 @@ export const StatsRow = () => {
   const tasks = useTasksStore((s) => s.tasks)
   const habits = useHabitsStore((s) => s.habits)
   const workouts = useWorkoutsStore((s) => s.workoutLogs)
+  const isSyncComplete = useSyncStore((s) => s.isInitialSyncComplete)
 
   const stats = useMemo(() => {
     const activeTasks = tasks.filter((t) => !t.deletedAt)
@@ -64,8 +66,9 @@ export const StatsRow = () => {
       habitsToday: `${todayHabits}/${totalHabits}`,
       totalStreak,
       workoutsThisWeek: workoutsThisWeek === 0 && workouts.length > 0 ? `${workouts.length} total` : workoutsThisWeek,
+      isSyncing: !isSyncComplete && tasks.length === 0 && habits.length === 0 && workouts.length === 0
     }
-  }, [tasks, habits, workouts])
+  }, [tasks, habits, workouts, isSyncComplete])
 
   return (
     <View className="mt-4 gap-3">
@@ -73,15 +76,15 @@ export const StatsRow = () => {
       <View className="flex-row gap-3">
         <StatCard
           label="Tasks"
-          value={stats.pendingTasks}
-          subLabel="pending"
+          value={stats.isSyncing ? "..." : stats.pendingTasks}
+          subLabel={stats.isSyncing ? "syncing" : "pending"}
           icon={<Ionicons name="list" size={18} color="white" />}
           colors={['#6366f1', '#4338ca']} // Indigo
         />
         <StatCard
           label="Habits"
-          value={stats.habitsToday}
-          subLabel="today"
+          value={stats.isSyncing ? "..." : stats.habitsToday}
+          subLabel={stats.isSyncing ? "syncing" : "today"}
           icon={<FontAwesome5 name="check-double" size={14} color="white" />}
           colors={['#10b981', '#047857']} // Emerald
         />
@@ -90,15 +93,15 @@ export const StatsRow = () => {
       <View className="flex-row gap-3">
         <StatCard
           label="Streak"
-          value={stats.totalStreak}
-          subLabel="days"
+          value={stats.isSyncing ? "..." : stats.totalStreak}
+          subLabel={stats.isSyncing ? "syncing" : "days"}
           icon={<FontAwesome5 name="fire-alt" size={16} color="white" />}
           colors={['#f59e0b', '#d97706']} // Amber
         />
         <StatCard
           label="Workouts"
-          value={stats.workoutsThisWeek}
-          subLabel={typeof stats.workoutsThisWeek === 'number' ? "this week" : ""}
+          value={stats.isSyncing ? "..." : stats.workoutsThisWeek}
+          subLabel={stats.isSyncing ? "syncing" : (typeof stats.workoutsThisWeek === 'number' ? "this week" : "")}
           icon={<MaterialIcons name="fitness-center" size={18} color="white" />}
           colors={['#ec4899', '#be185d']} // Pink
         />

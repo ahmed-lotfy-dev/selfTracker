@@ -4,6 +4,7 @@ import { PieChart } from "react-native-chart-kit"
 import { Ionicons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useTasksStore } from "@/src/stores/useTasksStore"
+import { useSyncStore } from "@/src/stores/useSyncStore"
 import { PremiumCard } from "../../ui/PremiumCard"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
@@ -11,6 +12,7 @@ const SCREEN_WIDTH = Dimensions.get("window").width
 export const TasksChart = () => {
   const colors = useThemeColors()
   const tasks = useTasksStore((s) => s.tasks)
+  const isSyncComplete = useSyncStore((s) => s.isInitialSyncComplete)
 
   const stats = useMemo(() => {
     const activeTasks = tasks.filter((t) => !t.deletedAt)
@@ -73,10 +75,16 @@ export const TasksChart = () => {
         ) : (
           <View className="items-center justify-center py-10">
             <View className="p-4 rounded-full bg-white/5 mb-3">
-              <Ionicons name="stats-chart-outline" size={32} color="rgba(255,255,255,0.2)" />
+              <Ionicons 
+                name={!isSyncComplete ? "sync" : "stats-chart-outline"} 
+                size={32} 
+                color="rgba(255,255,255,0.2)" 
+              />
             </View>
             <Text className="text-white/30 text-center text-sm px-10">
-              Your productivity insights will appear here once you start completing tasks.
+              {!isSyncComplete 
+                ? "Syncing your data from the cloud... This may take a moment." 
+                : "Your productivity insights will appear here once you start completing tasks."}
             </Text>
           </View>
         )}

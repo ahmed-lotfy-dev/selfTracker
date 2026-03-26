@@ -35,7 +35,7 @@ export default function CustomDrawerContent(props: any) {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="flex-1 bg-background pt-12 pb-6">
+      <View className="flex-1 bg-background pb-6">
         <View className="flex-1">
           {/* User Header */}
           <View className="px-6 py-8 border-b border-border mb-2">

@@ -5,7 +5,7 @@ import * as SplashScreen from "expo-splash-screen"
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
-import { SafeAreaProvider } from "react-native-safe-area-context"
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
 
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useAppState } from "@/src/hooks/useAppState"
@@ -77,7 +77,9 @@ export function RootProvider({ children }: RootProviderProps) {
         <KeyboardProvider>
           <ToastProvider>
             {isLoading && <LoadingOverlay />}
-            {children}
+            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+              {children}
+            </SafeAreaView>
           </ToastProvider>
         </KeyboardProvider>
       </GestureHandlerRootView>

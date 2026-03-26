@@ -45,11 +45,16 @@ userRouter.get("/me/home", async (c) => {
   const user = c.get("user" as any)
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
+  const refresh = c.req.query("refresh") === "true";
+
   try {
     const cacheKey = `userHomeData:${user.id}`
-    const cached = await getCache(cacheKey)
-    if (cached) {
-      return c.json(JSON.parse(cached))
+    
+    if (!refresh) {
+      const cached = await getCache(cacheKey)
+      if (cached) {
+        return c.json(JSON.parse(cached))
+      }
     }
 
     const userData = await getUserData(user)

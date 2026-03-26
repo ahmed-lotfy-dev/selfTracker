@@ -35,7 +35,7 @@ export default function Header({ title, className, backTo, leftAction, rightActi
 
   return (
     <View
-      className={`w-full ${className} ${shouldShowBackButton || backTo || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"} ml-1 pt-3`}
+      className={`w-full ${className} ${shouldShowBackButton || backTo || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"} ml-1`}
     >
       {/* Left Section */}
       {(shouldShowBackButton || backTo) && (

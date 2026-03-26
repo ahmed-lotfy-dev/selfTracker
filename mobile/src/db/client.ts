@@ -1,6 +1,7 @@
 import { ShapeStream, Message } from '@electric-sql/client'
 import * as SQLite from 'expo-sqlite'
 import { useAuthStore } from "@/src/features/auth/useAuthStore"
+import { useSyncStore } from "@/src/stores/useSyncStore"
 
 import { API_BASE_URL } from "@/src/lib/api/config"
 
@@ -21,6 +22,8 @@ export class ElectricSync {
     const token = useAuthStore.getState().token;
     console.log(`[ElectricSync] 🔑 Syncing ${tableName} with token: ${token ? 'PRESENT (' + token.substring(0, 10) + '...)' : 'MISSING'}`);
 
+    useSyncStore.getState().setTableStatus(tableName, 'syncing');
+
 
     try {
       // Use Backend Proxy: [API_BASE_URL]/api/electric/[tableName]
@@ -40,6 +43,7 @@ export class ElectricSync {
         } : undefined,
         onError: (error) => {
           console.error(`[ElectricSync] ❌ Stream Error (${tableName}):`, error);
+          useSyncStore.getState().setTableStatus(tableName, 'error');
           // If it's a FetchError with 503, it's likely the quota issue seen in logs
           if ((error as any).status === 503) {
             console.warn(`[ElectricSync] ⚠️ Quota exceeded or service error for ${tableName}. Check ElectricSQL Cloud dashboard.`);
@@ -93,6 +97,7 @@ export class ElectricSync {
               const m = msg as any
 
               if (m.headers?.control === 'up-to-date') {
+                useSyncStore.getState().setTableStatus(tableName, 'synced');
                 continue
               }
 
