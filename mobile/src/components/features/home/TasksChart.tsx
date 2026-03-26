@@ -1,8 +1,10 @@
 import { View, Text, Dimensions } from "react-native"
 import React, { useMemo } from "react"
 import { PieChart } from "react-native-chart-kit"
+import { Ionicons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useTasksStore } from "@/src/stores/useTasksStore"
+import { PremiumCard } from "../../ui/PremiumCard"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 
@@ -21,53 +23,64 @@ export const TasksChart = () => {
     {
       name: "Pending",
       population: stats.pendingTasks,
-      color: colors.secondary,
-      legendFontColor: colors.text,
-      legendFontSize: 12,
+      color: "#6366f1", // Indigo
+      legendFontColor: "rgba(255,255,255,0.7)",
+      legendFontSize: 11,
     },
     {
       name: "Done",
       population: stats.completedTasks,
-      color: colors.primary,
-      legendFontColor: colors.text,
-      legendFontSize: 12,
+      color: "#10b981", // Emerald
+      legendFontColor: "rgba(255,255,255,0.7)",
+      legendFontSize: 11,
     },
   ]
 
   const hasData = stats.pendingTasks > 0 || stats.completedTasks > 0
 
   return (
-    <View
-      className="p-4 my-2 bg-card rounded-lg shadow-md border border-border"
-      style={{ alignSelf: "center", width: "100%" }}
-    >
-      <Text
-        style={{ marginBottom: 4, fontWeight: "bold", color: colors.primary }}
+    <View className="my-2">
+      <PremiumCard 
+        gradientColors={['rgba(255,255,255,0.03)', 'rgba(255,255,255,0.01)']}
       >
-        Tasks Overview
-      </Text>
-      {hasData ? (
-        <PieChart
-          data={data}
-          width={SCREEN_WIDTH - 48}
-          height={140}
-          chartConfig={{
-            backgroundGradientFrom: colors.card,
-            backgroundGradientTo: colors.card,
-            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          }}
-          accessor="population"
-          backgroundColor="transparent"
-          paddingLeft="15"
-          absolute
-        />
-      ) : (
-        <View className="items-center justify-center py-8">
-          <Text className="text-placeholder text-center">
-            No tasks yet. Add some tasks to see your progress!
+        <View className="flex-row items-center justify-between mb-2">
+          <Text className="text-white/40 font-bold text-[10px] uppercase tracking-wider">
+            Tasks Overview
           </Text>
+          {hasData && (
+             <View className="bg-primary/20 px-2 py-0.5 rounded-full">
+               <Text className="text-primary text-[10px] font-bold">LIVE</Text>
+             </View>
+          )}
         </View>
-      )}
+
+        {hasData ? (
+          <View className="items-center -ml-4">
+            <PieChart
+              data={data}
+              width={SCREEN_WIDTH - 64}
+              height={160}
+              chartConfig={{
+                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              }}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute
+              hasLegend={true}
+            />
+          </View>
+        ) : (
+          <View className="items-center justify-center py-10">
+            <View className="p-4 rounded-full bg-white/5 mb-3">
+              <Ionicons name="stats-chart-outline" size={32} color="rgba(255,255,255,0.2)" />
+            </View>
+            <Text className="text-white/30 text-center text-sm px-10">
+              Your productivity insights will appear here once you start completing tasks.
+            </Text>
+          </View>
+        )}
+      </PremiumCard>
     </View>
   )
 }
