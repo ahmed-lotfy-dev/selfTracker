@@ -1,12 +1,9 @@
 import type { MiddlewareHandler } from "hono";
-import { db } from "../db/index.js";
-import { sessions, users } from "../db/schema/index.js";
-import { eq, and, gt } from "drizzle-orm";
+import { auth } from "../../lib/auth.js";
 
 /**
  * Middleware to authenticate requests using better-auth session tokens.
- * Directly validates session tokens from cookies against the database.
- * Supports both email/password and social login authentication.
+ * Uses official better-auth API to validate sessions from headers or cookies.
  */
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
   // Skip auth check for OPTIONS requests (CORS preflight) and auth routes (login/register)
@@ -15,66 +12,22 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
   }
 
   try {
-    const token = c.req.query('token');
+    const authHeader = c.req.header("Authorization");
+    const cookieHeader = c.req.header("Cookie");
+    
+    const session = await auth.api.getSession({
+      headers: c.req.raw.headers,
+    });
 
-    // Extract session token from query, Authorization header, or cookies
-    let sessionToken: string | undefined = token;
-
-    // Check Authorization header (Bearer token)
-    if (!sessionToken) {
-      const authHeader = c.req.header('Authorization');
-      if (authHeader?.startsWith('Bearer ')) {
-        sessionToken = authHeader.substring(7); // Remove 'Bearer ' prefix
-      }
-    }
-
-    // Check cookies
-    if (!sessionToken) {
-      const cookieHeader = c.req.header('Cookie') || '';
-      // Try to extract from either cookie format
-      const betterAuthMatch = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
-      const secureMatch = cookieHeader.match(/__Secure-better-auth\.session_token=([^;]+)/);
-      sessionToken = betterAuthMatch?.[1] || secureMatch?.[1];
-
-      // Handle signed cookies (token.signature) - better-auth uses this format
-      if (sessionToken && sessionToken.includes(".")) {
-        sessionToken = sessionToken.split(".")[0];
-      }
-    }
-
-    if (!sessionToken) {
+    if (!session) {
+      console.error(`[AuthMiddleware] ❌ Unauthorized: ${c.req.method} ${c.req.path}`);
+      console.error(`  Auth Header: ${authHeader ? 'Present (' + authHeader.substring(0, 15) + '...)' : 'MISSING'}`);
+      console.error(`  Cookie Header: ${cookieHeader ? 'Present' : 'MISSING'}`);
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    // Query session directly from database
-    const sessionResult = await db
-      .select({
-        session: sessions,
-        user: users
-      })
-      .from(sessions)
-      .innerJoin(users, eq(sessions.userId, users.id))
-      .where(
-        and(
-          eq(sessions.token, sessionToken),
-          gt(sessions.expiresAt, new Date())
-        )
-      )
-      .limit(1);
-
-
-
-
-
-    if (sessionResult.length === 0) {
-      console.log(`[AuthMiddleware] ❌ Session NOT FOUND or EXPIRED for token ${sessionToken.substring(0, 20)}...`);
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    const { session, user } = sessionResult[0];
-
-    c.set("user" as any, user);
-    c.set("session", session);
+    c.set("user" as any, session.user);
+    c.set("session" as any, session.session);
 
     await next();
   } catch (error) {

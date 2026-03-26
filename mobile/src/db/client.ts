@@ -19,7 +19,8 @@ export class ElectricSync {
     // console.log(`[ElectricSync] Starting sync for table: ${tableName}`)
 
     const token = useAuthStore.getState().token;
-    // console.log(`[ElectricSync] Syncing ${tableName} with token: ${token ? 'PRESENT' : 'MISSING'} (${token?.substring(0, 10)}...)`);
+    console.log(`[ElectricSync] 🔑 Syncing ${tableName} with token: ${token ? 'PRESENT (' + token.substring(0, 10) + '...)' : 'MISSING'}`);
+
 
     try {
       // Use Backend Proxy: [API_BASE_URL]/api/electric/[tableName]
@@ -34,8 +35,12 @@ export class ElectricSync {
 
       const stream = new ShapeStream({
         url,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        headers: token ? { 
+          Authorization: `Bearer ${token}`,
+          Cookie: `better-auth.session_token=${token}; __Secure-better-auth.session_token=${token}`
+        } : undefined,
       })
+
 
       const unsubscribe = stream.subscribe((messages) => {
         this.applyMessages(tableName, messages as Message[])

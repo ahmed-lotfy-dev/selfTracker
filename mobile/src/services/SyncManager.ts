@@ -10,16 +10,21 @@ class SyncManagerService {
   private db: SQLite.SQLiteDatabase | null = null
   private dbName = "self_tracker_db.db"
   private isInitialized = false
-
+  private initPromise: Promise<void> | null = null
 
   async initialize() {
-    if (this.db) return
+    if (this.isInitialized) return
+    if (this.initPromise) return this.initPromise
 
+    this.initPromise = this._doInitialize()
+    return this.initPromise
+  }
+
+  private async _doInitialize() {
     try {
       console.log(`[SyncManager] Initializing Local DB: ${this.dbName}`)
       this.db = await SQLite.openDatabaseAsync(this.dbName)
 
-      // Enable WAL mode for concurrency (prevents "database locked" errors)
       await this.db.execAsync('PRAGMA journal_mode = WAL;')
 
       await this.db.execAsync(`
@@ -52,11 +57,11 @@ class SyncManagerService {
       `)
 
       this.isInitialized = true
-      // Load whatever local data we have immediately
       await this.pullFromDB()
 
     } catch (e) {
       console.error("[SyncManager] Initialization failed:", e)
+      this.initPromise = null
     }
   }
 
