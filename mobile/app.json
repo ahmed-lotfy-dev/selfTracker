@@ -7,11 +7,9 @@
     "icon": "./assets/images/splash-screen.png",
     "scheme": ["selftracker", "exp+selftracker"],
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ahmedlotfy.selftracker",
-      "jsEngine": "jsc"
+      "bundleIdentifier": "com.ahmedlotfy.selftracker"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +17,6 @@
         "backgroundImage": "./assets/images/splash-screen.png"
       },
       "googleServicesFile": "./google-services.json",
-      "edgeToEdgeEnabled": true,
       "package": "com.ahmedlotfy.selftracker",
       "versionCode": 12
     },
@@ -50,19 +47,17 @@
           "icon": "./assets/images/ic_launcher.png",
           "color": "#ffffff",
           "defaultChannel": "default",
-          "sounds": [
-            "./assets/notification_sound.wav"
-          ],
+          "sounds": ["./assets/notification_sound.wav"],
           "enableBackgroundRemoteNotifications": false
         }
       ],
-      [
-        "expo-secure-store"
-      ],
+      ["expo-secure-store"],
       "expo-font",
       "expo-web-browser",
       "expo-sqlite",
-      "./plugins/withDisableLinting"
+      "./plugins/withDisableLinting",
+      "@react-native-community/datetimepicker",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true
@@ -79,7 +74,6 @@
     "runtimeVersion": "1.1.4",
     "updates": {
       "url": "https://u.expo.dev/6cb0f186-29d6-46d3-baa5-af88fdccee50"
-    },
-    "jsEngine": "hermes"
+    }
   }
 }
