@@ -12,7 +12,7 @@ export default function HabitsStackLayout() {
         presentation: "formSheet",
         headerShown: false,
         animation: "slide_from_bottom",
-        headerLeft: () => <BackButton backTo="/habits" />,
+        headerLeft: () => <BackButton backTo="/home/habits" />,
       }} />
     </Stack>
   );

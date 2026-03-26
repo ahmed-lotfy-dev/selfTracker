@@ -1,11 +1,21 @@
-import { z } from "zod"
+export type WorkoutLog = {
+  id: string
+  userId: string
+  workoutId?: string | null
+  workoutName: string
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
 
-export const WorkoutSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  trainingSplitId: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-})
-
-export type WorkoutType = z.infer<typeof WorkoutSchema>
+export type Workout = {
+  id: string
+  name: string
+  trainingSplitId?: string | null
+  userId: string
+  createdAt: string
+  updatedAt: string
+  isPublic: boolean | null
+  deletedAt: string | null
+}

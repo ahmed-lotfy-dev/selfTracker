@@ -18,6 +18,8 @@ import {
 import { LoadingOverlay } from "@/src/components/ui/Loading"
 import { ToastProvider } from "@/src/hooks/useToast"
 
+import { useThemeColors } from "@/src/constants/Colors"
+
 SplashScreen.preventAutoHideAsync()
 
 interface RootProviderProps {
@@ -25,6 +27,7 @@ interface RootProviderProps {
 }
 
 export function RootProvider({ children }: RootProviderProps) {
+  const colors = useThemeColors()
   useAppState(onAppStateChange)
   const { isAuthenticated, isLoading } = useAuth()
   const [appIsReady, setAppIsReady] = useState(false)
@@ -77,7 +80,7 @@ export function RootProvider({ children }: RootProviderProps) {
         <KeyboardProvider>
           <ToastProvider>
             {isLoading && <LoadingOverlay />}
-            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
               {children}
             </SafeAreaView>
           </ToastProvider>

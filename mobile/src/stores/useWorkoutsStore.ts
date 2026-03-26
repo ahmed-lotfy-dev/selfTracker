@@ -1,27 +1,6 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
-
-export type WorkoutLog = {
-  id: string
-  userId: string
-  workoutId?: string | null
-  workoutName: string
-  notes: string | null
-  createdAt: string
-  updatedAt: string
-  deletedAt: string | null
-}
-
-export type Workout = {
-  id: string
-  name: string
-  trainingSplitId?: string | null
-  userId: string
-  createdAt: string
-  updatedAt: string
-  isPublic: boolean | null
-  deletedAt: string | null
-}
+import { WorkoutLog, Workout } from '../types/workoutType'
 
 const STORAGE_KEY_LOGS = 'local-workout-logs'
 const STORAGE_KEY_TEMPLATES = 'local-workouts'

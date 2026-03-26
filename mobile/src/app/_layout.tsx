@@ -8,7 +8,7 @@ Appearance.setColorScheme = (scheme: any) => {
   _origSetColorScheme(scheme ?? "unspecified")
 }
 
-import React from "react"
+import React, { useEffect } from "react"
 import { Stack } from "expo-router"
 import { StatusBar, useColorScheme } from "react-native"
 import { Colors } from "../constants/Colors"
@@ -16,17 +16,23 @@ import { RootProvider } from "@/src/components/Provider/RootProvider"
 import { PortalHost } from "@rn-primitives/portal"
 import CustomAlert from "@/src/components/ui/CustomAlert"
 import Toast from "@/src/components/ui/Toast"
+import { checkForUpdates } from "@/src/lib/lib"
 import "@/src/global.css"
 
 function RootLayout() {
   const colorScheme = useColorScheme()
   const themeColors = Colors[(colorScheme === "dark" ? "dark" : "light")]
 
+  useEffect(() => {
+    checkForUpdates()
+  }, [])
+
   return (
     <RootProvider>
       <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
-        backgroundColor={themeColors.background}
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent={true}
       />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />

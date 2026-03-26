@@ -6,7 +6,7 @@ import type {
   NutritionGoals,
   FoodItem,
   MealType
-} from "@/src/types/nutrition"
+} from "@/src/types/nutritionType"
 
 export const analyzeFoodImage = async (base64Image: string): Promise<FoodAnalysisResult> => {
   const response = await axiosInstance.post(`${API_BASE_URL}/api/nutrition/analyze`, {

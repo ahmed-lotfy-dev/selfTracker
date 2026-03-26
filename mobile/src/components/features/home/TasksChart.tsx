@@ -43,21 +43,23 @@ export const TasksChart = () => {
   return (
     <View className="my-2">
       <PremiumCard 
-        gradientColors={['rgba(255,255,255,0.03)', 'rgba(255,255,255,0.01)']}
+        gradientColors={['rgba(99,102,241,0.15)', 'rgba(255,255,255,0.01)']}
+        containerStyle="border-white/5 pb-4 pt-6"
       >
         <View className="flex-row items-center justify-between mb-2">
-          <Text className="text-white/40 font-bold text-[10px] uppercase tracking-wider">
-            Tasks Overview
-          </Text>
+          <View>
+            <Text className="text-white/40 text-[10px] font-black uppercase tracking-[2px] mb-1">Productivity</Text>
+            <Text className="text-white text-3xl font-black tracking-tighter">Task Overview</Text>
+          </View>
           {hasData && (
-             <View className="bg-primary/20 px-2 py-0.5 rounded-full">
-               <Text className="text-primary text-[10px] font-bold">LIVE</Text>
+             <View className="bg-indigo-500/20 px-3 py-1.5 rounded-full border border-indigo-500/20">
+               <Text className="text-indigo-400 text-[10px] font-black uppercase tracking-widest">LIVE</Text>
              </View>
           )}
         </View>
 
         {hasData ? (
-          <View className="items-center -ml-4">
+          <View className="items-center -ml-4 mt-2">
             <PieChart
               data={data}
               width={SCREEN_WIDTH - 64}
@@ -73,18 +75,18 @@ export const TasksChart = () => {
             />
           </View>
         ) : (
-          <View className="items-center justify-center py-10">
+          <View className="items-center justify-center py-10 mt-2 bg-black/20 rounded-2xl border border-white/5">
             <View className="p-4 rounded-full bg-white/5 mb-3">
               <Ionicons 
-                name={!isSyncComplete ? "sync" : "stats-chart-outline"} 
+                name={!isSyncComplete ? "sync" : "checkmark-circle-outline"}
                 size={32} 
-                color="rgba(255,255,255,0.2)" 
+                color="rgba(255,255,255,0.5)" 
               />
             </View>
-            <Text className="text-white/30 text-center text-sm px-10">
+            <Text className="text-white/50 text-center text-xs font-bold px-10 leading-5">
               {!isSyncComplete 
-                ? "Syncing your data from the cloud... This may take a moment." 
-                : "Your productivity insights will appear here once you start completing tasks."}
+                ? "SYNCING YOUR DATA FROM THE CLOUD..." 
+                : "YOUR PRODUCTIVITY INSIGHTS WILL APPEAR HERE ONCE YOU COMPLETE TASKS."}
             </Text>
           </View>
         )}

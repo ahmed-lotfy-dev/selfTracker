@@ -1,8 +1,10 @@
 import * as SQLite from "expo-sqlite"
 import { useTasksStore } from "@/src/stores/useTasksStore"
 import { useHabitsStore } from "@/src/stores/useHabitsStore"
-import { useWorkoutsStore, WorkoutLog, Workout } from "@/src/stores/useWorkoutsStore"
-import { useWeightStore, WeightLog } from "@/src/stores/useWeightStore"
+import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
+import { useWeightStore } from "@/src/stores/useWeightStore"
+import { WeightLog } from "../types/weightType"
+import { Workout, WorkoutLog } from "../types/workoutType"
 import { ElectricSync } from "@/src/db/client"
 import axiosInstance from '@/src/lib/api/axiosInstance'
 
@@ -11,6 +13,29 @@ class SyncManagerService {
   private dbName = "self_tracker_db.db"
   private isInitialized = false
   private initPromise: Promise<void> | null = null
+
+  private dbLock = Promise.resolve()
+
+  async runExclusive<T>(fn: () => Promise<T>): Promise<T> {
+    let resolve: (value: T) => void
+    let reject: (reason?: any) => void
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res
+      reject = rej
+    })
+
+    const nextLock = this.dbLock.then(async () => {
+      try {
+        const result = await fn()
+        resolve(result)
+      } catch (e) {
+        reject(e)
+      }
+    })
+
+    this.dbLock = nextLock
+    return promise
+  }
 
   async initialize() {
     if (this.isInitialized) return
@@ -243,18 +268,23 @@ class SyncManagerService {
         const foodLogs = foodLogsResult.map(f => {
           let parsedItems = []
           try {
-            if (typeof f.food_items === 'string') {
-              if (f.food_items === 'undefined' || f.food_items === '[object Object]') {
+            const rawItems = f.food_items
+            if (typeof rawItems === 'string') {
+              if (rawItems.startsWith('[object') || rawItems === 'undefined') {
                 parsedItems = []
               } else {
-                parsedItems = JSON.parse(f.food_items)
+                parsedItems = JSON.parse(rawItems)
+                // If it's still a string after one parse, parse it again (double stringification fix)
+                if (typeof parsedItems === 'string') {
+                  parsedItems = JSON.parse(parsedItems)
+                }
               }
+            } else if (Array.isArray(rawItems)) {
+              parsedItems = rawItems
             } else {
-              parsedItems = f.food_items || []
+              parsedItems = []
             }
           } catch (e) {
-            // Fail safe: If items are corrupted, still load the log with empty items to preserve history
-            // console.log(`[SyncManager] 🛠️ Auto-repaired corrupted food items for log ${f.id}`)
             parsedItems = []
           }
 
@@ -295,85 +325,90 @@ class SyncManagerService {
   async pushTask(task: any) {
     if (!this.db) return
     try {
-      await this.db.runAsync(`
-        INSERT OR REPLACE INTO tasks (id, user_id, title, completed, created_at, updated_at, deleted_at, category, priority)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [task.id, task.userId, task.title, task.completed ? 1 : 0, task.createdAt, task.updatedAt, task.deletedAt, task.category || 'general', task.priority || 'medium'])
+      await this.runExclusive(async () => {
+        await this.db!.runAsync(`
+          INSERT OR REPLACE INTO tasks (id, user_id, title, completed, created_at, updated_at, deleted_at, category, priority)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [task.id, task.userId, task.title, task.completed ? 1 : 0, task.createdAt, task.updatedAt, task.deletedAt, task.category || 'general', task.priority || 'medium'])
+      })
 
       if (task.deletedAt) {
         await axiosInstance.delete(`/api/tasks/${task.id}`)
       } else {
         await axiosInstance.post('/api/tasks', task)
       }
-
     } catch (e) { console.error("Push task failed:", e) }
   }
 
   async pushHabit(habit: any) {
     if (!this.db) return
     try {
-      await this.db.runAsync(`
-        INSERT OR REPLACE INTO habits (id, user_id, name, description, streak, color, completed_today, last_completed_at, created_at, updated_at, deleted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt])
+      await this.runExclusive(async () => {
+        await this.db!.runAsync(`
+          INSERT OR REPLACE INTO habits (id, user_id, name, description, streak, color, completed_today, last_completed_at, created_at, updated_at, deleted_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt])
+      })
 
       if (habit.deletedAt) {
         await axiosInstance.delete(`/api/habits/${habit.id}`)
       } else {
         await axiosInstance.post('/api/habits', habit)
       }
-
     } catch (e) { console.error("Push habit failed:", e) }
   }
 
   async pushWorkout(workout: any) {
     if (!this.db) return
     try {
-      await this.db.runAsync(`
-         INSERT OR REPLACE INTO workouts (id, name, training_split_id, user_id, created_at, updated_at, is_public, deleted_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       `, [workout.id, workout.name, workout.trainingSplitId, workout.userId, workout.createdAt, workout.updatedAt, workout.isPublic ? 1 : 0, workout.deletedAt])
+      await this.runExclusive(async () => {
+        await this.db!.runAsync(`
+          INSERT OR REPLACE INTO workouts (id, name, training_split_id, user_id, created_at, updated_at, is_public, deleted_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [workout.id, workout.name, workout.trainingSplitId, workout.userId, workout.createdAt, workout.updatedAt, workout.isPublic ? 1 : 0, workout.deletedAt])
+      })
 
       if (workout.deletedAt) {
         await axiosInstance.delete(`/api/workouts/${workout.id}`)
       } else {
         await axiosInstance.post('/api/workouts', workout)
       }
-
     } catch (e) { console.error("Push workout template failed:", e) }
   }
 
   async pushWorkoutLog(log: WorkoutLog) {
     if (!this.db) return
     try {
-      await this.db.runAsync(`
-        INSERT OR REPLACE INTO workout_logs (id, user_id, workout_id, workout_name, notes, created_at, updated_at, deleted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `, [log.id, log.userId, log.workoutId || 'unknown', log.workoutName, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
+      await this.runExclusive(async () => {
+        await this.db!.runAsync(`
+          INSERT OR REPLACE INTO workout_logs (id, user_id, workout_id, workout_name, notes, created_at, updated_at, deleted_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [log.id, log.userId, log.workoutId || 'unknown', log.workoutName, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
+      })
 
       if (log.deletedAt) {
         await axiosInstance.delete(`/api/workoutLogs/${log.id}`)
       } else {
         await axiosInstance.post('/api/workoutLogs', log)
       }
-
     } catch (e) { console.error("Push workout failed:", e) }
   }
 
   async pushWeightLog(log: WeightLog) {
     if (!this.db) return
     try {
-      await this.db.runAsync(`
-        INSERT OR REPLACE INTO weight_logs (id, user_id, weight, notes, created_at, updated_at, deleted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `, [log.id, log.userId, log.weight, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
+      await this.runExclusive(async () => {
+        await this.db!.runAsync(`
+          INSERT OR REPLACE INTO weight_logs (id, user_id, weight, notes, created_at, updated_at, deleted_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [log.id, log.userId, log.weight, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
+      })
 
       if (log.deletedAt) {
         await axiosInstance.delete(`/api/weightLogs/${log.id}`)
       } else {
         await axiosInstance.post('/api/weightLogs', log)
       }
-
     } catch (e) { console.error("Push weight failed:", e) }
   }
 
@@ -385,27 +420,29 @@ class SyncManagerService {
     console.log('[SyncManager] 💾 Pushing food log:', JSON.stringify(log))
 
     try {
-      await this.db.runAsync(`
-        INSERT OR REPLACE INTO food_logs (
-          id, user_id, logged_at, meal_type, food_items,
-          total_calories, total_protein, total_carbs, total_fat,
-          created_at, updated_at, deleted_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        log.id,
-        log.userId,
-        log.loggedAt,
-        log.mealType,
-        JSON.stringify(log.foodItems || []),
-        log.totalCalories,
-        log.totalProtein,
-        log.totalCarbs,
-        log.totalFat,
-        log.createdAt || new Date().toISOString(),
-        log.updatedAt || new Date().toISOString(),
-        log.deletedAt || null
-      ])
+      await this.runExclusive(async () => {
+        await this.db!.runAsync(`
+          INSERT OR REPLACE INTO food_logs (
+            id, user_id, logged_at, meal_type, food_items,
+            total_calories, total_protein, total_carbs, total_fat,
+            created_at, updated_at, deleted_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          log.id,
+          log.userId,
+          log.loggedAt,
+          log.mealType,
+          JSON.stringify(log.foodItems || []),
+          log.totalCalories,
+          log.totalProtein,
+          log.totalCarbs,
+          log.totalFat,
+          log.createdAt || new Date().toISOString(),
+          log.updatedAt || new Date().toISOString(),
+          log.deletedAt || null
+        ])
+      })
       console.log(`[SyncManager] ✅ Food log ${log.id} saved to SQLite`)
 
       // If deleted, use DELETE endpoint. Otherwise use POST (Create/Update)
@@ -416,7 +453,6 @@ class SyncManagerService {
         await axiosInstance.post('/api/nutrition/logs', log)
         console.log(`[SyncManager] ☁️ Food log ${log.id} pushed to API`)
       }
-
     } catch (e: any) {
       console.error("[SyncManager] ❌ Push food log failed:", e.message)
       if (e.response) {

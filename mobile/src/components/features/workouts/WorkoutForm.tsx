@@ -179,18 +179,23 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
         </View>
 
         {/* --- Date Toggle --- */}
-        <View className="flex-row items-center justify-between px-2">
-          <Pressable
-            onPress={() => setIsDatePickerVisible(true)}
-            className="flex-row items-center gap-2 py-2 px-3 rounded-full bg-muted/30"
-          >
-            <Feather name="calendar" size={14} color={!isToday ? colors.primary : colors.placeholder} />
-            <Text className={`text-xs font-medium ${!isToday ? 'text-primary' : 'text-placeholder'}`}>
-              {!isToday ? <DateDisplay date={createdAt} /> : "Today"}
-            </Text>
-            <Feather name="chevron-down" size={12} color={colors.placeholder} />
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={() => setIsDatePickerVisible(!isDatePickerVisible)}
+          className="bg-card rounded-2xl shadow-sm border border-white/5 overflow-hidden p-4 flex-row justify-between items-center"
+        >
+          <View className="flex-row items-center gap-3">
+            <View className="w-10 h-10 rounded-full bg-white/5 items-center justify-center border border-white/5">
+              <Feather name="calendar" size={18} color={isToday ? colors.placeholder : colors.primary} />
+            </View>
+            <View>
+              <Text className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-0.5">Date</Text>
+              <Text className={`text-base font-black tracking-tight ${!isToday ? 'text-white' : 'text-white/60'}`}>
+                {!isToday ? <DateDisplay date={createdAt} /> : "Today"}
+              </Text>
+            </View>
+          </View>
+          <Feather name={isDatePickerVisible ? "chevron-up" : "chevron-down"} size={20} color={'rgba(255,255,255,0.2)'} />
+        </Pressable>
 
         <Button
           onPress={handleSubmit}

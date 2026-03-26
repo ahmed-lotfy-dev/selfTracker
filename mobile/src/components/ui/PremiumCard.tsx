@@ -4,18 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
 
-interface PremiumCardProps {
-  children: React.ReactNode;
-  gradientColors?: readonly [string, string, ...string[]];
-  containerStyle?: string;
-  onPress?: () => void;
-}
+import { PremiumCardProps } from '@/src/types/uiType';
 
 export const PremiumCard = ({ 
   children, 
   gradientColors = ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)'],
   containerStyle = "",
-  onPress 
+  onPress,
+  onLongPress
 }: PremiumCardProps) => {
   const scale = useSharedValue(1);
 
@@ -35,6 +31,7 @@ export const PremiumCard = ({
     <Animated.View style={[animatedStyle, { flex: 1 }]}>
       <Pressable
         onPress={onPress}
+        onLongPress={onLongPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         className={`rounded-2xl overflow-hidden border border-white/10 ${containerStyle}`}

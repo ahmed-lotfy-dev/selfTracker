@@ -62,13 +62,15 @@ export default function WeightsScreen() {
   )
 
   return (
-    <View className="flex-1 bg-background px-1">
+    <View className="flex-1 bg-background px-4">
       <Header
         title="Weights"
         rightAction={<DrawerToggleButton />}
       />
-      <WeightLogsList ListHeaderComponent={<ListHeader />} />
-      <AddButton path="/weights" />
+      <View className="flex-1 mt-2">
+        <WeightLogsList ListHeaderComponent={<ListHeader />} />
+        <AddButton path="/weights" />
+      </View>
     </View>
   )
 }

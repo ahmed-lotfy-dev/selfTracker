@@ -2,10 +2,11 @@ import React from "react"
 import { View, Text, Pressable } from "react-native"
 import { useThemeColors } from "@/src/constants/Colors"
 import { Ionicons } from "@expo/vector-icons"
-import type { FoodLog, MealType } from "@/src/types/nutrition"
+import type { FoodLog, MealType } from "@/src/types/nutritionType"
 import { useNutritionStore } from "@/src/stores/useNutritionStore"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 import FoodItemRow from "./FoodItemRow"
+import { PremiumCard } from "@/src/components/ui/PremiumCard"
 
 type Props = {
   title: string
@@ -13,11 +14,40 @@ type Props = {
   logs: FoodLog[]
 }
 
+const normalizeItems = (items: any): any[] => {
+  let processedItems = items
+  
+  // Handle stringified items (double stringification defense)
+  if (typeof items === 'string') {
+    try {
+      processedItems = JSON.parse(items)
+      if (typeof processedItems === 'string') {
+        processedItems = JSON.parse(processedItems)
+      }
+    } catch (e) {
+      return []
+    }
+  }
+
+  if (!Array.isArray(processedItems)) return []
+  
+  return processedItems.map(item => ({
+    ...item,
+    name: item.name ?? 'Unknown Item',
+    quantity: item.quantity ?? item.amount ?? 1,
+    unit: item.unit ?? 'u',
+    calories: item.calories ?? item.kcal ?? 0,
+    protein: item.protein ?? 0,
+    carbs: item.carbs ?? 0,
+    fat: item.fat ?? 0
+  }))
+}
+
 const mealIcons: Record<MealType, string> = {
-  breakfast: "sunny-outline",
-  lunch: "restaurant-outline",
-  dinner: "moon-outline",
-  snack: "cafe-outline",
+  breakfast: "sunny",
+  lunch: "restaurant",
+  dinner: "moon",
+  snack: "cafe",
 }
 
 export default function MealSection({ title, mealType, logs }: Props) {
@@ -33,7 +63,6 @@ export default function MealSection({ title, mealType, logs }: Props) {
     const newFoodItems = log.foodItems.filter((_, idx) => idx !== itemIndex)
 
     if (newFoodItems.length === 0) {
-      // If no items left, ask to delete the whole log
       showAlert(
         "Remove Meal",
         "This was the last item. Remove the entire meal entry?",
@@ -46,12 +75,10 @@ export default function MealSection({ title, mealType, logs }: Props) {
       return
     }
 
-    // Show confirmation for deleting individual item
     showAlert(
       "Remove Item",
       `Remove ${itemToDelete.name} from this meal?`,
       () => {
-        // Recalculate totals
         const updates = {
           foodItems: newFoodItems,
           totalCalories: log.totalCalories - itemToDelete.calories,
@@ -81,66 +108,68 @@ export default function MealSection({ title, mealType, logs }: Props) {
   }
 
   return (
-    <View className="mb-4">
-      <View className="flex-row items-center justify-between mb-2">
+    <View className="mb-6">
+      <View className="flex-row items-center justify-between mb-3 px-1">
         <View className="flex-row items-center">
-          <Ionicons
-            name={mealIcons[mealType] as any}
-            size={20}
-            color={colors.primary}
-          />
-          <Text
-            className="text-base font-semibold ml-2"
-            style={{ color: colors.text }}
-          >
+          <View className="w-8 h-8 rounded-lg bg-primary/10 items-center justify-center">
+            <Ionicons
+              name={mealIcons[mealType] as any}
+              size={16}
+              color={colors.primary}
+            />
+          </View>
+          <Text className="text-sm font-black text-white/90 uppercase tracking-widest ml-3">
             {title}
           </Text>
         </View>
-        <Text className="text-sm" style={{ color: colors.placeholder }}>
-          {totalCalories} kcal
-        </Text>
+        <View className="bg-white/5 px-2 py-1 rounded-md">
+          <Text className="text-[10px] font-black text-white/40 uppercase tracking-tighter">
+            {totalCalories} kcal
+          </Text>
+        </View>
       </View>
 
-      <View
-        className="rounded-xl overflow-hidden shadow-sm"
-        style={{ backgroundColor: colors.card }}
+      <PremiumCard
+        gradientColors={['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.01)']}
+        containerStyle="p-0 border-white/5"
       >
         {logs.length === 0 ? (
-          <View className="py-6 items-center">
+          <View className="py-8 items-center">
             <Ionicons
               name="add-circle-outline"
-              size={32}
-              color={colors.border}
+              size={24}
+              color="rgba(255,255,255,0.1)"
             />
-            <Text
-              className="text-sm mt-2"
-              style={{ color: colors.placeholder }}
-            >
+            <Text className="text-[10px] font-bold text-white/20 uppercase tracking-widest mt-2">
               No items logged
             </Text>
           </View>
         ) : (
-          logs.map((log) => (
-            <View key={log.id} className="border-b border-border last:border-0" style={{ borderColor: `${colors.border}40` }}>
-              {log.foodItems.map((item, idx) => (
-                <FoodItemRow
-                  key={`${log.id}-${idx}`}
-                  item={item}
-                  isLast={idx === log.foodItems.length - 1}
-                  onDelete={() => handleDeleteItem(log, idx)}
-                />
-              ))}
-              <Pressable
-                onPress={() => handleDeleteLog(log.id)}
-                className="py-2 items-center justify-center bg-black/5 dark:bg-white/5 active:bg-red-500/10"
-              >
-                <Text className="text-[10px] font-bold text-placeholder uppercase tracking-widest">Remove Entire Log</Text>
-              </Pressable>
-            </View>
-          ))
+          logs.map((log) => {
+            const items = normalizeItems(log.foodItems)
+            return (
+              <View key={log.id} className="border-b border-white/5 last:border-0">
+                {items.map((item, idx) => (
+                  <FoodItemRow
+                    key={`${log.id}-${idx}`}
+                    item={item}
+                    isLast={idx === items.length - 1}
+                    onDelete={() => handleDeleteItem(log, idx)}
+                  />
+                ))}
+                <Pressable
+                  onPress={() => handleDeleteLog(log.id)}
+                  className="py-3 items-center justify-center bg-red-500/5 active:bg-red-500/10"
+                >
+                  <Text className="text-[9px] font-black text-white uppercase tracking-widest">
+                    Remove Meal Log - {items.length} items
+                  </Text>
+                </Pressable>
+              </View>
+            )
+          })
         )}
-      </View>
+      </PremiumCard>
     </View>
   )
 }
-

@@ -13,6 +13,7 @@ interface HeaderProps {
 
 export default function Header({ title, className, backTo, leftAction, rightAction }: HeaderProps) {
   const pathname = usePathname()
+
   const noBackButtonPaths = [
     "/",
     "/index",
@@ -32,10 +33,9 @@ export default function Header({ title, className, backTo, leftAction, rightActi
   const shouldShowBackButton = !noBackButtonPaths.includes(pathname)
   const isLargeTitle = !shouldShowBackButton
 
-
   return (
     <View
-      className={`w-full ${className} ${shouldShowBackButton || backTo || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"} ml-1`}
+      className={`w-full ${className} ${shouldShowBackButton || backTo || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"}`}
     >
       {/* Left Section */}
       {(shouldShowBackButton || backTo) && (
@@ -47,14 +47,14 @@ export default function Header({ title, className, backTo, leftAction, rightActi
 
       {/* Middle Section (Title) */}
       {isLargeTitle ? (
-        <Text className="text-3xl font-extrabold text-text tracking-tight flex-1" numberOfLines={1}>{title}</Text>
+        <Text className="text-3xl font-black text-text tracking-tighter flex-1" numberOfLines={1}>{title}</Text>
       ) : (
         <Text className="text-xl font-bold text-text flex-1" numberOfLines={1}>{title}</Text>
       )}
 
       {/* Right Section */}
       {rightAction && (
-        <View className="ml-2">
+        <View className="ml-2 px-2">
           {rightAction}
         </View>
       )}

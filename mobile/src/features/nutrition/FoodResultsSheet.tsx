@@ -3,7 +3,7 @@ import { View, Text, Pressable, Modal, TextInput, ScrollView } from "react-nativ
 import { useState } from "react"
 import { useThemeColors } from "@/src/constants/Colors"
 import { Ionicons } from "@expo/vector-icons"
-import type { FoodItem, MealType, FoodAnalysisResult } from "@/src/types/nutrition"
+import type { FoodItem, MealType, FoodAnalysisResult } from "@/src/types/nutritionType"
 
 type Props = {
   result: FoodAnalysisResult

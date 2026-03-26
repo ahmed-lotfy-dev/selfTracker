@@ -1,19 +1,6 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
-
-export type Habit = {
-  id: string
-  userId: string
-  name: string
-  description: string | null
-  color: string
-  streak: number
-  completedToday: boolean
-  lastCompletedAt: string | null
-  createdAt: string
-  updatedAt: string
-  deletedAt: string | null
-}
+import { Habit } from '../types/habitType'
 
 const STORAGE_KEY = 'local-habits'
 
@@ -160,4 +147,14 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 export const useActiveHabits = () => {
   const habits = useHabitsStore((s) => s.habits)
   return habits.filter((h) => !h.deletedAt)
+}
+
+// Helper to pull fresh data from Database (called by SyncManager)
+export const pullHabitsFromDB = async () => {
+  try {
+    const { SyncManager } = require('@/src/services/SyncManager')
+    await SyncManager.pullFromDB('habits')
+  } catch (e) {
+    console.error('Failed to pull habits from DB:', e)
+  }
 }

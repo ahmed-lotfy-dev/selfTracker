@@ -9,7 +9,7 @@ import {
 } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
-import DateTimePicker from "@react-native-community/datetimepicker"
+import DateTimePicker from "@expo/ui/datetimepicker"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useAuthStore } from "@/src/features/auth/useAuthStore"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
@@ -19,22 +19,14 @@ import { updateUser } from "@/src/lib/api/userApi"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useProfileImage } from "@/src/hooks/useProfileImage"
-
 import Button from "@/src/components/ui/Button"
 import { Section } from "@/src/components/ui/Section"
 import Row from "@/src/components/ui/Row"
 import Input from "@/src/components/ui/Input"
 import SyncSection from "./SyncSection"
+import { PremiumCard } from "@/src/components/ui/PremiumCard"
+import type { UserGoal } from "@/src/types/goalType"
 
-type UserGoal = {
-  id: string;
-  userId: string;
-  goalType: string;
-  targetValue: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-}
 
 export default function ProfileSettings() {
   const { user, setUser } = useAuthStore() // Use store directly to update local state optimistically or after success
@@ -95,9 +87,10 @@ export default function ProfileSettings() {
   }
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || dateOfBirth
-    setShowDatePicker(Platform.OS === "ios")
-    setDateOfBirth(currentDate)
+    if (selectedDate) {
+      setShowDatePicker(Platform.OS === "ios")
+      setDateOfBirth(selectedDate)
+    }
   }
 
   const handleAddGoal = async () => {
@@ -107,43 +100,47 @@ export default function ProfileSettings() {
   return (
     <View className="flex-1 bg-background px-2">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
-        {/* Header Profile Card */}
-        <Animated.View entering={FadeInDown.delay(100).duration(600).springify()}>
-          <LinearGradient
-            colors={['#064E3B', '#10B981']} // Emerald 900 -> Emerald 500
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="pt-12 pb-6 items-center rounded-b-[40px] shadow-lg mb-8"
+        {/* Header Profile Hero - Centered */}
+        <Animated.View entering={FadeInDown.delay(100).duration(600).springify()} className="mb-8">
+          <PremiumCard 
+            gradientColors={['#1e1b4b', '#312e81']} // Deep Indigo
+            containerStyle="pt-10 pb-10 items-center justify-center"
           >
-            {/* ... content ... */}
-            <Pressable onPress={() => pickAndUploadImage()} className="relative mb-4" disabled={isImageUploading}>
-              <View className="h-28 w-28 bg-white/20 rounded-full items-center justify-center border-4 border-white/30 backdrop-blur-md shadow-xl overflow-hidden">
-                {isImageUploading ? (
-                  <View className="flex-1 items-center justify-center bg-black/20 w-full h-full">
-                    <Feather name="loader" size={24} color="white" className="animate-spin" />
-                  </View>
-                ) : user?.image ? (
-                  <Image source={{ uri: user.image }} className="h-full w-full" resizeMode="cover" />
-                ) : (
-                  <Text className="text-4xl font-bold text-white shadow-sm">
-                    {user?.name?.charAt(0).toUpperCase() || "U"}
-                  </Text>
-                )}
+            <View className="items-center justify-center w-full">
+              <Pressable onPress={() => pickAndUploadImage()} className="relative mb-6" disabled={isImageUploading}>
+                <View className="h-40 w-40 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden bg-white/5">
+                  {isImageUploading ? (
+                    <View className="flex-1 items-center justify-center bg-black/20 w-full h-full">
+                      <Feather name="loader" size={24} color="white" className="animate-spin" />
+                    </View>
+                  ) : user?.image ? (
+                    <Image source={{ uri: user.image }} className="h-full w-full" resizeMode="cover" />
+                  ) : (
+                    <Text className="text-6xl font-black text-white/20 tracking-tighter">
+                      {user?.name?.charAt(0).toUpperCase() || "U"}
+                    </Text>
+                  )}
+                </View>
+                <View className="absolute bottom-2 right-2 bg-white p-3 rounded-full border-4 border-[#1e1b4b] shadow-lg">
+                  <Feather name="camera" size={16} color="black" />
+                </View>
+              </Pressable>
+              
+              <View className="items-center w-full px-4">
+                <Input
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="User Name"
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  className="text-center font-black text-4xl text-white border-0 bg-transparent w-full tracking-tighter"
+                  containerClassName="mb-1"
+                />
+                <View className="bg-white/10 px-4 py-1.5 rounded-full border border-white/5 mt-1">
+                  <Text className="text-white/40 text-[10px] font-black uppercase tracking-[3px]">{user?.email}</Text>
+                </View>
               </View>
-              <View className="absolute bottom-0 right-0 bg-secondary p-2 rounded-full border-2 border-white shadow-sm">
-                <Feather name="camera" size={16} color="white" />
-              </View>
-            </Pressable>
-            <Input
-              value={name}
-              onChangeText={setName}
-              placeholder="Your Name"
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              className="text-center font-bold text-2xl text-white border-0 bg-transparent min-w-[200px]"
-              containerClassName="mb-1"
-            />
-            <Text className="text-emerald-50 text-sm font-medium tracking-wide">{user?.email}</Text>
-          </LinearGradient>
+            </View>
+          </PremiumCard>
         </Animated.View>
 
         {/* Content */}
@@ -365,16 +362,24 @@ export default function ProfileSettings() {
             <SyncSection />
           </Animated.View>
 
-          {/* Save Action */}
-          <Animated.View entering={FadeInDown.delay(600).duration(500)} className="mb-6">
-            <Button
+          {/* Action: Sync Changes */}
+          <Animated.View entering={FadeInDown.delay(600).duration(500)} className="mb-6 px-4">
+            <PremiumCard 
               onPress={handleSave}
-              loading={isPending}
-              variant="secondary"
-
+              gradientColors={['#10b981', '#059669']} // Emerald
+              containerStyle="h-14 justify-center"
             >
-              Save Profile Changes
-            </Button>
+              <View className="flex-row items-center justify-center">
+                {isPending ? (
+                  <Feather name="loader" size={18} color="white" className="animate-spin" />
+                ) : (
+                  <Feather name="refresh-cw" size={16} color="white" />
+                )}
+                <Text className="text-white text-sm font-black uppercase tracking-[2px] ml-3">
+                  {isPending ? "Synchronizing..." : "Sync Profile Changes"}
+                </Text>
+              </View>
+            </PremiumCard>
           </Animated.View>
 
           {/* Log Out */}

@@ -29,7 +29,6 @@ export default function DrawerLayout() {
           name="(tabs)"
           options={{
             drawerLabel: "Home",
-            // Icon handled in CustomDrawerContent
           }}
         />
       </Drawer>

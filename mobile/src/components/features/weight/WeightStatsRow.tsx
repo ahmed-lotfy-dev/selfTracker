@@ -1,36 +1,32 @@
 import { View, Text, ScrollView } from "react-native"
 import React from "react"
-import { FontAwesome5, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { FontAwesome5, MaterialIcons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
+import { PremiumCard } from "../../ui/PremiumCard"
 
 interface StatCardProps {
   label: string
   value: string | number
   icon: React.ReactNode
-  colorClass: string
+  colors: readonly [string, string, ...string[]]
 }
 
-const getBgClass = (colorClass: string) => {
-  const map: Record<string, string> = {
-    "text-primary": "bg-primary/10",
-    "text-blue-500": "bg-blue-500/10",
-    "text-purple-500": "bg-purple-500/10",
-    "text-orange-500": "bg-orange-500/10",
-    "text-green-500": "bg-green-500/10",
-    "text-indigo-500": "bg-indigo-500/10",
-  }
-  return map[colorClass] || "bg-background"
-}
-
-const StatCard = ({ label, value, icon, colorClass }: StatCardProps) => (
-  <View
-    className={`bg-card p-4 rounded-xl shadow-sm mr-3 min-w-[140px] border border-border flex-1`}
-  >
-    <View className={`p-2 rounded-full self-start mb-3 ${getBgClass(colorClass)}`}>
-      {icon}
-    </View>
-    <Text className="text-2xl font-bold text-text">{value}</Text>
-    <Text className="text-placeholder font-medium text-xs uppercase mt-1">{label}</Text>
+const StatCard = ({ label, value, icon, colors }: StatCardProps) => (
+  <View className="min-w-[140px] h-[100px] px-1">
+    <PremiumCard
+      gradientColors={colors}
+      containerStyle="border-white/5"
+    >
+      <View className="flex-row items-center justify-between mb-2">
+        <View className="w-7 h-7 rounded-lg bg-white/10 items-center justify-center">
+          {icon}
+        </View>
+        <Text className="text-white/40 font-black text-[8px] uppercase tracking-tighter">{label}</Text>
+      </View>
+      <View className="flex-1 justify-end">
+        <Text className="text-xl font-black text-white tracking-tighter">{value}</Text>
+      </View>
+    </PremiumCard>
   </View>
 )
 
@@ -53,40 +49,40 @@ export const WeightStatsRow = ({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      className="flex-row py-2"
-      contentContainerStyle={{ paddingRight: 20 }}
+      className="flex-row py-1"
+      contentContainerStyle={{ paddingHorizontal: 0 }}
     >
       {currentWeight && (
         <StatCard
-          label="Current Weight"
+          label="Current"
           value={`${currentWeight} kg`}
-          icon={<FontAwesome5 name="weight" size={16} color={colors.primary} />}
-          colorClass="text-primary"
+          icon={<FontAwesome5 name="weight" size={12} color="white" />}
+          colors={[colors.statPrimary, `${colors.statPrimary}80`]}
         />
       )}
 
       <StatCard
-        label="Total Change"
-        value={weightChange || "N/A"}
-        icon={<MaterialIcons name="trending-up" size={18} color="#a855f7" />}
-        colorClass="text-purple-500"
+        label="Change"
+        value={weightChange || "0 kg"}
+        icon={<MaterialIcons name="trending-up" size={14} color="white" />}
+        colors={[colors.statQuaternary, `${colors.statQuaternary}80`]}
       />
 
       {bmi && (
         <StatCard
           label="BMI"
           value={bmi.toFixed(1)}
-          icon={<MaterialIcons name="accessibility" size={18} color="#f97316" />}
-          colorClass="text-orange-500"
+          icon={<MaterialIcons name="accessibility" size={14} color="white" />}
+          colors={[colors.statTertiary, `${colors.statTertiary}80`]}
         />
       )}
 
       {goalWeight && (
         <StatCard
-          label="Goal Weight"
+          label="Goal"
           value={`${goalWeight} kg`}
-          icon={<MaterialIcons name="flag" size={18} color="#22c55e" />}
-          colorClass="text-green-500"
+          icon={<MaterialIcons name="flag" size={14} color="white" />}
+          colors={[colors.statSecondary, `${colors.statSecondary}80`]}
         />
       )}
     </ScrollView>

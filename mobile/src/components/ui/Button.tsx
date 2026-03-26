@@ -2,17 +2,7 @@ import React from "react"
 import { Pressable, Text, ActivityIndicator } from "react-native"
 import { cn } from '@/src/lib/utils'
 
-interface ButtonProps {
-  onPress: () => void
-  children: React.ReactNode
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger"
-  size?: "sm" | "default" | "lg"
-  loading?: boolean
-  disabled?: boolean
-  className?: string
-  textClassName?: string
-  fullWidth?: boolean
-}
+import { ButtonProps } from '@/src/types/uiType';
 
 export default function Button({
   onPress,
@@ -29,15 +19,17 @@ export default function Button({
   const baseStyles = "rounded-2xl items-center justify-center flex-row shadow-sm active:opacity-90 transition-opacity"
 
   const variants = {
-    primary: "bg-primary shadow-sm", // Simplified shadow for now or use specific class if defined
+    primary: "bg-primary shadow-sm",
     secondary: "bg-secondary shadow-sm",
     outline: "bg-transparent border border-primary",
     ghost: "bg-transparent shadow-none",
     danger: "bg-error shadow-sm",
+    error: "bg-error shadow-sm",
+    success: "bg-success shadow-sm",
   }
 
   const sizes = {
-    sm: "py-2 px-3",
+    sm: "py-1.5 px-3",
     default: "py-3 px-4",
     lg: "py-4 px-6",
   }
@@ -46,10 +38,12 @@ export default function Button({
 
   const textVariants = {
     primary: "text-white",
-    secondary: "text-primary-dark", // Dark green text on light green
+    secondary: "text-primary-dark",
     outline: "text-primary",
     ghost: "text-primary",
     danger: "text-white",
+    error: "text-white",
+    success: "text-white",
   }
 
   const textSizes = {

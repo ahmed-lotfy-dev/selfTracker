@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons"
 import * as ImagePicker from "expo-image-picker"
 import { analyzeFoodImage } from "@/src/lib/api/nutritionApi"
 import { useNutritionStore } from "@/src/stores/useNutritionStore"
-import type { FoodItem, MealType, FoodAnalysisResult } from "@/src/types/nutrition"
+import type { FoodItem, MealType, FoodAnalysisResult } from "@/src/types/nutritionType"
 import FoodResultsSheet from "@/src/features/nutrition/FoodResultsSheet"
 import * as Crypto from "expo-crypto"
 

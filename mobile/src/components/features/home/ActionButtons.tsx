@@ -1,57 +1,79 @@
 import React from "react"
-import { View, Text, Pressable } from "react-native"
+import { View, Text } from "react-native"
 import { useRouter } from "expo-router"
-import { MaterialCommunityIcons } from "@expo/vector-icons"
-import { COLORS } from "@/src/constants/Colors"
+import { MaterialCommunityIcons, FontAwesome5, Feather } from "@expo/vector-icons"
+import { PremiumCard } from "@/src/components/ui/PremiumCard"
+import { useThemeColors } from "@/src/constants/Colors"
 
 interface ActionButtonProps {
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"]
+  icon: any
+  iconType: 'mci' | 'fa5' | 'feather'
   label: string
+  color: string
   onPress: () => void
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({
   icon,
+  iconType,
   label,
+  color,
   onPress,
 }) => {
-  return (
-    <Pressable
-      onPress={onPress}
-      className="flex-1 items-center justify-center p-3 rounded-xl shadow-sm mr-3 my-2 bg-card border border-border"
-    >
-      <MaterialCommunityIcons
-        name={
-          icon as React.ComponentProps<typeof MaterialCommunityIcons>["name"]
-        }
-        size={24}
-        color={COLORS.primary}
-      />
+  const IconComponent = iconType === 'mci' ? MaterialCommunityIcons : 
+                        iconType === 'fa5' ? FontAwesome5 : Feather;
 
-      <Text className="text-primary text-sm font-semibold mt-2">{label}</Text>
-    </Pressable>
+  return (
+    <View className="flex-1 min-w-[100px] h-28 m-1">
+      <PremiumCard 
+        onPress={onPress}
+        gradientColors={[`${color}20`, `${color}05`]}
+        containerStyle="items-center justify-center border-white/5"
+      >
+        <View className="items-center justify-center">
+          <View 
+            className="w-12 h-12 rounded-full items-center justify-center mb-2"
+            style={{ backgroundColor: `${color}15` }}
+          >
+            <IconComponent
+              name={icon}
+              size={24}
+              color={color}
+            />
+          </View>
+          <Text className="text-text/90 text-xs font-bold uppercase tracking-tight">{label}</Text>
+        </View>
+      </PremiumCard>
+    </View>
   )
 }
 
 export default function ActionButtons() {
   const router = useRouter()
+  const colors = useThemeColors()
 
   return (
-    <View className="flex-row flex-wrap justify-start items-center">
+    <View className="flex-row flex-wrap justify-between px-1">
       <ActionButton
-        icon="plus-circle"
+        icon="weight"
+        iconType="fa5"
         label="Weight"
-        onPress={() => router.push("/weights/add")}
+        color={colors.statSecondary}
+        onPress={() => router.push("/(drawer)/(tabs)/weights/add")}
       />
       <ActionButton
-        icon="plus-circle"
+        icon="dumbbell"
+        iconType="fa5"
         label="Workout"
-        onPress={() => router.push("/workouts/add")}
+        color={colors.statQuaternary}
+        onPress={() => router.push("/(drawer)/(tabs)/workouts/add")}
       />
       <ActionButton
-        icon="plus-circle"
+        icon="check-circle"
+        iconType="feather"
         label="Task"
-        onPress={() => router.push("/tasks")}
+        color={colors.primary}
+        onPress={() => router.push("/(drawer)/(tabs)/tasks")}
       />
     </View>
   )

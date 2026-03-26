@@ -15,26 +15,27 @@ export class ElectricSync {
   }
 
   private subscriptions: (() => void)[] = []
+  private tableUnsubs: Map<string, () => void> = new Map()
+  private retryAttempts: Map<string, number> = new Map()
 
   async syncTable(tableName: string, options?: { where?: string }) {
-    // console.log(`[ElectricSync] Starting sync for table: ${tableName}`)
-
     const token = useAuthStore.getState().token;
     console.log(`[ElectricSync] 🔑 Syncing ${tableName} with token: ${token ? 'PRESENT (' + token.substring(0, 10) + '...)' : 'MISSING'}`);
 
     useSyncStore.getState().setTableStatus(tableName, 'syncing');
 
+    const existingUnsub = this.tableUnsubs.get(tableName);
+    if (existingUnsub) {
+      existingUnsub();
+      this.tableUnsubs.delete(tableName);
+    }
 
     try {
-      // Use Backend Proxy: [API_BASE_URL]/api/electric/[tableName]
-      // The backend adds the auth token check and injects the 'where user_id=...' clause.
       let url = `${API_BASE_URL}/api/electric/${tableName}?offset=-1`;
 
       if (options?.where) {
         url += `&where=${encodeURIComponent(options.where)}`;
       }
-
-      // console.log(`[ElectricSync] Connecting to Proxy: ${url}`);
 
       const stream = new ShapeStream({
         url,
@@ -42,19 +43,37 @@ export class ElectricSync {
           Authorization: `Bearer ${token}`
         } : undefined,
         onError: (error) => {
-          console.error(`[ElectricSync] ❌ Stream Error (${tableName}):`, error);
+          const status = (error as any).status;
+          console.error(`[ElectricSync] ❌ Stream Error (${tableName}) [Status: ${status}]:`, error);
+          
+          if (status === 409) {
+            const attempt = (this.retryAttempts.get(tableName) ?? 0) + 1;
+            this.retryAttempts.set(tableName, attempt);
+            const delay = Math.min(500 * Math.pow(2, attempt - 1), 30000);
+            console.warn(`[ElectricSync] 🔄 409 must-refetch for ${tableName}. Attempt ${attempt}, retrying in ${delay}ms...`);
+
+            const unsub = this.tableUnsubs.get(tableName);
+            if (unsub) {
+              unsub();
+              this.tableUnsubs.delete(tableName);
+            }
+
+            setTimeout(() => this.syncTable(tableName, options), delay);
+            return;
+          }
+
           useSyncStore.getState().setTableStatus(tableName, 'error');
-          // If it's a FetchError with 503, it's likely the quota issue seen in logs
-          if ((error as any).status === 503) {
-            console.warn(`[ElectricSync] ⚠️ Quota exceeded or service error for ${tableName}. Check ElectricSQL Cloud dashboard.`);
+          if (status === 503) {
+            console.warn(`[ElectricSync] ⚠️ Quota exceeded or service error for ${tableName}.`);
           }
         }
       })
 
-
       const unsubscribe = stream.subscribe((messages) => {
+        this.retryAttempts.delete(tableName);
         this.applyMessages(tableName, messages as Message[])
       })
+      this.tableUnsubs.set(tableName, unsubscribe)
       this.subscriptions.push(unsubscribe)
 
     } catch (e) {
@@ -63,17 +82,18 @@ export class ElectricSync {
   }
 
   stop() {
-    // console.log('[ElectricSync] Stopping all active sync streams...')
     this.subscriptions.forEach(unsub => unsub())
     this.subscriptions = []
+    this.tableUnsubs.clear()
+    this.retryAttempts.clear()
   }
 
-  private dbLock = Promise.resolve()
-
   private async applyMessages(tableName: string, messages: Message[]) {
+    const { SyncManager } = require('@/src/services/SyncManager')
+
     // Chain all database operations to ensure sequential execution.
     // SQLite can only handle one transaction at a time.
-    this.dbLock = this.dbLock.then(async () => {
+    await SyncManager.runExclusive(async () => {
       const hasControl = messages.some((m: any) => m.headers?.control)
       const dataMessages = messages.filter((m: any) => m.value)
 
@@ -97,6 +117,7 @@ export class ElectricSync {
               const m = msg as any
 
               if (m.headers?.control === 'up-to-date') {
+                const { useSyncStore } = require("@/src/stores/useSyncStore")
                 useSyncStore.getState().setTableStatus(tableName, 'synced');
                 continue
               }
@@ -142,13 +163,10 @@ export class ElectricSync {
           }
         }
       }
-    }).catch(err => {
+    }).catch((err: any) => {
       // Catch any error in the chain itself to prevent breaking the lock for future tasks
       console.error(`[ElectricSync] Unexpected error in transaction lock for ${tableName}:`, err)
     })
-
-    // Await the current operation specifically (optional, since the chain handles ordering)
-    await this.dbLock
   }
 
   private async upsert(tableName: string, data: any) {

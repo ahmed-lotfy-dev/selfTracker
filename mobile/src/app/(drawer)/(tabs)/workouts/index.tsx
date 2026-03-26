@@ -55,20 +55,20 @@ export default function WorkoutScreen() {
   }
 
   const ViewSelector = () => (
-    <View className="flex-row mx-2 mb-6 bg-card p-1 rounded-full h-12 border border-border">
+    <View className="flex-row mb-6 bg-black/20 p-1.5 rounded-full h-14 border border-white/5">
       <Pressable
         onPress={() => toggleView(VIEW_TYPES.LIST)}
-        className={`flex-1 items-center justify-center rounded-full ${currentView === VIEW_TYPES.LIST ? "bg-primary shadow-sm" : ""
+        className={`flex-1 items-center justify-center rounded-full ${currentView === VIEW_TYPES.LIST ? "bg-white/10 shadow-sm border border-white/5" : ""
           }`}
       >
-        <Text className={`text-sm font-semibold ${currentView === VIEW_TYPES.LIST ? "text-white" : "text-placeholder"}`}>Timeline</Text>
+        <Text className={`text-xs tracking-widest uppercase font-black ${currentView === VIEW_TYPES.LIST ? "text-white" : "text-white/40"}`}>Timeline</Text>
       </Pressable>
       <Pressable
         onPress={() => toggleView(VIEW_TYPES.CALENDAR)}
-        className={`flex-1 items-center justify-center rounded-full ${currentView === VIEW_TYPES.CALENDAR ? "bg-primary shadow-sm" : ""
+        className={`flex-1 items-center justify-center rounded-full ${currentView === VIEW_TYPES.CALENDAR ? "bg-white/10 shadow-sm border border-white/5" : ""
           }`}
       >
-        <Text className={`text-sm font-semibold ${currentView === VIEW_TYPES.CALENDAR ? "text-white" : "text-placeholder"}`}>Calendar</Text>
+        <Text className={`text-xs tracking-widest uppercase font-black ${currentView === VIEW_TYPES.CALENDAR ? "text-white" : "text-white/40"}`}>Calendar</Text>
       </Pressable>
     </View>
   )
@@ -82,9 +82,7 @@ export default function WorkoutScreen() {
           uniqueWorkoutsThisWeek={stats.uniqueWorkoutsThisWeek}
         />
       </View>
-      <View className="px-2">
-        <WorkoutChart />
-      </View>
+      <WorkoutChart />
       <ViewSelector />
     </View>
   )
@@ -107,12 +105,12 @@ export default function WorkoutScreen() {
   }
 
   return (
-    <View className="flex-1 bg-background px-2">
+    <View className="flex-1 bg-background px-4">
       <Header
         title="Workouts"
         rightAction={<DrawerToggleButton />}
       />
-      <View className="flex-1">
+      <View className="flex-1 mt-2">
         {renderContent()}
       </View>
       <AddButton path="/workouts" />
