@@ -38,6 +38,13 @@ export class ElectricSync {
         headers: token ? { 
           Authorization: `Bearer ${token}`
         } : undefined,
+        onError: (error) => {
+          console.error(`[ElectricSync] ❌ Stream Error (${tableName}):`, error);
+          // If it's a FetchError with 503, it's likely the quota issue seen in logs
+          if ((error as any).status === 503) {
+            console.warn(`[ElectricSync] ⚠️ Quota exceeded or service error for ${tableName}. Check ElectricSQL Cloud dashboard.`);
+          }
+        }
       })
 
 
