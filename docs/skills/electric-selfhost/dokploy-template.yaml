@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  electric:
+    image: electricsql/electric:latest
+    container_name: electric-sync-engine
+    ports:
+      - "5050:3000" # Expose host 5050 if needed, or leave to Dokploy UI
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - ELECTRIC_PORT=3000
+      - ELECTRIC_STORAGE_DIR=/var/lib/electric/persistent
+      - ELECTRIC_DATABASE_USE_IPV6=false
+      - ELECTRIC_SECRET=${ELECTRIC_SECRET}
+    volumes:
+      - electric_data:/var/lib/electric/persistent
+    restart: always
+
+volumes:
+  electric_data:
