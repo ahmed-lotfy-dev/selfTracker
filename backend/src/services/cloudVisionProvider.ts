@@ -1,21 +1,7 @@
 import Groq from "groq-sdk";
+import type { FoodAnalysisResult } from "../types/foodAnalysis";
 
-export type FoodAnalysisResult = {
-  foods: {
-    name: string;
-    quantity: number;
-    unit: string;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  }[];
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-  confidence: number;
-};
+export type { FoodAnalysisResult };
 
 export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysisResult> {
   const apiKey = process.env.GROQ_API_KEY;
@@ -67,7 +53,7 @@ Return ONLY valid JSON, no markdown or explanation.`;
         ],
       },
     ],
-    model: "meta-llama/llama-4-scout-17b-16e-instruct",
+    model: "meta-llama/llama-4-maverick-17b-128e-instruct",
     temperature: 0.1,
     max_tokens: 1024,
     top_p: 1,

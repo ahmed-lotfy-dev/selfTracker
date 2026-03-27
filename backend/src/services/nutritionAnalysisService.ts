@@ -1,4 +1,5 @@
-import { analyzeFoodImage as analyzeWithGroq, type FoodAnalysisResult } from "./groqVisionService";
+import { analyzeFoodImage as analyzeWithGroq, type FoodAnalysisResult } from "./cloudVisionProvider";
+import { analyzeFoodImage as analyzeWithNvidia } from "./nvidiaVisionProvider";
 
 export type { FoodAnalysisResult };
 
@@ -20,7 +21,17 @@ export async function analyzeFoodImageProxy(base64Image: string): Promise<FoodAn
     };
   }
 
-  // 2. Use Groq Vision AI (Cloud)
+  // 2. Try NVIDIA Vision AI (Preferred as requested)
+  if (process.env.NVIDIA_API_KEY) {
+    console.log("[AI Proxy] Using NVIDIA Vision AI...");
+    try {
+      return await analyzeWithNvidia(base64Image);
+    } catch (error) {
+      console.error("[AI Proxy] NVIDIA Vision AI failed, falling back to Groq...", error);
+    }
+  }
+
+  // 3. Fallback to Groq Vision AI (Cloud)
   console.log("[AI Proxy] Using Groq Vision AI...");
   return await analyzeWithGroq(base64Image);
 }
