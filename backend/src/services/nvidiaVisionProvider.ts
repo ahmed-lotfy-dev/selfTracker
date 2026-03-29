@@ -1,13 +1,42 @@
 import type { FoodAnalysisResult } from "../types/foodAnalysis";
 import { buildFoodAnalysisResult, extractJsonObject, FOOD_ANALYSIS_PROMPT, normalizeDraftFoodItems } from "./foodAnalysisUtils";
 
-const DEFAULT_NVIDIA_VISION_MODEL = "meta/llama-3.2-11b-vision-instruct";
+function extractMessageText(content: unknown): string {
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && "text" in item && typeof item.text === "string") {
+          return item.text;
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  return "";
+}
+
+function previewContent(content: string, maxLength = 300): string {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength)}...`
+    : normalized;
+}
 
 export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysisResult> {
   const apiKey = process.env.NVIDIA_API_KEY;
-  const model = process.env.NVIDIA_VISION_MODEL || DEFAULT_NVIDIA_VISION_MODEL;
+  const model = process.env.NVIDIA_VISION_MODEL?.trim();
   if (!apiKey) {
     throw new Error("NVIDIA_API_KEY not configured in .env");
+  }
+  if (!model) {
+    throw new Error("NVIDIA_VISION_MODEL not configured");
   }
 
   const url = "https://integrate.api.nvidia.com/v1/chat/completions";
@@ -50,12 +79,26 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
 
     const data: any = await response.json();
 
-    const content = data.choices[0]?.message?.content;
+    const content = extractMessageText(data.choices?.[0]?.message?.content);
     if (!content) {
-      throw new Error("No response content from Nvidia API");
+      console.error("[Nvidia Vision] Empty response payload:", JSON.stringify(data));
+      throw new Error("No response content from NVIDIA API");
     }
-    const parsed = JSON.parse(extractJsonObject(String(content)));
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(extractJsonObject(String(content)));
+    } catch (error) {
+      console.error("[Nvidia Vision] Unparseable model response preview:", previewContent(content));
+      throw error;
+    }
+
     const foods = normalizeDraftFoodItems(parsed.foods);
+    if (!foods.length) {
+      console.error("[Nvidia Vision] Parsed response without foods:", JSON.stringify(parsed));
+      throw new Error("NVIDIA response did not contain any valid foods");
+    }
+
     return buildFoodAnalysisResult(foods, {
       confidence: foods.length ? foods.reduce((sum, food) => sum + (food.detectionConfidence ?? 0.45), 0) / foods.length : 0.3,
       confidenceBreakdown: {

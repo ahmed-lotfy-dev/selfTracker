@@ -32,6 +32,83 @@ Return this exact shape:
 }
 `;
 
+function previewContent(content: string, maxLength = 200): string {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength)}...`
+    : normalized;
+}
+
+function tryParseJsonCandidate(candidate: string): string | null {
+  const trimmed = candidate.trim();
+  if (!trimmed) return null;
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return trimmed;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function extractJsonFromCodeFence(content: string): string | null {
+  const fenceMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (!fenceMatch) return null;
+  return tryParseJsonCandidate(fenceMatch[1]);
+}
+
+function extractBalancedJsonObject(content: string): string | null {
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < content.length; i += 1) {
+    const char = content[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (char === "{") {
+      if (depth === 0) start = i;
+      depth += 1;
+      continue;
+    }
+
+    if (char === "}") {
+      if (depth === 0) continue;
+      depth -= 1;
+
+      if (depth === 0 && start !== -1) {
+        const candidate = content.slice(start, i + 1);
+        const parsed = tryParseJsonCandidate(candidate);
+        if (parsed) return parsed;
+        start = -1;
+      }
+    }
+  }
+
+  return null;
+}
+
 function toFiniteNumber(value: unknown, fallback = 0): number {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -42,12 +119,16 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export function extractJsonObject(content: string): string {
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Failed to extract JSON from model response");
-  }
+  const direct = tryParseJsonCandidate(content);
+  if (direct) return direct;
 
-  return jsonMatch[0];
+  const fromFence = extractJsonFromCodeFence(content);
+  if (fromFence) return fromFence;
+
+  const balanced = extractBalancedJsonObject(content);
+  if (balanced) return balanced;
+
+  throw new Error(`Failed to extract JSON from model response. Preview: ${previewContent(content)}`);
 }
 
 export function normalizeDraftFoodItems(rawFoods: unknown): FoodAnalysisFoodItem[] {

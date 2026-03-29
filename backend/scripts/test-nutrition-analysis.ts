@@ -9,12 +9,14 @@ async function testNutritionAnalysis() {
   console.log("🚀 Testing Nutrition Analysis Proxy...");
   console.log("Environment Variables Check:");
   console.log(`- NVIDIA_API_KEY: ${process.env.NVIDIA_API_KEY ? "PRESENT (length " + process.env.NVIDIA_API_KEY.length + ")" : "MISSING"}`);
-  console.log(`- GROQ_API_KEY: ${process.env.GROQ_API_KEY ? "PRESENT" : "MISSING"}`);
-  console.log(`- NVIDIA_VISION_MODEL: ${process.env.NVIDIA_VISION_MODEL || "meta/llama-3.2-11b-vision-instruct (default)"}`);
-  console.log(`- GROQ_VISION_MODEL: ${process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-maverick-17b-128e-instruct (default)"}`);
+  console.log(`- NVIDIA_VISION_MODEL: ${process.env.NVIDIA_VISION_MODEL || "MISSING"}`);
   
   if (!process.env.NVIDIA_API_KEY) {
-    console.warn("⚠️ NVIDIA_API_KEY not found in .env. Will likely fallback to Groq or fail.");
+    console.warn("⚠️ NVIDIA_API_KEY not found in .env.");
+  }
+
+  if (!process.env.NVIDIA_VISION_MODEL) {
+    console.warn("⚠️ NVIDIA_VISION_MODEL not found in .env.");
   }
 
   try {

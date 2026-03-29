@@ -10,9 +10,7 @@ RUN bun install --frozen-lockfile
 # Copy Source Code
 COPY . .
 
-# Build/Run
 ENV NODE_ENV=production
-ENV AI_PROVIDER=gemini
 ENV PORT=8000
 
 EXPOSE 8000

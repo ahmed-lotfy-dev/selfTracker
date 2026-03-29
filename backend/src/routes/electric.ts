@@ -116,7 +116,12 @@ electricRouter.on(["GET", "POST"], "/:table", async (c) => {
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`[ElectricProxy] ❌ Electric (${res.status}) after ${duration}ms: ${errorText}`);
+      const controlHeader = res.headers.get("control");
+      if (res.status === 409 && controlHeader === "must-refetch") {
+        console.warn(`[ElectricProxy] 🔁 Electric requested refetch for ${table} after ${duration}ms`);
+      } else {
+        console.error(`[ElectricProxy] ❌ Electric (${res.status}) after ${duration}ms: ${errorText}`);
+      }
       
       if (res.status === 401 || res.status === 403) {
         return c.json({ error: "Auth Error", message: "Electric service rejected secrets", details: errorText }, res.status);
