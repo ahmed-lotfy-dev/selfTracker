@@ -196,7 +196,13 @@ When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter
           calories: { type: 'number' },
           protein: { type: 'number' },
           carbs: { type: 'number' },
-          fat: { type: 'number' }
+          fat: { type: 'number' },
+          estimatedGrams: { type: 'number' },
+          confidence: { type: 'number' },
+          confidenceReason: { type: 'string' },
+          nutritionSource: { type: 'string', enum: ['model_estimate', 'open_food_facts'] },
+          matchedProductName: { type: 'string' },
+          detectionConfidence: { type: 'number' }
         }
       },
       FoodLog: {
@@ -231,7 +237,19 @@ When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter
           totalProtein: { type: 'integer' },
           totalCarbs: { type: 'integer' },
           totalFat: { type: 'integer' },
-          confidence: { type: 'number' }
+          confidence: { type: 'number' },
+          confidenceBreakdown: {
+            type: 'object',
+            properties: {
+              detection: { type: 'number' },
+              nutritionData: { type: 'number' },
+              portionEstimation: { type: 'number' }
+            }
+          },
+          notes: {
+            type: 'array',
+            items: { type: 'string' }
+          }
         }
       }
     }

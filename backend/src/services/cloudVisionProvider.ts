@@ -1,10 +1,14 @@
 import Groq from "groq-sdk";
 import type { FoodAnalysisResult } from "../types/foodAnalysis";
+import { buildFoodAnalysisResult, extractJsonObject, FOOD_ANALYSIS_PROMPT, normalizeDraftFoodItems } from "./foodAnalysisUtils";
 
 export type { FoodAnalysisResult };
 
+const DEFAULT_GROQ_VISION_MODEL = "meta-llama/llama-4-maverick-17b-128e-instruct";
+
 export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysisResult> {
   const apiKey = process.env.GROQ_API_KEY;
+  const model = process.env.GROQ_VISION_MODEL || DEFAULT_GROQ_VISION_MODEL;
   if (!apiKey) {
     throw new Error("GROQ_API_KEY not configured");
   }
@@ -18,23 +22,6 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
     imageUrl = `data:image/jpeg;base64,${base64Image}`;
   }
 
-  const prompt = `Analyze this food image and provide nutritional information in the following JSON format. Be as accurate as possible:
-{
-  "foods": [
-    {
-      "name": "Food name",
-      "quantity": estimated_quantity_number,
-      "unit": "g/ml/cup/piece/etc",
-      "calories": estimated_calories,
-      "protein": grams_of_protein,
-      "carbs": grams_of_carbs,
-      "fat": grams_of_fat
-    }
-  ]
-}
-
-Return ONLY valid JSON, no markdown or explanation.`;
-
   const chatCompletion = await groq.chat.completions.create({
     messages: [
       {
@@ -42,7 +29,7 @@ Return ONLY valid JSON, no markdown or explanation.`;
         content: [
           {
             type: "text",
-            text: prompt,
+            text: FOOD_ANALYSIS_PROMPT,
           },
           {
             type: "image_url",
@@ -53,7 +40,7 @@ Return ONLY valid JSON, no markdown or explanation.`;
         ],
       },
     ],
-    model: "meta-llama/llama-4-maverick-17b-128e-instruct",
+    model,
     temperature: 0.1,
     max_tokens: 1024,
     top_p: 1,
@@ -67,26 +54,16 @@ Return ONLY valid JSON, no markdown or explanation.`;
     throw new Error("No response from Groq API");
   }
 
-  // Extract JSON from potential markdown code blocks
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Failed to extract JSON from Groq response");
-  }
+  const parsed = JSON.parse(extractJsonObject(String(content)));
+  const foods = normalizeDraftFoodItems(parsed.foods);
 
-  const parsed = JSON.parse(jsonMatch[0]);
-
-  // Calculate totals
-  const totalCalories = parsed.foods.reduce((sum: number, food: any) => sum + (food.calories || 0), 0);
-  const totalProtein = parsed.foods.reduce((sum: number, food: any) => sum + (food.protein || 0), 0);
-  const totalCarbs = parsed.foods.reduce((sum: number, food: any) => sum + (food.carbs || 0), 0);
-  const totalFat = parsed.foods.reduce((sum: number, food: any) => sum + (food.fat || 0), 0);
-
-  return {
-    foods: parsed.foods,
-    totalCalories,
-    totalProtein,
-    totalCarbs,
-    totalFat,
-    confidence: 0.95,
-  };
+  return buildFoodAnalysisResult(foods, {
+    confidence: foods.length ? foods.reduce((sum, food) => sum + (food.detectionConfidence ?? 0.45), 0) / foods.length : 0.3,
+    confidenceBreakdown: {
+      detection: foods.length ? foods.reduce((sum, food) => sum + (food.detectionConfidence ?? 0.45), 0) / foods.length : 0.3,
+      nutritionData: 0.2,
+      portionEstimation: foods.some((food) => food.estimatedGrams) ? 0.75 : 0.45,
+    },
+    notes: [`Initial result from Groq vision model (${model}) before nutrition-data reconciliation.`],
+  });
 }

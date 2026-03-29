@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
+const NVIDIA_VISION_MODEL = process.env.NVIDIA_VISION_MODEL || "nvidia/llama-3.2-11b-vision-instruct";
 
 if (!NVIDIA_API_KEY) {
   console.error("❌ NVIDIA_API_KEY not found in .env");
@@ -16,7 +17,7 @@ const base64Image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAA
 
 async function testNvidia() {
   console.log("🚀 Testing Nvidia Vision API...");
-  console.log("Model: nvidia/llama-3.2-11b-vision-instruct");
+  console.log(`Model: ${NVIDIA_VISION_MODEL}`);
   
   try {
     const response = await fetch(url, {
@@ -26,7 +27,7 @@ async function testNvidia() {
         "Authorization": `Bearer ${NVIDIA_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "nvidia/llama-3.2-11b-vision-instruct",
+        model: NVIDIA_VISION_MODEL,
         messages: [
           {
             role: "user",

@@ -6,6 +6,12 @@ export type FoodItem = {
   protein: number
   carbs: number
   fat: number
+  estimatedGrams?: number
+  confidence?: number
+  confidenceReason?: string
+  nutritionSource?: "model_estimate" | "open_food_facts"
+  matchedProductName?: string | null
+  detectionConfidence?: number
 }
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack"
@@ -40,4 +46,10 @@ export type FoodAnalysisResult = {
   totalCarbs: number
   totalFat: number
   confidence: number
+  confidenceBreakdown?: {
+    detection: number
+    nutritionData: number
+    portionEstimation: number
+  }
+  notes?: string[]
 }

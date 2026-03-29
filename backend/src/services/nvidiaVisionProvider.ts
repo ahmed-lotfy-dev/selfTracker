@@ -1,7 +1,11 @@
 import type { FoodAnalysisResult } from "../types/foodAnalysis";
+import { buildFoodAnalysisResult, extractJsonObject, FOOD_ANALYSIS_PROMPT, normalizeDraftFoodItems } from "./foodAnalysisUtils";
+
+const DEFAULT_NVIDIA_VISION_MODEL = "meta/llama-3.2-11b-vision-instruct";
 
 export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysisResult> {
   const apiKey = process.env.NVIDIA_API_KEY;
+  const model = process.env.NVIDIA_VISION_MODEL || DEFAULT_NVIDIA_VISION_MODEL;
   if (!apiKey) {
     throw new Error("NVIDIA_API_KEY not configured in .env");
   }
@@ -14,23 +18,6 @@ export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysi
     imageUrl = `data:image/jpeg;base64,${base64Image}`;
   }
 
-  const prompt = `Analyze this food image and provide nutritional information in the following JSON format. Be as accurate as possible:
-{
-  "foods": [
-    {
-      "name": "Food name",
-      "quantity": estimated_quantity_number,
-      "unit": "g/ml/cup/piece/etc",
-      "calories": estimated_calories,
-      "protein": grams_of_protein,
-      "carbs": grams_of_carbs,
-      "fat": grams_of_fat
-    }
-  ]
-}
-
-Return ONLY valid JSON, no markdown or explanation.`;
-
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -39,12 +26,12 @@ Return ONLY valid JSON, no markdown or explanation.`;
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "meta/llama-3.2-11b-vision-instruct",
+        model,
         messages: [
           {
             role: "user",
             content: [
-              { type: "text", text: prompt },
+              { type: "text", text: FOOD_ANALYSIS_PROMPT },
               { type: "image_url", image_url: { url: imageUrl } }
             ],
           },
@@ -67,29 +54,17 @@ Return ONLY valid JSON, no markdown or explanation.`;
     if (!content) {
       throw new Error("No response content from Nvidia API");
     }
-
-    // Extract JSON from potential markdown code blocks
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to extract JSON from Nvidia response");
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    // Calculate totals
-    const totalCalories = parsed.foods.reduce((sum: number, food: any) => sum + (food.calories || 0), 0);
-    const totalProtein = parsed.foods.reduce((sum: number, food: any) => sum + (food.protein || 0), 0);
-    const totalCarbs = parsed.foods.reduce((sum: number, food: any) => sum + (food.carbs || 0), 0);
-    const totalFat = parsed.foods.reduce((sum: number, food: any) => sum + (food.fat || 0), 0);
-
-    return {
-      foods: parsed.foods,
-      totalCalories,
-      totalProtein,
-      totalCarbs,
-      totalFat,
-      confidence: 0.95,
-    };
+    const parsed = JSON.parse(extractJsonObject(String(content)));
+    const foods = normalizeDraftFoodItems(parsed.foods);
+    return buildFoodAnalysisResult(foods, {
+      confidence: foods.length ? foods.reduce((sum, food) => sum + (food.detectionConfidence ?? 0.45), 0) / foods.length : 0.3,
+      confidenceBreakdown: {
+        detection: foods.length ? foods.reduce((sum, food) => sum + (food.detectionConfidence ?? 0.45), 0) / foods.length : 0.3,
+        nutritionData: 0.2,
+        portionEstimation: foods.some((food) => food.estimatedGrams) ? 0.75 : 0.45,
+      },
+      notes: [`Initial result from NVIDIA vision model (${model}) before nutrition-data reconciliation.`],
+    });
   } catch (error) {
     console.error("[Nvidia Vision] Error:", error);
     throw error;

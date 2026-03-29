@@ -47,7 +47,7 @@ export default function FoodResultsSheet({ result, mealType, onConfirm, onClose 
             </Text>
             <View className="flex-row items-center">
               <Text className="text-sm mr-2" style={{ color: colors.placeholder }}>
-                Confidence: {Math.round(result.confidence * 100)}%
+                Estimated confidence: {Math.round(result.confidence * 100)}%
               </Text>
               <Pressable onPress={onClose}>
                 <Ionicons name="close-circle" size={28} color={colors.placeholder} />
