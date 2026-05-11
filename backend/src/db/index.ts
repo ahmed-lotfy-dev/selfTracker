@@ -13,6 +13,14 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL environment variable is required");
 }
 
+// Log the host we're connecting to (without exposing credentials)
+try {
+  const url = new URL(databaseUrl);
+  console.log(`[DB] Connecting to database at ${url.hostname}${url.port ? `:${url.port}` : ':5432'}`);
+} catch {
+  console.log(`[DB] DATABASE_URL set (could not parse as URL for logging)`);
+}
+
 const pool = new Pool({
   connectionString: databaseUrl,
   max: 10,
