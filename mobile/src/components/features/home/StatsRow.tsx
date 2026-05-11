@@ -57,7 +57,8 @@ export const StatsRow = () => {
     const activeHabits = habits.filter((h) => !h.deletedAt)
 
     const pendingTasks = activeTasks.filter((t) => !t.completed).length
-    const todayHabits = activeHabits.filter((h) => h.completedToday).length
+    const today = new Date().toISOString().split('T')[0]
+    const todayHabits = activeHabits.filter((h) => h.completionDates?.includes(today)).length
     const totalHabits = activeHabits.length
     const totalStreak = activeHabits.reduce((sum, h) => sum + h.streak, 0)
 

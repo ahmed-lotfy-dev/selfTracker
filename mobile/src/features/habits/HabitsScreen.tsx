@@ -37,7 +37,8 @@ export default function HabitsScreen() {
     );
   };
 
-  const completedCount = habits.filter((h) => h.completedToday).length;
+  const today = new Date().toISOString().split('T')[0]
+  const completedCount = habits.filter((h) => h.completionDates?.includes(today)).length;
   const completionRate = habits.length > 0
     ? Math.round((completedCount / habits.length) * 100)
     : 0;

@@ -7,6 +7,7 @@ export type Habit = {
   streak: number
   completedToday: boolean
   lastCompletedAt: string | null
+  completionDates: string[]  // ISO date strings (e.g., "2026-05-12")
   createdAt: string
   updatedAt: string
   deletedAt: string | null

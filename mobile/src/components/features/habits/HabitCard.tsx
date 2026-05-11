@@ -14,7 +14,8 @@ interface HabitCardProps {
 
 export default function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
   const colors = useThemeColors();
-  const isCompleted = habit.completedToday;
+  const today = new Date().toISOString().split('T')[0]
+  const isCompleted = habit.completionDates?.includes(today) ?? false
 
   const gradientColors = isCompleted 
     ? ['rgba(34, 197, 94, 0.15)', 'rgba(34, 197, 94, 0.05)'] as const

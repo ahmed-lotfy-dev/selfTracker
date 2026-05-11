@@ -14,8 +14,10 @@ const saveHabits = (habits: Habit[]) => {
 
 type HabitsState = {
   habits: Habit[]
+  isLoading: boolean
   setHabits: (habits: Habit[]) => void
-  addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'streak' | 'completedToday' | 'lastCompletedAt'>) => void
+  fetchHabits: () => Promise<void>
+  addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'streak' | 'completedToday' | 'lastCompletedAt' | 'completionDates'>) => void
   updateHabit: (id: string, updates: Partial<Habit>) => void
   deleteHabit: (id: string) => void
   toggleComplete: (id: string) => void
@@ -23,10 +25,32 @@ type HabitsState = {
 
 export const useHabitsStore = create<HabitsState>((set, get) => ({
   habits: loadHabits(),
+  isLoading: false,
 
   setHabits: (habits) => {
     saveHabits(habits)
     set({ habits })
+  },
+
+  fetchHabits: async () => {
+    if (get().isLoading) return
+    set({ isLoading: true })
+    try {
+      const { getHabits } = await import('@/src/lib/api/habitsApi')
+      const serverHabits = await getHabits()
+      const existingHabits = get().habits
+      const newHabits = serverHabits.filter(
+        (h) => !existingHabits.some((e) => e.id === h.id)
+      )
+      const merged = [...existingHabits, ...newHabits]
+      const unique = Array.from(new Map(merged.map(h => [h.id, h])).values())
+      saveHabits(unique)
+      set({ habits: unique })
+    } catch (e) {
+      console.error('Failed to fetch habits:', e)
+    } finally {
+      set({ isLoading: false })
+    }
   },
 
   addHabit: (habitData) => {
@@ -36,6 +60,7 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
       streak: 0,
       completedToday: false,
       lastCompletedAt: null,
+      completionDates: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       deletedAt: null,
@@ -98,34 +123,35 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
   toggleComplete: (id) => {
     const now = new Date().toISOString()
+    const today = now.split('T')[0]
     let updatedHabit: Habit | null = null
 
     const newHabits = get().habits.map((h) => {
       if (h.id !== id) return h
 
-      const wasCompleted = h.completedToday
-      const lastDate = h.lastCompletedAt?.split('T')[0]
-      let streak = h.streak
-      let completedToday = h.completedToday
+      const dates = [...(h.completionDates || [])]
+      const wasCompleted = dates.includes(today)
+      let streak = h.streak ?? 0
 
       if (wasCompleted) {
-        completedToday = false
-        streak = Math.max(0, h.streak - 1)
+        // Remove today from completion dates
+        const idx = dates.indexOf(today)
+        if (idx !== -1) dates.splice(idx, 1)
+        streak = Math.max(0, streak - 1)
       } else {
-        const yesterday = new Date()
-        yesterday.setDate(yesterday.getDate() - 1)
-        const yesterdayStr = yesterday.toISOString().split('T')[0]
-        const continuesStreak = lastDate === yesterdayStr
-
-        completedToday = true
-        streak = continuesStreak ? h.streak + 1 : 1
+        // Add today
+        dates.push(today)
+        dates.sort()
+        // Calculate streak based on consecutive days
+        streak = calculateStreak(dates)
       }
 
       updatedHabit = {
         ...h,
-        completedToday,
+        completedToday: !wasCompleted,
+        completionDates: dates,
         streak,
-        lastCompletedAt: completedToday ? now : h.lastCompletedAt,
+        lastCompletedAt: wasCompleted ? (dates.length > 0 ? dates[dates.length - 1] + 'T00:00:00.000Z' : null) : now,
         updatedAt: now,
       }
       return updatedHabit
@@ -143,6 +169,34 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     }
   },
 }))
+
+/** Calculate consecutive streak from an array of date strings (yyyy-MM-dd) */
+function calculateStreak(dates: string[]): number {
+  if (dates.length === 0) return 0
+  const sorted = [...dates].sort().reverse()
+  let streak = 1
+  const today = new Date().toISOString().split('T')[0]
+  // Start from the most recent date
+  let expected = sorted[0]
+  // If the most recent isn't today or yesterday, streak is 1 (or 0)
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  if (expected !== today && expected !== yesterdayStr) return 1
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(expected)
+    prev.setDate(prev.getDate() - 1)
+    const prevStr = prev.toISOString().split('T')[0]
+    if (sorted[i] === prevStr) {
+      streak++
+      expected = prevStr
+    } else {
+      break
+    }
+  }
+  return streak
+}
 
 export const useActiveHabits = () => {
   const habits = useHabitsStore((s) => s.habits)

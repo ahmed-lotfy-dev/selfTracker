@@ -80,6 +80,10 @@ class SyncManagerService {
           total_fat INTEGER, created_at TEXT, updated_at TEXT, deleted_at TEXT
         );
       `)
+      // Add completion_dates column if upgrading from old schema
+      try {
+        await this.db!.execAsync(`ALTER TABLE habits ADD COLUMN completion_dates TEXT DEFAULT '[]'`)
+      } catch { /* column already exists */ }
 
       this.isInitialized = true
       await this.pullFromDB()
@@ -207,6 +211,7 @@ class SyncManagerService {
           streak: h.streak,
           color: h.color,
           completedToday: !!h.completed_today,
+          completionDates: h.completion_dates ? JSON.parse(h.completion_dates) : [],
           lastCompletedAt: h.last_completed_at,
           createdAt: h.created_at,
           updatedAt: h.updated_at,
@@ -341,9 +346,9 @@ class SyncManagerService {
     try {
       await this.runExclusive(async () => {
         await this.db!.runAsync(`
-          INSERT OR REPLACE INTO habits (id, user_id, name, description, streak, color, completed_today, last_completed_at, created_at, updated_at, deleted_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt])
+          INSERT OR REPLACE INTO habits (id, user_id, name, description, streak, color, completed_today, completion_dates, last_completed_at, created_at, updated_at, deleted_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, JSON.stringify(habit.completionDates || []), habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt])
       })
 
       if (habit.deletedAt) {

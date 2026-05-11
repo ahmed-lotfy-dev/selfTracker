@@ -33,7 +33,9 @@ const saveTasks = (tasks: Task[]) => {
 
 type TasksState = {
   tasks: Task[]
+  isLoading: boolean
   setTasks: (tasks: Task[]) => void
+  fetchTasks: () => Promise<void>
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>) => void
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
@@ -42,6 +44,7 @@ type TasksState = {
 
 export const useTasksStore = create<TasksState>((set, get) => ({
   tasks: loadTasks(),
+  isLoading: false,
 
   setTasks: (tasks) => {
     const uniqueTasks = Array.from(new Map(tasks.map(t => [t.id, t])).values())
@@ -50,6 +53,27 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     }
     saveTasks(uniqueTasks)
     set({ tasks: uniqueTasks })
+  },
+
+  fetchTasks: async () => {
+    if (get().isLoading) return
+    set({ isLoading: true })
+    try {
+      const { getTasks } = await import('@/src/lib/api/tasksApi')
+      const serverTasks = await getTasks()
+      const existingTasks = get().tasks
+      const newTasks = serverTasks.filter(
+        (t) => !existingTasks.some((e) => e.id === t.id)
+      )
+      const merged = [...existingTasks, ...newTasks]
+      const unique = Array.from(new Map(merged.map(t => [t.id, t])).values())
+      saveTasks(unique)
+      set({ tasks: unique })
+    } catch (e) {
+      console.error('Failed to fetch tasks:', e)
+    } finally {
+      set({ isLoading: false })
+    }
   },
 
   addTask: (taskData) => {

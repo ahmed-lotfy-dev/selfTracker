@@ -74,6 +74,14 @@ export function RootProvider({ children }: RootProviderProps) {
   useEffect(() => {
     if (!appIsReady || !isAuthenticated) return
     SyncManager.startSync().catch((e) => console.warn("Sync error:", e))
+
+    // REST API fallback — load tasks and habits from server
+    import('@/src/stores/useTasksStore').then(({ useTasksStore }) => {
+      useTasksStore.getState().fetchTasks()
+    }).catch(() => {})
+    import('@/src/stores/useHabitsStore').then(({ useHabitsStore }) => {
+      useHabitsStore.getState().fetchHabits()
+    }).catch(() => {})
   }, [appIsReady, isAuthenticated])
 
   return (
