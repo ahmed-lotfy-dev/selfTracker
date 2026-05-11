@@ -6,8 +6,6 @@ services:
     container_name: selftracker-backend
     ports:
       - "8000:8000"
-    env_file:
-      - ./backend/.env
     environment:
       - NODE_ENV=production
       - PORT=8000
