@@ -46,6 +46,31 @@ export class ElectricSync {
           const status = (error as any).status;
           console.error(`[ElectricSync] ❌ Stream Error (${tableName}) [Status: ${status}]:`, error);
           
+          if (status === 401) {
+            console.warn(`[ElectricSync] 🔑 Token expired for ${tableName}, attempting refresh...`);
+            // Trigger token refresh via authClient
+            import('@/src/lib/auth-client').then(async ({ authClient }) => {
+              try {
+                const { data: session } = await (authClient as any).getSession();
+                if (session?.user) {
+                  const newToken = session.session?.token;
+                  if (newToken) {
+                    useAuthStore.getState().setToken(newToken);
+                    console.log(`[ElectricSync] ✅ Token refreshed, retrying ${tableName}...`);
+                    // Retry sync with new token after a short delay
+                    setTimeout(() => this.syncTable(tableName, options), 1000);
+                    return;
+                  }
+                }
+              } catch (refreshErr) {
+                console.error(`[ElectricSync] ❌ Token refresh failed:`, refreshErr);
+              }
+              // If refresh failed, mark as error — user needs to log in again
+              useSyncStore.getState().setTableStatus(tableName, 'auth_required');
+            });
+            return;
+          }
+
           if (status === 409) {
             const attempt = (this.retryAttempts.get(tableName) ?? 0) + 1;
             this.retryAttempts.set(tableName, attempt);

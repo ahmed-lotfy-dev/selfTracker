@@ -11,6 +11,7 @@ import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useAppState } from "@/src/hooks/useAppState"
 import { onAppStateChange, checkForUpdates } from "@/src/lib/lib"
 import { SyncManager } from "@/src/services/SyncManager"
+import { useTokenRefresh } from "@/src/hooks/useTokenRefresh"
 import {
   registerForPushNotificationsAsync,
   setUpNotificationListeners
@@ -30,6 +31,7 @@ export function RootProvider({ children }: RootProviderProps) {
   const colors = useThemeColors()
   useAppState(onAppStateChange)
   const { isAuthenticated, isLoading } = useAuth()
+  useTokenRefresh()
   const [appIsReady, setAppIsReady] = useState(false)
 
   const [fontsLoaded] = useFonts({

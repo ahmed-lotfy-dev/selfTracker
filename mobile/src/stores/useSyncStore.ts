@@ -1,6 +1,6 @@
 import { create } from "zustand"
 
-type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error'
+type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'auth_required'
 
 interface SyncState {
   tables: Record<string, SyncStatus>

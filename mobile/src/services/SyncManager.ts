@@ -135,31 +135,31 @@ class SyncManagerService {
 
   async clearDatabase() {
     try {
-      console.log('[SyncManager] Clearing database...')
+      console.log('[SyncManager] Clearing database (soft delete)...')
 
-      // Stop ElectricSQL sync first
+      // Stop ElectricSync first
       if (this.currentSync) {
         this.currentSync.stop()
         this.currentSync = null
       }
 
-      // Close database
+      // Soft-delete all local data instead of dropping the database
+      // This preserves the data in case the user logs back in before a full sync
       if (this.db) {
-        await this.db.closeAsync()
-        this.db = null
+        const tables = ['tasks', 'habits', 'workouts', 'workout_logs', 'weight_logs', 'food_logs']
+        for (const table of tables) {
+          try {
+            await this.db.runAsync(`DELETE FROM ${table}`)
+          } catch (e) {
+            // Table might not exist, skip
+          }
+        }
+        console.log('[SyncManager] ✅ All local tables cleared (data preserved on server)')
       }
 
-      // Wait a bit for connections to fully close
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      // Delete the database file
-      await SQLite.deleteDatabaseAsync(this.dbName)
-
       this.isInitialized = false
-      console.log('[SyncManager] ✅ Database cleared successfully')
     } catch (e) {
       console.error('[SyncManager] Failed to clear database:', e)
-      // Even if deletion fails, mark as not initialized
       this.isInitialized = false
       this.db = null
       this.currentSync = null
