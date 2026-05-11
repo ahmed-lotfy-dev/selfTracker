@@ -39,6 +39,9 @@ app.use(
       "http://localhost:1420", // Tauri
       "tauri://localhost", // Tauri Production
       "http://localhost:5173", // Vite local
+      "http://localhost:8000", // Local backend
+      "http://localhost:8081", // Expo dev
+      "https://selftracker.ahmedlotfy.site", // Production
     ],
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "UPDATE", "DELETE", "PATCH", "OPTIONS"],

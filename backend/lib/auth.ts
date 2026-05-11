@@ -122,6 +122,9 @@ export const auth = betterAuth({
   trustedOrigins: [
     "selftracker://",
     "selftracker://callback",
+    "selftracker://callback/",
+    "exp+selftracker://",
+    "exp+selftracker://callback",
     "exp+selftracker://callback/",
     "https://selftracker.ahmedlotfy.site",
     "http://localhost:8000",
