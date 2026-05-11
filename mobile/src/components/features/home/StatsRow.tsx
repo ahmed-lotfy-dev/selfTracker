@@ -89,7 +89,7 @@ export const StatsRow = () => {
           subLabel={stats.isSyncing ? "syncing" : "pending"}
           icon={<Ionicons name="list" size={18} color="white" />}
           colors={['#6366f1', '#4338ca']} // Indigo
-          onPress={() => router.push("/(drawer)/(tabs)/tasks")}
+          onPress={() => router.push("/(drawer)/(tabs)/home/tasks")}
         />
         <StatCard
           label="Habits"
@@ -97,7 +97,7 @@ export const StatsRow = () => {
           subLabel={stats.isSyncing ? "syncing" : "today"}
           icon={<FontAwesome5 name="check-double" size={14} color="white" />}
           colors={['#10b981', '#047857']} // Emerald
-          onPress={() => router.push("/(drawer)/(tabs)/home/habits")}
+          onPress={() => router.push("/(drawer)/(tabs)/habits")}
         />
       </View>
 
@@ -108,7 +108,7 @@ export const StatsRow = () => {
           subLabel={stats.isSyncing ? "syncing" : "days"}
           icon={<FontAwesome5 name="fire-alt" size={16} color="white" />}
           colors={['#f59e0b', '#d97706']} // Amber
-          onPress={() => router.push("/(drawer)/(tabs)/home/habits")}
+          onPress={() => router.push("/(drawer)/(tabs)/habits")}
         />
         <StatCard
           label="Workouts"
@@ -116,7 +116,7 @@ export const StatsRow = () => {
           subLabel={stats.isSyncing ? "syncing" : (typeof stats.workoutsThisWeek === 'number' ? "this week" : "")}
           icon={<MaterialIcons name="fitness-center" size={18} color="white" />}
           colors={['#ec4899', '#be185d']} // Pink
-          onPress={() => router.push("/(drawer)/(tabs)/workouts")}
+          onPress={() => router.push("/(drawer)/(tabs)/home/workouts")}
         />
       </View>
     </View>
