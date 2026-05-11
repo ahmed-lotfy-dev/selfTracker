@@ -10,6 +10,10 @@ RUN bun install --frozen-lockfile
 # Copy Source Code
 COPY . .
 
+# Required environment variables (set in Dokploy)
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+ENV BETTER_AUTH_URL=$BETTER_AUTH_URL
 ENV NODE_ENV=production
 ENV PORT=8000
 

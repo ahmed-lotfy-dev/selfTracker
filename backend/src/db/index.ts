@@ -2,8 +2,19 @@ import * as schema from "./schema/index"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Pool } from "pg"
 
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  console.error("========================================");
+  console.error("  CRITICAL: DATABASE_URL is not set!");
+  console.error("  The app will FAIL to connect to the database.");
+  console.error("  Set DATABASE_URL in your environment variables.");
+  console.error("========================================");
+  throw new Error("DATABASE_URL environment variable is required");
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: databaseUrl,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
