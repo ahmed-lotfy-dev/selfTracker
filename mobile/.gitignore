@@ -41,5 +41,4 @@ app-example
 /dist
 /node_modules
 .apk
-docs
 *.apk
