@@ -1,6 +1,7 @@
 import * as schema from "./schema/index"
-import { drizzle } from "drizzle-orm/node-postgres"
-import { Pool } from "pg"
+import { drizzle } from "drizzle-orm/neon-serverless"
+import { neonConfig } from "@neondatabase/serverless"
+import ws from "ws"
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -21,26 +22,15 @@ try {
   console.log(`[DB] DATABASE_URL set (could not parse as URL for logging)`);
 }
 
-const pool = new Pool({
-  connectionString: databaseUrl,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  ssl: { rejectUnauthorized: false },
-})
+// Set WebSocket constructor for Neon serverless driver
+// This is required for the ws package to be used instead of native WebSocket
+neonConfig.webSocketConstructor = ws as any
 
-pool.on('connect', () => {
-  console.log('[DB] New connection established')
+// Use Neon serverless driver with WebSocket support
+// This handles Neon's compute suspension gracefully (unlike raw pg Pool)
+export const db = drizzle({
+  connection: databaseUrl,
+  schema,
 })
-
-pool.on('error', (err) => {
-  console.error('[DB] Pool error:', err.message)
-})
-
-pool.on('remove', () => {
-  console.log('[DB] Connection removed from pool')
-})
-
-export const db = drizzle({ connection: pool, schema })
 
 export type db = typeof db
