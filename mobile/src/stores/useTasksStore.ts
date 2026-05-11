@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
+import { getTasks } from '@/src/lib/api/tasksApi'
 
 export type Task = {
   id: string
@@ -59,7 +60,6 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     if (get().isLoading) return
     set({ isLoading: true })
     try {
-      const { getTasks } = await import('@/src/lib/api/tasksApi')
       const serverTasks = await getTasks()
       const existingTasks = get().tasks
       const newTasks = serverTasks.filter(

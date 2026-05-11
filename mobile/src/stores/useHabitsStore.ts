@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { Habit } from '../types/habitType'
+import { getHabits } from '@/src/lib/api/habitsApi'
 
 const STORAGE_KEY = 'local-habits'
 
@@ -36,7 +37,6 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     if (get().isLoading) return
     set({ isLoading: true })
     try {
-      const { getHabits } = await import('@/src/lib/api/habitsApi')
       const serverHabits = await getHabits()
       const existingHabits = get().habits
       const newHabits = serverHabits.filter(
