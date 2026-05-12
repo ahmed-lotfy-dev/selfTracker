@@ -80,39 +80,20 @@ electricRouter.on(["GET", "POST"], "/:table", async (c) => {
           origin.searchParams.set("where", userWhereClause);
         }
         origin.searchParams.set("params[1]", user.id);
-        
-        // Handle any existing params by shifting indices to avoid conflict with our params[1]
-        // We need to iterate through a copy of keys since we're modifying the collection
-        const keys = Array.from(origin.searchParams.keys());
-        keys.forEach(key => {
-          if (key.startsWith("params[")) {
-            const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
-            if (currentIndex >= 1) { // Skip our param[1] which we just set
-              const newKey = `params[${currentIndex + 1}]`;
-              origin.searchParams.set(newKey, origin.searchParams.get(key));
-              origin.searchParams.delete(key);
-            }
-          }
-        });
       } else {
         // For POST, the client might be sending its own subset filtering in the body.
         // We'll handle this by ensuring the URL has our user filter.
         // The body filtering will be combined by Electric with AND.
         origin.searchParams.set("where", userWhereClause);
         origin.searchParams.set("params[1]", user.id);
-        
-        // Handle any existing params by shifting indices to avoid conflict with our params[1]
-        const keys = Array.from(origin.searchParams.keys());
-        keys.forEach(key => {
-          if (key.startsWith("params[")) {
-            const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
-            if (currentIndex >= 1) { // Skip our param[1] which we just set
-              const newKey = `params[${currentIndex + 1}]`;
-              origin.searchParams.set(newKey, origin.searchParams.get(key));
-              origin.searchParams.delete(key);
-            }
-          }
-        });
+      }
+        origin.searchParams.set("params[1]", user.id);
+      } else {
+        // For POST, the client might be sending its own subset filtering in the body.
+        // We'll handle this by ensuring the URL has our user filter.
+        // The body filtering will be combined by Electric with AND.
+        origin.searchParams.set("where", userWhereClause);
+        origin.searchParams.set("params[1]", user.id);
       }
    }
 
