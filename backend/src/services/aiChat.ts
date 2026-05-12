@@ -14,6 +14,15 @@ Rules:
 - Be encouraging and supportive.
 - Format responses with short paragraphs and bullet points where helpful.`
 
+const ARABIC_PATTERN = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/
+
+function buildSystemPrompt(message: string): string {
+  const langInstruction = ARABIC_PATTERN.test(message)
+    ? "\n\nIMPORTANT: The user's message is in Arabic. Respond in Arabic."
+    : ""
+  return CHAT_SYSTEM_PROMPT + langInstruction
+}
+
 function formatContext(results: SearchResult[]): string {
   if (results.length === 0) return "No relevant data found."
   return results
@@ -42,7 +51,7 @@ export async function streamChat(
 
   // 2. Build messages array
   const messages: ChatMessage[] = [
-    { role: "system", content: CHAT_SYSTEM_PROMPT },
+    { role: "system", content: buildSystemPrompt(options.message) },
     ...options.history,
     {
       role: "user",
