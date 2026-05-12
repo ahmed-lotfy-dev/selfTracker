@@ -132,6 +132,10 @@ app.onError((err, c) => {
   )
 })
 
+// Background worker for creating embeddings from synced data
+import { startEmbeddingWorker } from "./services/embeddingWorker.js"
+startEmbeddingWorker()
+
 export default {
   port: process.env.PORT || 8000,
   hostname: "0.0.0.0",

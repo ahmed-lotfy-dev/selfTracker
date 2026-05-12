@@ -73,6 +73,17 @@ workoutsRouter.post("/", zValidator("json", createWorkoutSchema), async (c) => {
 
     await clearCache(`workouts:${user.id}`);
 
+    try {
+      await upsertEmbedding({
+        userId: user.id,
+        resourceType: "training_split",
+        resourceId: created.id,
+        content: templateTrainingSplit(created),
+      })
+    } catch (embedErr) {
+      console.error("Error creating embedding for workout:", embedErr)
+    }
+
     return c.json(created);
   } catch (err) {
     console.error("Error creating workout:", err);
