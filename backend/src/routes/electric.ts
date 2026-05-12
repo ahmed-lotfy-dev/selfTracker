@@ -65,36 +65,20 @@ electricRouter.on(["GET", "POST"], "/:table", async (c) => {
      "user_goals", "expenses", "timer_sessions", "habits", "food_logs"
    ];
 
-   if (tablesWithUserId.includes(electricTable)) {
-     // Basic user isolation using parameterized query
-     // This is safer and better optimized by the sync service
+if (tablesWithUserId.includes(electricTable)) {
      const userWhereClause = `"user_id" = $1 OR "user_id" IS NULL`;
      
-      if (method === "GET") {
-        // Preserve any existing where clause from the client and combine with user filter
-        const existingWhere = origin.searchParams.get("where");
-        if (existingWhere) {
-          // Combine existing where with user filter using AND
-          origin.searchParams.set("where", `(${existingWhere}) AND (${userWhereClause})`);
-        } else {
-          origin.searchParams.set("where", userWhereClause);
-        }
-        origin.searchParams.set("params[1]", user.id);
-      } else {
-        // For POST, the client might be sending its own subset filtering in the body.
-        // We'll handle this by ensuring the URL has our user filter.
-        // The body filtering will be combined by Electric with AND.
-        origin.searchParams.set("where", userWhereClause);
-        origin.searchParams.set("params[1]", user.id);
-      }
-        origin.searchParams.set("params[1]", user.id);
-      } else {
-        // For POST, the client might be sending its own subset filtering in the body.
-        // We'll handle this by ensuring the URL has our user filter.
-        // The body filtering will be combined by Electric with AND.
-        origin.searchParams.set("where", userWhereClause);
-        origin.searchParams.set("params[1]", user.id);
-      }
+     if (method === "GET") {
+       const existingWhere = origin.searchParams.get("where");
+       if (existingWhere) {
+         origin.searchParams.set("where", `(${existingWhere}) AND (${userWhereClause})`);
+       } else {
+         origin.searchParams.set("where", userWhereClause);
+       }
+     } else {
+       origin.searchParams.set("where", userWhereClause);
+     }
+     origin.searchParams.set("params[1]", user.id);
    }
 
   // 4. Attach API Secrets
