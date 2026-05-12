@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   KeyboardAvoidingView,
-  Platform,
   StyleSheet,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -174,7 +173,7 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
       <View style={StyleSheet.absoluteFill} className="bg-background" />
       <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         className="flex-1"
       >
         {/* Header */}

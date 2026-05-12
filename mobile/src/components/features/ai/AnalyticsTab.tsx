@@ -5,6 +5,7 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
+  KeyboardAvoidingView,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import InsightCard from './InsightCard'
@@ -124,92 +125,97 @@ export default function AnalyticsTab() {
   }, [chatMessages, streamingContent, showChat])
 
   return (
-    <View className="flex-1 bg-background">
-      {loading && insights.length === 0 ? (
-        <AnalyticsTabSkeleton />
-      ) : error && insights.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-error text-4xl mb-4">⚠</Text>
-          <Text className="text-text font-bold text-lg mb-2">Failed to load</Text>
-          <Text className="text-text/50 text-sm text-center mb-6">{error}</Text>
-          <Pressable
-            onPress={() => loadInsights()}
-            className="bg-primary rounded-xl px-6 py-3"
+    <KeyboardAvoidingView
+      behavior="padding"
+      className="flex-1"
+    >
+      <View className="flex-1 bg-background">
+        {loading && insights.length === 0 ? (
+          <AnalyticsTabSkeleton />
+        ) : error && insights.length === 0 ? (
+          <View className="flex-1 items-center justify-center px-8">
+            <Text className="text-error text-4xl mb-4">⚠</Text>
+            <Text className="text-text font-bold text-lg mb-2">Failed to load</Text>
+            <Text className="text-text/50 text-sm text-center mb-6">{error}</Text>
+            <Pressable
+              onPress={() => loadInsights()}
+              className="bg-primary rounded-xl px-6 py-3"
+            >
+              <Text className="text-white font-bold">Retry</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <ScrollView
+            ref={scrollRef}
+            className="flex-1 px-4"
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadInsights(true)}
+                tintColor="#10B981"
+              />
+            }
           >
-            <Text className="text-white font-bold">Retry</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <ScrollView
-          ref={scrollRef}
-          className="flex-1 px-4"
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => loadInsights(true)}
-              tintColor="#10B981"
-            />
-          }
-        >
-          {/* Insight Cards */}
-          {insights.length > 0 && (
-            <View className="gap-3 mt-2 mb-6">
-              <Text className="text-text/60 text-xs font-bold uppercase tracking-widest mb-1">
-                Your Insights
-              </Text>
-              {insights.map((insight, i) => (
-                <InsightCard
-                  key={`${insight.type}-${i}`}
-                  insight={insight}
-                  onAction={handleAction}
-                />
-              ))}
-            </View>
-          )}
-
-          {allEmpty && (
-            <EmptyState />
-          )}
-
-          {/* Inline Chat Section */}
-          <View className="mb-4">
-            <Text className="text-text/60 text-xs font-bold uppercase tracking-widest mb-3">
-              Ask about your data
-            </Text>
-
-            {showChat && (
-              <View className="mb-4">
-                {chatMessages.map((msg, i) => (
-                  <ChatMessage key={i} role={msg.role} content={msg.content} />
-                ))}
-                {streamingContent && (
-                  <ChatMessage
-                    role="assistant"
-                    content={streamingContent}
-                    isStreaming
+            {/* Insight Cards */}
+            {insights.length > 0 && (
+              <View className="gap-3 mt-2 mb-6">
+                <Text className="text-text/60 text-xs font-bold uppercase tracking-widest mb-1">
+                  Your Insights
+                </Text>
+                {insights.map((insight, i) => (
+                  <InsightCard
+                    key={`${insight.type}-${i}`}
+                    insight={insight}
+                    onAction={handleAction}
                   />
-                )}
+                ))}
               </View>
             )}
-          </View>
 
-          {/* Bottom spacing */}
-          <View className="h-24" />
-        </ScrollView>
-      )}
+            {allEmpty && (
+              <EmptyState />
+            )}
 
-      {/* Sticky Chat Input at bottom */}
-      <View className="border-t border-white/10 bg-background">
-        <ChatInput
-          value={chatInput}
-          onChangeText={setChatInput}
-          onSend={handleChatSend}
-          loading={chatLoading}
-          placeholder="Ask a question..."
-        />
+            {/* Inline Chat Section */}
+            <View className="mb-4">
+              <Text className="text-text/60 text-xs font-bold uppercase tracking-widest mb-3">
+                Ask about your data
+              </Text>
+
+              {showChat && (
+                <View className="mb-4">
+                  {chatMessages.map((msg, i) => (
+                    <ChatMessage key={i} role={msg.role} content={msg.content} />
+                  ))}
+                  {streamingContent && (
+                    <ChatMessage
+                      role="assistant"
+                      content={streamingContent}
+                      isStreaming
+                    />
+                  )}
+                </View>
+              )}
+            </View>
+
+            {/* Bottom spacing */}
+            <View className="h-24" />
+          </ScrollView>
+        )}
+
+        {/* Sticky Chat Input at bottom */}
+        <View className="border-t border-white/10 bg-background">
+          <ChatInput
+            value={chatInput}
+            onChangeText={setChatInput}
+            onSend={handleChatSend}
+            loading={chatLoading}
+            placeholder="Ask a question..."
+          />
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   )
 }
