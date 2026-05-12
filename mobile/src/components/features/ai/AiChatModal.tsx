@@ -65,8 +65,14 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)
   }, [messages, streamingContent])
 
+  const abortStream = useCallback(() => {
+    abortRef.current?.()
+    abortRef.current = null
+  }, [])
+
   const startStream = useCallback(
     async (text: string, currentMessages: AiChatMessage[]) => {
+      abortStream()
       setInput('')
       setError(null)
       setShowHistory(false)
@@ -108,7 +114,7 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
 
       abortRef.current = abort
     },
-    [handleSave]
+    [handleSave, abortStream]
   )
 
   const handleSend = useCallback(() => {
@@ -119,19 +125,22 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
 
   const handleSuggestedPrompt = useCallback(
     (prompt: string) => {
+      if (isLoading) return
       startStream(prompt, messagesRef.current)
     },
-    [startStream]
+    [startStream, isLoading]
   )
 
   const loadConversation = useCallback((conv: Conversation) => {
+    abortStream()
     setMessages(conv.messages)
     setCurrentConvId(conv.id)
     setShowHistory(false)
     setError(null)
-  }, [])
+  }, [abortStream])
 
   const startNewChat = useCallback(() => {
+    abortStream()
     setMessages([
       {
         role: 'assistant',
@@ -143,13 +152,13 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
     setError(null)
     setStreamingContent('')
     setShowHistory(false)
-  }, [])
+  }, [abortStream])
 
   useEffect(() => {
     return () => {
-      abortRef.current?.()
+      abortStream()
     }
-  }, [])
+  }, [abortStream])
 
   useEffect(() => {
     if (visible) {

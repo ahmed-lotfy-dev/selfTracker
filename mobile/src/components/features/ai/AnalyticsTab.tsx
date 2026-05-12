@@ -49,10 +49,15 @@ export default function AnalyticsTab() {
     }
   }, [])
 
+  const abortStream = useCallback(() => {
+    abortRef.current?.()
+    abortRef.current = null
+  }, [])
+
   useEffect(() => {
     loadInsights()
     return () => {
-      abortRef.current?.()
+      abortStream()
     }
   }, [])
 
@@ -62,10 +67,11 @@ export default function AnalyticsTab() {
 
   const allEmpty = insights.length > 0 && insights.every((i) => !i.hasData)
 
-  const handleChatSend = useCallback(() => {
+  const handleChatSend = useCallback(async () => {
     const text = chatInput.trim()
     if (!text || chatLoading) return
 
+    abortStream()
     setChatInput('')
     setShowChat(true)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -77,22 +83,23 @@ export default function AnalyticsTab() {
     setChatLoading(true)
     setStreamingContent('')
 
-    const abort = streamChat(
+    let accumulatedContent = ''
+
+    const abort = await streamChat(
       text,
       history,
       (token) => {
-        setStreamingContent((prev) => prev + token)
+        accumulatedContent += token
+        setStreamingContent(accumulatedContent)
       },
       (sources: SearchResult[]) => {
-        setChatMessages((prev) => {
-          const newMessages = [
-            ...prev,
-            { role: 'assistant', content: streamingContent } as AiChatMessage,
-          ]
-          // Auto-save to conversation history
-          saveConversation(newMessages)
-          return newMessages
-        })
+        const assistantMessage: AiChatMessage = {
+          role: 'assistant',
+          content: accumulatedContent,
+        }
+        const newMessages = [...history, assistantMessage]
+        setChatMessages(newMessages)
+        saveConversation(newMessages)
         setStreamingContent('')
         setChatLoading(false)
       },
@@ -107,7 +114,7 @@ export default function AnalyticsTab() {
     )
 
     abortRef.current = abort
-  }, [chatInput, chatLoading, chatMessages, streamingContent])
+  }, [chatInput, chatLoading, chatMessages, abortStream])
 
   // Auto-scroll chat
   useEffect(() => {
