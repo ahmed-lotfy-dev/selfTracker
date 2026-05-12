@@ -1,7 +1,7 @@
 import { db } from "../db"
 import { weightLogs, workoutLogs, foodLogs, habits, tasks, userGoals, workouts } from "../db/schema"
 import { embeddings } from "../db/schema/embeddings"
-import { eq, sql } from "drizzle-orm"
+import { sql } from "drizzle-orm"
 import {
   templateWeightLog,
   templateWorkoutLog,
@@ -14,14 +14,25 @@ import {
 import { generateEmbedding } from "./embedding"
 
 const RESOURCE_TABLES = [
-  { type: "weight_log", table: weightLogs, template: templateWeightLog, idField: "id", userIdField: "userId" },
-  { type: "workout_log", table: workoutLogs, template: templateWorkoutLog, idField: "id", userIdField: "userId" },
-  { type: "food_log", table: foodLogs, template: templateFoodLog, idField: "id", userIdField: "userId" },
-  { type: "habit", table: habits, template: templateHabit, idField: "id", userIdField: "userId" },
-  { type: "task", table: tasks, template: templateTask, idField: "id", userIdField: "userId" },
-  { type: "user_goal", table: userGoals, template: templateUserGoal, idField: "id", userIdField: "userId" },
-  { type: "training_split", table: workouts, template: templateTrainingSplit, idField: "id", userIdField: "userId" },
+  { type: "weight_log", table: weightLogs, template: templateWeightLog, idColumn: "id", userIdColumn: "user_id" },
+  { type: "workout_log", table: workoutLogs, template: templateWorkoutLog, idColumn: "id", userIdColumn: "user_id" },
+  { type: "food_log", table: foodLogs, template: templateFoodLog, idColumn: "id", userIdColumn: "user_id" },
+  { type: "habit", table: habits, template: templateHabit, idColumn: "id", userIdColumn: "user_id" },
+  { type: "task", table: tasks, template: templateTask, idColumn: "id", userIdColumn: "user_id" },
+  { type: "user_goal", table: userGoals, template: templateUserGoal, idColumn: "id", userIdColumn: "user_id" },
+  { type: "training_split", table: workouts, template: templateTrainingSplit, idColumn: "id", userIdColumn: "user_id" },
 ]
+
+function toCamelRecord(row: Record<string, any>) {
+  const record: Record<string, any> = {}
+
+  for (const [key, value] of Object.entries(row)) {
+    const camelKey = key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())
+    record[camelKey] = value
+  }
+
+  return record
+}
 
 let running = false
 let intervalHandle: ReturnType<typeof setInterval> | null = null
@@ -31,16 +42,16 @@ async function processMissingEmbeddings() {
   running = true
 
   try {
-    for (const { type, table, template, idField, userIdField } of RESOURCE_TABLES) {
+    for (const { type, table, template, idColumn, userIdColumn } of RESOURCE_TABLES) {
       try {
         const missing = await db.execute(sql`
           SELECT src.*
           FROM ${table} src
           LEFT JOIN ${embeddings} e
             ON e.resource_type = ${type}
-            AND e.resource_id = src.${sql.raw(idField)}
+            AND e.resource_id = src.${sql.raw(idColumn)}
           WHERE e.resource_id IS NULL
-            AND src.${sql.raw(userIdField)} IS NOT NULL
+            AND src.${sql.raw(userIdColumn)} IS NOT NULL
           LIMIT 5
         `)
 
@@ -50,14 +61,14 @@ async function processMissingEmbeddings() {
         console.log(`[EmbeddingWorker] Processing ${rows.length} missing ${type} embeddings`)
 
         for (const row of rows) {
-          const record = row as any
+          const record = toCamelRecord(row as Record<string, any>)
           try {
             const content = template(record)
             const embedding = await generateEmbedding(content, "passage")
             await db.insert(embeddings).values({
-              userId: (record as any)[userIdField],
+              userId: record.userId,
               resourceType: type,
-              resourceId: (record as any)[idField],
+              resourceId: record.id,
               content,
               embedding,
             }).onConflictDoNothing()
