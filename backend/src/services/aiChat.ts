@@ -1,5 +1,12 @@
 import { NIM_CONFIG } from "../config/nim"
 import { searchUserData, SearchResult } from "./vectorSearch"
+import { db } from "../db"
+import { weightLogs, workoutLogs } from "../db/schema"
+import { desc } from "drizzle-orm"
+import {
+  templateWeightLog,
+  templateWorkoutLog,
+} from "./embeddingHelper"
 
 const CHAT_SYSTEM_PROMPT = `You are an AI fitness and wellness assistant integrated into selfTracker, a personal tracking app.
 
@@ -30,6 +37,48 @@ function formatContext(results: SearchResult[]): string {
     .join("\n")
 }
 
+async function fetchRecentRecords(userId: string, limit = 5): Promise<SearchResult[]> {
+  const recent: SearchResult[] = []
+
+  try {
+    const recentWeights = await db
+      .select()
+      .from(weightLogs)
+      .where(weightLogs.userId as any)
+      .orderBy(desc(weightLogs.createdAt))
+      .limit(limit)
+
+    for (const w of recentWeights) {
+      recent.push({
+        resourceType: "weight_log",
+        resourceId: w.id,
+        content: templateWeightLog(w),
+        similarity: 1,
+      })
+    }
+  } catch {}
+
+  try {
+    const recentWorkouts = await db
+      .select()
+      .from(workoutLogs)
+      .where(workoutLogs.userId as any)
+      .orderBy(desc(workoutLogs.createdAt))
+      .limit(limit)
+
+    for (const w of recentWorkouts) {
+      recent.push({
+        resourceType: "workout_log",
+        resourceId: w.id,
+        content: templateWorkoutLog(w),
+        similarity: 1,
+      })
+    }
+  } catch {}
+
+  return recent
+}
+
 export interface ChatMessage {
   role: "user" | "assistant" | "system"
   content: string
@@ -46,16 +95,28 @@ export async function streamChat(
   onToken: (token: string) => void,
   onDone: (sources: SearchResult[]) => void
 ): Promise<void> {
-  // 1. Search for relevant context
+  // 1. Search for relevant context (semantic)
   const searchResults = await searchUserData(options.userId, options.message, 10)
 
-  // 2. Build messages array
+  // 2. Always include recent records (for trend/summary queries)
+  const recentRecords = await fetchRecentRecords(options.userId, 5)
+
+  // 3. Merge: deduplicate by resourceType+resourceId, recent first
+  const seen = new Set<string>()
+  const merged = [...recentRecords, ...searchResults].filter((r) => {
+    const key = `${r.resourceType}:${r.resourceId}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  // 4. Build messages array
   const messages: ChatMessage[] = [
     { role: "system", content: buildSystemPrompt(options.message) },
     ...options.history,
     {
       role: "user",
-      content: `Relevant data:\n${formatContext(searchResults)}\n\nQuestion: ${options.message}`,
+      content: `Relevant data:\n${formatContext(merged)}\n\nQuestion: ${options.message}`,
     },
   ]
 
