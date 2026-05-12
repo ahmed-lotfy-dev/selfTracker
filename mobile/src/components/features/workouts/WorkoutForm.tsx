@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import {
   View,
   Text,
@@ -30,6 +30,14 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
   const addWorkoutLog = useWorkoutsStore(s => s.addWorkoutLog)
   const updateWorkoutLog = useWorkoutsStore(s => s.updateWorkoutLog)
   const addWorkout = useWorkoutsStore(s => s.addWorkout)
+  const fetchWorkouts = useWorkoutsStore(s => s.fetchWorkouts)
+
+  // Fetch workouts when component mounts or when workouts array is empty
+  useEffect(() => {
+    if (workouts.length === 0) {
+      fetchWorkouts()
+    }
+  }, [workouts.length, fetchWorkouts])
 
   // Find existing log if editing
   const existingLog = useMemo(() => {

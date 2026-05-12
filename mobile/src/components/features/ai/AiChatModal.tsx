@@ -66,7 +66,7 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
   }, [messages, streamingContent])
 
   const startStream = useCallback(
-    (text: string, currentMessages: AiChatMessage[]) => {
+    async (text: string, currentMessages: AiChatMessage[]) => {
       setInput('')
       setError(null)
       setShowHistory(false)
@@ -81,7 +81,7 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
 
       let accumulatedContent = ''
 
-      const abort = streamChat(
+      const abort = await streamChat(
         text,
         history,
         (token) => {

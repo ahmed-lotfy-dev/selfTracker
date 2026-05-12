@@ -29,10 +29,15 @@ workoutsRouter.get("/", async (c) => {
     return c.json(cached);
   }
 
-  // Return all workout templates (these are global, not user-specific)
-  // For now we return all, but ideally we should filter by user_id OR public
-  // Assuming strict schema access for now
-  const allWorkouts = await db.query.workouts.findMany();
+  // Return workouts belonging to the user OR public workouts
+  // This ensures users see their own workouts and public templates
+  const allWorkouts = await db.query.workouts.findMany({
+    where: (workouts, { eq, or }) => 
+      or(
+        eq(workouts.userId, user?.id ?? ''),
+        eq(workouts.isPublic, true)
+      )
+  });
 
   await setCache(cacheKey, 3600, allWorkouts);
 

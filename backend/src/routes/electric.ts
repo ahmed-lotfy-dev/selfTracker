@@ -58,31 +58,63 @@ electricRouter.on(["GET", "POST"], "/:table", async (c) => {
   if (table === "tasks") electricTable = "task_items";
   origin.searchParams.set("table", electricTable);
 
-  // 3. Mandatory authorization filtering (Subset WHERE)
-  // This ensures the client can ONLY see their own data.
-  const tablesWithUserId = [
-    "task_items", "workout_logs", "weight_logs", "workouts",
-    "user_goals", "expenses", "timer_sessions", "habits", "food_logs"
-  ];
+   // 3. Mandatory authorization filtering (Subset WHERE)
+   // This ensures the client can ONLY see their own data.
+   const tablesWithUserId = [
+     "task_items", "workout_logs", "weight_logs", "workouts",
+     "user_goals", "expenses", "timer_sessions", "habits", "food_logs"
+   ];
 
-  if (tablesWithUserId.includes(electricTable)) {
-    // Basic user isolation using parameterized query
-    // This is safer and better optimized by the sync service
-    const whereClause = `"user_id" = $1 OR "user_id" IS NULL`;
-    
-    if (method === "GET") {
-      origin.searchParams.set("where", whereClause);
-      origin.searchParams.set("params[1]", user.id);
-      
-      // Client-side filtering via query params is NOT recommended for global shapes,
-      // but if we support it, we must be careful with AND/OR precedence.
-    } else {
-      // For POST, the client might be sending its own subset filtering.
-      // Electric combines main WHERE (URL) and subset WHERE (Body) with AND.
-      origin.searchParams.set("where", whereClause);
-      origin.searchParams.set("params[1]", user.id);
-    }
-  }
+   if (tablesWithUserId.includes(electricTable)) {
+     // Basic user isolation using parameterized query
+     // This is safer and better optimized by the sync service
+     const userWhereClause = `"user_id" = $1 OR "user_id" IS NULL`;
+     
+     if (method === "GET") {
+       // Preserve any existing where clause from the client and combine with user filter
+       const existingWhere = origin.searchParams.get("where");
+       if (existingWhere) {
+         // Combine existing where with user filter using AND
+         origin.searchParams.set("where", `(${existingWhere}) AND (${userWhereClause})`);
+       } else {
+         origin.searchParams.set("where", userWhereClause);
+       }
+       origin.searchParams.set("params[1]", user.id);
+       
+       // Handle additional params if any (like params[2], etc.) - shift them to avoid conflict
+       // We keep our param at [1] and shift existing ones up
+       let paramIndex = 2;
+       origin.searchParams.keys().forEach(key => {
+         if (key.startsWith("params[")) {
+           const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
+           if (currentIndex >= 1) { // Skip our param[1]
+             const newKey = `params[${currentIndex + 1}]`;
+             origin.searchParams.set(newKey, origin.searchParams.get(key));
+             origin.searchParams.delete(key);
+           }
+         }
+       });
+     } else {
+       // For POST, the client might be sending its own subset filtering in the body.
+       // We'll handle this by ensuring the URL has our user filter.
+       // The body filtering will be combined by Electric with AND.
+       origin.searchParams.set("where", userWhereClause);
+       origin.searchParams.set("params[1]", user.id);
+       
+       // Handle additional params if any (like params[2], etc.) - shift them to avoid conflict
+       let paramIndex = 2;
+       origin.searchParams.keys().forEach(key => {
+         if (key.startsWith("params[")) {
+           const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
+           if (currentIndex >= 1) { // Skip our param[1]
+             const newKey = `params[${currentIndex + 1}]`;
+             origin.searchParams.set(newKey, origin.searchParams.get(key));
+             origin.searchParams.delete(key);
+           }
+         }
+       });
+     }
+   }
 
   // 4. Attach API Secrets
   origin.searchParams.set("source_id", SOURCE_ID);

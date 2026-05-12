@@ -24,45 +24,46 @@ export async function searchData(
 // ── POST /api/ai/chat (SSE streaming via XMLHttpRequest) ──────────
 // Returns an abort function. Works reliably on React Native where
 // ReadableStream/EventSource aren't always available.
-export function streamChat(
+export async function streamChat(
   message: string,
   history: AiChatMessage[],
   onToken: (token: string) => void,
   onDone: (sources: SearchResult[]) => void,
   onError: (error: string) => void
-): () => void {
+): Promise<() => void> {
   const xhr = new XMLHttpRequest()
   let lastIndex = 0
   let aborted = false
 
+  // Get token BEFORE sending the request
+  let token = await SecureStore.getItemAsync('selftracker.session_token')
+  if (!token) {
+    token = await SecureStore.getItemAsync('selftracker.better-auth.session_token')
+  }
+
   xhr.open('POST', `${API_BASE_URL}/api/ai/chat`)
   xhr.setRequestHeader('Content-Type', 'application/json')
 
-  // Attach auth token
-  SecureStore.getItemAsync('selftracker.session_token').then((token) => {
-    if (token) {
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-    }
-  })
+  if (token) {
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+  }
 
   xhr.onprogress = () => {
+    if (aborted) return
     const newData = xhr.responseText.slice(lastIndex)
     lastIndex = xhr.responseText.length
-
     parseSseLines(newData, onToken, onDone, onError)
   }
 
   xhr.onreadystatechange = () => {
-    // Handle end of stream
     if (xhr.readyState === XMLHttpRequest.DONE && !aborted) {
-      // Flush any remaining data in the buffer
       const remaining = xhr.responseText.slice(lastIndex)
       if (remaining.trim()) {
         parseSseLines(remaining, onToken, onDone, onError)
       }
-
-      // If no done event was fired and status is error
-      if (xhr.status !== 200) {
+      if (xhr.status === 401) {
+        onError('Session expired — please log in again')
+      } else if (xhr.status !== 200 && xhr.status !== 0) {
         onError(`Request failed with status ${xhr.status}`)
       }
     }

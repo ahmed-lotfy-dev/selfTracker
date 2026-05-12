@@ -101,25 +101,41 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
     }
   },
 
-  addWorkoutLog: (logData) => {
-    const log: WorkoutLog = {
-      ...logData,
-      id: crypto.randomUUID(),
-      createdAt: logData.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deletedAt: null,
-    }
-    const newLogs = [log, ...get().workoutLogs]
-    saveWorkoutLogs(newLogs)
-    set({ workoutLogs: newLogs })
+   addWorkoutLog: (logData) => {
+     const log: WorkoutLog = {
+       ...logData,
+       id: crypto.randomUUID(),
+       createdAt: logData.createdAt || new Date().toISOString(),
+       updatedAt: new Date().toISOString(),
+       deletedAt: null,
+     }
+     const newLogs = [log, ...get().workoutLogs]
+     saveWorkoutLogs(newLogs)
+     set({ workoutLogs: newLogs })
 
-    try {
-      const { SyncManager } = require('@/src/services/SyncManager')
-      SyncManager.pushWorkoutLog(log)
-    } catch (e) {
-      console.error('Failed to sync workout log:', e)
-    }
-  },
+     try {
+       const { SyncManager } = require('@/src/services/SyncManager')
+       SyncManager.pushWorkoutLog(log)
+     } catch (e) {
+       console.error('Failed to sync workout log:', e)
+     }
+   },
+
+   fetchWorkouts: async () => {
+     if (get().isLoading) return
+     set({ isLoading: true })
+
+      try:
+        const { getWorkouts } = await import('@/src/lib/api/workoutsApi.ts')
+        const workouts = await getWorkouts()
+        console.log('[WorkoutsStore] Fetched workouts:', workouts.length)
+        get().setWorkouts(workouts)
+     } catch (e) {
+       console.error('Failed to fetch workouts:', e)
+     } finally {
+       set({ isLoading: false })
+     }
+   },
 
   deleteWorkoutLog: (id) => {
     let deletedLog: WorkoutLog | null = null
