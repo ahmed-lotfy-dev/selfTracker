@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, Pressable } from 'react-native'
+import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated'
 
 const SUGGESTIONS = [
   'How was my workout consistency this week?',
@@ -13,21 +14,34 @@ interface SuggestedPromptsProps {
   onSelect: (prompt: string) => void
 }
 
+function PromptChip({ prompt, onSelect }: { prompt: string; onSelect: (p: string) => void }) {
+  const scale = useSharedValue(1)
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={() => onSelect(prompt)}
+        onPressIn={() => { scale.value = withSpring(0.95) }}
+        onPressOut={() => { scale.value = withSpring(1) }}
+        className="bg-card border border-border rounded-xl px-3 py-2 active:opacity-70"
+      >
+        <Text className="text-text text-xs">{prompt}</Text>
+      </Pressable>
+    </Animated.View>
+  )
+}
+
 export default function SuggestedPrompts({ onSelect }: SuggestedPromptsProps) {
   return (
     <View className="px-4 mb-6">
-      <Text className="text-text/60 text-xs font-bold uppercase tracking-widest mb-3">
+      <Text className="text-text-muted text-xs font-bold uppercase tracking-widest mb-3">
         Try asking
       </Text>
       <View className="flex-row flex-wrap gap-2">
         {SUGGESTIONS.map((prompt) => (
-          <Pressable
-            key={prompt}
-            onPress={() => onSelect(prompt)}
-            className="bg-card border border-white/10 rounded-xl px-3 py-2 active:opacity-70"
-          >
-            <Text className="text-text text-xs">{prompt}</Text>
-          </Pressable>
+          <PromptChip key={prompt} prompt={prompt} onSelect={onSelect} />
         ))}
       </View>
     </View>

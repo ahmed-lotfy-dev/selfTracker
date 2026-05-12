@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native'
+import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated'
 
 interface ChatInputProps {
   value: string
@@ -19,16 +20,20 @@ export default function ChatInput({
   placeholder = 'Ask about your data...',
 }: ChatInputProps) {
   const canSend = value.trim().length > 0 && !loading && !disabled
+  const sendScale = useSharedValue(1)
+  const sendStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: sendScale.value }],
+  }))
 
   return (
-    <View className="flex-row items-center gap-2 px-4 py-3 border-t border-white/10 bg-background">
-      <View className="flex-1 rounded-2xl bg-card border border-white/10 px-4 py-2">
+    <View className="flex-row items-center gap-2 px-4 py-3 border-t border-border bg-background">
+      <View className="flex-1 rounded-2xl bg-card border border-border px-4 py-2">
         <TextInput
           className="text-text text-sm leading-5 max-h-24"
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#6B7280"
+          placeholderTextColor="var(--color-placeholder)"
           multiline
           editable={!loading}
           returnKeyType="send"
@@ -37,21 +42,25 @@ export default function ChatInput({
         />
       </View>
 
-      <Pressable
-        onPress={onSend}
-        disabled={!canSend}
-        className={`w-10 h-10 rounded-full items-center justify-center ${
-          canSend ? 'bg-primary' : 'bg-white/10'
-        }`}
-      >
-        {loading ? (
-          <ActivityIndicator size="small" color="#FFFFFF" />
-        ) : (
-          <Text className={`text-lg ${canSend ? 'text-white' : 'text-gray-500'}`}>
-            ↑
-          </Text>
-        )}
-      </Pressable>
+      <Animated.View style={sendStyle}>
+        <Pressable
+          onPress={onSend}
+          disabled={!canSend}
+          onPressIn={() => { if (canSend) sendScale.value = withSpring(0.85) }}
+          onPressOut={() => { sendScale.value = withSpring(1) }}
+          className={`w-10 h-10 rounded-full items-center justify-center ${
+            canSend ? 'bg-primary' : 'bg-border'
+          }`}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text className={`text-lg ${canSend ? 'text-white' : 'text-text-muted'}`}>
+              ↑
+            </Text>
+          )}
+        </Pressable>
+      </Animated.View>
     </View>
   )
 }

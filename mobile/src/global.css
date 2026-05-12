@@ -4,68 +4,48 @@
 @layer theme {
    :root {
       @variant light {
-         /* =========================
-         Brand (used sparingly)
-      ========================= */
+         /* ── Brand ────────────────────────────── */
          --color-primary: #10B981;
-         /* Emerald 500 */
          --color-primary-dark: #059669;
-         /* Emerald 600 */
          --color-secondary: #34D399;
-         /* Emerald 400 */
 
-         /* =========================
-         Neutrals (UI foundation)
-      ========================= */
+         /* ── Surfaces ──────────────────────────── */
          --color-background: #F9FAFB;
-         /* Neutral 50 */
          --color-surface: #FFFFFF;
+         --color-surface-elevated: #FFFFFF;
          --color-card: #FFFFFF;
+         --color-overlay: rgba(0, 0, 0, 0.4);
 
+         /* ── Text ──────────────────────────────── */
          --color-text: #111827;
-         /* Neutral 900 */
          --color-text-secondary: #4B5563;
-         /* Neutral 600 */
+         --color-text-muted: #9CA3AF;
          --color-foreground: #111827;
 
          --color-border: #E5E7EB;
-         /* Neutral 200 */
          --color-placeholder: #9CA3AF;
-         /* Neutral 400 */
 
-         /* =========================
-         Inputs
-      ========================= */
+         /* ── Inputs ────────────────────────────── */
          --color-input-background: #FFFFFF;
          --color-input-text: #111827;
 
-         /* =========================
-         Feedback
-      ========================= */
+         /* ── Feedback ──────────────────────────── */
          --color-success: #10B981;
+         --color-warning: #F59E0B;
          --color-error: #EF4444;
+         --color-info: #3B82F6;
 
-         /* =========================
-         Charts / Stats
-      ========================= */
+         /* ── Charts / Stats ────────────────────── */
          --color-stat-primary: #10B981;
-         /* Emerald */
          --color-stat-secondary: #0EA5E9;
-         /* Sky 500 */
          --color-stat-tertiary: #F59E0B;
-         /* Amber 500 */
          --color-stat-quaternary: #6366F1;
-         /* Indigo 500 */
 
-         /* =========================
-         Social
-      ========================= */
+         /* ── Social ────────────────────────────── */
          --color-social-google: #4285F4;
          --color-social-github: #18181B;
 
-         /* =========================
-         Legacy compatibility
-      ========================= */
+         /* ── Legacy ────────────────────────────── */
          --color-tint: #10B981;
          --color-icon: #6B7280;
          --color-tabIconDefault: #9CA3AF;
@@ -77,79 +57,58 @@
       }
 
       @variant dark {
-         /* =========================
-     Brand
-  ========================= */
+         /* ── Brand ────────────────────────────── */
          --color-primary: #34D399;
-         /* Emerald 400 */
          --color-primary-dark: #10B981;
          --color-secondary: #6EE7B7;
 
-         /* =========================
-     Background layers (KEY FIX)
-  ========================= */
+         /* ── Surfaces ──────────────────────────── */
          --color-background: #14161A;
-         /* Soft charcoal */
          --color-surface: #1C1F26;
-         /* Elevated surface */
+         --color-surface-elevated: #262B38;
          --color-card: #232733;
-         /* Card layer */
+         --color-overlay: rgba(0, 0, 0, 0.6);
 
-         /* =========================
-     Text
-  ========================= */
+         /* ── Text ──────────────────────────────── */
          --color-text: #F8FAFC;
-         /* Near white */
          --color-text-secondary: #B6BCC8;
-         /* Calm gray */
+         --color-text-muted: #6B7280;
          --color-foreground: #F8FAFC;
 
          --color-border: #2D3340;
-         /* Soft border */
          --color-placeholder: #8B93A7;
 
-         /* =========================
-     Inputs
-  ========================= */
+         /* ── Inputs ────────────────────────────── */
          --color-input-background: #1F2430;
          --color-input-text: #F8FAFC;
 
-         /* =========================
-     Feedback
-  ========================= */
+         /* ── Feedback ──────────────────────────── */
          --color-success: #34D399;
+         --color-warning: #FBBF24;
          --color-error: #F87171;
+         --color-info: #60A5FA;
 
-         /* =========================
-     Charts / Stats
-  ========================= */
+         /* ── Charts / Stats ────────────────────── */
          --color-stat-primary: #34D399;
          --color-stat-secondary: #38BDF8;
          --color-stat-tertiary: #FBBF24;
          --color-stat-quaternary: #818CF8;
 
-         /* =========================
-         Social
-      ========================= */
+         /* ── Social ────────────────────────────── */
          --color-social-google: #4285F4;
          --color-social-github: #F8FAFC;
 
-         /* =========================
-     Icons & Nav
-  ========================= */
+         /* ── Icons & Nav ───────────────────────── */
          --color-icon: #A1A7B5;
          --color-tabIconDefault: #7C8394;
          --color-tabIconSelected: #34D399;
 
-         /* =========================
-     Legacy
-  ========================= */
+         /* ── Legacy ────────────────────────────── */
          --color-tint: #34D399;
          --color-gray: #A1A7B5;
          --color-darkGreen: #34D399;
          --color-lightGreen: #2A2F3A;
          --color-inputText: #F8FAFC;
       }
-
    }
 }
