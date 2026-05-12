@@ -13,6 +13,7 @@ import {
 } from "date-fns"
 import { clearCache, getCache, setCache } from "../../lib/redis.js"
 import {
+import { upsertEmbedding, deleteEmbedding, templateUserGoal } from "../services/embeddingHelper"
   calculateBMI,
   calculateWeightDelta,
   getBMICategory,
@@ -306,6 +307,14 @@ userRouter.post("/goals", async (c) => {
         }
       })
       .returning()
+
+    // Generate embedding
+    upsertEmbedding({
+      userId: user.id,
+      resourceType: "user_goal",
+      resourceId: newGoal.id,
+      content: templateUserGoal(newGoal),
+    }).catch(err => console.error('[Embedding] user_goal create failed:', err.message))
 
     return c.json(
       {

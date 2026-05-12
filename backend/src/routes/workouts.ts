@@ -5,6 +5,7 @@ import { getCache, setCache, clearCache } from "../../lib/redis"
 import { z } from "zod"
 import { zValidator } from "@hono/zod-validator"
 import { eq } from "drizzle-orm"
+import { upsertEmbedding, templateTrainingSplit } from "../services/embeddingHelper"
 
 const workoutsRouter = new Hono()
 

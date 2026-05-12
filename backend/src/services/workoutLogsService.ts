@@ -4,6 +4,7 @@ import { workoutLogs } from "../db/schema/workoutLogs"
 import { clearCache } from "../../lib/redis"
 import { endOfMonth, format, startOfMonth, subMonths } from "date-fns"
 import { workouts } from "../db/schema"
+import { upsertEmbedding, deleteEmbedding, templateWorkoutLog } from "./embeddingHelper"
 
 export const getWorkoutLogs = async (
   userId: string,
@@ -40,13 +41,10 @@ export async function getWorkoutLogsCalendar(
   year: number,
   month: number
 ) {
-  // Calculate the start of the previous month
-  const prevMonthDate = new Date(year, month - 2, 1); // month - 1 is current month, month - 2 is previous
-  const start = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), 1);
-
-  // Calculate the end of the next month
-  const nextMonthDate = new Date(year, month, 1); // month is current month, month + 1 is next
-  const end = new Date(nextMonthDate.getFullYear(), nextMonthDate.getMonth() + 1, 0, 23, 59, 59, 999); // last day of next month
+  const prevMonthDate = new Date(year, month - 2, 1)
+  const start = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), 1)
+  const nextMonthDate = new Date(year, month, 1)
+  const end = new Date(nextMonthDate.getFullYear(), nextMonthDate.getMonth() + 1, 0, 23, 59, 59, 999)
 
   const logs = await db
     .select({
@@ -69,16 +67,13 @@ export async function getWorkoutLogsCalendar(
     )
 
   const grouped: Record<string, typeof logs> = {}
-
   for (const log of logs) {
-
     if (log.createdAt) {
-      const dateKey = log.createdAt.toISOString().split("T")[0] // "2025-07-10"
+      const dateKey = log.createdAt.toISOString().split("T")[0]
       if (!grouped[dateKey]) grouped[dateKey] = []
       grouped[dateKey].push(log)
     }
   }
-
   return grouped
 }
 
@@ -89,14 +84,12 @@ export const getSingleWorkoutLog = async (logId: string) => {
     })
     .prepare("getSingleWorkoutLog")
     .execute()
-
   return log
 }
 
 export const createWorkoutLog = async (userId: string, fields: any) => {
-
   try {
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [created] = await tx
         .insert(workoutLogs)
         .values({
@@ -121,16 +114,23 @@ export const createWorkoutLog = async (userId: string, fields: any) => {
         })
         .returning()
 
-
       const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
       const rows = (res.rows || []) as { txid: string }[]
       const txid = rows[0]?.txid || "0"
-
       return { ...created, txid: parseInt(txid) }
     })
+
+    upsertEmbedding({
+      userId,
+      resourceType: "workout_log",
+      resourceId: result.id,
+      content: templateWorkoutLog(result),
+    }).catch(err => console.error('[Embedding] workout_log create failed:', err.message))
+
+    return result
   } catch (err: any) {
-    console.error('[WorkoutLogsService] Create failed:', err.message);
-    throw err;
+    console.error('[WorkoutLogsService] Create failed:', err.message)
+    throw err
   }
 }
 
@@ -141,7 +141,7 @@ export const updateWorkoutLog = async (
 ) => {
   await clearCache([`userHomeData:${userId}`, `workoutLogs:list:${userId}:*`])
 
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const updateData: any = {}
     if (fields.notes !== undefined) updateData.notes = fields.notes
     if (fields.workoutId !== undefined) updateData.workoutId = fields.workoutId
@@ -160,9 +160,19 @@ export const updateWorkoutLog = async (
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
     const rows = res.rows as { txid: string }[]
     const txid = rows[0].txid
-
     return { ...updated, txid: parseInt(txid) }
   })
+
+  if (result) {
+    upsertEmbedding({
+      userId,
+      resourceType: "workout_log",
+      resourceId: result.id,
+      content: templateWorkoutLog(result),
+    }).catch(err => console.error('[Embedding] workout_log update failed:', err.message))
+  }
+
+  return result
 }
 
 export const deleteWorkoutLog = async (
@@ -171,7 +181,7 @@ export const deleteWorkoutLog = async (
 ) => {
   await clearCache([`userHomeData:${userId}`, `workoutLogs:list:${userId}:*`])
 
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [deleted] = await tx
       .delete(workoutLogs)
       .where(and(eq(workoutLogs.id, workoutLogId), eq(workoutLogs.userId, userId)))
@@ -182,11 +192,15 @@ export const deleteWorkoutLog = async (
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
     const rows = res.rows as { txid: string }[]
     const txid = rows[0].txid
-
     return { ...deleted, txid: parseInt(txid) }
   })
-}
 
+  deleteEmbedding("workout_log", workoutLogId).catch(err =>
+    console.error('[Embedding] workout_log delete failed:', err.message)
+  )
+
+  return result
+}
 
 export const getTimeWorkoutLogs = async (userId: string, month: number) => {
   try {
@@ -215,11 +229,7 @@ export const getTimeWorkoutLogs = async (userId: string, month: number) => {
 
     return {
       labels,
-      datasets: [
-        {
-          data,
-        },
-      ],
+      datasets: [{ data }],
     }
   } catch (error) {
     console.error("Failed to fetch workout logs:", error)

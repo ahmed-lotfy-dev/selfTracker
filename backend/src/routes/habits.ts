@@ -6,6 +6,7 @@ import { db } from "../db/index.js"
 import { habits } from "../db/schema/index"
 import { eq, and } from "drizzle-orm"
 import { clearCache, getCache, setCache } from "../../lib/redis.js"
+import { upsertEmbedding, deleteEmbedding, templateHabit } from "../services/embeddingHelper"
 
 const habitsRouter = new Hono()
 
@@ -104,6 +105,14 @@ habitsRouter.post("/", zValidator("json", createHabitSchema), async (c) => {
       })
       .returning()
 
+    // Generate embedding
+    upsertEmbedding({
+      userId: user.id,
+      resourceType: "habit",
+      resourceId: newHabit.id,
+      content: templateHabit(newHabit),
+    }).catch(err => console.error('[Embedding] habit create failed:', err.message))
+
     return c.json({
       message: "Habit created successfully",
       habit: newHabit,
@@ -192,6 +201,14 @@ habitsRouter.post("/:id/complete", async (c) => {
       .where(eq(habits.id, id))
       .returning()
 
+    // Update embedding
+    upsertEmbedding({
+      userId: user.id,
+      resourceType: "habit",
+      resourceId: updated.id,
+      content: templateHabit(updated),
+    }).catch(err => console.error('[Embedding] habit complete failed:', err.message))
+
     return c.json({
       message: completed !== false ? "Habit completed" : "Habit unmarked",
       habit: updated,
@@ -238,6 +255,14 @@ habitsRouter.patch("/:id", zValidator("json", updateHabitSchema), async (c) => {
       .where(eq(habits.id, id))
       .returning()
 
+    // Update embedding
+    upsertEmbedding({
+      userId: user.id,
+      resourceType: "habit",
+      resourceId: updatedHabit.id,
+      content: templateHabit(updatedHabit),
+    }).catch(err => console.error('[Embedding] habit update failed:', err.message))
+
     return c.json({
       message: "Habit updated successfully",
       habit: updatedHabit,
@@ -267,6 +292,11 @@ habitsRouter.delete("/:id", async (c) => {
     if (deleted.length === 0) {
       return c.json({ message: "Habit not found" }, 404)
     }
+
+    // Remove embedding
+    deleteEmbedding("habit", id).catch(err =>
+      console.error('[Embedding] habit delete failed:', err.message)
+    )
 
     return c.json({ message: "Habit deleted successfully" })
   } catch (error) {

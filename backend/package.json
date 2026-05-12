@@ -9,7 +9,8 @@
     "db:push": "drizzle-kit push",
     "db:drop": "bun run ./src/db/seed/dropAllTables.ts",
     "db:seed": "bun run ./src/db/seed/seed.ts",
-    "db:seed:demo": "bun run ./scripts/seed-demo-data.ts"
+    "db:seed:demo": "bun run ./scripts/seed-demo-data.ts",
+    "ai:backfill": "bun run ./src/scripts/backfill-embeddings.ts"
   },
   "dependencies": {
     "@arcjet/bun": "^1.0.0-beta.7",
@@ -31,6 +32,7 @@
     "drizzle-orm": "^0.43.1",
     "hono": "^4.7.10",
     "jsonwebtoken": "^9.0.2",
+    "pg": "^8.20.0",
     "pino": "^10.1.0",
     "redis": "^4.7.1",
     "resend": "^4.5.1",
