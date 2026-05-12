@@ -13,7 +13,11 @@ import {
 } from "date-fns"
 import { clearCache, getCache, setCache } from "../../lib/redis.js"
 import {
-import { upsertEmbedding, deleteEmbedding, templateUserGoal } from "../services/embeddingHelper"
+  upsertEmbedding,
+  deleteEmbedding,
+  templateUserGoal,
+} from "../services/embeddingHelper"
+import {
   calculateBMI,
   calculateWeightDelta,
   getBMICategory,
