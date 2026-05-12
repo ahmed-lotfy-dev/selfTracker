@@ -81,28 +81,18 @@ electricRouter.on(["GET", "POST"], "/:table", async (c) => {
         }
         origin.searchParams.set("params[1]", user.id);
         
-        // Handle additional params if any (like params[2], etc.) - shift them to avoid conflict
-        // We keep our param at [1] and shift existing ones up
-        // First, collect all existing params to avoid modifying while iterating
-        const existingParams = [];
-        origin.searchParams.keys().forEach(key => {
+        // Handle any existing params by shifting indices to avoid conflict with our params[1]
+        // We need to iterate through a copy of keys since we're modifying the collection
+        const keys = Array.from(origin.searchParams.keys());
+        keys.forEach(key => {
           if (key.startsWith("params[")) {
             const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
             if (currentIndex >= 1) { // Skip our param[1] which we just set
-              existingParams.push({ key, currentIndex, value: origin.searchParams.get(key) });
+              const newKey = `params[${currentIndex + 1}]`;
+              origin.searchParams.set(newKey, origin.searchParams.get(key));
+              origin.searchParams.delete(key);
             }
           }
-        });
-        
-        // Remove existing params (except ours at [1])
-        existingParams.forEach(param => {
-          origin.searchParams.delete(param.key);
-        });
-        
-        // Re-add them with incremented indices
-        existingParams.forEach(param => {
-          const newKey = `params[${param.currentIndex + 1}]`;
-          origin.searchParams.set(newKey, param.value);
         });
       } else {
         // For POST, the client might be sending its own subset filtering in the body.
@@ -111,27 +101,17 @@ electricRouter.on(["GET", "POST"], "/:table", async (c) => {
         origin.searchParams.set("where", userWhereClause);
         origin.searchParams.set("params[1]", user.id);
         
-        // Handle additional params if any (like params[2], etc.) - shift them to avoid conflict
-        // First, collect all existing params to avoid modifying while iterating
-        const existingParams = [];
-        origin.searchParams.keys().forEach(key => {
+        // Handle any existing params by shifting indices to avoid conflict with our params[1]
+        const keys = Array.from(origin.searchParams.keys());
+        keys.forEach(key => {
           if (key.startsWith("params[")) {
             const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
             if (currentIndex >= 1) { // Skip our param[1] which we just set
-              existingParams.push({ key, currentIndex, value: origin.searchParams.get(key) });
+              const newKey = `params[${currentIndex + 1}]`;
+              origin.searchParams.set(newKey, origin.searchParams.get(key));
+              origin.searchParams.delete(key);
             }
           }
-        });
-        
-        // Remove existing params (except ours at [1])
-        existingParams.forEach(param => {
-          origin.searchParams.delete(param.key);
-        });
-        
-        // Re-add them with incremented indices
-        existingParams.forEach(param => {
-          const newKey = `params[${param.currentIndex + 1}]`;
-          origin.searchParams.set(newKey, param.value);
         });
       }
    }
