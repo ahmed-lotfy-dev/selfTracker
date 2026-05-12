@@ -70,50 +70,70 @@ electricRouter.on(["GET", "POST"], "/:table", async (c) => {
      // This is safer and better optimized by the sync service
      const userWhereClause = `"user_id" = $1 OR "user_id" IS NULL`;
      
-     if (method === "GET") {
-       // Preserve any existing where clause from the client and combine with user filter
-       const existingWhere = origin.searchParams.get("where");
-       if (existingWhere) {
-         // Combine existing where with user filter using AND
-         origin.searchParams.set("where", `(${existingWhere}) AND (${userWhereClause})`);
-       } else {
-         origin.searchParams.set("where", userWhereClause);
-       }
-       origin.searchParams.set("params[1]", user.id);
-       
-       // Handle additional params if any (like params[2], etc.) - shift them to avoid conflict
-       // We keep our param at [1] and shift existing ones up
-       let paramIndex = 2;
-       origin.searchParams.keys().forEach(key => {
-         if (key.startsWith("params[")) {
-           const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
-           if (currentIndex >= 1) { // Skip our param[1]
-             const newKey = `params[${currentIndex + 1}]`;
-             origin.searchParams.set(newKey, origin.searchParams.get(key));
-             origin.searchParams.delete(key);
-           }
-         }
-       });
-     } else {
-       // For POST, the client might be sending its own subset filtering in the body.
-       // We'll handle this by ensuring the URL has our user filter.
-       // The body filtering will be combined by Electric with AND.
-       origin.searchParams.set("where", userWhereClause);
-       origin.searchParams.set("params[1]", user.id);
-       
-       // Handle additional params if any (like params[2], etc.) - shift them to avoid conflict
-       let paramIndex = 2;
-       origin.searchParams.keys().forEach(key => {
-         if (key.startsWith("params[")) {
-           const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
-           if (currentIndex >= 1) { // Skip our param[1]
-             const newKey = `params[${currentIndex + 1}]`;
-             origin.searchParams.set(newKey, origin.searchParams.get(key));
-             origin.searchParams.delete(key);
-           }
-         }
-       });
-     }
+      if (method === "GET") {
+        // Preserve any existing where clause from the client and combine with user filter
+        const existingWhere = origin.searchParams.get("where");
+        if (existingWhere) {
+          // Combine existing where with user filter using AND
+          origin.searchParams.set("where", `(${existingWhere}) AND (${userWhereClause})`);
+        } else {
+          origin.searchParams.set("where", userWhereClause);
+        }
+        origin.searchParams.set("params[1]", user.id);
+        
+        // Handle additional params if any (like params[2], etc.) - shift them to avoid conflict
+        // We keep our param at [1] and shift existing ones up
+        // First, collect all existing params to avoid modifying while iterating
+        const existingParams = [];
+        origin.searchParams.keys().forEach(key => {
+          if (key.startsWith("params[")) {
+            const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
+            if (currentIndex >= 1) { // Skip our param[1] which we just set
+              existingParams.push({ key, currentIndex, value: origin.searchParams.get(key) });
+            }
+          }
+        });
+        
+        // Remove existing params (except ours at [1])
+        existingParams.forEach(param => {
+          origin.searchParams.delete(param.key);
+        });
+        
+        // Re-add them with incremented indices
+        existingParams.forEach(param => {
+          const newKey = `params[${param.currentIndex + 1}]`;
+          origin.searchParams.set(newKey, param.value);
+        });
+      } else {
+        // For POST, the client might be sending its own subset filtering in the body.
+        // We'll handle this by ensuring the URL has our user filter.
+        // The body filtering will be combined by Electric with AND.
+        origin.searchParams.set("where", userWhereClause);
+        origin.searchParams.set("params[1]", user.id);
+        
+        // Handle additional params if any (like params[2], etc.) - shift them to avoid conflict
+        // First, collect all existing params to avoid modifying while iterating
+        const existingParams = [];
+        origin.searchParams.keys().forEach(key => {
+          if (key.startsWith("params[")) {
+            const currentIndex = parseInt(key.match(/params\[(\d+)\]/)?.[1] || "0");
+            if (currentIndex >= 1) { // Skip our param[1] which we just set
+              existingParams.push({ key, currentIndex, value: origin.searchParams.get(key) });
+            }
+          }
+        });
+        
+        // Remove existing params (except ours at [1])
+        existingParams.forEach(param => {
+          origin.searchParams.delete(param.key);
+        });
+        
+        // Re-add them with incremented indices
+        existingParams.forEach(param => {
+          const newKey = `params[${param.currentIndex + 1}]`;
+          origin.searchParams.set(newKey, param.value);
+        });
+      }
    }
 
   // 4. Attach API Secrets
