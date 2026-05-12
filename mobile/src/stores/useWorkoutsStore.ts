@@ -122,8 +122,8 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
    },
 
    fetchWorkouts: async () => {
-     if (get().isLoading) return
-     set({ isLoading: true })
+      if (get().isLoading) return
+      set({ isLoading: true })
 
       try {
         const { getWorkouts } = await import('@/src/lib/api/workoutsApi')
@@ -135,11 +135,6 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
       } finally {
         set({ isLoading: false })
       }
-     } catch (e) {
-       console.error('Failed to fetch workouts:', e)
-     } finally {
-       set({ isLoading: false })
-     }
    },
 
   deleteWorkoutLog: (id) => {
