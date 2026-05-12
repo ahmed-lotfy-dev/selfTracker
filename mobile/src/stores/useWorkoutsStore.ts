@@ -125,11 +125,16 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
      if (get().isLoading) return
      set({ isLoading: true })
 
-      try:
-        const { getWorkouts } = await import('@/src/lib/api/workoutsApi.ts')
+      try {
+        const { getWorkouts } = await import('@/src/lib/api/workoutsApi')
         const workouts = await getWorkouts()
         console.log('[WorkoutsStore] Fetched workouts:', workouts.length)
         get().setWorkouts(workouts)
+      } catch (e) {
+        console.error('Failed to fetch workouts:', e)
+      } finally {
+        set({ isLoading: false })
+      }
      } catch (e) {
        console.error('Failed to fetch workouts:', e)
      } finally {
