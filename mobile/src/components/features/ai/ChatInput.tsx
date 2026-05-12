@@ -19,7 +19,7 @@ export default function ChatInput({
   disabled = false,
   placeholder = 'Ask about your data...',
 }: ChatInputProps) {
-  const canSend = value.trim().length > 0 && !loading && !disabled
+  const canSend = value.trim().length > 0 && !disabled
   const sendScale = useSharedValue(1)
   const sendStyle = useAnimatedStyle(() => ({
     transform: [{ scale: sendScale.value }],
@@ -35,7 +35,7 @@ export default function ChatInput({
           placeholder={placeholder}
           placeholderTextColor="var(--color-placeholder)"
           multiline
-          editable={!loading}
+          editable={!disabled}
           returnKeyType="send"
           onSubmitEditing={canSend ? onSend : undefined}
           blurOnSubmit
@@ -52,7 +52,7 @@ export default function ChatInput({
             canSend ? 'bg-primary' : 'bg-border'
           }`}
         >
-          {loading ? (
+          {loading && !canSend ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Text className={`text-lg ${canSend ? 'text-white' : 'text-text-muted'}`}>

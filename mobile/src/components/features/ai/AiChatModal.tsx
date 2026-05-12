@@ -6,6 +6,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   StyleSheet,
+  BackHandler,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BlurView } from 'expo-blur'
@@ -29,6 +30,7 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
   const insets = useSafeAreaInsets()
   const scrollRef = useRef<ScrollView>(null)
   const abortRef = useRef<(() => void) | null>(null)
+  const requestIdRef = useRef(0)
 
   const { conversations, save: saveConversation, remove: deleteConversation } =
     useConversationHistory()
@@ -71,6 +73,8 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
 
   const startStream = useCallback(
     async (text: string, currentMessages: AiChatMessage[]) => {
+      const requestId = requestIdRef.current + 1
+      requestIdRef.current = requestId
       abortStream()
       setInput('')
       setError(null)
@@ -86,41 +90,58 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
 
       let accumulatedContent = ''
 
-      const abort = await streamChat(
-        text,
-        history,
-        (token) => {
-          accumulatedContent += token
-          setStreamingContent(accumulatedContent)
-        },
-        (sources: SearchResult[]) => {
-          const assistantMessage: AiChatMessage = {
-            role: 'assistant',
-            content: accumulatedContent,
+      try {
+        const abort = await streamChat(
+          text,
+          history,
+          (token) => {
+            if (requestIdRef.current !== requestId) return
+            accumulatedContent += token
+            setStreamingContent(accumulatedContent)
+          },
+          (sources: SearchResult[]) => {
+            if (requestIdRef.current !== requestId) return
+            const assistantMessage: AiChatMessage = {
+              role: 'assistant',
+              content: accumulatedContent,
+            }
+            const newMessages = [...history, assistantMessage]
+            setMessages(newMessages)
+            setStreamingContent('')
+            setIsLoading(false)
+            abortRef.current = null
+            handleSave(newMessages)
+          },
+          (errorMsg: string) => {
+            if (requestIdRef.current !== requestId) return
+            setError(errorMsg)
+            setIsLoading(false)
+            setStreamingContent('')
+            abortRef.current = null
           }
-          const newMessages = [...history, assistantMessage]
-          setMessages(newMessages)
-          setStreamingContent('')
-          setIsLoading(false)
-          handleSave(newMessages)
-        },
-        (errorMsg: string) => {
-          setError(errorMsg)
-          setIsLoading(false)
-          setStreamingContent('')
-        }
-      )
+        )
 
-      abortRef.current = abort
+        if (requestIdRef.current === requestId) {
+          abortRef.current = abort
+        } else {
+          abort()
+        }
+      } catch (err: any) {
+        if (requestIdRef.current !== requestId) return
+        setError(err?.message || 'Failed to start chat')
+        setIsLoading(false)
+        setStreamingContent('')
+        abortRef.current = null
+      }
     },
     [handleSave, abortStream]
   )
 
   const handleSend = useCallback(() => {
     const text = input.trim()
-    if (!text || isLoading) return
+    if (!text) return
     startStream(text, messagesRef.current)
-  }, [input, isLoading, startStream])
+  }, [input, startStream])
 
   const handleSuggestedPrompt = useCallback(
     (prompt: string) => {
@@ -164,6 +185,23 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
       setShowHistory(false)
     }
   }, [visible])
+
+  useEffect(() => {
+    if (!visible) return
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (showHistory) {
+        setShowHistory(false)
+        return true
+      }
+
+      abortRef.current?.()
+      onClose()
+      return true
+    })
+
+    return () => subscription.remove()
+  }, [visible, showHistory, onClose])
 
   if (!visible) return null
 
@@ -335,7 +373,6 @@ export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
               }}
               onSend={handleSend}
               loading={isLoading}
-              disabled={!!streamingContent}
             />
           </>
         )}
