@@ -56,12 +56,19 @@ app.use(
 app.get("/api/auth/desktop/:provider", async (c) => {
   const { provider } = c.req.param()
   const callbackURL = c.req.query("callbackURL") || "selftracker://auth"
-  const result = await auth.api.signInSocial({
-    body: { provider, callbackURL },
-    headers: c.req.raw.headers,
-    asResponse: true,
-  })
-  return result
+  try {
+    const result = await auth.api.signInSocial({
+      body: { provider, callbackURL },
+      headers: c.req.raw.headers,
+    })
+    if (result && typeof result === 'object' && 'url' in result) {
+      return c.redirect(result.url as string, 302)
+    }
+    return c.json({ error: "Failed to initiate OAuth" }, 500)
+  } catch (e: any) {
+    console.error("[Desktop OAuth] Failed:", e)
+    return c.html(`<html><body style="font-family:system-ui;background:#09090b;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:20px;text-align:center;padding:20px"><h2 style="margin:0">Authentication Failed</h2><p style="color:#a1a1aa">${e?.message || 'Could not initiate sign-in'}</p></body></html>`)
+  }
 })
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
