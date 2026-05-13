@@ -2,29 +2,36 @@
   "expo": {
     "name": "selfTracker",
     "slug": "selftracker",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "orientation": "portrait",
-    "icon": "./assets/images/splash-screen.png",
-    "scheme": ["selftracker", "exp+selftracker"],
+    "icon": "./assets/images/icon.png",
+    "scheme": [
+      "selftracker",
+      "exp+selftracker"
+    ],
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ahmedlotfy.selftracker",
-      "jsEngine": "jsc"
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "backgroundImage": "./assets/images/splash-screen.png"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
-      "edgeToEdgeEnabled": true,
       "package": "com.ahmedlotfy.selftracker",
-      "versionCode": 12
+      "versionCode": 13,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
+      "expo-updates",
       [
         "expo-splash-screen",
         {
@@ -62,7 +69,8 @@
       "expo-font",
       "expo-web-browser",
       "expo-sqlite",
-      "./plugins/withDisableLinting"
+      "./plugins/withDisableLinting",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true
@@ -76,10 +84,11 @@
       }
     },
     "owner": "ahmed-lotfy",
-    "runtimeVersion": "1.1.4",
+    "runtimeVersion": "1.1.5",
     "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/6cb0f186-29d6-46d3-baa5-af88fdccee50"
-    },
-    "jsEngine": "hermes"
+    }
   }
 }

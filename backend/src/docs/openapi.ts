@@ -196,7 +196,13 @@ When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter
           calories: { type: 'number' },
           protein: { type: 'number' },
           carbs: { type: 'number' },
-          fat: { type: 'number' }
+          fat: { type: 'number' },
+          estimatedGrams: { type: 'number' },
+          confidence: { type: 'number' },
+          confidenceReason: { type: 'string' },
+          nutritionSource: { type: 'string', enum: ['model_estimate', 'open_food_facts'] },
+          matchedProductName: { type: 'string' },
+          detectionConfidence: { type: 'number' }
         }
       },
       FoodLog: {
@@ -231,7 +237,19 @@ When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter
           totalProtein: { type: 'integer' },
           totalCarbs: { type: 'integer' },
           totalFat: { type: 'integer' },
-          confidence: { type: 'number' }
+          confidence: { type: 'number' },
+          confidenceBreakdown: {
+            type: 'object',
+            properties: {
+              detection: { type: 'number' },
+              nutritionData: { type: 'number' },
+              portionEstimation: { type: 'number' }
+            }
+          },
+          notes: {
+            type: 'array',
+            items: { type: 'string' }
+          }
         }
       }
     }
@@ -246,7 +264,7 @@ When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter
     { name: 'Workout Logs', description: 'Workout history' },
     { name: 'Timer', description: 'Focus timer sessions' },
     { name: 'Habits', description: 'Habit tracking and streaks' },
-    { name: 'Nutrition', description: 'AI-powered food recognition with Groq Llama 3.2 Vision and calorie tracking' },
+    { name: 'Nutrition', description: 'AI-powered food recognition with NVIDIA vision analysis and calorie tracking' },
     { name: 'Image', description: 'Image upload and management' },
     { name: 'ElectricSQL', description: 'Data synchronization' }
   ],
@@ -486,7 +504,7 @@ When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter
       post: {
         tags: ['Nutrition'],
         summary: 'Analyze food image with AI',
-        description: 'Send a base64-encoded food image to Groq AI (Llama 3.2 Vision) for instant calorie and macro analysis. Features lightning-fast inference with 1000 free requests/day.',
+        description: 'Send a base64-encoded food image to the configured NVIDIA vision model for calorie and macro analysis.',
         requestBody: {
           content: {
             'application/json': {

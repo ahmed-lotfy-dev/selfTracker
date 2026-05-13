@@ -24,9 +24,9 @@ export default function BackButton({
   return (
     <Pressable 
         onPress={handlePress} 
-        className={`w-10 h-10 rounded-full bg-gray-100 items-center justify-center active:bg-gray-200 ${className}`}
+        className={`w-10 h-10 rounded-full bg-white/5 border border-white/10 items-center justify-center active:bg-white/10 transition-colors ${className}`}
     >
-        <Entypo name="chevron-left" size={24} color="#374151" />
+        <Entypo name="chevron-left" size={24} color="rgba(255,255,255,0.8)" />
     </Pressable>
   )
 }

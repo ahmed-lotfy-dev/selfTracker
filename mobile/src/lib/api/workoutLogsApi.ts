@@ -42,8 +42,12 @@ export const getWorkoutLogsForMonth = async (
   const url = `${API_BASE_URL}/api/workoutLogs/calendar?year=${year}&month=${month}`
 
   const response = await axiosInstance.get(url)
+  const data = response.data
 
-  return response.data.map((log: any) => ({
+  // Flatten the grouped object { "date": [logs] } into a flat array [logs]
+  const allLogs = Object.values(data).flat() as any[]
+
+  return allLogs.map((log: any) => ({
     id: log.id,
     userId: log.userId,
     workoutId: log.workoutId,

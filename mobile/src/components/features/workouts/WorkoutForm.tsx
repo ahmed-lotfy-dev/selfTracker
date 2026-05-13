@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { formatUTC } from "@/src/lib/utils/dateUtils"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 
 import Button from "@/src/components/ui/Button"
+import { PremiumCard } from "@/src/components/ui/PremiumCard"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 
@@ -29,6 +30,14 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
   const addWorkoutLog = useWorkoutsStore(s => s.addWorkoutLog)
   const updateWorkoutLog = useWorkoutsStore(s => s.updateWorkoutLog)
   const addWorkout = useWorkoutsStore(s => s.addWorkout)
+  const fetchWorkouts = useWorkoutsStore(s => s.fetchWorkouts)
+
+  // Fetch workouts when component mounts or when workouts array is empty
+  useEffect(() => {
+    if (workouts.length === 0) {
+      fetchWorkouts()
+    }
+  }, [workouts.length, fetchWorkouts])
 
   // Find existing log if editing
   const existingLog = useMemo(() => {
@@ -127,14 +136,14 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
       <View className="flex-1 px-5 pt-6 gap-6">
 
         {/* --- Activity Section --- */}
-        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-          <View className="bg-muted/30 px-4 py-3 border-b border-border flex-row items-center gap-2">
+        <PremiumCard>
+          <View className="flex-row items-center gap-2 mb-4">
             <MaterialIcons name="fitness-center" size={18} color={colors.primary} />
-            <Text className="text-sm font-bold uppercase text-placeholder tracking-wider">Workout Details</Text>
+            <Text className="text-[10px] font-bold uppercase text-white/50 tracking-widest">Workout Details</Text>
           </View>
 
-          <View className="p-2">
-            <View className={`rounded-xl ${Platform.OS === 'ios' ? 'bg-transparent' : 'border border-border bg-background'}`}>
+          <View>
+            <View className={`rounded-xl ${Platform.OS === 'ios' ? 'bg-transparent' : 'border border-white/10 bg-white/5'}`}>
               <Picker
                 selectedValue={workoutId}
                 onValueChange={(itemValue) => setWorkoutId(itemValue)}
@@ -149,13 +158,13 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
             </View>
 
             {(workoutId === "new" || !workoutId) && (
-              <View className="mt-2 mx-2 mb-2 p-3 bg-background rounded-xl border border-border flex-row items-center gap-3">
-                <Feather name="edit-2" size={18} color={colors.placeholder} />
+              <View className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10 flex-row items-center gap-3">
+                <Feather name="edit-2" size={18} color="rgba(255,255,255,0.4)" />
                 <TextInput
                   className="flex-1 text-base font-medium"
                   style={{ color: colors.text }}
                   placeholder="Enter custom workout name"
-                  placeholderTextColor={colors.placeholder}
+                  placeholderTextColor="rgba(255,255,255,0.3)"
                   value={workoutName}
                   onChangeText={setWorkoutName}
                   autoFocus={workoutId === "new"}
@@ -163,42 +172,50 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
               </View>
             )}
           </View>
-        </View>
+        </PremiumCard>
 
         {/* --- Notes Section --- */}
-        <View className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden p-4">
+        <PremiumCard>
+          <View className="flex-row items-center gap-2 mb-3">
+            <Feather name="align-left" size={16} color="rgba(255,255,255,0.4)" />
+            <Text className="text-[10px] font-bold uppercase text-white/50 tracking-widest">Notes</Text>
+          </View>
           <TextInput
             className="text-base leading-6"
             style={{ color: colors.text, minHeight: 80, textAlignVertical: 'top' }}
-            placeholder="Notes (optional)..."
-            placeholderTextColor={colors.placeholder}
+            placeholder="How did the workout feel?..."
+            placeholderTextColor="rgba(255,255,255,0.3)"
             value={notes}
             onChangeText={setNotes}
             multiline
           />
-        </View>
+        </PremiumCard>
 
         {/* --- Date Toggle --- */}
-        <View className="flex-row items-center justify-between px-2">
-          <Pressable
-            onPress={() => setIsDatePickerVisible(true)}
-            className="flex-row items-center gap-2 py-2 px-3 rounded-full bg-muted/30"
-          >
-            <Feather name="calendar" size={14} color={!isToday ? colors.primary : colors.placeholder} />
-            <Text className={`text-xs font-medium ${!isToday ? 'text-primary' : 'text-placeholder'}`}>
-              {!isToday ? <DateDisplay date={createdAt} /> : "Today"}
-            </Text>
-            <Feather name="chevron-down" size={12} color={colors.placeholder} />
-          </Pressable>
-        </View>
+        <PremiumCard onPress={() => setIsDatePickerVisible(!isDatePickerVisible)}>
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center gap-3">
+              <View className="w-10 h-10 rounded-xl bg-white/5 items-center justify-center border border-white/10">
+                <Feather name="calendar" size={18} color={isToday ? "rgba(255,255,255,0.4)" : colors.primary} />
+              </View>
+              <View>
+                <Text className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-0.5">Date</Text>
+                <Text className={`text-base font-black tracking-tight ${!isToday ? 'text-white' : 'text-white/60'}`}>
+                  {!isToday ? <DateDisplay date={createdAt} /> : "Today"}
+                </Text>
+              </View>
+            </View>
+            <Feather name={isDatePickerVisible ? "chevron-up" : "chevron-down"} size={20} color={'rgba(255,255,255,0.2)'} />
+          </View>
+        </PremiumCard>
 
         <Button
           onPress={handleSubmit}
           loading={isSubmitting}
-          className="mt-2 shadow-md"
+          className="mt-4 shadow-md bg-white text-black rounded-xl py-4"
           size="lg"
         >
-          {isEditing ? "Update Log" : "Log Workout"}
+          <Text className="text-black font-bold uppercase tracking-widest text-center w-full">{isEditing ? "Update Log" : "Log Workout"}</Text>
         </Button>
 
       </View>

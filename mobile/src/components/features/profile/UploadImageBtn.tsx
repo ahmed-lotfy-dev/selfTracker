@@ -2,8 +2,7 @@ import React from "react"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { deleteImage, uploadImage } from "@/src/lib/api/imageApi"
 import { updateUser } from "@/src/lib/api/userApi"
-import { useState } from "react"
-import { View, Text, Pressable, Button } from "react-native"
+import { View, Pressable } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 import * as ImageManipulator from "expo-image-manipulator"
 import { useAuthActions } from "@/src/features/auth/useAuthStore"
@@ -12,8 +11,6 @@ import Foundation from "@expo/vector-icons/Foundation"
 export default function UploadImageBtn({ className }: { className?: string }) {
   const { user } = useAuth()
   const { setUser } = useAuthActions()
-  const [imageFile, setImageFile] =
-    useState<ImagePicker.ImagePickerAsset | null>(null)
 
   const pickImageAndUpload = async () => {
     try {
@@ -30,7 +27,6 @@ export default function UploadImageBtn({ className }: { className?: string }) {
       }
 
       const selectedImage = result.assets[0]
-      setImageFile(selectedImage)
 
       const optimizedImage = await ImageManipulator.manipulateAsync(
         selectedImage.uri,
@@ -48,8 +44,8 @@ export default function UploadImageBtn({ className }: { className?: string }) {
 
       const { imageUrl } = await uploadImage(
         optimizedImage,
-        imageFile?.fileName ?? "",
-        imageFile?.mimeType ?? ""
+        selectedImage.fileName ?? "profile.jpg",
+        selectedImage.mimeType ?? "image/jpeg"
       )
 
       // Update User

@@ -13,6 +13,7 @@ import {
   getWeightLogs,
   updateWeightLog,
 } from "../services/weightLogsService"
+import { upsertEmbedding, deleteEmbedding, templateWeightLog } from "../services/embeddingHelper"
 
 const weightsLogsRouter = new Hono()
 
@@ -156,6 +157,17 @@ weightsLogsRouter.post("/", zValidator("json", createWeightLogSchema), async (c)
 
     const created = await createWeightLog(user.id, body)
 
+    try {
+      await upsertEmbedding({
+        userId: user.id,
+        resourceType: "weight_log",
+        resourceId: created.id,
+        content: templateWeightLog(created),
+      })
+    } catch (embeddingError) {
+      console.error("Error upserting embedding for weight log:", embeddingError)
+    }
+
     return c.json({ message: "log created successfully", weightLog: created })
   } catch (error) {
     console.error("Error creating weight log:", error)
@@ -211,6 +223,17 @@ weightsLogsRouter.patch("/:id", zValidator("json", updateWeightLogSchema), async
 
     const updated = await updateWeightLog(id, user.id, updateFields)
 
+    try {
+      await upsertEmbedding({
+        userId: user.id,
+        resourceType: "weight_log",
+        resourceId: id,
+        content: templateWeightLog(updated),
+      })
+    } catch (embeddingError) {
+      console.error("Error upserting embedding for weight log update:", embeddingError)
+    }
+
     return c.json({
       message: "Weight log updated successfully",
       weightLog: updated,
@@ -252,6 +275,12 @@ weightsLogsRouter.delete("/:id", async (c) => {
 
     if (!deleteLog) {
       return c.json({ message: "Weight log not found" }, 404)
+    }
+
+    try {
+      await deleteEmbedding("weight_log", id)
+    } catch (embeddingError) {
+      console.error("Error deleting embedding for weight log:", embeddingError)
     }
 
     return c.json({
