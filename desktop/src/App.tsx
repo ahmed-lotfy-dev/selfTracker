@@ -24,15 +24,20 @@ import TasksPage from "./routes/tasks";
 import TimersPage from "./routes/timers";
 import TimerOverlayPage from "./routes/timer-overlay";
 import OnboardingPage from "./routes/onboarding";
+import NutritionPage from "./routes/nutrition";
+import NutritionAddPage from "./routes/nutrition-add";
+import NutritionGoalsPage from "./routes/nutrition-goals";
+import AIPage from "./routes/ai";
+import ProfilePage from "./routes/profile";
+import DataPage from "./routes/data";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DebugConsole } from "@/components/DebugConsole";
 
-// Create a client with persistence settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      staleTime: 1000 * 60 * 5, // 5 minutes (adjust as needed)
+      gcTime: 1000 * 60 * 60 * 24,
+      staleTime: 1000 * 60 * 5,
     },
   },
 });
@@ -41,9 +46,7 @@ const persister = createSyncStoragePersister({
   storage: window.localStorage,
 });
 
-// Root Layout Component - renders inside providers
 function RootLayout() {
-  // Handle deep link authentication from social OAuth providers
   useDeepLinkHandler();
 
   if (window.location.pathname === '/timer-overlay') {
@@ -67,29 +70,21 @@ function RootLayout() {
   );
 }
 
-// 1. Root Route (Global Providers & Logic)
 const rootRoute = createRootRoute({
   beforeLoad: ({ location }) => {
     const onboardingComplete = localStorage.getItem("onboarding_complete");
     if (!onboardingComplete && location.pathname !== '/onboarding' && location.pathname !== '/timer-overlay') {
-      throw redirect({
-        to: '/onboarding',
-      })
+      throw redirect({ to: '/onboarding' })
     }
   },
   component: RootLayout,
 });
 
-// 2. App Shell Route (Sidebar Layout)
 const shellRoute = createRoute({
   id: 'shell',
   getParentRoute: () => rootRoute,
-  component: () => (
-    <AppShell />
-  ),
+  component: () => <AppShell />,
 });
-
-// --- Routes inside App Shell ---
 
 const indexRoute = createRoute({
   getParentRoute: () => shellRoute,
@@ -133,7 +128,41 @@ const timersRoute = createRoute({
   component: TimersPage,
 });
 
-// --- Standalone Routes (No Sidebar) ---
+const nutritionRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/nutrition",
+  component: NutritionPage,
+});
+
+const nutritionAddRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/nutrition-add",
+  component: NutritionAddPage,
+});
+
+const nutritionGoalsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/nutrition-goals",
+  component: NutritionGoalsPage,
+});
+
+const aiRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/ai",
+  component: AIPage,
+});
+
+const profileRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/profile",
+  component: ProfilePage,
+});
+
+const dataRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/data",
+  component: DataPage,
+});
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -159,11 +188,6 @@ const onboardingRoute = createRoute({
   component: OnboardingPage,
 });
 
-
-
-
-
-// 3. Register Route Tree
 const routeTree = rootRoute.addChildren([
   shellRoute.addChildren([
     indexRoute,
@@ -173,7 +197,12 @@ const routeTree = rootRoute.addChildren([
     habitsRoute,
     tasksRoute,
     timersRoute,
-
+    nutritionRoute,
+    nutritionAddRoute,
+    nutritionGoalsRoute,
+    aiRoute,
+    profileRoute,
+    dataRoute,
   ]),
   loginRoute,
   registerRoute,
@@ -181,10 +210,8 @@ const routeTree = rootRoute.addChildren([
   onboardingRoute,
 ]);
 
-// Create router
 const router = createRouter({ routeTree });
 
-// Register the router instance for type safety
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
