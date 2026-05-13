@@ -5,6 +5,7 @@ import { getCache, setCache, clearCache } from "../../lib/redis"
 import { z } from "zod"
 import { zValidator } from "@hono/zod-validator"
 import { eq } from "drizzle-orm"
+import { upsertEmbedding, templateTrainingSplit } from "../services/embeddingHelper"
 
 const workoutsRouter = new Hono()
 
@@ -28,10 +29,15 @@ workoutsRouter.get("/", async (c) => {
     return c.json(cached);
   }
 
-  // Return all workout templates (these are global, not user-specific)
-  // For now we return all, but ideally we should filter by user_id OR public
-  // Assuming strict schema access for now
-  const allWorkouts = await db.query.workouts.findMany();
+  // Return workouts belonging to the user OR public workouts
+  // This ensures users see their own workouts and public templates
+  const allWorkouts = await db.query.workouts.findMany({
+    where: (workouts, { eq, or }) => 
+      or(
+        eq(workouts.userId, user?.id ?? ''),
+        eq(workouts.isPublic, true)
+      )
+  });
 
   await setCache(cacheKey, 3600, allWorkouts);
 
@@ -66,6 +72,17 @@ workoutsRouter.post("/", zValidator("json", createWorkoutSchema), async (c) => {
     }).returning();
 
     await clearCache(`workouts:${user.id}`);
+
+    try {
+      await upsertEmbedding({
+        userId: user.id,
+        resourceType: "training_split",
+        resourceId: created.id,
+        content: templateTrainingSplit(created),
+      })
+    } catch (embedErr) {
+      console.error("Error creating embedding for workout:", embedErr)
+    }
 
     return c.json(created);
   } catch (err) {

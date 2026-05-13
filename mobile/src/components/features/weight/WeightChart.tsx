@@ -1,18 +1,18 @@
 import React, { useMemo, useState } from "react"
-import { View, Text, Dimensions, Pressable } from "react-native"
+import { View, Text, Pressable, StyleSheet } from "react-native"
 import { LineChart } from "react-native-chart-kit"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWeightStore } from "@/src/stores/useWeightStore"
-import { format, subMonths, subYears, isAfter } from "date-fns"
+import { format, subMonths, isAfter } from "date-fns"
+import { PremiumCard } from "../../ui/PremiumCard"
 
-const SCREEN_WIDTH = Dimensions.get("window").width
-
-type Range = "1M" | "3M" | "6M" | "1Y"
+type Range = "1M" | "3M" | "6M"
 
 export const WeightChart = () => {
   const colors = useThemeColors()
   const weightLogs = useWeightStore(s => s.weightLogs)
   const [range, setRange] = useState<Range>("1M")
+  const [chartWidth, setChartWidth] = useState(0)
 
   const chartData = useMemo(() => {
     let startDate: Date
@@ -20,7 +20,6 @@ export const WeightChart = () => {
       case "1M": startDate = subMonths(new Date(), 1); break
       case "3M": startDate = subMonths(new Date(), 3); break
       case "6M": startDate = subMonths(new Date(), 6); break
-      case "1Y": startDate = subYears(new Date(), 1); break
     }
 
     const filteredLogs = weightLogs
@@ -29,7 +28,6 @@ export const WeightChart = () => {
 
     if (filteredLogs.length < 2) return null
 
-    // We only want a few labels on the X axis
     const labels = filteredLogs.map((l, i) =>
       i === 0 || i === filteredLogs.length - 1 || i === Math.floor(filteredLogs.length / 2)
         ? format(new Date(l.createdAt), "dd/MM")
@@ -38,77 +36,104 @@ export const WeightChart = () => {
 
     const data = filteredLogs.map(l => parseFloat(l.weight))
 
-    return {
-      labels,
-      datasets: [{ data }]
-    }
+    return { labels, datasets: [{ data }] }
   }, [weightLogs, range])
 
   const RangeButton = ({ label, value }: { label: string, value: Range }) => (
     <Pressable
       onPress={() => setRange(value)}
-      className={`px-3 py-1 rounded-full ${range === value ? "bg-primary" : "bg-card border border-border"}`}
+      className={`px-3 py-1 rounded-lg ${range === value ? "bg-white/20" : "bg-transparent"}`}
     >
-      <Text className={`text-[10px] font-bold ${range === value ? "text-white" : "text-placeholder"}`}>
+      <Text className={`text-[10px] font-black ${range === value ? "text-white" : "text-white/40"}`}>
         {label}
       </Text>
     </Pressable>
   )
 
   return (
-    <View className="mb-4 bg-card rounded-2xl border border-border overflow-hidden shadow-sm mx-3">
-      <View className="p-4 border-b border-border flex-row items-center justify-between">
-        <View>
-          <Text className="text-lg font-bold" style={{ color: colors.text }}>Weight Trend</Text>
-          <Text className="text-[10px] text-placeholder uppercase tracking-widest">Progress Visualization</Text>
-        </View>
-        <View className="flex-row gap-1">
-          <RangeButton label="1M" value="1M" />
-          <RangeButton label="3M" value="3M" />
-          <RangeButton label="6M" value="6M" />
-          <RangeButton label="1Y" value="1Y" />
-        </View>
-      </View>
-
-      <View className="py-4 items-center justify-center">
-        {chartData ? (
-          <LineChart
-            data={chartData}
-            width={SCREEN_WIDTH - 48}
-            height={180}
-            yAxisSuffix="kg"
-            withInnerLines={false}
-            withOuterLines={false}
-            chartConfig={{
-              backgroundColor: colors.card,
-              backgroundGradientFrom: colors.card,
-              backgroundGradientTo: colors.card,
-              decimalPlaces: 1,
-              color: (opacity = 1) => `rgba(${parseInt(colors.primary.slice(1, 3), 16)}, ${parseInt(colors.primary.slice(3, 5), 16)}, ${parseInt(colors.primary.slice(5, 7), 16)}, ${opacity})`,
-              labelColor: (opacity = 1) => colors.placeholder,
-              propsForDots: {
-                r: "4",
-                strokeWidth: "2",
-                stroke: colors.primary
-              },
-              style: {
-                borderRadius: 16
-              }
-            }}
-            bezier
-            style={{
-              marginVertical: 8,
-              borderRadius: 16
-            }}
-          />
-        ) : (
-          <View className="py-12 items-center px-8">
-            <Text className="text-placeholder text-center text-sm">
-              Keep logging your weight to see your progress chart!
-            </Text>
+    <View className="mb-8">
+      <PremiumCard
+        gradientColors={['rgba(255,255,255,0.03)', 'rgba(255,255,255,0.01)']}
+        containerStyle="border-white/5 py-6"
+      >
+        <View className="flex-row items-center justify-between mb-6 px-2">
+          <View>
+            <View className="flex-row items-center gap-2 mb-1">
+              <View className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <Text className="text-white/40 font-black text-[10px] uppercase tracking-[2px]">Weight Velocity</Text>
+            </View>
+            <Text className="text-white text-3xl font-black tracking-tighter">Progress</Text>
           </View>
-        )}
-      </View>
+          <View className="flex-row bg-white/5 p-1 rounded-2xl border border-white/5">
+            <RangeButton label="1M" value="1M" />
+            <RangeButton label="3M" value="3M" />
+            <RangeButton label="6M" value="6M" />
+          </View>
+        </View>
+
+        <View
+          onLayout={e => setChartWidth(e.nativeEvent.layout.width)}
+          style={styles.chartContainer}
+        >
+          {chartData && chartWidth > 0 ? (
+            <LineChart
+              data={chartData}
+              width={chartWidth}
+              height={180}
+              withInnerLines={false}
+              withOuterLines={false}
+              withVerticalLines={false}
+              withHorizontalLines={false}
+              chartConfig={{
+                backgroundColor: "#0f172a",
+                backgroundGradientFrom: "#0f172a",
+                backgroundGradientTo: "#0f172a",
+                fillShadowGradientFrom: "#10b981",
+                fillShadowGradientTo: "#10b981",
+                fillShadowGradientFromOpacity: 0.18,
+                fillShadowGradientToOpacity: 0,
+                color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.35})`,
+                decimalPlaces: 1,
+                propsForDots: {
+                  r: "3",
+                  strokeWidth: "2",
+                  stroke: "#10b981"
+                },
+                propsForLabels: {
+                  fontSize: 10,
+                  fontWeight: "bold",
+                }
+              }}
+              bezier
+              style={styles.chart}
+              transparent
+              getDotColor={() => "#10b981"}
+            />
+          ) : !chartData && chartWidth > 0 ? (
+            <View className="py-16 items-center px-10">
+              <View className="w-12 h-12 rounded-2xl bg-white/5 items-center justify-center border border-white/10 mb-4">
+                <Text className="text-white/20 text-xl font-black">?</Text>
+              </View>
+              <Text className="text-white/30 text-center text-[10px] font-black uppercase tracking-[2px]">
+                Awaiting Data Input
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </PremiumCard>
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  chartContainer: {
+    width: '100%',
+    overflow: 'hidden',
+  },
+  chart: {
+    borderRadius: 12,
+    marginTop: 4,
+    marginLeft: -16,
+  }
+})

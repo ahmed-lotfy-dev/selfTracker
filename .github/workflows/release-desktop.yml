@@ -1,8 +1,8 @@
 name: Desktop Release
-on:
-  push:
-    tags:
-      - 'desktop-v*'
+# on:
+#   push:
+#     tags:
+#       - 'desktop-v*'
 
 jobs:
   publish-tauri:

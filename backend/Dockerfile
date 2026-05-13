@@ -10,9 +10,12 @@ RUN bun install --frozen-lockfile
 # Copy Source Code
 COPY . .
 
-# Build/Run
+# Build-time args (for Dokploy builds)
+ARG DATABASE_URL
+ARG BETTER_AUTH_URL
+
+# These are the minimum required runtime env vars
 ENV NODE_ENV=production
-ENV AI_PROVIDER=gemini
 ENV PORT=8000
 
 EXPOSE 8000

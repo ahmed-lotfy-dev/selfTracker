@@ -1,9 +1,10 @@
-import { db } from "../db"
 import { and, eq, desc, gte, lt, lte, or, sql } from "drizzle-orm"
+import { db } from "../db"
 import { weightLogs } from "../db/schema/weightLogs"
 import type { User } from "../db/schema"
 import { clearCache } from "../../lib/redis"
 import { format, subMonths } from "date-fns"
+import { upsertEmbedding, deleteEmbedding, templateWeightLog } from "./embeddingHelper"
 
 export const getWeightLogs = async (
   userId: string,
@@ -49,7 +50,7 @@ export const getSingleWeightLog = async (logId: string) => {
 export const createWeightLog = async (userId: string, fields: any) => {
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
 
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [created] = await tx
       .insert(weightLogs)
       .values({
@@ -82,6 +83,16 @@ export const createWeightLog = async (userId: string, fields: any) => {
 
     return { ...created, txid: parseInt(txid) }
   })
+
+  // Generate embedding asynchronously (don't block the response)
+  upsertEmbedding({
+    userId,
+    resourceType: "weight_log",
+    resourceId: result.id,
+    content: templateWeightLog(result),
+  }).catch(err => console.error('[Embedding] weight_log create failed:', err.message))
+
+  return result
 }
 
 export const updateWeightLog = async (
@@ -91,7 +102,7 @@ export const updateWeightLog = async (
 ) => {
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
 
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const updateData: any = {}
     if (updatedFields.weight !== undefined) updateData.weight = String(updatedFields.weight)
     if (updatedFields.mood !== undefined) updateData.mood = updatedFields.mood
@@ -114,12 +125,23 @@ export const updateWeightLog = async (
 
     return { ...updated, txid: parseInt(txid) }
   })
+
+  if (result) {
+    upsertEmbedding({
+      userId,
+      resourceType: "weight_log",
+      resourceId: result.id,
+      content: templateWeightLog(result),
+    }).catch(err => console.error('[Embedding] weight_log update failed:', err.message))
+  }
+
+  return result
 }
 
 export const deleteWeightLog = async (userId: string, weightLogId: string) => {
   await clearCache([`userHomeData:${userId}`, `weightLogs:list:${userId}:*`])
 
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [deleted] = await tx
       .delete(weightLogs)
       .where(and(eq(weightLogs.id, weightLogId), eq(weightLogs.userId, userId)))
@@ -133,6 +155,13 @@ export const deleteWeightLog = async (userId: string, weightLogId: string) => {
 
     return { ...deleted, txid: parseInt(txid) }
   })
+
+  // Remove embedding
+  deleteEmbedding("weight_log", weightLogId).catch(err =>
+    console.error('[Embedding] weight_log delete failed:', err.message)
+  )
+
+  return result
 }
 
 export const getTimeWeightLogs = async (userId: string, month: number) => {

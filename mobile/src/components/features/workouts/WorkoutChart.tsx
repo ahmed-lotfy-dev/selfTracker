@@ -1,13 +1,12 @@
 import React, { useMemo, useState } from "react"
-import { View, Text, Dimensions, Pressable } from "react-native"
+import { View, Text, Pressable, StyleSheet } from "react-native"
 import { BarChart } from "react-native-chart-kit"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
-import { subMonths, subDays, subYears, isAfter } from "date-fns"
+import { subMonths, subDays, isAfter } from "date-fns"
+import { PremiumCard } from "../../ui/PremiumCard"
 
-const SCREEN_WIDTH = Dimensions.get("window").width
-
-type Range = "1W" | "1M" | "3M" | "6M" | "1Y"
+type Range = "1W" | "1M" | "3M" | "6M"
 
 const parseDate = (dateStr: string): Date => {
   if (!dateStr) return new Date()
@@ -20,26 +19,15 @@ export const WorkoutChart = () => {
   const colors = useThemeColors()
   const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
   const [range, setRange] = useState<Range>("1M")
+  const [chartWidth, setChartWidth] = useState(0)
 
   const chartData = useMemo(() => {
     let startDate: Date
-
     switch (range) {
-      case "1W":
-        startDate = subDays(new Date(), 7)
-        break
-      case "1M":
-        startDate = subMonths(new Date(), 1)
-        break
-      case "3M":
-        startDate = subMonths(new Date(), 3)
-        break
-      case "6M":
-        startDate = subMonths(new Date(), 6)
-        break
-      case "1Y":
-        startDate = subYears(new Date(), 1)
-        break
+      case "1W": startDate = subDays(new Date(), 7); break
+      case "1M": startDate = subMonths(new Date(), 1); break
+      case "3M": startDate = subMonths(new Date(), 3); break
+      case "6M": startDate = subMonths(new Date(), 6); break
     }
 
     const activeLogs = workoutLogs.filter(l =>
@@ -56,79 +44,104 @@ export const WorkoutChart = () => {
 
     const sorted = Object.entries(workoutCounts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
+      .slice(0, 5)
 
     if (sorted.length === 0) return null
 
     return {
-      labels: sorted.map(([name]) => name.length > 8 ? name.slice(0, 7) + '…' : name),
+      labels: sorted.map(([name]) => name.length > 7 ? name.slice(0, 6) + '…' : name),
       datasets: [{ data: sorted.map(([, count]) => count) }]
     }
   }, [workoutLogs, range])
 
-  const RangeButton = ({ label, value }: { label: string; value: Range }) => (
+  const RangeButton = ({ label, value }: { label: string, value: Range }) => (
     <Pressable
       onPress={() => setRange(value)}
-      className={`px-3 py-1 rounded-full ${range === value ? "bg-primary" : "bg-card border border-border"}`}
+      className={`px-3 py-1 rounded-lg ${range === value ? "bg-white/20" : "bg-transparent"}`}
     >
-      <Text className={`text-[10px] font-bold ${range === value ? "text-white" : "text-placeholder"}`}>
+      <Text className={`text-[10px] font-black ${range === value ? "text-white" : "text-white/40"}`}>
         {label}
       </Text>
     </Pressable>
   )
 
   return (
-    <View className="mb-4 bg-card rounded-2xl border border-border overflow-hidden shadow-sm mx-1">
-      <View className="p-4 border-b border-border flex-row items-center justify-between">
-        <View>
-          <Text className="text-lg font-bold" style={{ color: colors.text }}>Workouts</Text>
-          <Text className="text-[10px] text-placeholder uppercase tracking-widest">By Type</Text>
-        </View>
-        <View className="flex-row gap-1">
-          <RangeButton label="1W" value="1W" />
-          <RangeButton label="1M" value="1M" />
-          <RangeButton label="3M" value="3M" />
-          <RangeButton label="6M" value="6M" />
-          <RangeButton label="1Y" value="1Y" />
-        </View>
-      </View>
-
-      <View className="py-4 items-center justify-center">
-        {chartData ? (
-          <BarChart
-            data={chartData}
-            width={SCREEN_WIDTH - 48}
-            height={180}
-            yAxisLabel=""
-            yAxisSuffix=""
-            fromZero
-            withInnerLines={false}
-            showValuesOnTopOfBars
-            chartConfig={{
-              backgroundColor: colors.card,
-              backgroundGradientFrom: colors.card,
-              backgroundGradientTo: colors.card,
-              decimalPlaces: 0,
-              color: (opacity = 1) => colors.primary,
-              labelColor: (opacity = 1) => colors.placeholder,
-              style: {
-                borderRadius: 16
-              },
-              barPercentage: 0.6,
-            }}
-            style={{
-              marginVertical: 8,
-              borderRadius: 16
-            }}
-          />
-        ) : (
-          <View className="py-12 items-center px-8">
-            <Text className="text-placeholder text-center text-sm">
-              No workouts in this period. Log some workouts!
-            </Text>
+    <View className="mb-8">
+      <PremiumCard
+        gradientColors={['rgba(255,255,255,0.03)', 'rgba(255,255,255,0.01)']}
+        containerStyle="border-white/5 py-6"
+      >
+        <View className="flex-row items-center justify-between mb-6 px-2">
+          <View>
+            <View className="flex-row items-center gap-2 mb-1">
+              <View className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+              <Text className="text-white/40 font-black text-[10px] uppercase tracking-[2px]">Training Volume</Text>
+            </View>
+            <Text className="text-white text-3xl font-black tracking-tighter">Frequency</Text>
           </View>
-        )}
-      </View>
+          <View className="flex-row bg-white/5 p-1 rounded-2xl border border-white/5">
+            <RangeButton label="1W" value="1W" />
+            <RangeButton label="1M" value="1M" />
+            <RangeButton label="3M" value="3M" />
+            <RangeButton label="6M" value="6M" />
+          </View>
+        </View>
+
+        <View
+          onLayout={e => setChartWidth(e.nativeEvent.layout.width)}
+          style={styles.chartContainer}
+        >
+          {chartData && chartWidth > 0 ? (
+            <BarChart
+              data={chartData}
+              width={chartWidth}
+              height={180}
+              yAxisLabel=""
+              yAxisSuffix=""
+              fromZero
+              withInnerLines={false}
+              showValuesOnTopOfBars
+              chartConfig={{
+                backgroundColor: "#0d0d14",
+                backgroundGradientFrom: "#0d0d14",
+                backgroundGradientTo: "#0d0d14",
+                backgroundGradientFromOpacity: 0,
+                backgroundGradientToOpacity: 0,
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(168, 85, 247, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.35})`,
+                barPercentage: 0.55,
+                propsForLabels: {
+                  fontSize: 9,
+                  fontWeight: "bold",
+                }
+              }}
+              style={styles.chart}
+            />
+          ) : !chartData && chartWidth > 0 ? (
+            <View className="py-16 items-center px-10">
+              <View className="w-12 h-12 rounded-2xl bg-white/5 items-center justify-center border border-white/10 mb-4">
+                <Text className="text-white/20 text-xl font-black">?</Text>
+              </View>
+              <Text className="text-white/30 text-center text-[10px] font-black uppercase tracking-[2px]">
+                Awaiting Data Input
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </PremiumCard>
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  chartContainer: {
+    width: '100%',
+    overflow: 'hidden',
+  },
+  chart: {
+    borderRadius: 12,
+    marginTop: 4,
+    marginLeft: -16,
+  }
+})

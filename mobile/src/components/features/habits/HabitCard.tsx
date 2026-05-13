@@ -1,34 +1,94 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { View, Text, StyleSheet } from 'react-native';
+import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/src/constants/Colors';
+import { PremiumCard } from '@/src/components/ui/PremiumCard';
+import { Habit } from '@/src/types/habitType';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface HabitCardProps {
-  habit: any;
-  onToggle: (habit: any) => void;
-  onDelete: (habit: any) => void;
+  habit: Habit;
+  onToggle: () => void;
+  onDelete: () => void;
 }
 
 export default function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
   const colors = useThemeColors();
-  const isCompleted = habit.completedToday;
+  const today = new Date().toISOString().split('T')[0]
+  const isCompleted = habit.completionDates?.includes(today) ?? false
+
+  const gradientColors = isCompleted 
+    ? ['rgba(34, 197, 94, 0.15)', 'rgba(34, 197, 94, 0.05)'] as const
+    : ['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.02)'] as const;
 
   return (
-    <Pressable onPress={() => onToggle(habit)} onLongPress={() => onDelete(habit)} delayLongPress={500} android_ripple={{ color: 'transparent' }} className="group relative overflow-hidden rounded-2xl border p-5 transition-all active:scale-[0.99]" style={{ backgroundColor: colors.card, borderColor: isCompleted ? '#22c55e80' : colors.border, opacity: 1 }}>
-      {isCompleted && <View className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundColor: '#22c55e' }} />}
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1 mr-4">
-          <Text className="text-lg font-bold mb-1 leading-tight" style={{ color: isCompleted ? '#16a34a' : colors.text, textDecorationLine: 'none' }}>{habit.name}</Text>
-          <Text className="text-xs opacity-50" style={{ color: colors.text }}>{isCompleted ? "Completed for today" : "Tap to mark done • Long press to delete"}</Text>
+    <View className="mb-4">
+      <PremiumCard 
+        onPress={onToggle}
+        gradientColors={gradientColors}
+        containerStyle={`border-${isCompleted ? 'green-500/50' : 'white/10'}`}
+      >
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 mr-4">
+            <View className="flex-row items-center gap-2 mb-1">
+               <View 
+                className="w-2 h-2 rounded-full" 
+                style={{ backgroundColor: habit.color || colors.primary }} 
+               />
+               <Text 
+                className={`text-lg font-bold leading-tight ${isCompleted ? 'text-green-400' : 'text-white'}`}
+                style={{ textDecorationLine: isCompleted ? 'line-through' : 'none', opacity: isCompleted ? 0.6 : 1 }}
+               >
+                {habit.name}
+              </Text>
+            </View>
+            
+            <Text className="text-[11px] text-white/40 font-medium uppercase tracking-wider">
+              {isCompleted ? "Goal achieved for today" : "Daily Dedication"}
+            </Text>
+          </View>
+
+          <View 
+            className={`w-12 h-12 rounded-2xl items-center justify-center border-2 ${
+              isCompleted ? 'bg-green-500 border-green-400' : 'bg-white/5 border-white/10'
+            }`}
+          >
+            {isCompleted ? (
+              <Feather name="check" size={24} color="white" strokeWidth={3} />
+            ) : (
+              <Ionicons name="radio-button-off" size={24} color="rgba(255,255,255,0.2)" />
+            )}
+          </View>
         </View>
-        <View className="w-10 h-10 rounded-full items-center justify-center border-2 transition-all shadow-sm" style={{ borderColor: isCompleted ? '#22c55e' : `${colors.text}30`, backgroundColor: isCompleted ? '#22c55e' : 'transparent', transform: [{ scale: isCompleted ? 1.1 : 1 }] }}>{isCompleted && <Feather name="check" size={20} color="#FFF" strokeWidth={3} />}</View>
-      </View>
-      <View className="flex-row items-center mt-4">
-        <View className="flex-row items-center gap-1.5 px-3 py-1 rounded-full" style={{ backgroundColor: isCompleted ? (habit.streak > 0 ? '#ffedd5' : `${colors.text}10`) : '#eff6ff' }}>
-          <FontAwesome5 name="fire" size={12} color={isCompleted ? (habit.streak > 0 ? "#ea580c" : colors.placeholder) : "#3b82f6"} />
-          <Text className="text-xs font-bold" style={{ color: isCompleted ? (habit.streak > 0 ? '#ea580c' : colors.placeholder) : "#3b82f6" }}>{isCompleted ? `${habit.streak} Day Streak` : `Reach ${habit.streak + 1} Day Streak!`}</Text>
+
+        <View className="flex-row items-center justify-between mt-4 border-t border-white/5 pt-3">
+          <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5">
+              <FontAwesome5 
+                name="fire" 
+                size={12} 
+                color={habit.streak > 0 ? "#fb923c" : "rgba(255,255,255,0.3)"} 
+              />
+              <Text className="text-[11px] font-bold text-white/70">
+                {habit.streak} Day Streak
+              </Text>
+            </View>
+            
+            {habit.lastCompletedAt && (
+               <Text className="text-[10px] text-white/20">
+                Last: {new Date(habit.lastCompletedAt).toLocaleDateString()}
+              </Text>
+            )}
+          </View>
+
+          <Feather 
+            name="trash-2" 
+            size={16} 
+            color="rgba(255,255,255,0.2)" 
+            onPress={onDelete}
+          />
         </View>
-      </View>
-    </Pressable>
+      </PremiumCard>
+    </View>
   );
 }

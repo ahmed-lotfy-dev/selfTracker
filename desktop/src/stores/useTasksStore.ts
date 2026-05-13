@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/lib/storage/mmkv'
+import axiosInstance from '@/lib/api/axiosInstance'
 
 export type Task = {
   id: string
@@ -64,10 +65,9 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     saveTasks(newTasks)
     set({ tasks: newTasks })
 
-    // Sync to DB
     try {
-      const { SyncManager } = require('../../lib/sync/SyncManager')
-      SyncManager.pushTask(task)
+      const token = localStorage.getItem("bearer_token")
+      if (token) axiosInstance.post('/api/tasks', task)
     } catch (e) {
       console.error('Failed to sync task:', e)
     }
@@ -87,8 +87,8 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
     if (updatedTask) {
       try {
-        const { SyncManager } = require('../../lib/sync/SyncManager')
-        SyncManager.pushTask(updatedTask)
+        const token = localStorage.getItem("bearer_token")
+        if (token) axiosInstance.patch(`/api/tasks/${id}`, updatedTask)
       } catch (e) {
         console.error('Failed to sync updated task:', e)
       }
@@ -109,8 +109,8 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
     if (deletedTask) {
       try {
-        const { SyncManager } = require('../../lib/sync/SyncManager')
-        SyncManager.pushTask(deletedTask)
+        const token = localStorage.getItem("bearer_token")
+        if (token) axiosInstance.delete(`/api/tasks/${id}`)
       } catch (e) {
         console.error('Failed to sync deleted task:', e)
       }
@@ -138,8 +138,8 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
     if (updatedTask) {
       try {
-        const { SyncManager } = require('../../lib/sync/SyncManager')
-        SyncManager.pushTask(updatedTask)
+        const token = localStorage.getItem("bearer_token")
+        if (token) axiosInstance.patch(`/api/tasks/${id}`, { completed: updatedTask.completed, completedAt: updatedTask.completedAt })
       } catch (e) {
         console.error('Failed to sync task completion:', e)
       }

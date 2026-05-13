@@ -1,6 +1,6 @@
 import React from "react"
 import { View, Text } from "react-native"
-import Card from "./Card"
+import { PremiumCard } from "./PremiumCard"
 
 interface SectionProps {
   title?: string
@@ -11,17 +11,20 @@ interface SectionProps {
 
 export function Section({ title, children, className, error }: SectionProps) {
   return (
-    <View className={`mb-6 ${className}`}>
+    <View className={`mb-8 ${className}`}>
       {title && (
-        <Text className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 ml-1">
+        <Text className="text-[10px] font-black text-white/40 uppercase tracking-[2px] mb-3 ml-2">
           {title}
         </Text>
       )}
-      <Card noPadding>
+      <PremiumCard 
+        gradientColors={['rgba(255,255,255,0.03)', 'rgba(255,255,255,0.01)']}
+        containerStyle="p-0 border-white/5"
+      >
         {children}
-      </Card>
+      </PremiumCard>
       {error && (
-        <Text className="text-error text-sm mt-1 ml-1">
+        <Text className="text-red-500 text-[10px] font-bold mt-2 ml-2 uppercase tracking-tight">
           {error}
         </Text>
       )}

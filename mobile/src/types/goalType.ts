@@ -11,3 +11,13 @@ export const GoalTypeSchema = z.object({
 })
 
 export type GoalType = z.infer<typeof GoalTypeSchema>
+
+export type UserGoal = {
+  id: string;
+  userId: string;
+  goalType: string;
+  targetValue: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}

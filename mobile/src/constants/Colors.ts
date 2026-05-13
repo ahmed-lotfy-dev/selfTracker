@@ -1,28 +1,28 @@
 import { useCSSVariable } from "uniwind";
 
-// Export a hook that mimics the old behavior but pulls from CSS variables
-// This allows strict adherence to global.css as source of truth
 export function useThemeColors() {
-  // Force string cast or fallback to ensure TS is happy for Chart components
   const primary = useCSSVariable('--color-primary') as string ?? '#10B981';
   const secondary = useCSSVariable('--color-secondary') as string ?? '#34D399';
-  const background = useCSSVariable('--color-background') as string ?? '#F0FDF4';
+  const background = useCSSVariable('--color-background') as string ?? '#F9FAFB';
+  const surface = useCSSVariable('--color-surface') as string ?? '#FFFFFF';
   const card = useCSSVariable('--color-card') as string ?? '#FFFFFF';
-  const text = useCSSVariable('--color-text') as string ?? '#064E3B';
-  const border = useCSSVariable('--color-border') as string ?? '#D1FAE5';
+  const text = useCSSVariable('--color-text') as string ?? '#111827';
+  const textSecondary = useCSSVariable('--color-text-secondary') as string ?? '#4B5563';
+  const textMuted = useCSSVariable('--color-text-muted') as string ?? '#9CA3AF';
+  const border = useCSSVariable('--color-border') as string ?? '#E5E7EB';
   const error = useCSSVariable('--color-error') as string ?? '#EF4444';
+  const warning = useCSSVariable('--color-warning') as string ?? '#F59E0B';
   const success = useCSSVariable('--color-success') as string ?? '#10B981';
-  const placeholder = useCSSVariable('--color-placeholder') as string ?? '#6EE7B7';
+  const info = useCSSVariable('--color-info') as string ?? '#3B82F6';
+  const placeholder = useCSSVariable('--color-placeholder') as string ?? '#9CA3AF';
   const tint = useCSSVariable('--color-tint') as string ?? '#10B981';
-  const icon = useCSSVariable('--color-icon') as string ?? '#10B981';
+  const icon = useCSSVariable('--color-icon') as string ?? '#6B7280';
 
-  // Semantic Stats Colors
   const statPrimary = useCSSVariable('--color-stat-primary') as string ?? '#10B981';
-  const statSecondary = useCSSVariable('--color-stat-secondary') as string ?? '#34D399';
-  const statTertiary = useCSSVariable('--color-stat-tertiary') as string ?? '#4ade80';
-  const statQuaternary = useCSSVariable('--color-stat-quaternary') as string ?? '#818CF8';
+  const statSecondary = useCSSVariable('--color-stat-secondary') as string ?? '#0EA5E9';
+  const statTertiary = useCSSVariable('--color-stat-tertiary') as string ?? '#F59E0B';
+  const statQuaternary = useCSSVariable('--color-stat-quaternary') as string ?? '#6366F1';
 
-  // Social Colors
   const socialGoogle = useCSSVariable('--color-social-google') as string ?? '#4285F4';
   const socialGithub = useCSSVariable('--color-social-github') as string ?? '#18181B';
 
@@ -30,11 +30,16 @@ export function useThemeColors() {
     primary,
     secondary,
     background,
+    surface,
     card,
     text,
+    textSecondary,
+    textMuted,
     border,
     error,
+    warning,
     success,
+    info,
     placeholder,
     tint,
     icon,

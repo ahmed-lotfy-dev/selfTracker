@@ -4,8 +4,6 @@ import { AntDesign } from '@expo/vector-icons';
 import { authClient } from '@/src/lib/auth-client';
 import { useToast } from '@/src/hooks/useToast';
 import { useThemeColors } from '@/src/constants/Colors';
-import Constants from 'expo-constants';
-import * as Linking from 'expo-linking';
 
 /**
  * Social login buttons component providing Google and GitHub OAuth authentication.
@@ -27,12 +25,11 @@ export function SocialLoginButtons({ className }: SocialLoginButtonsProps) {
     setIsSigningIn(provider);
 
     try {
-
-      const callbackURL = Linking.createURL("callback");
-
+      // Use relative path — expoClient plugin auto-converts to deep link
+      // e.g. "selftracker://callback" based on the scheme in app.json
       const result = await authClient.signIn.social({
         provider,
-        callbackURL,
+        callbackURL: "/callback",
       });
 
 
