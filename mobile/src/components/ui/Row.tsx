@@ -16,19 +16,19 @@ export default function Row({ label, icon, children, isLast = false, className }
   const colors = useThemeColors()
   return (
     <View className={cn(
-      "flex-row items-center py-4 px-4 bg-card",
-      !isLast && "border-b border-border",
+      "flex-row items-center py-4 px-4",
+      !isLast && "border-b border-white/5",
       className
     )}>
       {icon && (
         <View className="w-8 items-center justify-center mr-3">
-          <Feather name={icon} size={20} color={colors.primary} />
+          <Feather name={icon} size={18} color="rgba(255,255,255,0.4)" />
         </View>
       )}
       <View className="flex-1 mr-2">
-        <Text className="text-base text-text font-medium">{label}</Text>
+        <Text className="text-sm text-white font-black tracking-tighter">{label}</Text>
       </View>
-      <View className="flex-row items-center justify-end" style={{ minWidth: 80 }}>
+      <View className="flex-row items-center justify-end">
         {children}
       </View>
     </View>

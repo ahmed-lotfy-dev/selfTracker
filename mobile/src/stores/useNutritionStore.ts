@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { zustandMMKVStorage } from '@/src/lib/storage/mmkv'
 import { createFoodLog, deleteFoodLog as deleteFoodLogApi, updateFoodLog as updateFoodLogApi } from '@/src/lib/api/nutritionApi'
 import { SyncManager } from '@/src/services/SyncManager'
-import type { FoodLog, NutritionGoals } from '@/src/types/nutrition'
+import type { FoodLog, NutritionGoals } from '@/src/types/nutritionType'
 
 type NutritionState = {
   foodLogs: FoodLog[]

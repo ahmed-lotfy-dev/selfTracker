@@ -6,8 +6,11 @@ const config = getDefaultConfig(__dirname);
 // Exclude .cxx build artifacts to prevent watcher crashes
 config.resolver.blockList = [
   ...(config.resolver.blockList || []),
-  /.*\/node_modules\/.*\.cxx\/.*/,
-  /.*\/android\/.cxx\/.*/
+  /.*\/android\/app\/\.cxx\/.*/,
+  /.*\/android\/\.cxx\/.*/,
+  /.*\/android\/app\/build\/.*/,
+  /.*\/android\/build\/.*/,
+  /.*\/android\/\.gradle\/.*/,
 ];
 
 const FinalConfig = withUniwindConfig(config, {

@@ -2,6 +2,7 @@ import React from "react"
 import { View, Text } from "react-native"
 import BackButton from "./Buttons/BackButton"
 import { usePathname, Href } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 interface HeaderProps {
   title: string
@@ -12,30 +13,33 @@ interface HeaderProps {
 }
 
 export default function Header({ title, className, backTo, leftAction, rightAction }: HeaderProps) {
-  const pathname = usePathname()
+  const pathname = usePathname().replace(/\/$/, "")
+  const insets = useSafeAreaInsets()
+
   const noBackButtonPaths = [
     "/",
     "/index",
-    "/weights",
-    "/weights/add",
-    "/tasks",
-    "/workouts",
-    "/workouts/add",
+    "/home/weights",
+    "/home/workouts",
+    "/home/tasks",
+    "/home/habits_stack",
+    "/habits",
+    "/nutrition",
     "/profile",
     "/home",
-    "/habits",
-    "/habits/add",
-    "/nutrition",
-    "/nutrition/add",
-    "/nutrition/goals",
   ]
-  const shouldShowBackButton = !noBackButtonPaths.includes(pathname)
-  const isLargeTitle = !shouldShowBackButton
 
+  // Robust check to handle both exact matches and variations
+  const shouldShowBackButton = !noBackButtonPaths.includes(pathname) &&
+    !pathname.endsWith('habits') &&
+    !pathname.endsWith('habits_stack')
+
+  const isLargeTitle = !shouldShowBackButton
 
   return (
     <View
-      className={`w-full ${className} ${shouldShowBackButton || backTo || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"} ml-1 pt-3`}
+      className={`w-full ${className} ${shouldShowBackButton || backTo || leftAction || rightAction ? "flex-row items-center mb-2" : "mb-3"}`}
+      style={{ marginTop: 12 }}
     >
       {/* Left Section */}
       {(shouldShowBackButton || backTo) && (
@@ -47,14 +51,14 @@ export default function Header({ title, className, backTo, leftAction, rightActi
 
       {/* Middle Section (Title) */}
       {isLargeTitle ? (
-        <Text className="text-3xl font-extrabold text-text tracking-tight flex-1" numberOfLines={1}>{title}</Text>
+        <Text className="text-3xl font-black text-text tracking-tighter flex-1" numberOfLines={1}>{title}</Text>
       ) : (
         <Text className="text-xl font-bold text-text flex-1" numberOfLines={1}>{title}</Text>
       )}
 
       {/* Right Section */}
       {rightAction && (
-        <View className="ml-2">
+        <View className="ml-2 px-2">
           {rightAction}
         </View>
       )}

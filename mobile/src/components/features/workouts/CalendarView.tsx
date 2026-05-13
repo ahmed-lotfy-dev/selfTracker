@@ -2,9 +2,10 @@ import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { View, Text, ActivityIndicator } from "react-native"
 import { Calendar, DateData } from "react-native-calendars"
 import { useThemeColors } from "@/src/constants/Colors"
-import { useWorkoutsStore, WorkoutLog } from "@/src/stores/useWorkoutsStore"
+import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import { WorkoutLogsList } from "./WorkoutLogsList"
 import { format } from "date-fns"
+import { PremiumCard } from "../../ui/PremiumCard"
 
 interface CalendarViewProps {
   headerElement?: React.ReactNode
@@ -14,7 +15,7 @@ interface CalendarViewProps {
 export default function CalendarView({ headerElement, workoutLogs: propLogs }: CalendarViewProps) {
   const colors = useThemeColors()
   const storeLogs = useWorkoutsStore(s => s.workoutLogs)
-  const [calendarLogs, setCalendarLogs] = useState<WorkoutLog[]>([])
+  const [calendarLogs, setCalendarLogs] = useState<any[]>([])
   const [isLoadingMonth, setIsLoadingMonth] = useState(false)
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
@@ -64,17 +65,55 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
       const date = new Date(log.createdAt).toISOString().split('T')[0]
       if (!marks[date]) {
         marks[date] = {
-          marked: true,
-          dotColor: colors.primary,
+          customStyles: {
+            container: {
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              borderRadius: 8,
+            },
+            text: {
+              color: 'white',
+              fontWeight: 'bold',
+            }
+          }
         }
       }
     })
 
+    const today = new Date().toISOString().split('T')[0]
+    
+    // Style today if it's not selected
+    if (selectedDate !== today) {
+      if (!marks[today]) {
+        marks[today] = {
+          customStyles: {
+            text: {
+              color: colors.primary,
+              fontWeight: '900',
+            }
+          }
+        }
+      } else {
+        marks[today].customStyles.text = {
+          color: colors.primary,
+          fontWeight: '900',
+        }
+      }
+    }
+
     marks[selectedDate] = {
       ...(marks[selectedDate] || {}),
-      selected: true,
-      selectedColor: colors.primary,
-      selectedTextColor: '#ffffff',
+      customStyles: {
+        container: {
+          backgroundColor: 'rgba(16, 185, 129, 0.2)', // Translucent primary
+          borderRadius: 10,
+          borderWidth: 1.5,
+          borderColor: colors.primary,
+        },
+        text: {
+          color: 'white',
+          fontWeight: '900',
+        }
+      }
     }
 
     return marks
@@ -95,47 +134,51 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
         ListHeaderComponent={
           <View>
             {headerElement}
-            <View className="mx-2 mb-4 bg-card rounded-2xl overflow-hidden border border-border shadow-sm">
-              {isLoadingMonth && (
-                <View className="absolute top-2 right-2 z-10">
-                  <ActivityIndicator size="small" color={colors.primary} />
-                </View>
-              )}
-              <Calendar
-                current={selectedDate}
-                onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
-                onMonthChange={handleMonthChange}
-                markedDates={markedDates}
-                theme={{
-                  backgroundColor: colors.card,
-                  calendarBackground: colors.card,
-                  textSectionTitleColor: colors.text,
-                  selectedDayBackgroundColor: colors.primary,
-                  selectedDayTextColor: '#ffffff',
-                  todayTextColor: colors.primary,
-                  dayTextColor: colors.text,
-                  textDisabledColor: colors.placeholder,
-                  dotColor: colors.primary,
-                  selectedDotColor: '#ffffff',
-                  arrowColor: colors.primary,
-                  monthTextColor: colors.text,
-                  indicatorColor: colors.primary,
-                  textDayFontWeight: '500',
-                  textMonthFontWeight: 'bold',
-                  textDayHeaderFontWeight: '500',
-                  textDayFontSize: 14,
-                  textMonthFontSize: 16,
-                  textDayHeaderFontSize: 13,
-                }}
-              />
+            <View className="mb-4">
+              <PremiumCard 
+                containerStyle="p-2 border-white/5"
+                gradientColors={['rgba(255,255,255,0.03)', 'transparent']}
+              >
+                {isLoadingMonth && (
+                  <View className="absolute top-4 right-4 z-10">
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                )}
+                <Calendar
+                  current={selectedDate}
+                  onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
+                  onMonthChange={handleMonthChange}
+                  markedDates={markedDates}
+                  markingType={'custom'}
+                  theme={{
+                    backgroundColor: 'transparent',
+                    calendarBackground: 'transparent',
+                    textSectionTitleColor: 'rgba(255,255,255,0.5)',
+                    dayTextColor: 'white',
+                    textDisabledColor: 'rgba(255,255,255,0.2)',
+                    monthTextColor: 'white',
+                    textDayFontWeight: '500',
+                    textMonthFontWeight: '900',
+                    textDayHeaderFontWeight: '800',
+                    textDayFontSize: 14,
+                    textMonthFontSize: 16,
+                    textDayHeaderFontSize: 10,
+                  }}
+                />
+              </PremiumCard>
             </View>
-            <View className="px-4 mb-2">
-              <Text className="text-lg font-bold text-text">
-                {format(new Date(selectedDate), "dd/MM/yyyy")}
+            <View className="px-5 mb-4 mt-2">
+              <Text className="text-white text-[10px] font-black uppercase tracking-[2px] mb-1">
+                Selected Date
               </Text>
-              <Text className="text-sm text-placeholder">
-                {selectedDayLogs.length} workout{selectedDayLogs.length !== 1 ? 's' : ''}
-              </Text>
+              <View className="flex-row items-baseline">
+                <Text className="text-2xl font-black text-white tracking-tighter mr-2">
+                  {format(new Date(selectedDate), "dd MMM")}
+                </Text>
+                <Text className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                  {format(new Date(selectedDate), "yyyy")} • {selectedDayLogs.length} WORKOUT{selectedDayLogs.length !== 1 ? 'S' : ''}
+                </Text>
+              </View>
             </View>
           </View>
         }

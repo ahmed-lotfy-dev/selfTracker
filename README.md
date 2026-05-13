@@ -1,171 +1,109 @@
 # 📊 SelfTracker
 
-> **Your comprehensive, local-first personal tracking assistant.**
-> Track your workouts, habits, expenses, and more with seamless synchronization across Mobile, Desktop, and Web.
+> **The Ultimate Local-First Personal Tracking Ecosystem.**
+> Seamlessly monitor your workouts, nutrition, habits, and finances across **Mobile**, **Desktop**, and **Web** with zero-latency synchronization.
 
 ---
 
-## 📖 Overview
+## 🚀 Vision & Core Philosophy
 
-**SelfTracker** is a robust, cross-platform application designed to help users monitor various aspects of their daily lives. Built with a **Local-First** architecture, it ensures that your data is always accessible, even offline, and syncs seamlessly when you're back online.
-
-Whether you're lifting weights, tracking your budget, or building new habits, SelfTracker provides a unified experience across all your devices.
-
-## ✨ Key Features
-
--   **📱 Cross-Platform Support**: Native experiences for **Android**, **iOS**, and **Desktop** (macOS, Linux, Windows).
--   **⚡ Local-First Architecture**: Powered by **ElectricSQL** and **TanStack DB**, ensuring instant UI interactions and robust offline capability.
--   **🔐 Secure Authentication**: Integrated with **Better Auth** for secure and session management.
--   **💪 Weights & Workouts**: comprehensive workout logging, custom routines, and progress visualization.
--   **📅 Tasks Tracking**: Daily tasks monitoring adding editing removing
--   **🍎 AI Nutrition Tracking**: Snap a photo of your meal and let **Groq AI (Llama 3.2 Vision)** automatically identify foods. Includes smart **Date Context** (log for yesterday seamlessly) and robust offline support.
--   **📅 Habit Tracking**: Daily habit monitoring with streak analytics.
--   **⚡ Optimistic Updates**: Instant UI responses with background API sync for seamless UX across all features.
--   **💰 Expense Manager**: Track your spending and categorize expenses.
--   **📈 Data Visualization**: Interactive charts and statistics for all your tracked metrics.
--   **🔄 Background Sync**: Seamless data synchronization between local device storage (SQLite/MMKV) and the central Postgres database.
+**SelfTracker** is built on a **Local-First** bedrock. Your data lives where you use it—on your device. It's always fast, always available offline, and syncs instantly when you're connected. No more spinners, no more "Unauthorized" errors on startup, and no more vendor lock-in.
 
 ---
 
-## 🛠️ Technology Stack
+## ✨ Features "Pro Max"
 
-SelfTracker is a monorepo organized into three main workspaces:
+### 🛡️ Advanced Sync Engine
+- **Self-Hosted ElectricSQL**: No cloud quotas, no limits. Full control over your data sync.
+- **Real-Time Hydration**: Sophisticated sync-tracking system (20s initial catch-up) ensures consistent data views.
+- **Partial Sync Logic**: Smart filtering (last 500 days) keeps local storage slim and startup times under 200ms.
 
-### 🔙 Backend (`/backend`)
-A high-performance API server managing authentication, data synchronization, and business logic.
--   **Runtime**: [Bun](https://bun.sh)
--   **Framework**: [Hono](https://hono.dev)
--   **Database**: PostgreSQL
--   **ORM**: [Drizzle ORM](https://orm.drizzle.team)
--   **Sync Engine**: [ElectricSQL](https://electric-sql.com)
--   **Authentication**: [Better Auth](https://www.better-auth.com)
--   **AI Vision**: [Groq Cloud](https://groq.com) with Llama 3.2 Vision
+### 🍎 AI-Powered Nutrition
+- **Groq AI Vision**: Identify foods from photos using **Llama 3.2 Vision**.
+- **Context-Aware Logging**: Retroactive logging for yesterday or today with automatic nutritional macro-calculations.
 
-### 🖥️ Desktop (`/desktop`)
-A blazing fast, native-feeling desktop application.
--   **Core**: [Tauri v2](https://tauri.app)
--   **Frontend**: React + Vite
--   **State/Data**: TanStack Query & TanStack Router
--   **Styling**: [TailwindCSS v4](https://tailwindcss.com)
--   **Language**: TypeScript
+### 🏋️ Pro Workout Analytics
+- **Dynamic Charting**: Heatmaps and streak analytics for your fitness journey.
+- **Pro Design**: Premium "Glassmorphism" UI with dark mode and vibrant color palettes.
 
-### 📱 Mobile (`/mobile`)
-A fluid, native mobile experience.
--   **Framework**: [Expo](https://expo.dev) (React Native)
--   **Router**: Expo Router
--   **Styling**: NativeWind (TailwindCSS for Native)
--   **Local DB**: SQLite + MMKV
--   **Language**: TypeScript
+### 💰 Finance & Habits
+- **Action Buttons**: One-tap quick actions for common entries.
+- **Streak Protection**: Habit tracking with visual progress and reminders.
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ The Tech Ecosystem
 
-Follow these instructions to set up the project locally.
+### 🔙 The Backbone (`/backend`)
+- **Runtime**: [Bun](https://bun.sh) (Speed first)
+- **Engine**: [Hono](https://hono.dev) with Drizzle ORM
+- **Security**: [Better Auth](https://www.better-auth.com) (JWT & Sessions)
+- **Sync**: Self-hosted ElectricSQL instance on Dokploy
 
-### Prerequisites
+### 📱 The Companion (`/mobile`)
+- **Framework**: [Expo 55](https://expo.dev) 
+- **Styling**: [TailwindCSS (NativeWind)](https://nativewind.dev)
+- **State**: Zustand + MMKV (Persisted)
+- **Local DB**: SQLite (Local-First Sync)
 
-Ensure you have the following installed on your machine:
--   **[Bun](https://bun.sh)** (Required for package management and backend runtime)
--   **Node.js** (LTS version recommended for Expo tools)
--   **PostgreSQL** (Database)
--   **Rust** (Required for building the Desktop app)
--   **Android Studio / Xcode** (For Mobile development)
+### 🖥️ The Control Center (`/desktop`)
+- **Core**: [Tauri v2](https://tauri.app) (Rust-powered speed)
+- **Frontend**: React + TailwindCSS v4
+- **Router**: TanStack Router
 
-### 1️⃣ Clone the Repository
+---
 
+## 🏁 Quick Start
+
+### 1️⃣ Clone & Dependencies
 ```bash
-git clone https://github.com/yourusername/selftracker.git
-cd selftracker
+git clone https://github.com/ahmed-lotfy-dev/selfTracker.git
+cd selfTracker
+bun install
 ```
 
-### 2️⃣ Backend Setup
+### 2️⃣ Backend (Hono)
+```bash
+cd backend
+# Setup .env (see .env.example)
+bun run dev
+```
 
-The backend serves as the source of truth and manages authentication.
+### 3️⃣ Mobile (Expo)
+```bash
+cd mobile
+# Ensure backend is running
+bun run android # or ios / start
+```
 
-1.  Navigate to the backend directory:
-    ```bash
-    cd backend
-    ```
-2.  Install dependencies:
-    ```bash
-    bun install
-    ```
-3.  Configure Environment Variables:
-    Create a `.env` file in `backend/` and configure your database URL and secrets.
-    ```env
-    DATABASE_URL="postgresql://user:password@localhost:5432/selftracker"
-    BETTER_AUTH_SECRET="your_secret_key"
-    BETTER_AUTH_URL="http://localhost:8000"
-    ```
-4.  Run Database Migrations:
-    ```bash
-    bun run db:migrate
-    ```
-5.  Start the Server:
-    ```bash
-    bun run dev
-    ```
-    *The server will start on `http://localhost:8000`*
-
-### 3️⃣ Desktop Setup
-
-1.  Navigate to the desktop directory:
-    ```bash
-    cd ../desktop
-    ```
-2.  Install dependencies:
-    ```bash
-    bun install
-    ```
-3.  Start the Development App:
-    ```bash
-    bun run tauri dev
-    ```
-
-### 4️⃣ Mobile Setup
-
-1.  Navigate to the mobile directory:
-    ```bash
-    cd ../mobile
-    ```
-2.  Install dependencies:
-    ```bash
-    bun install
-    # or if you encounter issues with native modules:
-    npm install
-    ```
-3.  Start the Expo Development Server:
-    ```bash
-    npx expo start
-    ```
-    *Scan the QR code with your Expo Go app or press `a` for Android Emulator / `i` for iOS Simulator.*
+### 4️⃣ Desktop (Tauri)
+```bash
+cd desktop
+bun run tauri dev
+```
 
 ---
 
-## 🏗️ Architecture & Sync
+## 🐳 Self-Hosting (The Power of ElectricSQL)
 
-**SelfTracker** utilizes a sophisticated synchronization strategy to ensure data consistency without sacrificing user experience.
+SelfTracker supports full self-hosting. We've published an official **Dokploy Template** to make deployment a breeze.
 
--   **Reads**: The application reads directly from the local database (SQLite on Mobile/Desktop) using **drizzle** and **electric-sql/client**, providing 0-latency data access.
--   **Writes**: Writes follow a **Write-Through** pattern: optimistic updates to the local store + immediate background API calls to ensure data persistence.
--   **Optimized Sync**: Uses a **Partial Sync** strategy (last 30 days for heavy tables) to ensure sub-second startup times vs downloading full history.
--   **Conflict Resolution**: Handled automatically by the sync engine (Last-Write-Wins or custom logic where defined).
+1. Install **Dokploy** on your VPS.
+2. Select the **ElectricSQL** template.
+3. Update your `.env` to point to your new private sync engine.
+4. **Result**: 0 dependencies on third-party cloud quotas.
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing & Community
 
-Contributions are welcome! Please follow these steps:
-
-1.  Fork the repository.
-2.  Create a new branch (`git checkout -b feature/amazing-feature`).
-3.  Commit your changes (`git commit -m 'Add some amazing feature'`).
-4.  Push to the branch (`git push origin feature/amazing-feature`).
-5.  Open a Pull Request.
+Join us in building the most robust open-source tracking app! Follow the [Contributing Guide](CONTRIBUTING.md) to get started with features or bug fixes.
 
 ---
 
 ## 📄 License
+MIT License. High Performance. High Privacy.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+---
+
+*Crafted with ❤️ by [ahmed-lotfy-dev](https://github.com/ahmed-lotfy-dev)*

@@ -1,9 +1,9 @@
 name: Mobile Release
 
-on:
-  push:
-    tags:
-      - 'mobile-v*'
+# on:
+#   push:
+#     tags:
+#       - 'mobile-v*'
 
 permissions:
   contents: write

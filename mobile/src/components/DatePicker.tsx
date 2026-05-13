@@ -1,10 +1,8 @@
-import { View, StyleSheet } from "react-native"
-import DateTimePicker, {
-  useDefaultClassNames,
-} from "react-native-ui-datepicker"
-import { COLORS, SPACING, useThemeColors } from "@/src/constants/Colors"
-import { format } from "date-fns"
 import React from "react"
+import { Platform, Modal, Pressable, Text, View } from "react-native"
+import DateTimePicker from "@expo/ui/datetimepicker"
+import { useThemeColors } from "@/src/constants/Colors"
+import { PremiumCard } from "./ui/PremiumCard"
 
 type DatePickerProps = {
   date: Date
@@ -19,41 +17,54 @@ export default function DatePicker({
   visible,
   onClose,
 }: DatePickerProps) {
-  const defaultClassNames = useDefaultClassNames()
   const colors = useThemeColors()
 
   if (!visible) return null
 
-  return (
-    <View className="border border-primary/70 rounded-lg mb-4 bg-card">
-      <DateTimePicker
-        mode="single"
-        date={date}
-        onChange={({ date: newDate }: any) => {
-          if (newDate) {
-            onChange(new Date(newDate))
-            onClose()
-          }
-        }}
+  // Use modal on iOS for better UX, native inline on Android
+  if (Platform.OS === 'ios') {
+    return (
+      <Modal visible={visible} transparent animationType="fade">
+        <Pressable className="flex-1 justify-end bg-black/60" onPress={onClose}>
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <PremiumCard 
+              containerStyle="m-4 p-4 border-white/10"
+              gradientColors={['rgba(30,30,30,1)', 'rgba(15,15,15,1)']}
+            >
+              <View className="flex-row justify-between items-center w-full mb-4 px-2">
+                 <Text className="text-white/50 font-bold uppercase tracking-widest text-[10px]">Select Date</Text>
+                 <Pressable onPress={onClose} className="bg-white/10 px-4 py-1.5 rounded-full border border-white/5">
+                   <Text className="text-white font-bold text-xs uppercase tracking-widest">Done</Text>
+                 </Pressable>
+              </View>
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="inline"
+                themeVariant="dark"
+                onChange={(event, selectedDate) => {
+                  if (selectedDate) onChange(selectedDate)
+                }}
+              />
+            </PremiumCard>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    )
+  }
 
-        classNames={{
-          ...defaultClassNames,
-          button_prev: "bg-secondary/60 rounded-full w-8 h-8 mt-2 items-center justify-center",
-          button_next: "bg-secondary/60 rounded-full w-8 h-8 mt-2 items-center justify-center",
-          today: "border border-primary rounded-full",
-          selected: "bg-primary rounded-full",
-          day: "active:bg-primary/20",
-          disabled: "opacity-30",
-        }}
-        styles={{
-          header: { backgroundColor: 'transparent' },
-          weekday_label: { color: colors.placeholder, fontWeight: '500' },
-          day_label: { color: colors.text, fontSize: 14, fontWeight: '500' },
-          month_selector_label: { color: colors.text, fontSize: 18, fontWeight: 'bold' },
-          year_selector_label: { color: colors.text, fontSize: 18, fontWeight: 'bold' },
-          selected_label: { color: '#FFFFFF', fontWeight: 'bold' },
-        }}
-      />
-    </View>
+  // Android - use native picker directly
+  return (
+    <DateTimePicker
+      value={date}
+      mode="date"
+      display="default"
+      onChange={(event, selectedDate) => {
+        if (event.type === 'set' && selectedDate) {
+          onChange(selectedDate)
+        }
+        onClose()
+      }}
+    />
   )
 }

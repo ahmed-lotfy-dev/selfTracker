@@ -18,6 +18,7 @@ export const habits = pgTable("habits", {
   streak: integer("streak").default(0),
   color: text("color").default("#000000"),
   completedToday: boolean("completed_today").default(false),
+  completionDates: text("completion_dates").array().default([]),
   // We might want to track the last completion date to manage resets
   lastCompletedAt: timestamp("last_completed_at", { withTimezone: true }),
 

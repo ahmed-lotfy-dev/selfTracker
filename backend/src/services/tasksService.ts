@@ -1,18 +1,18 @@
-import { and, desc, eq, sql } from "drizzle-orm"
+import { and, eq, desc, sql } from "drizzle-orm"
 import { db } from "../db"
 import { tasks } from "../db/schema"
+import { upsertEmbedding, deleteEmbedding, templateTask } from "./embeddingHelper"
 
 export const getUserTasks = async (userId: string) => {
   const userTasks = await db.query.tasks.findMany({
     where: eq(tasks.userId, userId),
     orderBy: desc(tasks.createdAt),
   })
-
   return userTasks
 }
 
 export const createTask = async (userId: string, fields: any) => {
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [created] = await tx
       .insert(tasks)
       .values({
@@ -52,13 +52,21 @@ export const createTask = async (userId: string, fields: any) => {
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
     const rows = res.rows as { txid: string }[]
     const txid = rows[0].txid
-
     return { ...created, txid: parseInt(txid) }
   })
+
+  upsertEmbedding({
+    userId,
+    resourceType: "task",
+    resourceId: result.id,
+    content: templateTask(result),
+  }).catch(err => console.error('[Embedding] task create failed:', err.message))
+
+  return result
 }
 
 export const updateTask = async (id: string, userId: string, fields: any) => {
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const updateData: any = {}
     if (fields.title !== undefined) updateData.title = fields.title
     if (fields.description !== undefined) updateData.description = fields.description
@@ -84,13 +92,23 @@ export const updateTask = async (id: string, userId: string, fields: any) => {
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
     const rows = res.rows as { txid: string }[]
     const txid = rows[0].txid
-
     return { ...updated, txid: parseInt(txid) }
   })
+
+  if (result) {
+    upsertEmbedding({
+      userId,
+      resourceType: "task",
+      resourceId: result.id,
+      content: templateTask(result),
+    }).catch(err => console.error('[Embedding] task update failed:', err.message))
+  }
+
+  return result
 }
 
 export const deleteTask = async (userId: string, taskId: string) => {
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [deleted] = await tx
       .delete(tasks)
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
@@ -101,8 +119,12 @@ export const deleteTask = async (userId: string, taskId: string) => {
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
     const rows = res.rows as { txid: string }[]
     const txid = rows[0].txid
-
     return { ...deleted, txid: parseInt(txid) }
   })
-}
 
+  deleteEmbedding("task", taskId).catch(err =>
+    console.error('[Embedding] task delete failed:', err.message)
+  )
+
+  return result
+}

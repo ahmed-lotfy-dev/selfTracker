@@ -13,6 +13,11 @@ import {
 } from "date-fns"
 import { clearCache, getCache, setCache } from "../../lib/redis.js"
 import {
+  upsertEmbedding,
+  deleteEmbedding,
+  templateUserGoal,
+} from "../services/embeddingHelper"
+import {
   calculateBMI,
   calculateWeightDelta,
   getBMICategory,
@@ -45,11 +50,16 @@ userRouter.get("/me/home", async (c) => {
   const user = c.get("user" as any)
   if (!user) return c.json({ message: "Unauthorized" }, 401)
 
+  const refresh = c.req.query("refresh") === "true";
+
   try {
     const cacheKey = `userHomeData:${user.id}`
-    const cached = await getCache(cacheKey)
-    if (cached) {
-      return c.json(JSON.parse(cached))
+    
+    if (!refresh) {
+      const cached = await getCache(cacheKey)
+      if (cached) {
+        return c.json(JSON.parse(cached))
+      }
     }
 
     const userData = await getUserData(user)
@@ -301,6 +311,14 @@ userRouter.post("/goals", async (c) => {
         }
       })
       .returning()
+
+    // Generate embedding
+    upsertEmbedding({
+      userId: user.id,
+      resourceType: "user_goal",
+      resourceId: newGoal.id,
+      content: templateUserGoal(newGoal),
+    }).catch(err => console.error('[Embedding] user_goal create failed:', err.message))
 
     return c.json(
       {

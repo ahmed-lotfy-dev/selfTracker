@@ -13,8 +13,10 @@ import uploadRouter from "./routes/image.js"
 import timerRouter from "./routes/timer.js"
 import electricRouter from "./routes/electric.js"
 import desktopCallbackRouter from "./routes/desktopCallback.js"
+import desktopAuthRouter from "./routes/desktopAuth.js"
 import habitsRouter from "./routes/habits.js"
 import nutritionRouter from "./routes/nutrition.js"
+import aiRouter from "./routes/ai.js"
 import { auth } from "../lib/auth.js"
 import { authMiddleware } from "./middlewares/authMiddleware.js"
 import { Scalar } from '@scalar/hono-api-reference'
@@ -39,6 +41,9 @@ app.use(
       "http://localhost:1420", // Tauri
       "tauri://localhost", // Tauri Production
       "http://localhost:5173", // Vite local
+      "http://localhost:8000", // Local backend
+      "http://localhost:8081", // Expo dev
+      "https://selftracker.ahmedlotfy.site", // Production
     ],
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "UPDATE", "DELETE", "PATCH", "OPTIONS"],
@@ -47,6 +52,9 @@ app.use(
     credentials: true,
   }),
 );
+
+// Desktop OAuth proxy — handled in routes/desktopAuth.ts
+app.route("/api/auth", desktopAuthRouter)
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
@@ -79,6 +87,8 @@ app.route("/api/electric", electricRouter)
 app.route("/api/habits", habitsRouter)
 
 app.route("/api/nutrition", nutritionRouter)
+
+app.route("/api/ai", aiRouter)
 
 app.route("/api", desktopCallbackRouter)
 
@@ -125,6 +135,10 @@ app.onError((err, c) => {
     500
   )
 })
+
+// Background worker for creating embeddings from synced data
+import { startEmbeddingWorker } from "./services/embeddingWorker.js"
+startEmbeddingWorker()
 
 export default {
   port: process.env.PORT || 8000,

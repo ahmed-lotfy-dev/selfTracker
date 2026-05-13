@@ -6,6 +6,7 @@ import { useThemeColors } from "@/src/constants/Colors"
 import { Swipeable } from "react-native-gesture-handler"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 import { useTasksStore } from "@/src/stores/useTasksStore"
+import { PremiumCard } from "../../ui/PremiumCard"
 
 type TaskItem = {
   id: string
@@ -72,18 +73,18 @@ export default function TaskListItem({ task, index = 0, onToggle }: TaskListItem
 
   const renderRightActions = () => {
     return (
-      <View className="flex-row items-center ml-2 h-[85%] pr-2">
+      <View className="flex-row items-center ml-2 h-full pr-1">
         <Pressable
           onPress={startEditing}
-          className="w-12 h-full bg-primary rounded-l-2xl items-center justify-center mr-px"
+          className="w-12 h-16 bg-white/5 rounded-xl items-center justify-center mr-1 border border-white/5"
         >
-          <MaterialIcons name="edit" size={24} color={colors.card} />
+          <MaterialIcons name="edit" size={20} color="white" />
         </Pressable>
         <Pressable
           onPress={handleDelete}
-          className="w-12 h-full bg-error rounded-r-2xl items-center justify-center"
+          className="w-12 h-16 bg-red-500/10 rounded-xl items-center justify-center border border-red-500/10"
         >
-          <MaterialIcons name="delete-outline" size={24} color={colors.card} />
+          <MaterialIcons name="delete-outline" size={20} color="#ef4444" />
         </Pressable>
       </View>
     )
@@ -94,67 +95,72 @@ export default function TaskListItem({ task, index = 0, onToggle }: TaskListItem
       entering={FadeIn.delay(Math.min(index * 35, 500)).duration(400)}
       exiting={FadeOutRight.duration(300)}
       layout={LinearTransition.duration(400)}
-      className="px-4"
+      className="px-2"
     >
       <Swipeable
         ref={swipeableRef}
         renderRightActions={renderRightActions}
         containerStyle={{ marginBottom: 12 }}
       >
-        <Pressable
-          className={`flex-row items-center p-4 bg-card rounded-2xl shadow-sm border ${task.completed ? "border-border bg-background/50" : "border-border"
-            }`}
+        <PremiumCard 
           onPress={handleToggle}
           onLongPress={startEditing}
+          gradientColors={task.completed 
+            ? ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.01)'] 
+            : ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)']
+          }
+          containerStyle={`border-white/5 ${task.completed ? "opacity-60" : ""}`}
         >
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation()
-              handleToggle()
-            }}
-            className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-4 ${task.completed ? "bg-primary border-primary" : "border-placeholder bg-card"
-              }`}
-          >
-            {task.completed && <Ionicons name="checkmark" size={16} color={colors.card} />}
-          </Pressable>
+          <View className="flex-row items-center">
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation()
+                handleToggle()
+              }}
+              className={`w-6 h-6 rounded-lg border-2 items-center justify-center mr-4 ${task.completed ? "bg-white border-white" : "border-white/20 bg-white/5"
+                }`}
+            >
+              {task.completed && <Ionicons name="checkmark" size={16} color="black" />}
+            </Pressable>
 
-          <View className="flex-1 mr-2">
-            {isEditing ? (
-              <View>
-                <TextInput
-                  ref={inputRef}
-                  value={editedTitle}
-                  onChangeText={setEditedTitle}
-                  className="text-base font-medium text-text p-0 m-0 mb-2"
-                  autoFocus
-                  multiline
-                />
-                <View className="flex-row justify-end gap-3 mt-1">
-                  <Pressable onPress={cancelEdit} className="p-1">
-                    <Ionicons name="close-circle" size={28} color={colors.error} />
-                  </Pressable>
-                  <Pressable onPress={saveEdit} className="p-1">
-                    <Ionicons name="checkmark-circle" size={28} color={colors.primary} />
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <View>
-                <Text
-                  className={`text-base font-medium shrink ${task.completed ? "text-placeholder line-through" : "text-text"
-                    }`}
-                >
-                  {task.title ? (task.title.slice(0, 1).toUpperCase() + task.title.slice(1)) : 'Untitled'}
-                </Text>
-                {task.category && task.category !== "general" && (
-                  <View className="self-start bg-secondary/10 px-2 py-0.5 rounded-md mt-1">
-                    <Text className="text-xs text-secondary/80 uppercase font-medium">{task.category}</Text>
+            <View className="flex-1">
+              {isEditing ? (
+                <View>
+                  <TextInput
+                    ref={inputRef}
+                    value={editedTitle}
+                    onChangeText={setEditedTitle}
+                    className="text-base font-black text-white p-0 m-0 mb-2 tracking-tighter"
+                    autoFocus
+                    multiline
+                  />
+                  <View className="flex-row justify-end gap-3 mt-1">
+                    <Pressable onPress={cancelEdit} className="p-1">
+                      <Ionicons name="close-circle" size={28} color="rgba(255,255,255,0.3)" />
+                    </Pressable>
+                    <Pressable onPress={saveEdit} className="p-1">
+                      <Ionicons name="checkmark-circle" size={28} color="white" />
+                    </Pressable>
                   </View>
-                )}
-              </View>
-            )}
+                </View>
+              ) : (
+                <View>
+                  <Text
+                    className={`text-base font-black tracking-tighter ${task.completed ? "text-white/30 line-through" : "text-white"
+                      }`}
+                  >
+                    {task.title ? (task.title.slice(0, 1).toUpperCase() + task.title.slice(1)) : 'Untitled'}
+                  </Text>
+                  {task.category && task.category !== "general" && (
+                    <View className="self-start bg-white/5 px-2 py-0.5 rounded-md mt-1.5 border border-white/5">
+                      <Text className="text-[9px] text-white/40 uppercase font-black tracking-widest">{task.category}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
           </View>
-        </Pressable>
+        </PremiumCard>
       </Swipeable>
     </Animated.View>
   )

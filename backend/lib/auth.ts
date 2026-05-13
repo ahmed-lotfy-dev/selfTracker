@@ -97,6 +97,8 @@ export const auth = betterAuth({
   },
   session: {
     modelName: "sessions",
+    expiresIn: 60 * 60 * 24 * 30, // 30 days (in seconds)
+    updateAge: 60 * 60 * 24 * 1, // Update session every 1 day
   },
   verification: {
     modelName: "verifications",
@@ -120,6 +122,9 @@ export const auth = betterAuth({
   trustedOrigins: [
     "selftracker://",
     "selftracker://callback",
+    "selftracker://callback/",
+    "exp+selftracker://",
+    "exp+selftracker://callback",
     "exp+selftracker://callback/",
     "https://selftracker.ahmedlotfy.site",
     "http://localhost:8000",
