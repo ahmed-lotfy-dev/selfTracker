@@ -17,7 +17,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@better-auth/expo": "^1.6.11",
+    "@better-auth/expo": "1.4.9",
     "@electric-sql/client": "^1.5.17",
     "@expo/ui": "~55.0.16",
     "@expo/vector-icons": "^15.1.1",
@@ -103,6 +103,11 @@
     "jscodeshift": "0.15.2",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "typescript": "~5.9.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.0",
+    "tar": "^7.0.0",
+    "send": "^1.1.0"
   },
   "resolutions": {
     "@react-navigation/core": "^7.13.7",
