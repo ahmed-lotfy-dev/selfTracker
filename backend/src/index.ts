@@ -52,6 +52,18 @@ app.use(
   }),
 );
 
+// Desktop OAuth proxy — system browser can GET this, sets cookie, redirects to provider
+app.get("/api/auth/desktop/:provider", async (c) => {
+  const { provider } = c.req.param()
+  const callbackURL = c.req.query("callbackURL") || "selftracker://auth"
+  const result = await auth.api.signInSocial({
+    body: { provider, callbackURL },
+    headers: c.req.raw.headers,
+    asResponse: true,
+  })
+  return result
+})
+
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
 });
