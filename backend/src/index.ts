@@ -60,9 +60,11 @@ app.get("/api/auth/desktop/:provider", async (c) => {
     // Build a synthetic POST to better-auth's sign-in endpoint
     // This is the only way to get the OAuth state cookie set in the system browser
     const body = JSON.stringify({ provider, callbackURL })
-    const url = `https://${c.req.header("host") || "selftracker.ahmedlotfy.site"}/api/auth/sign-in/social`
+    const host = c.req.header("host") || "selftracker.ahmedlotfy.site"
+    const url = `https://${host}/api/auth/sign-in/social`
     const headers = new Headers(c.req.raw.headers)
     headers.set("Content-Type", "application/json")
+    headers.set("Origin", `https://${host}`)
     const synthetic = new Request(url, { method: "POST", headers, body })
     const authRes = await auth.handler(synthetic)
     const txt = await authRes.text()
