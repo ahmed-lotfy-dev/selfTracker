@@ -13,6 +13,7 @@ import uploadRouter from "./routes/image.js"
 import timerRouter from "./routes/timer.js"
 import electricRouter from "./routes/electric.js"
 import desktopCallbackRouter from "./routes/desktopCallback.js"
+import desktopAuthRouter from "./routes/desktopAuth.js"
 import habitsRouter from "./routes/habits.js"
 import nutritionRouter from "./routes/nutrition.js"
 import aiRouter from "./routes/ai.js"
@@ -52,36 +53,8 @@ app.use(
   }),
 );
 
-// Desktop OAuth proxy — system browser can GET this, sets cookie, redirects to provider
-app.get("/api/auth/desktop/:provider", async (c) => {
-  const { provider } = c.req.param()
-  const callbackURL = c.req.query("callbackURL") || "selftracker://auth"
-  try {
-    // Build a synthetic POST to better-auth's sign-in endpoint
-    // This is the only way to get the OAuth state cookie set in the system browser
-    const body = JSON.stringify({ provider, callbackURL })
-    const host = c.req.header("host") || "selftracker.ahmedlotfy.site"
-    const url = `https://${host}/api/auth/sign-in/social`
-    const headers = new Headers(c.req.raw.headers)
-    headers.set("Content-Type", "application/json")
-    headers.set("Origin", `https://${host}`)
-    const synthetic = new Request(url, { method: "POST", headers, body })
-    const authRes = await auth.handler(synthetic)
-    const txt = await authRes.text()
-    let data: any
-    try { data = JSON.parse(txt) } catch { data = null }
-    if (data?.url) {
-      // Forward Set-Cookie (OAuth state) to the system browser
-      const setCookie = authRes.headers.get("set-cookie")
-      if (setCookie) c.header("Set-Cookie", setCookie)
-      return c.redirect(data.url, 302)
-    }
-    return c.json({ error: "Failed to initiate OAuth", raw: txt }, 500)
-  } catch (e: any) {
-    console.error("[Desktop OAuth] Failed:", e)
-    return c.html(`<html><body style="font-family:system-ui;background:#09090b;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:20px;text-align:center;padding:20px"><h2 style="margin:0">Authentication Failed</h2><p style="color:#a1a1aa">${e?.message || "Could not initiate sign-in"}</p></body></html>`)
-  }
-})
+// Desktop OAuth proxy — handled in routes/desktopAuth.ts
+app.route("/api/auth", desktopAuthRouter)
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
