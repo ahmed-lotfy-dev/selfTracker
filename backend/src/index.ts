@@ -57,28 +57,24 @@ app.get("/api/auth/desktop/:provider", async (c) => {
   const { provider } = c.req.param()
   const callbackURL = c.req.query("callbackURL") || "selftracker://auth"
   try {
-    // Forward a synthetic POST through the actual better-auth HTTP handler
-    // This ensures OAuth state cookie is set in the system browser's cookie jar
-    const host = c.req.header("host") || "selftracker.ahmedlotfy.site"
-    const forwardReq = new Request(`https://${host}/api/auth/sign-in/social`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: c.req.header("cookie") || "",
-        Origin: `https://${host}`,
-        "X-Forwarded-For": c.req.header("x-forwarded-for") || c.req.header("true-client-ip") || "",
-      },
-      body: JSON.stringify({ provider, callbackURL }),
-    })
-    const authRes = await auth.handler(forwardReq)
-    const data = await authRes.json()
-    if (data && typeof data === "object" && "url" in data) {
-      // Forward Set-Cookie from auth handler to the system browser
+    // Build a synthetic POST to better-auth's sign-in endpoint
+    // This is the only way to get the OAuth state cookie set in the system browser
+    const body = JSON.stringify({ provider, callbackURL })
+    const url = `https://${c.req.header("host") || "selftracker.ahmedlotfy.site"}/api/auth/sign-in/social`
+    const headers = new Headers(c.req.raw.headers)
+    headers.set("Content-Type", "application/json")
+    const synthetic = new Request(url, { method: "POST", headers, body })
+    const authRes = await auth.handler(synthetic)
+    const txt = await authRes.text()
+    let data: any
+    try { data = JSON.parse(txt) } catch { data = null }
+    if (data?.url) {
+      // Forward Set-Cookie (OAuth state) to the system browser
       const setCookie = authRes.headers.get("set-cookie")
       if (setCookie) c.header("Set-Cookie", setCookie)
-      return c.redirect(data.url as string, 302)
+      return c.redirect(data.url, 302)
     }
-    return c.json({ error: "Failed to initiate OAuth" }, 500)
+    return c.json({ error: "Failed to initiate OAuth", raw: txt }, 500)
   } catch (e: any) {
     console.error("[Desktop OAuth] Failed:", e)
     return c.html(`<html><body style="font-family:system-ui;background:#09090b;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:20px;text-align:center;padding:20px"><h2 style="margin:0">Authentication Failed</h2><p style="color:#a1a1aa">${e?.message || "Could not initiate sign-in"}</p></body></html>`)
