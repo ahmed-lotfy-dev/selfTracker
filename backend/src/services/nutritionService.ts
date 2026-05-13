@@ -2,6 +2,7 @@ import { and, desc, eq, sql, gte, lte } from "drizzle-orm"
 import { db } from "../db"
 import { foodLogs, nutritionGoals } from "../db/schema"
 import type { FoodItem } from "../db/schema/foodLogs"
+import { upsertEmbedding, deleteEmbedding, templateFoodLog } from "./embeddingHelper"
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack"
 
@@ -46,7 +47,7 @@ export const createFoodLog = async (
     updatedAt?: Date
   }
 ) => {
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [created] = await tx
       .insert(foodLogs)
       .values({
@@ -73,16 +74,24 @@ export const createFoodLog = async (
           totalCarbs: fields.totalCarbs,
           totalFat: fields.totalFat,
           updatedAt: new Date(),
-        },
+        }
       })
       .returning()
 
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
     const rows = res.rows as { txid: string }[]
     const txid = rows[0].txid
-
     return { ...created, txid: parseInt(txid) }
   })
+
+  upsertEmbedding({
+    userId,
+    resourceType: "food_log",
+    resourceId: result.id,
+    content: templateFoodLog(result),
+  }).catch(err => console.error('[Embedding] food_log create failed:', err.message))
+
+  return result
 }
 
 export const updateFoodLog = async (
@@ -98,7 +107,7 @@ export const updateFoodLog = async (
     totalFat: number
   }>
 ) => {
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const updateData: any = {}
     if (fields.loggedAt !== undefined) updateData.loggedAt = fields.loggedAt
     if (fields.mealType !== undefined) updateData.mealType = fields.mealType
@@ -120,13 +129,23 @@ export const updateFoodLog = async (
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
     const rows = res.rows as { txid: string }[]
     const txid = rows[0].txid
-
     return { ...updated, txid: parseInt(txid) }
   })
+
+  if (result) {
+    upsertEmbedding({
+      userId,
+      resourceType: "food_log",
+      resourceId: result.id,
+      content: templateFoodLog(result),
+    }).catch(err => console.error('[Embedding] food_log update failed:', err.message))
+  }
+
+  return result
 }
 
 export const deleteFoodLog = async (userId: string, foodLogId: string) => {
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [deleted] = await tx
       .delete(foodLogs)
       .where(and(eq(foodLogs.id, foodLogId), eq(foodLogs.userId, userId)))
@@ -137,9 +156,14 @@ export const deleteFoodLog = async (userId: string, foodLogId: string) => {
     const res = await tx.execute(sql`SELECT pg_current_xact_id()::xid::text as txid`)
     const rows = res.rows as { txid: string }[]
     const txid = rows[0].txid
-
     return { ...deleted, txid: parseInt(txid) }
   })
+
+  deleteEmbedding("food_log", foodLogId).catch(err =>
+    console.error('[Embedding] food_log delete failed:', err.message)
+  )
+
+  return result
 }
 
 export const getUserNutritionGoals = async (userId: string) => {

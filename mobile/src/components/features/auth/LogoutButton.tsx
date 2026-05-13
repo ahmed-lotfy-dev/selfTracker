@@ -1,14 +1,11 @@
 import React, { useState } from "react"
-import { View, Text } from "react-native"
+import { View, Text, Pressable } from "react-native"
 import { useRouter } from "expo-router"
 import { useAuthActions } from "@/src/features/auth/useAuthStore"
-import Button from "@/src/components/ui/Button"
+import { MaterialIcons } from "@expo/vector-icons"
+import { PremiumCard } from "@/src/components/ui/PremiumCard"
 
-type logoutProps = {
-  className?: string
-}
-
-export default function LogoutButton({ className }: logoutProps) {
+export default function LogoutButton({ className }: { className?: string }) {
   const { logout } = useAuthActions()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -29,17 +26,25 @@ export default function LogoutButton({ className }: logoutProps) {
   }
 
   return (
-    <View className={`w-32 m-auto ${className}`} >
-      <Button
+    <View className={`w-full px-4 ${className}`} >
+      <PremiumCard 
         onPress={handleLogout}
-        loading={isLoading}
-        variant="danger"
-        fullWidth
+        gradientColors={['#450a0a', '#7f1d1d']}
+        containerStyle="h-14 justify-center border-red-900/10"
       >
-        {isLoading ? "Signing out..." : "Sign Out"}
-      </Button>
+        <View className="flex-row items-center justify-center">
+          <MaterialIcons name="logout" size={18} color="white" />
+          <Text className="text-white text-sm font-black uppercase tracking-[2px] ml-3">
+            {isLoading ? "Synchronizing Out..." : "Sign Out"}
+          </Text>
+        </View>
+      </PremiumCard>
 
-      {error && <Text className="text-error mt-2 text-center">{error}</Text>}
+      {error && (
+        <View className="mt-4 bg-red-500/10 p-3 rounded-xl border border-red-500/20">
+          <Text className="text-red-500 text-[10px] font-black uppercase text-center tracking-widest leading-4">{error}</Text>
+        </View>
+      )}
     </View>
   )
 }

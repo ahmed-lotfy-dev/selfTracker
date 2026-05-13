@@ -6,6 +6,7 @@ import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import { useRouter } from "expo-router"
 import { FlashList } from "@shopify/flash-list"
 import { format } from "date-fns"
+import { PremiumCard } from "../../ui/PremiumCard"
 
 interface WorkoutLogsListProps {
   ListHeaderComponent?: React.ReactElement | null
@@ -52,28 +53,35 @@ export const WorkoutLogsList = ({ ListHeaderComponent, logs, disablePagination }
   }
 
   const renderItem = ({ item }: { item: any }) => (
-    <View className="flex-row items-center mb-2 px-3">
-      <Pressable
-        onPress={() => router.push(`/workouts/${item.id}`)}
-        className="flex-1 p-4 bg-card rounded-xl border border-border shadow-sm"
-      >
-        <View className="flex-row justify-between items-center">
-          <Text className="text-text font-medium text-base">{item.workoutName}</Text>
-          <Text className="text-xs text-placeholder">
-            {format(new Date(item.createdAt), "dd/MM/yyyy")}
-          </Text>
-        </View>
-        {item.notes && (
-          <Text className="text-sm text-placeholder mt-1" numberOfLines={1}>
-            {item.notes}
-          </Text>
-        )}
-      </Pressable>
+    <View className="flex-row items-center mb-3">
+      <View className="flex-1">
+        <PremiumCard
+          onPress={() => router.push(`/workouts/${item.id}`)}
+          gradientColors={['rgba(255,255,255,0.03)', 'transparent']}
+          containerStyle="p-4 border-white/5"
+        >
+          <View className="flex-row justify-between items-center">
+            <Text className="text-white font-black text-xl tracking-tighter" numberOfLines={1} style={{ flexShrink: 1, marginRight: 8 }}>
+              {item.workoutName}
+            </Text>
+            <View className="bg-white/5 px-2 py-1 rounded-full border border-white/5">
+              <Text className="text-[10px] text-white/50 font-bold uppercase tracking-widest">
+                {format(new Date(item.createdAt), "dd MMM")}
+              </Text>
+            </View>
+          </View>
+          {item.notes && (
+            <Text className="text-[12px] font-bold text-white/40 mt-3 tracking-tight uppercase" numberOfLines={1}>
+              {item.notes}
+            </Text>
+          )}
+        </PremiumCard>
+      </View>
       <Pressable
         onPress={() => handleDelete(item.id)}
-        className="ml-2 p-3 bg-red-500/10 rounded-xl"
+        className="ml-3 self-stretch min-w-[50px] bg-red-500/10 rounded-2xl items-center justify-center border border-red-500/20"
       >
-        <Ionicons name="trash-outline" size={20} color="#ef4444" />
+        <Ionicons name="trash" size={20} color="#ef4444" />
       </Pressable>
     </View>
   )
@@ -101,14 +109,19 @@ export const WorkoutLogsList = ({ ListHeaderComponent, logs, disablePagination }
       onEndReachedThreshold={0.5}
       ListEmptyComponent={
         !ListHeaderComponent ? (
-          <View className="items-center justify-center py-16 border-2 border-dashed rounded-3xl mx-3 opacity-50" style={{ borderColor: colors.border }}>
-            <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/5 dark:bg-white/5">
-              <FontAwesome5 name="dumbbell" size={24} color={colors.text} style={{ opacity: 0.5 }} />
-            </View>
-            <Text className="text-lg font-bold mb-1 text-text">No workouts yet</Text>
-            <Text className="text-sm text-center px-8 text-placeholder">
-              Your workout history will appear here.
-            </Text>
+          <View className="items-center justify-center py-10 px-4">
+            <PremiumCard 
+              containerStyle="border-white/5 items-center justify-center p-8 w-full border-dashed"
+              gradientColors={['rgba(255,255,255,0.02)', 'transparent']}
+            >
+              <View className="w-10 h-10 rounded-full items-center justify-center bg-white/5 mb-4">
+                <FontAwesome5 name="dumbbell" size={24} color="rgba(255,255,255,0.4)" />
+              </View>
+              <Text className="text-white text-lg font-black tracking-tight mb-2 uppercase">No Workouts Yet</Text>
+              <Text className="text-white/40 text-xs font-bold text-center leading-5 uppercase tracking-wide">
+                Your workout history will automatically appear here.
+              </Text>
+            </PremiumCard>
           </View>
         ) : null
       }

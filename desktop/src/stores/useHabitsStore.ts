@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/lib/storage/mmkv'
+import axiosInstance from '@/lib/api/axiosInstance'
 
 export type Habit = {
   id: string
@@ -58,8 +59,8 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     set({ habits: newHabits })
 
     try {
-      const { SyncManager } = require('../../lib/sync/SyncManager')
-      SyncManager.pushHabit(habit)
+      const token = localStorage.getItem("bearer_token")
+      if (token) axiosInstance.post('/api/habits', habit)
     } catch (e) {
       console.error('Failed to sync new habit:', e)
     }
@@ -79,8 +80,8 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
     if (updatedHabit) {
       try {
-        const { SyncManager } = require('../../lib/sync/SyncManager')
-        SyncManager.pushHabit(updatedHabit)
+        const token = localStorage.getItem("bearer_token")
+        if (token) axiosInstance.post('/api/habits', updatedHabit)
       } catch (e) {
         console.error('Failed to sync updated habit:', e)
       }
@@ -101,8 +102,8 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
     if (deletedHabit) {
       try {
-        const { SyncManager } = require('../../lib/sync/SyncManager')
-        SyncManager.pushHabit(deletedHabit)
+        const token = localStorage.getItem("bearer_token")
+        if (token) axiosInstance.delete(`/api/habits/${id}`)
       } catch (e) {
         console.error('Failed to sync deleted habit:', e)
       }
@@ -148,8 +149,11 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
     if (updatedHabit) {
       try {
-        const { SyncManager } = require('../../lib/sync/SyncManager')
-        SyncManager.pushHabit(updatedHabit)
+        const token = localStorage.getItem("bearer_token")
+        if (token) {
+          const today = new Date().toISOString().slice(0, 10)
+          axiosInstance.post(`/api/habits/${id}/complete`, { date: today, completed })
+        }
       } catch (e) {
         console.error('Failed to sync habit completion:', e)
       }

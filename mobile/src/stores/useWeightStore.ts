@@ -1,15 +1,6 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
-
-export type WeightLog = {
-  id: string
-  userId: string
-  weight: string
-  notes: string | null
-  createdAt: string
-  updatedAt: string
-  deletedAt: string | null
-}
+import { WeightLog } from '../types/weightType'
 
 const STORAGE_KEY = 'local-weight-logs'
 

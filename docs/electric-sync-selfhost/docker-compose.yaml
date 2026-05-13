@@ -1,0 +1,24 @@
+services:
+  electric:
+    image: electricsql/electric:latest
+    container_name: electric-sync-engine
+    ports:
+      - "5050:3000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - ELECTRIC_PORT=3000
+      - ELECTRIC_STORAGE_DIR=/var/lib/electric/persistent
+      # Optional: enable IPv6 if needed
+      - ELECTRIC_DATABASE_USE_IPV6=${ELECTRIC_DATABASE_USE_IPV6:-false}
+      # Security: Highly recommended to set a secret for your API
+      - ELECTRIC_SECRET=${ELECTRIC_SECRET}
+    volumes:
+      - electric_data:/var/lib/electric/persistent
+    restart: always
+    # Wait for postgres to be ready if running in the same compose
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
+
+volumes:
+  electric_data:

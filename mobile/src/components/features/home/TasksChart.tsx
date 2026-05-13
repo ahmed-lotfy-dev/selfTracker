@@ -1,14 +1,18 @@
 import { View, Text, Dimensions } from "react-native"
 import React, { useMemo } from "react"
 import { PieChart } from "react-native-chart-kit"
+import { Ionicons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useTasksStore } from "@/src/stores/useTasksStore"
+import { useSyncStore } from "@/src/stores/useSyncStore"
+import { PremiumCard } from "../../ui/PremiumCard"
 
 const SCREEN_WIDTH = Dimensions.get("window").width
 
 export const TasksChart = () => {
   const colors = useThemeColors()
   const tasks = useTasksStore((s) => s.tasks)
+  const isSyncComplete = useSyncStore((s) => s.isInitialSyncComplete)
 
   const stats = useMemo(() => {
     const activeTasks = tasks.filter((t) => !t.deletedAt)
@@ -21,53 +25,72 @@ export const TasksChart = () => {
     {
       name: "Pending",
       population: stats.pendingTasks,
-      color: colors.secondary,
-      legendFontColor: colors.text,
-      legendFontSize: 12,
+      color: "#6366f1", // Indigo
+      legendFontColor: "rgba(255,255,255,0.7)",
+      legendFontSize: 11,
     },
     {
       name: "Done",
       population: stats.completedTasks,
-      color: colors.primary,
-      legendFontColor: colors.text,
-      legendFontSize: 12,
+      color: "#10b981", // Emerald
+      legendFontColor: "rgba(255,255,255,0.7)",
+      legendFontSize: 11,
     },
   ]
 
   const hasData = stats.pendingTasks > 0 || stats.completedTasks > 0
 
   return (
-    <View
-      className="p-4 my-2 bg-card rounded-lg shadow-md border border-border"
-      style={{ alignSelf: "center", width: "100%" }}
-    >
-      <Text
-        style={{ marginBottom: 4, fontWeight: "bold", color: colors.primary }}
+    <View>
+      <PremiumCard 
+        gradientColors={['rgba(99,102,241,0.15)', 'rgba(255,255,255,0.01)']}
+        containerStyle="border-white/5 pt-2"
       >
-        Tasks Overview
-      </Text>
-      {hasData ? (
-        <PieChart
-          data={data}
-          width={SCREEN_WIDTH - 48}
-          height={140}
-          chartConfig={{
-            backgroundGradientFrom: colors.card,
-            backgroundGradientTo: colors.card,
-            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          }}
-          accessor="population"
-          backgroundColor="transparent"
-          paddingLeft="15"
-          absolute
-        />
-      ) : (
-        <View className="items-center justify-center py-8">
-          <Text className="text-placeholder text-center">
-            No tasks yet. Add some tasks to see your progress!
-          </Text>
+        <View className="flex-row items-center justify-between mb-2">
+          <View>
+            <Text className="text-white/40 text-[10px] font-black uppercase tracking-[2px] mb-1">Productivity</Text>
+            <Text className="text-white text-3xl font-black tracking-tighter">Task Overview</Text>
+          </View>
+          {hasData && (
+             <View className="bg-indigo-500/20 px-3 py-1.5 rounded-full border border-indigo-500/20">
+               <Text className="text-indigo-400 text-[10px] font-black uppercase tracking-widest">LIVE</Text>
+             </View>
+          )}
         </View>
-      )}
+
+        {hasData ? (
+          <View className="items-center -ml-4 mt-2">
+            <PieChart
+              data={data}
+              width={SCREEN_WIDTH - 64}
+              height={160}
+              chartConfig={{
+                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              }}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute
+              hasLegend={true}
+            />
+          </View>
+        ) : (
+          <View className="items-center justify-center py-10 mt-2 bg-black/20 rounded-2xl border border-white/5">
+            <View className="p-4 rounded-full bg-white/5 mb-3">
+              <Ionicons 
+                name={!isSyncComplete ? "sync" : "checkmark-circle-outline"}
+                size={32} 
+                color="rgba(255,255,255,0.5)" 
+              />
+            </View>
+            <Text className="text-white/50 text-center text-xs font-bold px-10 leading-5">
+              {!isSyncComplete 
+                ? "SYNCING YOUR DATA FROM THE CLOUD..." 
+                : "YOUR PRODUCTIVITY INSIGHTS WILL APPEAR HERE ONCE YOU COMPLETE TASKS."}
+            </Text>
+          </View>
+        )}
+      </PremiumCard>
     </View>
   )
 }

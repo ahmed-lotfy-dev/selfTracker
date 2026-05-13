@@ -6,6 +6,7 @@ import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { FlashList } from "@shopify/flash-list"
 import { format } from "date-fns"
+import { PremiumCard } from "../../ui/PremiumCard"
 
 interface Props {
   ListHeaderComponent?: React.ReactElement | null
@@ -48,28 +49,35 @@ export const WeightLogsList = ({ ListHeaderComponent }: Props) => {
   }
 
   const renderItem = ({ item }: { item: any }) => (
-    <View className="flex-row items-center mb-2 px-3">
-      <Pressable
-        onPress={() => router.push(`/weights/${item.id}`)}
-        className="flex-1 p-4 bg-card rounded-xl border border-border shadow-sm"
-      >
-        <View className="flex-row justify-between items-center">
-          <Text className="text-text font-bold text-lg">{item.weight} kg</Text>
-          <Text className="text-xs text-placeholder">
-            {format(new Date(item.createdAt), "dd/MM/yyyy")}
-          </Text>
-        </View>
-        {item.notes && (
-          <Text className="text-sm text-placeholder mt-1" numberOfLines={1}>
-            {item.notes}
-          </Text>
-        )}
-      </Pressable>
+    <View className="flex-row items-center mb-3">
+      <View className="flex-1">
+        <PremiumCard
+          onPress={() => router.push(`/weights/${item.id}`)}
+          gradientColors={['rgba(255,255,255,0.03)', 'transparent']}
+          containerStyle="p-4 border-white/5"
+        >
+          <View className="flex-row justify-between items-center">
+            <Text className="text-white font-black text-2xl tracking-tighter">
+              {item.weight} <Text className="text-base text-white/30 uppercase tracking-widest">kg</Text>
+            </Text>
+            <View className="bg-white/5 px-2 py-1 rounded-full border border-white/5">
+              <Text className="text-[10px] text-white/50 font-bold uppercase tracking-widest">
+                {format(new Date(item.createdAt), "dd MMM")}
+              </Text>
+            </View>
+          </View>
+          {item.notes && (
+            <Text className="text-[12px] font-bold text-white/40 mt-3 tracking-tight uppercase" numberOfLines={1}>
+              {item.notes}
+            </Text>
+          )}
+        </PremiumCard>
+      </View>
       <Pressable
         onPress={() => handleDelete(item.id)}
-        className="ml-2 p-3 bg-red-500/10 rounded-xl"
+        className="ml-3 self-stretch min-w-[50px] bg-red-500/10 rounded-2xl items-center justify-center border border-red-500/20"
       >
-        <Ionicons name="trash-outline" size={20} color="#ef4444" />
+        <Ionicons name="trash" size={20} color="#ef4444" />
       </Pressable>
     </View>
   )
@@ -85,13 +93,19 @@ export const WeightLogsList = ({ ListHeaderComponent }: Props) => {
 
   if (sortedLogs.length === 0 && !ListHeaderComponent) {
     return (
-      <View className="flex-1 items-center justify-center py-16">
-        <Text className="text-lg font-bold mb-2" style={{ color: colors.text }}>
-          No weight logs yet
-        </Text>
-        <Text className="text-placeholder text-center px-8">
-          Keep track of your journey by adding your first weight log.
-        </Text>
+      <View className="flex-1 items-center justify-center py-10 px-4">
+        <PremiumCard 
+          containerStyle="border-white/5 items-center justify-center p-8 w-full border-dashed"
+          gradientColors={['rgba(255,255,255,0.02)', 'transparent']}
+        >
+          <View className="w-10 h-10 rounded-full items-center justify-center bg-white/5 mb-4">
+            <Ionicons name="scale-outline" size={28} color="rgba(255,255,255,0.4)" />
+          </View>
+          <Text className="text-white text-lg font-black tracking-tight mb-2 uppercase">No Logs Yet</Text>
+          <Text className="text-white/40 text-xs font-bold text-center leading-5 uppercase tracking-wide">
+            Add your first weight reading to start tracking your journey.
+          </Text>
+        </PremiumCard>
       </View>
     )
   }

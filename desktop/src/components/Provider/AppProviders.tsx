@@ -1,15 +1,14 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { SyncManager } from '../../lib/sync/SyncManager';
+import { fetchAllFromApi } from '@/hooks/use-api';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
-
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
       try {
-        // Race the initialization against a 5-second timeout
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error("Initialization timed out")), 5000)
         );
@@ -22,9 +21,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
         setIsReady(true);
       } catch (e: any) {
         console.error("Failed to initialize SyncManager:", e);
-        // If it was just a timeout, we might still want to let them in, 
-        // or show an error. specific to the "Gray Screen" issue, letting them in 
-        // is safer than blocking forever.
         if (e.message === "Initialization timed out") {
           console.warn("Forcing app entry despite timeout");
           setIsReady(true);
@@ -39,24 +35,23 @@ export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isReady) return;
 
-    const checkAuthAndSync = () => {
+    const loadData = async () => {
       const token = localStorage.getItem("bearer_token");
       if (token) {
-        SyncManager.startSync();
+        console.log("[AppProviders] Authenticated, loading data from API...");
+        await fetchAllFromApi();
+        SyncManager.startSync().catch(e => console.warn("[AppProviders] Sync start skipped:", e?.message));
       }
     };
 
-    checkAuthAndSync();
+    loadData();
 
-    // Listen for storage changes (login/logout from other tabs/windows)
-    window.addEventListener('storage', checkAuthAndSync);
-
-    // Also listen for custom auth events if we dispatch them
-    window.addEventListener('auth-changed', checkAuthAndSync);
+    window.addEventListener('storage', loadData);
+    window.addEventListener('auth-changed', loadData);
 
     return () => {
-      window.removeEventListener('storage', checkAuthAndSync);
-      window.removeEventListener('auth-changed', checkAuthAndSync);
+      window.removeEventListener('storage', loadData);
+      window.removeEventListener('auth-changed', loadData);
     };
   }, [isReady]);
 
