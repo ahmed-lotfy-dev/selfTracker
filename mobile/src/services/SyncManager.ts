@@ -410,7 +410,8 @@ class SyncManagerService {
     for (const w of pendingWorkouts) {
       const success = await this.pushWithRetry(
         () => w.deletedAt ? axiosInstance.delete(`/api/workouts/${w.id}`) : axiosInstance.post('/api/workouts', w),
-        `pushWorkout(${w.id})`
+        `pushWorkout(${w.id})`,
+        !!w.deletedAt
       )
       if (success) {
         this.removeFromPending(PENDING_WORKOUT_KEY, w.id)
@@ -422,7 +423,8 @@ class SyncManagerService {
     for (const h of pendingHabits) {
       const success = await this.pushWithRetry(
         () => h.deletedAt ? axiosInstance.delete(`/api/habits/${h.id}`) : axiosInstance.post('/api/habits', h),
-        `pushHabit(${h.id})`
+        `pushHabit(${h.id})`,
+        !!h.deletedAt
       )
       if (success) {
         this.removeFromPending(PENDING_HABIT_KEY, h.id)
@@ -434,7 +436,8 @@ class SyncManagerService {
     for (const t of pendingTasks) {
       const success = await this.pushWithRetry(
         () => t.deletedAt ? axiosInstance.delete(`/api/tasks/${t.id}`) : axiosInstance.post('/api/tasks', t),
-        `pushTask(${t.id})`
+        `pushTask(${t.id})`,
+        !!t.deletedAt
       )
       if (success) {
         this.removeFromPending(PENDING_TASK_KEY, t.id)
@@ -446,7 +449,8 @@ class SyncManagerService {
     for (const w of pendingWeights) {
       const success = await this.pushWithRetry(
         () => w.deletedAt ? axiosInstance.delete(`/api/weightLogs/${w.id}`) : axiosInstance.post('/api/weightLogs', w),
-        `pushWeightLog(${w.id})`
+        `pushWeightLog(${w.id})`,
+        !!w.deletedAt
       )
       if (success) {
         this.removeFromPending(PENDING_WEIGHT_KEY, w.id)
@@ -458,7 +462,8 @@ class SyncManagerService {
     for (const log of pendingFoodLogs) {
       const success = await this.pushWithRetry(
         () => log.deletedAt ? axiosInstance.delete(`/api/nutrition/logs/${log.id}`) : axiosInstance.post('/api/nutrition/logs', log),
-        `pushFoodLog(${log.id})`
+        `pushFoodLog(${log.id})`,
+        !!log.deletedAt
       )
       if (success) {
         this.removeFromPending(PENDING_FOOD_LOG_KEY, log.id)
@@ -480,7 +485,8 @@ class SyncManagerService {
 
       const success = await this.pushWithRetry(
         () => task.deletedAt ? axiosInstance.delete(`/api/tasks/${task.id}`) : axiosInstance.post('/api/tasks', task),
-        `pushTask(${task.id})`
+        `pushTask(${task.id})`,
+        !!task.deletedAt
       )
       if (!success) {
         this.addToPending(PENDING_TASK_KEY, task)
@@ -500,7 +506,8 @@ class SyncManagerService {
 
       const success = await this.pushWithRetry(
         () => habit.deletedAt ? axiosInstance.delete(`/api/habits/${habit.id}`) : axiosInstance.post('/api/habits', habit),
-        `pushHabit(${habit.id})`
+        `pushHabit(${habit.id})`,
+        !!habit.deletedAt
       )
       if (!success) {
         this.addToPending(PENDING_HABIT_KEY, habit)
@@ -520,7 +527,8 @@ class SyncManagerService {
 
       const success = await this.pushWithRetry(
         () => workout.deletedAt ? axiosInstance.delete(`/api/workouts/${workout.id}`) : axiosInstance.post('/api/workouts', workout),
-        `pushWorkout(${workout.id})`
+        `pushWorkout(${workout.id})`,
+        !!workout.deletedAt
       )
       if (!success) {
         this.addToPending(PENDING_WORKOUT_KEY, workout)
@@ -540,7 +548,8 @@ class SyncManagerService {
 
       const success = await this.pushWithRetry(
         () => log.deletedAt ? axiosInstance.delete(`/api/workoutLogs/${log.id}`) : axiosInstance.post('/api/workoutLogs', log),
-        `pushWorkoutLog(${log.id})`
+        `pushWorkoutLog(${log.id})`,
+        !!log.deletedAt
       )
       if (!success) {
         this.addToPending(PENDING_WORKOUT_LOG_KEY, log)
@@ -560,7 +569,8 @@ class SyncManagerService {
 
       const success = await this.pushWithRetry(
         () => log.deletedAt ? axiosInstance.delete(`/api/weightLogs/${log.id}`) : axiosInstance.post('/api/weightLogs', log),
-        `pushWeightLog(${log.id})`
+        `pushWeightLog(${log.id})`,
+        !!log.deletedAt
       )
       if (!success) {
         this.addToPending(PENDING_WEIGHT_KEY, log)
@@ -605,7 +615,8 @@ class SyncManagerService {
         () => log.deletedAt
           ? axiosInstance.delete(`/api/nutrition/logs/${log.id}`)
           : axiosInstance.post('/api/nutrition/logs', log),
-        `pushFoodLog(${log.id})`
+        `pushFoodLog(${log.id})`,
+        !!log.deletedAt
       )
 
       if (!success) {
