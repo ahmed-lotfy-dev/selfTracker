@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator } from "react-native"
 import { Calendar, DateData, LocaleConfig } from "react-native-calendars"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
+import { todayLocal } from "@/src/lib/dateUtils"
 import { WorkoutLogsList } from "./WorkoutLogsList"
 import { format } from "date-fns"
 import { PremiumCard } from "../../ui/PremiumCard"
@@ -29,7 +30,7 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
   const [isLoadingMonth, setIsLoadingMonth] = useState(false)
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(todayLocal())
 
   const allLogs = useMemo(() => {
     const combined = [...storeLogs, ...calendarLogs]
@@ -105,7 +106,7 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
       })
     })
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayLocal()
     
     if (selectedDate !== today) {
       if (!marks[today]) {

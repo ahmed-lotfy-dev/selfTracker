@@ -3,6 +3,7 @@ import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { Habit } from '../types/habitType'
 import { getHabits } from '@/src/lib/api/habitsApi'
 import { getPowerSyncDB } from '@/src/db/powerSyncClient'
+import { nowISO, todayLocal } from '@/src/lib/dateUtils'
 
 const STORAGE_KEY = 'local-habits'
 
@@ -62,8 +63,8 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
       completedToday: false,
       lastCompletedAt: null,
       completionDates: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
       deletedAt: null,
     }
     const newHabits = [habit, ...get().habits]
@@ -83,10 +84,11 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   },
 
   updateHabit: (id, updates) => {
+    const now = nowISO()
     let updatedHabit: Habit | null = null
     const newHabits = get().habits.map((h) => {
       if (h.id === id) {
-        updatedHabit = { ...h, ...updates, updatedAt: new Date().toISOString() }
+        updatedHabit = { ...h, ...updates, updatedAt: now }
         return updatedHabit
       }
       return h
@@ -99,7 +101,7 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
         getPowerSyncDB().then(db => {
           db.execute(
             'UPDATE habits SET name = ?, description = ?, streak = ?, color = ?, completed_today = ?, completion_dates = ?, last_completed_at = ?, updated_at = ?, deleted_at = ? WHERE id = ?',
-            [updatedHabit.name, updatedHabit.description, updatedHabit.streak, updatedHabit.color, updatedHabit.completedToday ? 1 : 0, JSON.stringify(updatedHabit.completionDates || []), updatedHabit.lastCompletedAt, updatedHabit.updatedAt, updatedHabit.deletedAt, updatedHabit.id]
+            [updatedHabit!.name, updatedHabit!.description, updatedHabit!.streak, updatedHabit!.color, updatedHabit!.completedToday ? 1 : 0, JSON.stringify(updatedHabit!.completionDates || []), updatedHabit!.lastCompletedAt, updatedHabit!.updatedAt, updatedHabit!.deletedAt, updatedHabit!.id]
           )
         })
       } catch (e) {
@@ -109,10 +111,11 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   },
 
   deleteHabit: (id) => {
+    const now = nowISO()
     let deletedHabit: Habit | null = null
     const newHabits = get().habits.map((h) => {
       if (h.id === id) {
-        deletedHabit = { ...h, deletedAt: new Date().toISOString() }
+        deletedHabit = { ...h, deletedAt: now }
         return deletedHabit
       }
       return h
@@ -123,7 +126,7 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     if (deletedHabit) {
       try {
         getPowerSyncDB().then(db => {
-          db.execute('DELETE FROM habits WHERE id = ?', [deletedHabit.id])
+          db.execute('DELETE FROM habits WHERE id = ?', [deletedHabit!.id])
         })
       } catch (e) {
         console.error('Failed to delete habit from PowerSync:', e)
@@ -132,8 +135,8 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   },
 
   toggleComplete: (id) => {
-    const now = new Date().toISOString()
-    const today = now.split('T')[0]
+    const now = nowISO()
+    const today = todayLocal()
     let updatedHabit: Habit | null = null
 
     const newHabits = get().habits.map((h) => {
@@ -171,7 +174,7 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
         getPowerSyncDB().then(db => {
           db.execute(
             'UPDATE habits SET completed_today = ?, completion_dates = ?, streak = ?, last_completed_at = ?, updated_at = ? WHERE id = ?',
-            [updatedHabit.completedToday ? 1 : 0, JSON.stringify(updatedHabit.completionDates || []), updatedHabit.streak, updatedHabit.lastCompletedAt, updatedHabit.updatedAt, updatedHabit.id]
+            [updatedHabit!.completedToday ? 1 : 0, JSON.stringify(updatedHabit!.completionDates || []), updatedHabit!.streak, updatedHabit!.lastCompletedAt, updatedHabit!.updatedAt, updatedHabit!.id]
           )
         })
       } catch (e) {
@@ -181,22 +184,21 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   },
 }))
 
-/** Calculate consecutive streak from an array of date strings (yyyy-MM-dd) */
 function calculateStreak(dates: string[]): number {
   if (dates.length === 0) return 0
   const sorted = [...dates].sort().reverse()
   let streak = 1
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayLocal()
   let expected = sorted[0]
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`
   if (expected !== today && expected !== yesterdayStr) return 1
 
   for (let i = 1; i < sorted.length; i++) {
     const prev = new Date(expected)
     prev.setDate(prev.getDate() - 1)
-    const prevStr = prev.toISOString().split('T')[0]
+    const prevStr = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-${String(prev.getDate()).padStart(2, '0')}`
     if (sorted[i] === prevStr) {
       streak++
       expected = prevStr

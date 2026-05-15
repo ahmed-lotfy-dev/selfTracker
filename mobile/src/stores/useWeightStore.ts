@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { WeightLog } from '../types/weightType'
 import { getPowerSyncDB } from '@/src/db/powerSyncClient'
+import { nowISO } from '@/src/lib/dateUtils'
 
 const STORAGE_KEY = 'local-weight-logs'
 
@@ -39,10 +40,11 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
   },
 
   updateWeightLog: (id, updates) => {
+    const now = nowISO()
     let updatedLog: WeightLog | null = null
     const newLogs = get().weightLogs.map((l) => {
       if (l.id === id) {
-        updatedLog = { ...l, ...updates, updatedAt: new Date().toISOString() }
+        updatedLog = { ...l, ...updates, updatedAt: now }
         return updatedLog
       }
       return l
@@ -55,7 +57,7 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
         getPowerSyncDB().then(db => {
           db.execute(
             'UPDATE weight_logs SET weight = ?, notes = ?, updated_at = ?, deleted_at = ? WHERE id = ?',
-            [updatedLog.weight, updatedLog.notes, updatedLog.updatedAt, updatedLog.deletedAt, updatedLog.id]
+            [updatedLog!.weight, updatedLog!.notes, updatedLog!.updatedAt, updatedLog!.deletedAt, updatedLog!.id]
           )
         })
       } catch (e) {
@@ -68,8 +70,8 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
     const log: WeightLog = {
       ...logData,
       id: crypto.randomUUID(),
-      createdAt: logData.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: logData.createdAt || nowISO(),
+      updatedAt: nowISO(),
       deletedAt: null,
     }
     const newLogs = [log, ...get().weightLogs]
@@ -89,10 +91,11 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
   },
 
   deleteWeightLog: (id) => {
+    const now = nowISO()
     let deletedLog: WeightLog | null = null
     const newLogs = get().weightLogs.map((l) => {
       if (l.id === id) {
-        deletedLog = { ...l, deletedAt: new Date().toISOString() }
+        deletedLog = { ...l, deletedAt: now }
         return deletedLog
       }
       return l
@@ -103,7 +106,7 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
     if (deletedLog) {
       try {
         getPowerSyncDB().then(db => {
-          db.execute('DELETE FROM weight_logs WHERE id = ?', [deletedLog.id])
+          db.execute('DELETE FROM weight_logs WHERE id = ?', [deletedLog!.id])
         })
       } catch (e) {
         console.error('Failed to delete weight log from PowerSync:', e)

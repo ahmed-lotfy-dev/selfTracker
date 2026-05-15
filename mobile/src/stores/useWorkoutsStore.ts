@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { WorkoutLog, Workout } from '../types/workoutType'
 import { getPowerSyncDB } from '@/src/db/powerSyncClient'
+import { nowISO, todayLocal } from '@/src/lib/dateUtils'
 
 const STORAGE_KEY_LOGS = 'local-workout-logs'
 const STORAGE_KEY_TEMPLATES = 'local-workouts'
@@ -64,8 +65,8 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
     const workout: Workout = {
       ...workoutData,
       id: crypto.randomUUID(),
-      createdAt: workoutData.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: workoutData.createdAt || nowISO(),
+      updatedAt: nowISO(),
       deletedAt: null,
     }
     const newWorkouts = [workout, ...get().workouts]
@@ -85,10 +86,11 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
   },
 
   updateWorkoutLog: (id, updates) => {
+    const now = nowISO()
     let updatedLog: WorkoutLog | null = null
     const newLogs = get().workoutLogs.map((l) => {
       if (l.id === id) {
-        updatedLog = { ...l, ...updates, updatedAt: new Date().toISOString() }
+        updatedLog = { ...l, ...updates, updatedAt: now }
         return updatedLog
       }
       return l
@@ -101,7 +103,7 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
         getPowerSyncDB().then(db => {
           db.execute(
             'UPDATE workout_logs SET workout_id = ?, workout_name = ?, notes = ?, updated_at = ?, deleted_at = ? WHERE id = ?',
-            [updatedLog.workoutId, updatedLog.workoutName, updatedLog.notes, updatedLog.updatedAt, updatedLog.deletedAt, updatedLog.id]
+            [updatedLog!.workoutId, updatedLog!.workoutName, updatedLog!.notes, updatedLog!.updatedAt, updatedLog!.deletedAt, updatedLog!.id]
           )
         })
       } catch (e) {
@@ -114,8 +116,8 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
     const log: WorkoutLog = {
       ...logData,
       id: crypto.randomUUID(),
-      createdAt: logData.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: logData.createdAt || nowISO(),
+      updatedAt: nowISO(),
       deletedAt: null,
     }
     const newLogs = [log, ...get().workoutLogs]
@@ -135,10 +137,11 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
   },
 
   deleteWorkoutLog: (id) => {
+    const now = nowISO()
     let deletedLog: WorkoutLog | null = null
     const newLogs = get().workoutLogs.map((l) => {
       if (l.id === id) {
-        deletedLog = { ...l, deletedAt: new Date().toISOString() }
+        deletedLog = { ...l, deletedAt: now }
         return deletedLog
       }
       return l
@@ -149,7 +152,7 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
     if (deletedLog) {
       try {
         getPowerSyncDB().then(db => {
-          db.execute('DELETE FROM workout_logs WHERE id = ?', [deletedLog.id])
+          db.execute('DELETE FROM workout_logs WHERE id = ?', [deletedLog!.id])
         })
       } catch (e) {
         console.error('Failed to delete workout log from PowerSync:', e)

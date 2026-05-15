@@ -5,6 +5,7 @@ import { useThemeColors } from '@/src/constants/Colors';
 import { PremiumCard } from '@/src/components/ui/PremiumCard';
 import { Habit } from '@/src/types/habitType';
 import { LinearGradient } from 'expo-linear-gradient';
+import { todayLocal } from '@/src/lib/dateUtils';
 
 interface HabitCardProps {
   habit: Habit;
@@ -14,7 +15,7 @@ interface HabitCardProps {
 
 export default function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
   const colors = useThemeColors();
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayLocal()
   const isCompleted = habit.completionDates?.includes(today) ?? false
 
   const gradientColors = isCompleted 

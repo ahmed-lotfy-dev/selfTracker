@@ -5,7 +5,8 @@ import { useThemeColors } from "@/src/constants/Colors"
 import Header from "@/src/components/Header"
 import { Ionicons } from "@expo/vector-icons"
 import DrawerToggleButton from "@/src/components/features/navigation/DrawerToggleButton"
-import AddButton from "@/src/components/Buttons/AddButton"
+import { AddButton } from "@/src/components/Buttons/AddButton"
+import { todayLocal } from "@/src/lib/dateUtils"
 import { useNutritionStore } from "@/src/stores/useNutritionStore"
 import DailyIntakeCard from "@/src/features/nutrition/DailyIntakeCard"
 import MealSection from "@/src/features/nutrition/MealSection"
@@ -106,7 +107,7 @@ export default function NutritionScreen() {
       </View>
 
       <AddButton
-        path={`/nutrition/add?date=${selectedDate ? selectedDate.toISOString() : new Date().toISOString()}`}
+        path={`/nutrition/add?date=${selectedDate ? selectedDate : todayLocal()}`}
         icon="camera"
         iconFamily="ionicons"
       />

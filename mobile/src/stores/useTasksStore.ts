@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
-import { getTasks } from '@/src/lib/api/tasksApi'
 import { getPowerSyncDB } from '@/src/db/powerSyncClient'
+import { nowISO, todayLocal } from '@/src/lib/dateUtils'
+
+const STORAGE_KEY = 'local-tasks'
 
 export type Task = {
   id: string
@@ -20,8 +22,6 @@ export type Task = {
   order: number
   completedAt: string | null
 }
-
-const STORAGE_KEY = 'local-tasks'
 
 const loadTasks = (): Task[] => {
   const data = mmkvStorage.getItem<Task[]>(STORAGE_KEY) ?? []
@@ -81,15 +81,14 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     const task: Task = {
       ...taskData,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
       deletedAt: null,
     }
     const newTasks = [task, ...get().tasks]
     saveTasks(newTasks)
     set({ tasks: newTasks })
 
-    // Write to PowerSync SQLite — syncs automatically
     try {
       getPowerSyncDB().then(db => {
         db.execute(
@@ -103,10 +102,11 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
 
   updateTask: (id, updates) => {
+    const now = nowISO()
     let updatedTask: Task | null = null
     const newTasks = get().tasks.map((t) => {
       if (t.id === id) {
-        updatedTask = { ...t, ...updates, updatedAt: new Date().toISOString() }
+        updatedTask = { ...t, ...updates, updatedAt: now }
         return updatedTask
       }
       return t
@@ -129,10 +129,11 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
 
   deleteTask: (id) => {
+    const now = nowISO()
     let deletedTask: Task | null = null
     const newTasks = get().tasks.map((t) => {
       if (t.id === id) {
-        deletedTask = { ...t, deletedAt: new Date().toISOString() }
+        deletedTask = { ...t, deletedAt: now }
         return deletedTask
       }
       return t
@@ -152,7 +153,8 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
 
   toggleComplete: (id) => {
-    const now = new Date().toISOString()
+    const now = nowISO()
+    const today = todayLocal()
     let updatedTask: Task | null = null
 
     const newTasks = get().tasks.map((t) => {
@@ -160,7 +162,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
         updatedTask = {
           ...t,
           completed: !t.completed,
-          completedAt: !t.completed ? now : null,
+          completedAt: !t.completed ? today : null,
           updatedAt: now,
         }
         return updatedTask

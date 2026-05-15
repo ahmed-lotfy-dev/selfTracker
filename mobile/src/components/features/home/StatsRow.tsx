@@ -3,6 +3,7 @@ import React, { useMemo } from "react"
 import { FontAwesome5, MaterialIcons, Ionicons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useTasksStore } from "@/src/stores/useTasksStore"
+import { todayLocal } from "@/src/lib/dateUtils"
 import { useHabitsStore } from "@/src/stores/useHabitsStore"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import { useSyncStore } from "@/src/stores/useSyncStore"
@@ -57,7 +58,7 @@ export const StatsRow = () => {
     const activeHabits = habits.filter((h) => !h.deletedAt)
 
     const pendingTasks = activeTasks.filter((t) => !t.completed).length
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayLocal()
     const todayHabits = activeHabits.filter((h) => h.completionDates?.includes(today)).length
     const totalHabits = activeHabits.length
     const totalStreak = activeHabits.reduce((sum, h) => sum + h.streak, 0)

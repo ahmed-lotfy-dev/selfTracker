@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { zustandMMKVStorage } from '@/src/lib/storage/mmkv'
 import type { FoodLog, NutritionGoals } from '@/src/types/nutritionType'
 import { getPowerSyncDB } from '@/src/db/powerSyncClient'
+import { nowISO, todayLocal } from '@/src/lib/dateUtils'
 
 type NutritionState = {
   foodLogs: FoodLog[]
@@ -25,12 +26,11 @@ export const useNutritionStore = create<NutritionState>()(
       setFoodLogs: (foodLogs) => set({ foodLogs, isLoaded: true }),
 
       addFoodLog: (log) => {
-        // 1. Update MMKV immediately (instant UI)
+        const now = nowISO()
         set((state) => ({
           foodLogs: [log, ...state.foodLogs]
         }))
 
-        // 2. Write to PowerSync SQLite — syncs automatically
         try {
           getPowerSyncDB().then(db => {
             db.execute(
@@ -38,16 +38,16 @@ export const useNutritionStore = create<NutritionState>()(
               [
                 log.id,
                 log.userId || 'unknown',
-                log.loggedAt,
+                log.loggedAt || todayLocal(),
                 log.mealType,
                 JSON.stringify(log.foodItems || []),
                 log.totalCalories,
                 log.totalProtein,
                 log.totalCarbs,
                 log.totalFat,
-                log.createdAt || new Date().toISOString(),
-                log.updatedAt || new Date().toISOString(),
-                log.deletedAt || null,
+                log.createdAt || now,
+                log.updatedAt || now,
+                null,
               ]
             )
           })
@@ -57,9 +57,10 @@ export const useNutritionStore = create<NutritionState>()(
       },
 
       updateFoodLog: (id, updates) => {
+        const now = nowISO()
         set((state) => {
           const updatedLogs = state.foodLogs.map((l) =>
-            l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l
+            l.id === id ? { ...l, ...updates, updatedAt: now } : l
           )
           const updatedLog = updatedLogs.find(l => l.id === id)
           if (updatedLog) {
@@ -76,7 +77,7 @@ export const useNutritionStore = create<NutritionState>()(
                     updatedLog.totalCarbs,
                     updatedLog.totalFat,
                     updatedLog.updatedAt,
-                    updatedLog.deletedAt,
+                    null,
                     updatedLog.id,
                   ]
                 )
@@ -118,13 +119,14 @@ export const useNutritionStore = create<NutritionState>()(
 )
 
 export const getTodaysFoodLogs = (foodLogs: FoodLog[]): FoodLog[] => {
-  const today = new Date().toDateString()
-  return foodLogs.filter((l) => new Date(l.loggedAt).toDateString() === today)
+  const today = todayLocal()
+  return foodLogs.filter((l) => {
+    // Handle both ISO timestamps and date-only strings
+    const logDate = l.loggedAt?.substring(0, 10)
+    return logDate === today
+  })
 }
 
 export const getTodaysCalories = (foodLogs: FoodLog[]): number => {
-  const today = new Date().toDateString()
-  return foodLogs
-    .filter((l) => new Date(l.loggedAt).toDateString() === today)
-    .reduce((sum, l) => sum + l.totalCalories, 0)
+  return getTodaysFoodLogs(foodLogs).reduce((sum, l) => sum + l.totalCalories, 0)
 }

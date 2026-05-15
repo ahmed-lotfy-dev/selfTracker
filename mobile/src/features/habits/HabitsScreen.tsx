@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { useHabitsStore, useActiveHabits } from '@/src/stores/useHabitsStore';
+import { todayLocal } from '@/src/lib/dateUtils';
 import { Habit } from '@/src/types/habitType';
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useThemeColors } from '@/src/constants/Colors';
@@ -37,7 +38,7 @@ export default function HabitsScreen() {
     );
   };
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayLocal()
   const completedCount = habits.filter((h) => h.completionDates?.includes(today)).length;
   const completionRate = habits.length > 0
     ? Math.round((completedCount / habits.length) * 100)
