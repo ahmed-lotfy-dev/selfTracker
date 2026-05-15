@@ -1,25 +1,41 @@
 import { View, Text, ScrollView, Alert } from "react-native"
 import { Stack, useLocalSearchParams, useRouter } from "expo-router"
-import React, { useMemo } from "react"
+import React, { useMemo, useEffect, useState } from "react"
 import BackButton from "@/src/components/Buttons/BackButton"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import Button from "@/src/components/ui/Button"
 import { Feather, FontAwesome5 } from "@expo/vector-icons"
 import { format } from "date-fns"
+import { axiosInstance } from "@/src/lib/api/config"
 
 export default function WorkoutLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
   const colors = useThemeColors()
+  const [apiLog, setApiLog] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   const workoutLogs = useWorkoutsStore(s => s.workoutLogs)
   const deleteWorkoutLog = useWorkoutsStore(s => s.deleteWorkoutLog)
 
-  const log = useMemo(() =>
+  const storeLog = useMemo(() =>
     workoutLogs.find(l => l.id === id),
     [workoutLogs, id]
   )
+
+  const log = storeLog || apiLog
+
+  useEffect(() => {
+    if (!storeLog && id) {
+      axiosInstance.get(`/api/workoutLogs/${id}`)
+        .then(res => setApiLog(res.data?.logs || res.data?.workoutLog))
+        .catch(() => {}) // stay with "not found"
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
+    }
+  }, [id, storeLog])
 
   const handleDelete = () => {
     Alert.alert(

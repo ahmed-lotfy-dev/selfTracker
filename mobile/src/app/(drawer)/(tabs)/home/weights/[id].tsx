@@ -1,25 +1,41 @@
 import { View, Text, ScrollView, Alert } from "react-native"
 import { Stack, useLocalSearchParams, useRouter } from "expo-router"
-import React, { useMemo } from "react"
+import React, { useMemo, useEffect, useState } from "react"
 import BackButton from "@/src/components/Buttons/BackButton"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWeightStore } from "@/src/stores/useWeightStore"
 import Button from "@/src/components/ui/Button"
 import { Feather, FontAwesome5 } from "@expo/vector-icons"
 import { format } from "date-fns"
+import { axiosInstance } from "@/src/lib/api/config"
 
 export default function WeightLog() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
   const colors = useThemeColors()
+  const [apiLog, setApiLog] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   const weightLogs = useWeightStore(s => s.weightLogs)
   const deleteWeightLog = useWeightStore(s => s.deleteWeightLog)
 
-  const log = useMemo(() =>
+  const storeLog = useMemo(() =>
     weightLogs.find(l => l.id === id),
     [weightLogs, id]
   )
+
+  const log = storeLog || apiLog
+
+  useEffect(() => {
+    if (!storeLog && id) {
+      axiosInstance.get(`/api/weightLogs/${id}`)
+        .then(res => setApiLog(res.data?.weightLog))
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
+    }
+  }, [id, storeLog])
 
   const handleDelete = () => {
     Alert.alert(
