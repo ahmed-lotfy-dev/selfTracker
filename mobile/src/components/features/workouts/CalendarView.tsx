@@ -1,11 +1,21 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { View, Text, ActivityIndicator } from "react-native"
-import { Calendar, DateData } from "react-native-calendars"
+import { Calendar, DateData, LocaleConfig } from "react-native-calendars"
 import { useThemeColors } from "@/src/constants/Colors"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import { WorkoutLogsList } from "./WorkoutLogsList"
 import { format } from "date-fns"
 import { PremiumCard } from "../../ui/PremiumCard"
+
+const WORKOUT_COLORS: Record<string, string> = {
+  Push: '#3b82f6',
+  Pull: '#22c55e',
+  Legs: '#a855f7',
+}
+
+function getWorkoutColor(name: string): string {
+  return WORKOUT_COLORS[name] || '#f97316'
+}
 
 interface CalendarViewProps {
   headerElement?: React.ReactNode
@@ -28,6 +38,15 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
   }, [storeLogs, calendarLogs])
 
   const workoutLogs = propLogs || allLogs
+
+  // Collect unique workout types for legend
+  const workoutTypes = useMemo(() => {
+    const types = new Set<string>()
+    workoutLogs.forEach(log => {
+      if (log.workoutName) types.add(log.workoutName)
+    })
+    return Array.from(types).sort()
+  }, [workoutLogs])
 
   const fetchMonthData = useCallback(async (year: number, month: number) => {
     setIsLoadingMonth(true)
@@ -63,11 +82,13 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
 
     workoutLogs.forEach(log => {
       const date = new Date(log.createdAt).toISOString().split('T')[0]
+      const typeColor = getWorkoutColor(log.workoutName)
       if (!marks[date]) {
         marks[date] = {
+          dots: [],
           customStyles: {
             container: {
-              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              backgroundColor: typeColor + '20',
               borderRadius: 8,
             },
             text: {
@@ -77,11 +98,15 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
           }
         }
       }
+      marks[date].dots.push({
+        key: log.id,
+        color: typeColor,
+        selectedDotColor: typeColor,
+      })
     })
 
     const today = new Date().toISOString().split('T')[0]
     
-    // Style today if it's not selected
     if (selectedDate !== today) {
       if (!marks[today]) {
         marks[today] = {
@@ -104,7 +129,7 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
       ...(marks[selectedDate] || {}),
       customStyles: {
         container: {
-          backgroundColor: 'rgba(16, 185, 129, 0.2)', // Translucent primary
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
           borderRadius: 10,
           borderWidth: 1.5,
           borderColor: colors.primary,
@@ -149,7 +174,7 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
                   onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
                   onMonthChange={handleMonthChange}
                   markedDates={markedDates}
-                  markingType={'custom'}
+                  markingType={'multi-dot'}
                   theme={{
                     backgroundColor: 'transparent',
                     calendarBackground: 'transparent',
@@ -163,8 +188,25 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
                     textDayFontSize: 14,
                     textMonthFontSize: 16,
                     textDayHeaderFontSize: 10,
+                    dotColor: colors.primary,
+                    selectedDotColor: 'white',
                   }}
                 />
+
+                {/* Legend */}
+                {workoutTypes.length > 0 && (
+                  <View className="flex-row flex-wrap justify-center gap-x-4 gap-y-2 px-4 pb-3 pt-1">
+                    {workoutTypes.map(type => (
+                      <View key={type} className="flex-row items-center gap-1.5">
+                        <View
+                          className="w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: getWorkoutColor(type) }}
+                        />
+                        <Text className="text-xs text-white/60 font-medium">{type}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </PremiumCard>
             </View>
             <View className="px-5 mb-4 mt-2">
@@ -186,4 +228,3 @@ export default function CalendarView({ headerElement, workoutLogs: propLogs }: C
     </View>
   )
 }
-
