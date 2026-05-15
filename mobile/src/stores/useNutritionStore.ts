@@ -1,9 +1,8 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { zustandMMKVStorage } from '@/src/lib/storage/mmkv'
-import { createFoodLog, deleteFoodLog as deleteFoodLogApi, updateFoodLog as updateFoodLogApi } from '@/src/lib/api/nutritionApi'
-import { SyncManager } from '@/src/services/SyncManager'
 import type { FoodLog, NutritionGoals } from '@/src/types/nutritionType'
+import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 
 type NutritionState = {
   foodLogs: FoodLog[]
@@ -31,13 +30,30 @@ export const useNutritionStore = create<NutritionState>()(
           foodLogs: [log, ...state.foodLogs]
         }))
 
-        // 2. Write to SQLite + sync
-        SyncManager.pushFoodLog({
-          ...log,
-          userId: log.userId || 'unknown',
-          createdAt: log.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        })
+        // 2. Write to PowerSync SQLite — syncs automatically
+        try {
+          getPowerSyncDB().then(db => {
+            db.execute(
+              'INSERT OR REPLACE INTO food_logs (id, user_id, logged_at, meal_type, food_items, total_calories, total_protein, total_carbs, total_fat, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+              [
+                log.id,
+                log.userId || 'unknown',
+                log.loggedAt,
+                log.mealType,
+                JSON.stringify(log.foodItems || []),
+                log.totalCalories,
+                log.totalProtein,
+                log.totalCarbs,
+                log.totalFat,
+                log.createdAt || new Date().toISOString(),
+                log.updatedAt || new Date().toISOString(),
+                log.deletedAt || null,
+              ]
+            )
+          })
+        } catch (e) {
+          console.error('Failed to write food log to PowerSync:', e)
+        }
       },
 
       updateFoodLog: (id, updates) => {
@@ -47,11 +63,27 @@ export const useNutritionStore = create<NutritionState>()(
           )
           const updatedLog = updatedLogs.find(l => l.id === id)
           if (updatedLog) {
-            // Push to sync
-            SyncManager.pushFoodLog({
-              ...updatedLog,
-              userId: updatedLog.userId || 'unknown'
-            })
+            try {
+              getPowerSyncDB().then(db => {
+                db.execute(
+                  'UPDATE food_logs SET logged_at = ?, meal_type = ?, food_items = ?, total_calories = ?, total_protein = ?, total_carbs = ?, total_fat = ?, updated_at = ?, deleted_at = ? WHERE id = ?',
+                  [
+                    updatedLog.loggedAt,
+                    updatedLog.mealType,
+                    JSON.stringify(updatedLog.foodItems || []),
+                    updatedLog.totalCalories,
+                    updatedLog.totalProtein,
+                    updatedLog.totalCarbs,
+                    updatedLog.totalFat,
+                    updatedLog.updatedAt,
+                    updatedLog.deletedAt,
+                    updatedLog.id,
+                  ]
+                )
+              })
+            } catch (e) {
+              console.error('Failed to update food log in PowerSync:', e)
+            }
           }
           return { foodLogs: updatedLogs }
         })
@@ -62,11 +94,13 @@ export const useNutritionStore = create<NutritionState>()(
           foodLogs: state.foodLogs.filter((l) => l.id !== id)
         }))
 
-        // Mark as deleted in SQLite
-        SyncManager.pushFoodLog({
-          id,
-          deletedAt: new Date().toISOString()
-        })
+        try {
+          getPowerSyncDB().then(db => {
+            db.execute('DELETE FROM food_logs WHERE id = ?', [id])
+          })
+        } catch (e) {
+          console.error('Failed to delete food log from PowerSync:', e)
+        }
       },
 
       setGoals: (goals) => set({ goals }),
@@ -94,4 +128,3 @@ export const getTodaysCalories = (foodLogs: FoodLog[]): number => {
     .filter((l) => new Date(l.loggedAt).toDateString() === today)
     .reduce((sum, l) => sum + l.totalCalories, 0)
 }
-

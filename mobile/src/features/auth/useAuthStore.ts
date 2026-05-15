@@ -98,9 +98,9 @@ export const useAuthStore = create<AuthStore>()(
           useWeightStore.setState({ weightLogs: [] })
           useNutritionStore.setState({ foodLogs: [], goals: null })
 
-          // Clear SQLite database
-          const { SyncManager } = await import('@/src/services/SyncManager')
-          await SyncManager.clearDatabase()
+          // Clear PowerSync database
+          const { disconnectPowerSync } = await import('@/src/db/powerSyncClient')
+          await disconnectPowerSync()
 
           console.log('[AUTH] ✅ All local data cleared on logout')
         } catch (e) {

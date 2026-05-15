@@ -10,7 +10,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useAppState } from "@/src/hooks/useAppState"
 import { onAppStateChange, checkForUpdates } from "@/src/lib/lib"
-import { SyncManager } from "@/src/services/SyncManager"
+import { getPowerSyncDB, disconnectPowerSync } from "@/src/db/powerSyncClient"
 import { useTokenRefresh } from "@/src/hooks/useTokenRefresh"
 import {
   registerForPushNotificationsAsync,
@@ -55,7 +55,8 @@ export function RootProvider({ children }: RootProviderProps) {
     const prepare = async () => {
       try {
         checkForUpdates()
-        await SyncManager.initialize()
+        // Initialize PowerSync (replaces SyncManager.initialize + startSync)
+        await getPowerSyncDB()
       } catch (e) {
         console.warn("App init error:", e)
       } finally {
@@ -73,9 +74,9 @@ export function RootProvider({ children }: RootProviderProps) {
 
   useEffect(() => {
     if (!appIsReady || !isAuthenticated) return
-    SyncManager.startSync().catch((e) => console.warn("Sync error:", e))
 
-    // REST API fallback — load tasks and habits from server
+    // PowerSync auto-syncs — no manual fetch needed.
+    // But we still do a REST API fallback for initial data load.
     import('@/src/stores/useTasksStore').then(({ useTasksStore }) => {
       useTasksStore.getState().fetchTasks()
     }).catch(() => {})

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { WorkoutLog, Workout } from '../types/workoutType'
+import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 
 const STORAGE_KEY_LOGS = 'local-workout-logs'
 const STORAGE_KEY_TEMPLATES = 'local-workouts'
@@ -72,10 +73,14 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
     set({ workouts: newWorkouts })
 
     try {
-      const { SyncManager } = require('@/src/services/SyncManager')
-      SyncManager.pushWorkout(workout)
+      getPowerSyncDB().then(db => {
+        db.execute(
+          'INSERT OR REPLACE INTO workouts (id, name, training_split_id, user_id, created_at, updated_at, is_public, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [workout.id, workout.name, workout.trainingSplitId, workout.userId, workout.createdAt, workout.updatedAt, workout.isPublic ? 1 : 0, workout.deletedAt]
+        )
+      })
     } catch (e) {
-      console.error('Failed to sync new workout:', e)
+      console.error('Failed to write workout to PowerSync:', e)
     }
   },
 
@@ -93,49 +98,41 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
 
     if (updatedLog) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushWorkoutLog(updatedLog)
+        getPowerSyncDB().then(db => {
+          db.execute(
+            'UPDATE workout_logs SET workout_id = ?, workout_name = ?, notes = ?, updated_at = ?, deleted_at = ? WHERE id = ?',
+            [updatedLog.workoutId, updatedLog.workoutName, updatedLog.notes, updatedLog.updatedAt, updatedLog.deletedAt, updatedLog.id]
+          )
+        })
       } catch (e) {
-        console.error('Failed to sync updated workout log:', e)
+        console.error('Failed to update workout log in PowerSync:', e)
       }
     }
   },
 
-   addWorkoutLog: (logData) => {
-     const log: WorkoutLog = {
-       ...logData,
-       id: crypto.randomUUID(),
-       createdAt: logData.createdAt || new Date().toISOString(),
-       updatedAt: new Date().toISOString(),
-       deletedAt: null,
-     }
-     const newLogs = [log, ...get().workoutLogs]
-     saveWorkoutLogs(newLogs)
-     set({ workoutLogs: newLogs })
+  addWorkoutLog: (logData) => {
+    const log: WorkoutLog = {
+      ...logData,
+      id: crypto.randomUUID(),
+      createdAt: logData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      deletedAt: null,
+    }
+    const newLogs = [log, ...get().workoutLogs]
+    saveWorkoutLogs(newLogs)
+    set({ workoutLogs: newLogs })
 
-     try {
-       const { SyncManager } = require('@/src/services/SyncManager')
-       SyncManager.pushWorkoutLog(log)
-     } catch (e) {
-       console.error('Failed to sync workout log:', e)
-     }
-   },
-
-   fetchWorkouts: async () => {
-      if (get().isLoading) return
-      set({ isLoading: true })
-
-      try {
-        const { getWorkouts } = await import('@/src/lib/api/workoutsApi')
-        const workouts = await getWorkouts()
-        console.log('[WorkoutsStore] Fetched workouts:', workouts.length)
-        get().setWorkouts(workouts)
-      } catch (e) {
-        console.error('Failed to fetch workouts:', e)
-      } finally {
-        set({ isLoading: false })
-      }
-   },
+    try {
+      getPowerSyncDB().then(db => {
+        db.execute(
+          'INSERT OR REPLACE INTO workout_logs (id, user_id, workout_id, workout_name, notes, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [log.id, log.userId, log.workoutId || 'unknown', log.workoutName, log.notes, log.createdAt, log.updatedAt, log.deletedAt]
+        )
+      })
+    } catch (e) {
+      console.error('Failed to write workout log to PowerSync:', e)
+    }
+  },
 
   deleteWorkoutLog: (id) => {
     let deletedLog: WorkoutLog | null = null
@@ -151,10 +148,11 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
 
     if (deletedLog) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushWorkoutLog(deletedLog)
+        getPowerSyncDB().then(db => {
+          db.execute('DELETE FROM workout_logs WHERE id = ?', [deletedLog.id])
+        })
       } catch (e) {
-        console.error('Failed to sync deleted workout log:', e)
+        console.error('Failed to delete workout log from PowerSync:', e)
       }
     }
   },
@@ -165,22 +163,17 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
 
     try {
       const { getWorkoutLogs } = await import('@/src/lib/api/workoutLogsApi')
-      console.log('[WorkoutsStore] Fetching workout logs, cursor:', cursor)
       const response = await getWorkoutLogs(cursor, 20)
-      console.log('[WorkoutsStore] API response:', response.logs.length, 'logs, nextCursor:', response.nextCursor)
 
       if (cursor) {
         get().appendWorkoutLogs(response.logs, response.nextCursor)
       } else {
         const existingLogs = get().workoutLogs
-        console.log('[WorkoutsStore] Existing logs:', existingLogs.length)
         const newLogs = response.logs.filter(
           (newLog) => !existingLogs.some((existing) => existing.id === newLog.id)
         )
-        console.log('[WorkoutsStore] New logs to add:', newLogs.length)
         const merged = [...existingLogs, ...newLogs]
         const uniqueLogs = Array.from(new Map(merged.map(l => [l.id, l])).values())
-        console.log('[WorkoutsStore] Total unique logs after merge:', uniqueLogs.length)
         saveWorkoutLogs(uniqueLogs)
         set({
           workoutLogs: uniqueLogs,

@@ -11,12 +11,11 @@ import workoutsRouter from "./routes/workouts.js"
 import workoutLogsRouter from "./routes/workoutsLogs.js"
 import uploadRouter from "./routes/image.js"
 import timerRouter from "./routes/timer.js"
-import electricRouter from "./routes/electric.js"
-import desktopCallbackRouter from "./routes/desktopCallback.js"
-import desktopAuthRouter from "./routes/desktopAuth.js"
 import habitsRouter from "./routes/habits.js"
 import nutritionRouter from "./routes/nutrition.js"
 import aiRouter from "./routes/ai.js"
+import desktopCallbackRouter from "./routes/desktopCallback.js"
+import desktopAuthRouter from "./routes/desktopAuth.js"
 import { auth } from "../lib/auth.js"
 import { authMiddleware } from "./middlewares/authMiddleware.js"
 import { Scalar } from '@scalar/hono-api-reference'
@@ -82,7 +81,8 @@ app.route("/api/timer", timerRouter)
 
 app.route("/api/image", uploadRouter)
 
-app.route("/api/electric", electricRouter)
+// /api/electric removed — replaced by PowerSync
+// /api/desktop-callback removed — no longer needed
 
 app.route("/api/habits", habitsRouter)
 

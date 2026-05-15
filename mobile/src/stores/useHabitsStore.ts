@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { Habit } from '../types/habitType'
 import { getHabits } from '@/src/lib/api/habitsApi'
+import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 
 const STORAGE_KEY = 'local-habits'
 
@@ -70,10 +71,14 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     set({ habits: newHabits })
 
     try {
-      const { SyncManager } = require('@/src/services/SyncManager')
-      SyncManager.pushHabit(habit)
+      getPowerSyncDB().then(db => {
+        db.execute(
+          'INSERT OR REPLACE INTO habits (id, user_id, name, description, streak, color, completed_today, completion_dates, last_completed_at, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, JSON.stringify(habit.completionDates || []), habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt]
+        )
+      })
     } catch (e) {
-      console.error('Failed to sync new habit:', e)
+      console.error('Failed to write habit to PowerSync:', e)
     }
   },
 
@@ -91,10 +96,14 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
     if (updatedHabit) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushHabit(updatedHabit)
+        getPowerSyncDB().then(db => {
+          db.execute(
+            'UPDATE habits SET name = ?, description = ?, streak = ?, color = ?, completed_today = ?, completion_dates = ?, last_completed_at = ?, updated_at = ?, deleted_at = ? WHERE id = ?',
+            [updatedHabit.name, updatedHabit.description, updatedHabit.streak, updatedHabit.color, updatedHabit.completedToday ? 1 : 0, JSON.stringify(updatedHabit.completionDates || []), updatedHabit.lastCompletedAt, updatedHabit.updatedAt, updatedHabit.deletedAt, updatedHabit.id]
+          )
+        })
       } catch (e) {
-        console.error('Failed to sync updated habit:', e)
+        console.error('Failed to update habit in PowerSync:', e)
       }
     }
   },
@@ -113,10 +122,11 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
     if (deletedHabit) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushHabit(deletedHabit)
+        getPowerSyncDB().then(db => {
+          db.execute('DELETE FROM habits WHERE id = ?', [deletedHabit.id])
+        })
       } catch (e) {
-        console.error('Failed to sync deleted habit:', e)
+        console.error('Failed to delete habit from PowerSync:', e)
       }
     }
   },
@@ -134,15 +144,12 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
       let streak = h.streak ?? 0
 
       if (wasCompleted) {
-        // Remove today from completion dates
         const idx = dates.indexOf(today)
         if (idx !== -1) dates.splice(idx, 1)
         streak = Math.max(0, streak - 1)
       } else {
-        // Add today
         dates.push(today)
         dates.sort()
-        // Calculate streak based on consecutive days
         streak = calculateStreak(dates)
       }
 
@@ -161,10 +168,14 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
     if (updatedHabit) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushHabit(updatedHabit)
+        getPowerSyncDB().then(db => {
+          db.execute(
+            'UPDATE habits SET completed_today = ?, completion_dates = ?, streak = ?, last_completed_at = ?, updated_at = ? WHERE id = ?',
+            [updatedHabit.completedToday ? 1 : 0, JSON.stringify(updatedHabit.completionDates || []), updatedHabit.streak, updatedHabit.lastCompletedAt, updatedHabit.updatedAt, updatedHabit.id]
+          )
+        })
       } catch (e) {
-        console.error('Failed to sync habit completion:', e)
+        console.error('Failed to toggle habit in PowerSync:', e)
       }
     }
   },
@@ -176,9 +187,7 @@ function calculateStreak(dates: string[]): number {
   const sorted = [...dates].sort().reverse()
   let streak = 1
   const today = new Date().toISOString().split('T')[0]
-  // Start from the most recent date
   let expected = sorted[0]
-  // If the most recent isn't today or yesterday, streak is 1 (or 0)
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
   const yesterdayStr = yesterday.toISOString().split('T')[0]
@@ -201,14 +210,4 @@ function calculateStreak(dates: string[]): number {
 export const useActiveHabits = () => {
   const habits = useHabitsStore((s) => s.habits)
   return habits.filter((h) => !h.deletedAt)
-}
-
-// Helper to pull fresh data from Database (called by SyncManager)
-export const pullHabitsFromDB = async () => {
-  try {
-    const { SyncManager } = require('@/src/services/SyncManager')
-    await SyncManager.pullFromDB('habits')
-  } catch (e) {
-    console.error('Failed to pull habits from DB:', e)
-  }
 }

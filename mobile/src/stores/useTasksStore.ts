@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { getTasks } from '@/src/lib/api/tasksApi'
+import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 
 export type Task = {
   id: string
@@ -88,12 +89,16 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     saveTasks(newTasks)
     set({ tasks: newTasks })
 
-    // Sync to DB
+    // Write to PowerSync SQLite — syncs automatically
     try {
-      const { SyncManager } = require('@/src/services/SyncManager')
-      SyncManager.pushTask(task)
+      getPowerSyncDB().then(db => {
+        db.execute(
+          'INSERT OR REPLACE INTO tasks (id, user_id, title, completed, created_at, updated_at, deleted_at, category, priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [task.id, task.userId, task.title, task.completed ? 1 : 0, task.createdAt, task.updatedAt, task.deletedAt, task.category || 'general', task.priority || 'medium']
+        )
+      })
     } catch (e) {
-      console.error('Failed to sync task:', e)
+      console.error('Failed to write task to PowerSync:', e)
     }
   },
 
@@ -111,10 +116,14 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
     if (updatedTask) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushTask(updatedTask)
+        getPowerSyncDB().then(db => {
+          db.execute(
+            'UPDATE tasks SET title = ?, completed = ?, updated_at = ?, deleted_at = ?, category = ?, priority = ? WHERE id = ?',
+            [updatedTask.title, updatedTask.completed ? 1 : 0, updatedTask.updatedAt, updatedTask.deletedAt, updatedTask.category, updatedTask.priority, updatedTask.id]
+          )
+        })
       } catch (e) {
-        console.error('Failed to sync updated task:', e)
+        console.error('Failed to update task in PowerSync:', e)
       }
     }
   },
@@ -133,10 +142,11 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
     if (deletedTask) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushTask(deletedTask)
+        getPowerSyncDB().then(db => {
+          db.execute('DELETE FROM tasks WHERE id = ?', [deletedTask.id])
+        })
       } catch (e) {
-        console.error('Failed to sync deleted task:', e)
+        console.error('Failed to delete task from PowerSync:', e)
       }
     }
   },
@@ -162,10 +172,14 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
     if (updatedTask) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushTask(updatedTask)
+        getPowerSyncDB().then(db => {
+          db.execute(
+            'UPDATE tasks SET completed = ?, completed_at = ?, updated_at = ? WHERE id = ?',
+            [updatedTask.completed ? 1 : 0, updatedTask.completedAt, updatedTask.updatedAt, updatedTask.id]
+          )
+        })
       } catch (e) {
-        console.error('Failed to sync task completion:', e)
+        console.error('Failed to toggle task in PowerSync:', e)
       }
     }
   },

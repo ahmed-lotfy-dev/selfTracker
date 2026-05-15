@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { WeightLog } from '../types/weightType'
+import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 
 const STORAGE_KEY = 'local-weight-logs'
 
@@ -51,10 +52,14 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
 
     if (updatedLog) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushWeightLog(updatedLog)
+        getPowerSyncDB().then(db => {
+          db.execute(
+            'UPDATE weight_logs SET weight = ?, notes = ?, updated_at = ?, deleted_at = ? WHERE id = ?',
+            [updatedLog.weight, updatedLog.notes, updatedLog.updatedAt, updatedLog.deletedAt, updatedLog.id]
+          )
+        })
       } catch (e) {
-        console.error('Failed to sync updated weight log:', e)
+        console.error('Failed to update weight log in PowerSync:', e)
       }
     }
   },
@@ -72,10 +77,14 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
     set({ weightLogs: newLogs })
 
     try {
-      const { SyncManager } = require('@/src/services/SyncManager')
-      SyncManager.pushWeightLog(log)
+      getPowerSyncDB().then(db => {
+        db.execute(
+          'INSERT OR REPLACE INTO weight_logs (id, user_id, weight, notes, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [log.id, log.userId, log.weight, log.notes, log.createdAt, log.updatedAt, log.deletedAt]
+        )
+      })
     } catch (e) {
-      console.error('Failed to sync weight log:', e)
+      console.error('Failed to write weight log to PowerSync:', e)
     }
   },
 
@@ -93,10 +102,11 @@ export const useWeightStore = create<CheckWeightState>((set, get) => ({
 
     if (deletedLog) {
       try {
-        const { SyncManager } = require('@/src/services/SyncManager')
-        SyncManager.pushWeightLog(deletedLog)
+        getPowerSyncDB().then(db => {
+          db.execute('DELETE FROM weight_logs WHERE id = ?', [deletedLog.id])
+        })
       } catch (e) {
-        console.error('Failed to sync deleted weight log:', e)
+        console.error('Failed to delete weight log from PowerSync:', e)
       }
     }
   },
