@@ -14,12 +14,10 @@ export const getCache = async (key: string) => {
   try {
     const data = await redisClient.get(key)
     if (!data) return null
-
     try {
       return JSON.parse(data)
-    } catch (parseError) {
-      console.error("JSON parse error for key:", key, "Data:", data)
-      await redisClient.del(key) 
+    } catch {
+      await redisClient.del(key)
       return null
     }
   } catch (err) {
@@ -31,8 +29,8 @@ export const getCache = async (key: string) => {
 export const setCache = async (key: string, ttl: number, value: any) => {
   try {
     const serialized = JSON.stringify(value)
-    const result = await redisClient.set(key, serialized, { EX: ttl })
-    return result === "OK"
+    await redisClient.set(key, serialized, { EX: ttl })
+    return true
   } catch (err) {
     console.error("Cache set error:", err)
     return false
@@ -54,25 +52,15 @@ export async function clearCache(keys: string | string[]) {
           keysToDelete.push(key)
         }
 
-      if (keysToDelete.length > 0) {
         for (const key of keysToDelete) {
           await redisClient.del(key)
         }
-        console.log(
-            `[Redis] Cleared ${keysToDelete.length} keys matching pattern: ${rawPattern}`
-          )
-        } else {
-          console.log(`[Redis] No keys matched for pattern: ${rawPattern}`)
-        }
-      } else {
-        // Handle exact key deletion
-        const deleted = await redisClient.del(rawPattern)
 
-        if (deleted > 0) {
-          console.log(`[Redis] Deleted exact key: ${rawPattern}`)
-        } else {
-          console.log(`[Redis] Key not found: ${rawPattern}`)
-        }
+        console.log(
+          `[Redis] Cleared ${keysToDelete.length} keys matching pattern: ${rawPattern}`
+        )
+      } else {
+        console.log(`[Redis] Skipping cache clear for key: ${rawPattern}`)
       }
     }
   } catch (err) {
