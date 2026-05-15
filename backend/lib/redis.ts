@@ -54,7 +54,7 @@ export async function clearCache(keys: string | string[]) {
       }
 
       if (keysToDelete.length > 0) {
-        await redisClient.del(keysToDelete)
+        await redisClient.del(...keysToDelete)
         console.log(
           `[Redis] Cleared ${keysToDelete.length} keys matching pattern: ${rawPattern}`
         )
