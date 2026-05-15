@@ -40,36 +40,42 @@ export const setCache = async (key: string, ttl: number, value: any) => {
 }
 
 export async function clearCache(keys: string | string[]) {
-  const patterns = Array.isArray(keys) ? keys : [keys]
+  try {
+    const patterns = Array.isArray(keys) ? keys : [keys]
 
-  for (const rawPattern of patterns) {
-    if (rawPattern.includes("*")) {
-      const keysToDelete: string[] = []
+    for (const rawPattern of patterns) {
+      if (rawPattern.includes("*")) {
+        const keysToDelete: string[] = []
 
-      for await (const key of redisClient.scanIterator({
-        MATCH: rawPattern,
-        COUNT: 100,
-      })) {
-        keysToDelete.push(key)
-      }
+        for await (const key of redisClient.scanIterator({
+          MATCH: rawPattern,
+          COUNT: 100,
+        })) {
+          keysToDelete.push(key)
+        }
 
       if (keysToDelete.length > 0) {
-        await redisClient.del(...keysToDelete)
+        for (const key of keysToDelete) {
+          await redisClient.del(key)
+        }
         console.log(
-          `[Redis] Cleared ${keysToDelete.length} keys matching pattern: ${rawPattern}`
-        )
+            `[Redis] Cleared ${keysToDelete.length} keys matching pattern: ${rawPattern}`
+          )
+        } else {
+          console.log(`[Redis] No keys matched for pattern: ${rawPattern}`)
+        }
       } else {
-        console.log(`[Redis] No keys matched for pattern: ${rawPattern}`)
-      }
-    } else {
-      // Handle exact key deletion
-      const deleted = await redisClient.del(rawPattern)
+        // Handle exact key deletion
+        const deleted = await redisClient.del(rawPattern)
 
-      if (deleted > 0) {
-        console.log(`[Redis] Deleted exact key: ${rawPattern}`)
-      } else {
-        console.log(`[Redis] Key not found: ${rawPattern}`)
+        if (deleted > 0) {
+          console.log(`[Redis] Deleted exact key: ${rawPattern}`)
+        } else {
+          console.log(`[Redis] Key not found: ${rawPattern}`)
+        }
       }
     }
+  } catch (err) {
+    console.error("[Redis] clearCache error (non-fatal):", err)
   }
 }
