@@ -78,7 +78,7 @@ export default function WorkoutLog() {
               name="edit-2"
               size={20}
               color={colors.primary}
-              onPress={() => router.push(`/workouts/edit?id=${id}`)}
+              onPress={() => router.push(`/home/workouts/edit?id=${id}`)}
             />
           )
         }}

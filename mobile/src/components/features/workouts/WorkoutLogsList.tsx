@@ -56,7 +56,7 @@ export const WorkoutLogsList = ({ ListHeaderComponent, logs, disablePagination }
     <View className="flex-row items-center mb-3">
       <View className="flex-1">
         <PremiumCard
-          onPress={() => router.push(`/workouts/${item.id}`)}
+          onPress={() => router.push(`/home/workouts/${item.id}`)}
           gradientColors={['rgba(255,255,255,0.03)', 'transparent']}
           containerStyle="p-4 border-white/5"
         >

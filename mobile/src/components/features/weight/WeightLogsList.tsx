@@ -52,7 +52,7 @@ export const WeightLogsList = ({ ListHeaderComponent }: Props) => {
     <View className="flex-row items-center mb-3">
       <View className="flex-1">
         <PremiumCard
-          onPress={() => router.push(`/weights/${item.id}`)}
+          onPress={() => router.push(`/home/weights/${item.id}`)}
           gradientColors={['rgba(255,255,255,0.03)', 'transparent']}
           containerStyle="p-4 border-white/5"
         >

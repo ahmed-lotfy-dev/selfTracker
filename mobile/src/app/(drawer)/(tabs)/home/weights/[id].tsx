@@ -78,7 +78,7 @@ export default function WeightLog() {
               name="edit-2"
               size={20}
               color={colors.primary}
-              onPress={() => router.push(`/weights/edit?id=${id}`)}
+              onPress={() => router.push(`/home/weights/edit?id=${id}`)}
             />
           )
         }}
