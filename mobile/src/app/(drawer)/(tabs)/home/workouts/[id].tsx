@@ -72,6 +72,9 @@ export default function WorkoutLog() {
         options={{
           headerShown: true,
           title: "Workout Details",
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
           headerLeft: () => <BackButton />,
           headerRight: () => (
             <Feather

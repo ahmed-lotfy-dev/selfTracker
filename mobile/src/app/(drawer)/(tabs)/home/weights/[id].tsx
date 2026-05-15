@@ -72,6 +72,9 @@ export default function WeightLog() {
         options={{
           headerShown: true,
           title: "Weight Details",
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
           headerLeft: () => <BackButton />,
           headerRight: () => (
             <Feather
