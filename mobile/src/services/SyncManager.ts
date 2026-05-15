@@ -7,6 +7,15 @@ import { WeightLog } from "../types/weightType"
 import { Workout, WorkoutLog } from "../types/workoutType"
 import { ElectricSync } from "@/src/db/client"
 import axiosInstance from '@/src/lib/api/axiosInstance'
+import { mmkvStorage } from '@/src/lib/storage/mmkv'
+
+const PENDING_WORKOUT_LOG_KEY = 'pending-workout-log-pushes'
+const PENDING_WORKOUT_KEY = 'pending-workout-pushes'
+const PENDING_HABIT_KEY = 'pending-habit-pushes'
+const PENDING_TASK_KEY = 'pending-task-pushes'
+const PENDING_WEIGHT_KEY = 'pending-weight-pushes'
+const PENDING_FOOD_LOG_KEY = 'pending-food-log-pushes'
+const MAX_RETRIES = 4
 
 class SyncManagerService {
   private db: SQLite.SQLiteDatabase | null = null
@@ -87,6 +96,13 @@ class SyncManagerService {
 
       this.isInitialized = true
       await this.pullFromDB()
+
+      // Retry any pending pushes from previous failed attempts
+      try {
+        await this.retryPendingPushes()
+      } catch (e) {
+        console.error("[SyncManager] Retry pending pushes failed:", e)
+      }
 
     } catch (e) {
       console.error("[SyncManager] Initialization failed:", e)
@@ -321,7 +337,136 @@ class SyncManagerService {
     }
   }
 
-  // --- WRITE THROUGH ---
+  // --- RETRY QUEUE ---
+
+  private getPending<T>(key: string): T[] {
+    return mmkvStorage.getItem<T[]>(key) ?? []
+  }
+
+  private setPending<T>(key: string, items: T[]): void {
+    if (items.length === 0) {
+      mmkvStorage.removeItem(key)
+    } else {
+      mmkvStorage.setItem(key, items)
+    }
+  }
+
+  private addToPending<T>(key: string, item: T): void {
+    const pending = this.getPending<T>(key)
+    // Avoid duplicates by checking id
+    const exists = (item as any).id && pending.some(p => (p as any).id === (item as any).id)
+    if (!exists) {
+      pending.push(item)
+      this.setPending(key, pending)
+      console.log(`[SyncManager] 📥 Queued for retry (${key}): ${(item as any).id}`)
+    }
+  }
+
+  private removeFromPending<T>(key: string, id: string): void {
+    const pending = this.getPending<T>(key)
+    const filtered = pending.filter(p => (p as any).id !== id)
+    this.setPending(key, filtered)
+  }
+
+  /** Retry pushing a single item with exponential backoff */
+  private async pushWithRetry(pushFn: () => Promise<void>, label: string): Promise<boolean> {
+    let lastError: any
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        await pushFn()
+        return true
+      } catch (e: any) {
+        lastError = e
+        if (attempt < MAX_RETRIES) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000)
+          console.warn(`[SyncManager] ⏳ ${label} failed (attempt ${attempt}/${MAX_RETRIES}), retrying in ${delay}ms:`, e?.message)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
+      }
+    }
+    console.error(`[SyncManager] ❌ ${label} failed after ${MAX_RETRIES} attempts:`, lastError?.message)
+    return false
+  }
+
+  /** Retry all pending pushes (called on init and app foreground) */
+  async retryPendingPushes() {
+    console.log('[SyncManager] 🔄 Retrying pending pushes...')
+
+    // Workout Logs
+    const pendingWorkoutLogs = this.getPending<WorkoutLog>(PENDING_WORKOUT_LOG_KEY)
+    for (const log of pendingWorkoutLogs) {
+      const success = await this.pushWithRetry(
+        () => axiosInstance.post('/api/workoutLogs', log),
+        `pushWorkoutLog(${log.id})`
+      )
+      if (success) {
+        this.removeFromPending(PENDING_WORKOUT_LOG_KEY, log.id)
+        console.log(`[SyncManager] ✅ Pending workout log pushed: ${log.id}`)
+      }
+    }
+
+    // Workout templates
+    const pendingWorkouts = this.getPending<any>(PENDING_WORKOUT_KEY)
+    for (const w of pendingWorkouts) {
+      const success = await this.pushWithRetry(
+        () => w.deletedAt ? axiosInstance.delete(`/api/workouts/${w.id}`) : axiosInstance.post('/api/workouts', w),
+        `pushWorkout(${w.id})`
+      )
+      if (success) {
+        this.removeFromPending(PENDING_WORKOUT_KEY, w.id)
+      }
+    }
+
+    // Habits
+    const pendingHabits = this.getPending<any>(PENDING_HABIT_KEY)
+    for (const h of pendingHabits) {
+      const success = await this.pushWithRetry(
+        () => h.deletedAt ? axiosInstance.delete(`/api/habits/${h.id}`) : axiosInstance.post('/api/habits', h),
+        `pushHabit(${h.id})`
+      )
+      if (success) {
+        this.removeFromPending(PENDING_HABIT_KEY, h.id)
+      }
+    }
+
+    // Tasks
+    const pendingTasks = this.getPending<any>(PENDING_TASK_KEY)
+    for (const t of pendingTasks) {
+      const success = await this.pushWithRetry(
+        () => t.deletedAt ? axiosInstance.delete(`/api/tasks/${t.id}`) : axiosInstance.post('/api/tasks', t),
+        `pushTask(${t.id})`
+      )
+      if (success) {
+        this.removeFromPending(PENDING_TASK_KEY, t.id)
+      }
+    }
+
+    // Weight logs
+    const pendingWeights = this.getPending<any>(PENDING_WEIGHT_KEY)
+    for (const w of pendingWeights) {
+      const success = await this.pushWithRetry(
+        () => w.deletedAt ? axiosInstance.delete(`/api/weightLogs/${w.id}`) : axiosInstance.post('/api/weightLogs', w),
+        `pushWeightLog(${w.id})`
+      )
+      if (success) {
+        this.removeFromPending(PENDING_WEIGHT_KEY, w.id)
+      }
+    }
+
+    // Food logs
+    const pendingFoodLogs = this.getPending<any>(PENDING_FOOD_LOG_KEY)
+    for (const log of pendingFoodLogs) {
+      const success = await this.pushWithRetry(
+        () => log.deletedAt ? axiosInstance.delete(`/api/nutrition/logs/${log.id}`) : axiosInstance.post('/api/nutrition/logs', log),
+        `pushFoodLog(${log.id})`
+      )
+      if (success) {
+        this.removeFromPending(PENDING_FOOD_LOG_KEY, log.id)
+      }
+    }
+  }
+
+  // --- WRITE THROUGH (with retry queue) ---
 
   async pushTask(task: any) {
     if (!this.db) return
@@ -333,10 +478,12 @@ class SyncManagerService {
         `, [task.id, task.userId, task.title, task.completed ? 1 : 0, task.createdAt, task.updatedAt, task.deletedAt, task.category || 'general', task.priority || 'medium'])
       })
 
-      if (task.deletedAt) {
-        await axiosInstance.delete(`/api/tasks/${task.id}`)
-      } else {
-        await axiosInstance.post('/api/tasks', task)
+      const success = await this.pushWithRetry(
+        () => task.deletedAt ? axiosInstance.delete(`/api/tasks/${task.id}`) : axiosInstance.post('/api/tasks', task),
+        `pushTask(${task.id})`
+      )
+      if (!success) {
+        this.addToPending(PENDING_TASK_KEY, task)
       }
     } catch (e) { console.error("Push task failed:", e) }
   }
@@ -351,10 +498,12 @@ class SyncManagerService {
         `, [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, JSON.stringify(habit.completionDates || []), habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt])
       })
 
-      if (habit.deletedAt) {
-        await axiosInstance.delete(`/api/habits/${habit.id}`)
-      } else {
-        await axiosInstance.post('/api/habits', habit)
+      const success = await this.pushWithRetry(
+        () => habit.deletedAt ? axiosInstance.delete(`/api/habits/${habit.id}`) : axiosInstance.post('/api/habits', habit),
+        `pushHabit(${habit.id})`
+      )
+      if (!success) {
+        this.addToPending(PENDING_HABIT_KEY, habit)
       }
     } catch (e) { console.error("Push habit failed:", e) }
   }
@@ -369,10 +518,12 @@ class SyncManagerService {
         `, [workout.id, workout.name, workout.trainingSplitId, workout.userId, workout.createdAt, workout.updatedAt, workout.isPublic ? 1 : 0, workout.deletedAt])
       })
 
-      if (workout.deletedAt) {
-        await axiosInstance.delete(`/api/workouts/${workout.id}`)
-      } else {
-        await axiosInstance.post('/api/workouts', workout)
+      const success = await this.pushWithRetry(
+        () => workout.deletedAt ? axiosInstance.delete(`/api/workouts/${workout.id}`) : axiosInstance.post('/api/workouts', workout),
+        `pushWorkout(${workout.id})`
+      )
+      if (!success) {
+        this.addToPending(PENDING_WORKOUT_KEY, workout)
       }
     } catch (e) { console.error("Push workout template failed:", e) }
   }
@@ -387,10 +538,12 @@ class SyncManagerService {
         `, [log.id, log.userId, log.workoutId || 'unknown', log.workoutName, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
       })
 
-      if (log.deletedAt) {
-        await axiosInstance.delete(`/api/workoutLogs/${log.id}`)
-      } else {
-        await axiosInstance.post('/api/workoutLogs', log)
+      const success = await this.pushWithRetry(
+        () => log.deletedAt ? axiosInstance.delete(`/api/workoutLogs/${log.id}`) : axiosInstance.post('/api/workoutLogs', log),
+        `pushWorkoutLog(${log.id})`
+      )
+      if (!success) {
+        this.addToPending(PENDING_WORKOUT_LOG_KEY, log)
       }
     } catch (e) { console.error("Push workout failed:", e) }
   }
@@ -405,10 +558,12 @@ class SyncManagerService {
         `, [log.id, log.userId, log.weight, log.notes, log.createdAt, log.updatedAt, log.deletedAt])
       })
 
-      if (log.deletedAt) {
-        await axiosInstance.delete(`/api/weightLogs/${log.id}`)
-      } else {
-        await axiosInstance.post('/api/weightLogs', log)
+      const success = await this.pushWithRetry(
+        () => log.deletedAt ? axiosInstance.delete(`/api/weightLogs/${log.id}`) : axiosInstance.post('/api/weightLogs', log),
+        `pushWeightLog(${log.id})`
+      )
+      if (!success) {
+        this.addToPending(PENDING_WEIGHT_KEY, log)
       }
     } catch (e) { console.error("Push weight failed:", e) }
   }
@@ -446,12 +601,17 @@ class SyncManagerService {
       })
       console.log(`[SyncManager] ✅ Food log ${log.id} saved to SQLite`)
 
-      // If deleted, use DELETE endpoint. Otherwise use POST (Create/Update)
-      if (log.deletedAt) {
-        await axiosInstance.delete(`/api/nutrition/logs/${log.id}`)
-        console.log(`[SyncManager] 🗑️ Food log ${log.id} deleted from API`)
+      const success = await this.pushWithRetry(
+        () => log.deletedAt
+          ? axiosInstance.delete(`/api/nutrition/logs/${log.id}`)
+          : axiosInstance.post('/api/nutrition/logs', log),
+        `pushFoodLog(${log.id})`
+      )
+
+      if (!success) {
+        this.addToPending(PENDING_FOOD_LOG_KEY, log)
+        console.log(`[SyncManager] 📥 Food log ${log.id} queued for retry`)
       } else {
-        await axiosInstance.post('/api/nutrition/logs', log)
         console.log(`[SyncManager] ☁️ Food log ${log.id} pushed to API`)
       }
     } catch (e: any) {
@@ -464,6 +624,5 @@ class SyncManagerService {
 
 
 }
-
 
 export const SyncManager = new SyncManagerService()
