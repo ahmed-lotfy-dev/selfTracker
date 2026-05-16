@@ -38,16 +38,16 @@ interface OFFRow {
   image_url: string
   serving_size: string
   serving_quantity: string
-  energy_kcal_100g: string
-  proteins_100g: string
-  carbohydrates_100g: string
-  fat_100g: string
-  fiber_100g: string
-  sugars_100g: string
-  sodium_100g: string
-  saturated_fat_100g: string
-  cholesterol_100g: string
-  potassium_100g: string
+  "energy-kcal_100g": string
+  "proteins_100g": string
+  "carbohydrates_100g": string
+  "fat_100g": string
+  "fiber_100g": string
+  "sugars_100g": string
+  "sodium_100g": string
+  "saturated-fat_100g": string
+  "cholesterol_100g": string
+  "potassium_100g": string
   [key: string]: string
 }
 
@@ -106,7 +106,7 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 }
 
 function mapOFFRow(row: OFFRow) {
-  const calories = parseFloat(row.energy_kcal_100g)
+  const calories = parseFloat(row["energy-kcal_100g"])
   if (isNaN(calories) || calories < 0) return null
 
   const productName = row.product_name?.trim()
@@ -120,15 +120,15 @@ function mapOFFRow(row: OFFRow) {
     servingSize: parseFloat(row.serving_quantity) || 100,
     servingUnit: parseServingUnit(row.serving_size) || "g",
     calories,
-    protein: parseFloat(row.proteins_100g) || 0,
-    carbs: parseFloat(row.carbohydrates_100g) || 0,
-    fat: parseFloat(row.fat_100g) || 0,
-    fiber: parseFloat(row.fiber_100g) || null,
-    sugar: parseFloat(row.sugars_100g) || null,
-    sodium: parseFloat(row.sodium_100g) || null,
-    saturatedFat: parseFloat(row.saturated_fat_100g) || null,
-    cholesterol: parseFloat(row.cholesterol_100g) || null,
-    potassium: parseFloat(row.potassium_100g) || null,
+    protein: parseFloat(row["proteins_100g"]) || 0,
+    carbs: parseFloat(row["carbohydrates_100g"]) || 0,
+    fat: parseFloat(row["fat_100g"]) || 0,
+    fiber: parseFloat(row["fiber_100g"]) || null,
+    sugar: parseFloat(row["sugars_100g"]) || null,
+    sodium: parseFloat(row["sodium_100g"]) || null,
+    saturatedFat: parseFloat(row["saturated-fat_100g"]) || null,
+    cholesterol: parseFloat(row["cholesterol_100g"]) || null,
+    potassium: parseFloat(row["potassium_100g"]) || null,
     source: "openfoodfacts" as const,
     sourceId: row.code?.trim() || null,
     barcode: row.code?.trim() || null,
