@@ -88,22 +88,24 @@ export const searchFoods = async (
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
   const startTime = Date.now()
-  const [results, countResult] = await Promise.all([
-    db.query.foods.findMany({
-      where: whereClause,
-      limit,
-      offset,
-      orderBy: [foods.nameEn],
-    }),
-    db.select({ count: sql<number>`count(*).over()` }).from(foods).where(whereClause).limit(1),
-  ])
+  const results = await db.query.foods.findMany({
+    where: whereClause,
+    limit,
+    offset,
+    orderBy: [foods.nameEn],
+  })
+
+  // Use a separate count query (window functions don't work well with parameterized queries on Neon)
+  const countQuery = await db.select({ count: sql<number>`count(*)` }).from(foods).where(whereClause)
+  const total = countQuery?.[0]?.count ?? results.length
+
   const elapsed = Date.now() - startTime
 
-  console.log(`[FoodDB] Search complete: ${results.length} results (total: ${countResult?.[0]?.count ?? results.length}) in ${elapsed}ms`)
+  console.log(`[FoodDB] Search complete: ${results.length} results (total: ${total}) in ${elapsed}ms`)
 
   return {
     foods: results.map(mapFood),
-    total: countResult?.[0]?.count ?? results.length,
+    total,
   }
 }
 
