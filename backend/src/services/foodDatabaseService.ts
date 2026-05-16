@@ -49,15 +49,16 @@ export const searchFoods = async (
     limit?: number
     offset?: number
     category?: string
-    source?: string
+    source?: "openfoodfacts" | "usda" | "sfda" | "manual" | "seed"
     language?: "en" | "ar" | "both"
   }
 ): Promise<{ foods: FoodSearchResult[]; total: number }> => {
   const { limit = 20, offset = 0, category, source, language = "both" } = options || {}
 
+  console.log(`[FoodDB] Searching foods: query="${query}", limit=${limit}, offset=${offset}, category=${category || "all"}, source=${source || "all"}, language=${language}`)
+
   const conditions = []
 
-  // Search by name (fuzzy trigram search via gin index, or fallback to ilike)
   if (query && query.trim().length > 0) {
     const searchTerm = `%${query.trim()}%`
 
@@ -66,7 +67,6 @@ export const searchFoods = async (
     } else if (language === "en") {
       conditions.push(ilike(foods.nameEn, searchTerm))
     } else {
-      // Both languages
       conditions.push(
         or(
           ilike(foods.nameEn, searchTerm),
@@ -87,6 +87,7 @@ export const searchFoods = async (
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
+  const startTime = Date.now()
   const [results, countResult] = await Promise.all([
     db.query.foods.findMany({
       where: whereClause,
@@ -96,6 +97,9 @@ export const searchFoods = async (
     }),
     db.select({ count: sql<number>`count(*).over()` }).from(foods).where(whereClause).limit(1),
   ])
+  const elapsed = Date.now() - startTime
+
+  console.log(`[FoodDB] Search complete: ${results.length} results (total: ${countResult?.[0]?.count ?? results.length}) in ${elapsed}ms`)
 
   return {
     foods: results.map(mapFood),
@@ -104,26 +108,41 @@ export const searchFoods = async (
 }
 
 export const getFoodById = async (id: string): Promise<FoodSearchResult | null> => {
+  console.log(`[FoodDB] Getting food by ID: ${id}`)
   const food = await db.query.foods.findFirst({
     where: eq(foods.id, id),
   })
+  if (food) {
+    console.log(`[FoodDB] Found: "${food.nameEn}" (${food.nameAr || "no arabic name"}) | ${food.calories} kcal/${food.servingSize}${food.servingUnit} | source: ${food.source}`)
+  } else {
+    console.log(`[FoodDB] Food not found for ID: ${id}`)
+  }
   return food ? mapFood(food) : null
 }
 
 export const getFoodByBarcode = async (barcode: string): Promise<FoodSearchResult | null> => {
+  console.log(`[FoodDB] Looking up barcode: ${barcode}`)
   const food = await db.query.foods.findFirst({
     where: eq(foods.barcode, barcode),
   })
+  if (food) {
+    console.log(`[FoodDB] Barcode match: "${food.nameEn}" (${food.nameAr || "no arabic name"}) | ${food.calories} kcal | brand: ${food.brand || "N/A"}`)
+  } else {
+    console.log(`[FoodDB] No food found for barcode: ${barcode}`)
+  }
   return food ? mapFood(food) : null
 }
 
 export const getFoodCategories = async (): Promise<string[]> => {
+  console.log(`[FoodDB] Fetching all food categories...`)
   const results = await db
     .selectDistinct({ category: foods.category })
     .from(foods)
     .where(sql`${foods.category} IS NOT NULL`)
 
-  return results.map((r) => r.category).filter(Boolean) as string[]
+  const categories = results.map((r) => r.category).filter(Boolean) as string[]
+  console.log(`[FoodDB] Found ${categories.length} categories: ${categories.join(", ")}`)
+  return categories
 }
 
 export const upsertFood = async (food: {
@@ -143,24 +162,31 @@ export const upsertFood = async (food: {
   saturatedFat?: number | null
   cholesterol?: number | null
   potassium?: number | null
-  source?: string
+  source?: "openfoodfacts" | "usda" | "sfda" | "manual" | "seed"
   sourceId?: string | null
   barcode?: string | null
   imageUrl?: string | null
 }): Promise<FoodSearchResult> => {
-  // Try to find existing food by source + sourceId, or by name + brand
+  console.log(`[FoodDB] Upserting food: "${food.nameEn}" (${food.nameAr || "no arabic"}) | ${food.calories} kcal/${food.servingSize ?? 100}${food.servingUnit ?? "g"} | source: ${food.source ?? "manual"}`)
+
   let existing: Food | undefined
 
   if (food.sourceId && food.source) {
     existing = await db.query.foods.findFirst({
       where: and(eq(foods.source, food.source), eq(foods.sourceId, food.sourceId)),
     })
+    if (existing) {
+      console.log(`[FoodDB] Found existing by source+id: ${existing.id} — updating`)
+    }
   }
 
   if (!existing && food.barcode) {
     existing = await db.query.foods.findFirst({
       where: eq(foods.barcode, food.barcode),
     })
+    if (existing) {
+      console.log(`[FoodDB] Found existing by barcode: ${existing.id} — updating`)
+    }
   }
 
   if (!existing) {
@@ -170,6 +196,9 @@ export const upsertFood = async (food: {
         food.brand ? ilike(foods.brand, food.brand) : sql`1=1`
       ),
     })
+    if (existing) {
+      console.log(`[FoodDB] Found existing by name+brand: ${existing.id} — updating`)
+    }
   }
 
   if (existing) {
@@ -181,6 +210,7 @@ export const upsertFood = async (food: {
       })
       .where(eq(foods.id, existing.id))
       .returning()
+    console.log(`[FoodDB] Updated food: "${updated.nameEn}" (id: ${updated.id})`)
     return mapFood(updated)
   }
 
@@ -210,21 +240,26 @@ export const upsertFood = async (food: {
     })
     .returning()
 
+  console.log(`[FoodDB] Created food: "${created.nameEn}" (id: ${created.id})`)
   return mapFood(created)
 }
 
 export const bulkUpsertFoods = async (
   foodList: Array<Parameters<typeof upsertFood>[0]>
 ): Promise<number> => {
+  console.log(`[FoodDB] Bulk upserting ${foodList.length} foods...`)
   let count = 0
+  let errors = 0
   for (const food of foodList) {
     try {
       await upsertFood(food)
       count++
     } catch (err) {
+      errors++
       console.error(`[FoodDB] Failed to upsert food "${food.nameEn}":`, err)
     }
   }
+  console.log(`[FoodDB] Bulk upsert complete: ${count} succeeded, ${errors} failed out of ${foodList.length}`)
   return count
 }
 
@@ -233,6 +268,9 @@ export const getFoodStats = async (): Promise<{
   bySource: Record<string, number>
   byCategory: Record<string, number>
 }> => {
+  console.log(`[FoodDB] Calculating food database statistics...`)
+  const startTime = Date.now()
+
   const allFoods = await db.select().from(foods)
 
   const bySource: Record<string, number> = {}
@@ -244,6 +282,11 @@ export const getFoodStats = async (): Promise<{
       byCategory[food.category] = (byCategory[food.category] || 0) + 1
     }
   }
+
+  const elapsed = Date.now() - startTime
+  console.log(`[FoodDB] Stats calculated in ${elapsed}ms — Total: ${allFoods.length} foods`)
+  console.log(`[FoodDB] By source: ${JSON.stringify(bySource)}`)
+  console.log(`[FoodDB] By category: ${JSON.stringify(byCategory)}`)
 
   return {
     total: allFoods.length,

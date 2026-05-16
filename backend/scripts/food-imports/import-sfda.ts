@@ -212,10 +212,14 @@ function parseArg(name: string, fallback: string): string {
 }
 
 async function importSeedData() {
+  console.log(`[SFDA] ========================================`)
   console.log(`[SFDA] Importing ${ARABIC_FOODS_SEED.length} Arabic food seed entries...`)
+  console.log(`[SFDA] Categories: ${[...new Set(ARABIC_FOODS_SEED.map(f => f.category))].join(", ")}`)
+  console.log(`[SFDA] ========================================`)
 
   let imported = 0
   let skipped = 0
+  const startTime = Date.now()
 
   for (const food of ARABIC_FOODS_SEED) {
     try {
@@ -254,16 +258,21 @@ async function importSeedData() {
         imageUrl: null,
       })
       imported++
+      console.log(`[SFDA] ✓ Imported: "${food.nameAr}" / "${food.nameEn}" | ${food.calories} kcal/${food.servingSize}${food.servingUnit} | ${food.category}`)
     } catch (err: any) {
       if (err.message?.includes("duplicate")) {
         skipped++
       } else {
-        console.error(`[SFDA] Error importing "${food.nameEn}": ${err.message}`)
+        console.error(`[SFDA] ✗ Error importing "${food.nameEn}": ${err.message}`)
       }
     }
   }
 
-  console.log(`[SFDA] Seed import complete: ${imported} imported, ${skipped} skipped (already exist)`)
+  const elapsed = Date.now() - startTime
+  console.log(`\n[SFDA] ========================================`)
+  console.log(`[SFDA] Seed import complete!`)
+  console.log(`[SFDA] Imported: ${imported} | Skipped: ${skipped} | Time: ${elapsed}ms`)
+  console.log(`[SFDA] ========================================`)
 }
 
 async function importFromCSV(filePath: string) {
@@ -272,7 +281,9 @@ async function importFromCSV(filePath: string) {
     return
   }
 
+  console.log(`[SFDA] ========================================`)
   console.log(`[SFDA] Importing from CSV: ${filePath}`)
+  console.log(`[SFDA] ========================================`)
 
   const records: any[] = []
   const parser = parse({
@@ -295,13 +306,19 @@ async function importFromCSV(filePath: string) {
   console.log(`[SFDA] Found ${records.length} records in CSV`)
 
   let imported = 0
+  let errors = 0
   let batch: any[] = []
+  const startTime = Date.now()
+  let batchNum = 0
 
   for (const row of records) {
     const nameAr = row.name_ar?.trim() || row["الاسم العربي"]?.trim()
     const nameEn = row.name_en?.trim() || row["الاسم الانجليزي"]?.trim() || nameAr
 
-    if (!nameEn) continue
+    if (!nameEn) {
+      console.log(`[SFDA] ⚠ Skipping row (no name): ${JSON.stringify(row).slice(0, 100)}`)
+      continue
+    }
 
     batch.push({
       nameEn: nameEn.slice(0, 500),
@@ -324,33 +341,47 @@ async function importFromCSV(filePath: string) {
     })
 
     if (batch.length >= BATCH_SIZE) {
-      const count = await importBatch(batch)
+      batchNum++
+      const count = await importCSVBatch(batch, batchNum)
       imported += count
-      console.log(`[SFDA] Progress: ${imported} imported`)
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+      console.log(`[SFDA] Progress: ${imported} imported | ${elapsed}s elapsed`)
       batch = []
     }
   }
 
   if (batch.length > 0) {
-    const count = await importBatch(batch)
+    batchNum++
+    const count = await importCSVBatch(batch, batchNum)
     imported += count
   }
 
-  console.log(`[SFDA] CSV import complete: ${imported} imported`)
+  const elapsed = Date.now() - startTime
+  console.log(`\n[SFDA] ========================================`)
+  console.log(`[SFDA] CSV import complete!`)
+  console.log(`[SFDA] Imported: ${imported} | Errors: ${errors} | Time: ${elapsed}ms`)
+  console.log(`[SFDA] ========================================`)
 }
 
-async function importBatch(batch: any[]): Promise<number> {
+async function importCSVBatch(batch: any[], batchNum: number): Promise<number> {
   let inserted = 0
+  let errors = 0
+  const startTime = Date.now()
+
   for (const item of batch) {
     try {
       await db.insert(foods).values(item)
       inserted++
     } catch (err: any) {
+      errors++
       if (!err.message?.includes("duplicate")) {
         console.error(`[SFDA] Error importing "${item.nameEn}": ${err.message}`)
       }
     }
   }
+
+  const elapsed = Date.now() - startTime
+  console.log(`[SFDA] CSV Batch #${batchNum}: +${inserted} inserted, ${errors} errors in ${elapsed}ms`)
   return inserted
 }
 
@@ -358,7 +389,12 @@ async function main() {
   const doSeed = process.argv.includes("--seed")
   const csvFile = parseArg("--file", "")
 
-  console.log("=== SFDA Arabic Food Import ===")
+  console.log("========================================")
+  console.log("  SFDA Arabic Food Import")
+  console.log("========================================")
+  console.log(`Mode: ${doSeed && csvFile ? "seed + csv" : doSeed ? "seed only" : csvFile ? "csv only" : "none"}`)
+  console.log(`CSV file: ${csvFile || "N/A"}`)
+  console.log("========================================")
 
   if (!doSeed && !csvFile) {
     console.log("Usage:")
@@ -367,6 +403,8 @@ async function main() {
     console.log("  --seed --file   Import both")
     return
   }
+
+  const startTime = Date.now()
 
   if (doSeed) {
     await importSeedData()
@@ -379,9 +417,15 @@ async function main() {
   // Final stats
   const stats = await db.select().from(foods).where(eq(foods.source, "seed"))
   const sfdaStats = await db.select().from(foods).where(eq(foods.source, "sfda"))
-  console.log(`\n=== Stats ===`)
+  const totalElapsed = Date.now() - startTime
+
+  console.log("\n========================================")
+  console.log("  Final Database Stats")
+  console.log("========================================")
   console.log(`Seed foods: ${stats.length}`)
   console.log(`SFDA foods: ${sfdaStats.length}`)
+  console.log(`Total time: ${totalElapsed}ms`)
+  console.log("========================================")
 }
 
 main().catch(console.error)

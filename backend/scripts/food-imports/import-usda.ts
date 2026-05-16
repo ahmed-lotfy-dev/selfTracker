@@ -112,8 +112,13 @@ async function main() {
   const dataDir = parseArg("--dir", DATA_DIR)
   const limit = parseInt(parseArg("--limit", "0"))
 
-  console.log("=== USDA FoodData Central Import ===")
+  console.log("========================================")
+  console.log("  USDA FoodData Central Import")
+  console.log("========================================")
   console.log(`Data directory: ${dataDir}`)
+  console.log(`Limit: ${limit || "unlimited"}`)
+  console.log(`Batch size: ${BATCH_SIZE}`)
+  console.log("========================================")
 
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir, { recursive: true })
@@ -143,14 +148,17 @@ async function main() {
   console.log(`[USDA] Found ${portionRecords.length} portion records`)
 
   // Build lookup maps
-  const nutrientMap = new Map<string, Map<string, number>>() // fdc_id -> nutrient_id -> amount
+  console.log("[USDA] Building nutrient lookup map...")
+  const nutrientMap = new Map<string, Map<string, number>>()
   for (const n of nutrientRecords) {
     if (!nutrientMap.has(n.fdc_id)) {
       nutrientMap.set(n.fdc_id, new Map())
     }
     nutrientMap.get(n.fdc_id)!.set(n.nutrient_id, parseFloat(n.amount) || 0)
   }
+  console.log(`[USDA] Nutrient map built: ${nutrientMap.size} foods with nutrients`)
 
+  console.log("[USDA] Building portion lookup map...")
   const portionMap = new Map<string, USDAFoodPortion[]>()
   for (const p of portionRecords) {
     if (!portionMap.has(p.fdc_id)) {
@@ -158,44 +166,78 @@ async function main() {
     }
     portionMap.get(p.fdc_id)!.push(p)
   }
+  console.log(`[USDA] Portion map built: ${portionMap.size} foods with portions`)
 
   // Filter to foundation_food and survey_food types for quality
   const qualityFoods = foodRecords.filter(
     (f) => f.data_type === "foundation_food" || f.data_type === "survey_fdsnd" || f.data_type === "sr_legacy_food"
   )
-  console.log(`[USDA] Quality foods (foundation/survey): ${qualityFoods.length}`)
+  console.log(`[USDA] Quality foods (foundation/survey): ${qualityFoods.length} out of ${foodRecords.length} total`)
+
+  // Count existing
+  const existingCount = await db.select().from(foods).where(eq(foods.source, "usda"))
+  console.log(`[USDA] Existing USDA foods in DB: ${existingCount.length}`)
 
   // Import
+  console.log("[USDA] Starting import...")
+  const startTime = Date.now()
   let totalProcessed = 0
   let totalImported = 0
+  let skippedNoNutrients = 0
+  let skippedNoCalories = 0
   let batch: ReturnType<typeof mapUSDAFood>[] = []
+  let batchNum = 0
 
   for (const food of qualityFoods) {
-    if (limit > 0 && totalImported >= limit) break
+    if (limit > 0 && totalImported >= limit) {
+      console.log(`[USDA] Reached limit of ${limit}, stopping`)
+      break
+    }
 
     totalProcessed++
     const mapped = mapUSDAFood(food, nutrientMap, portionMap)
     if (mapped) {
       batch.push(mapped)
+    } else {
+      const nutrients = nutrientMap.get(food.fdc_id)
+      if (!nutrients) {
+        skippedNoNutrients++
+      } else {
+        skippedNoCalories++
+      }
     }
 
     if (batch.length >= BATCH_SIZE) {
-      const count = await importBatch(batch)
+      batchNum++
+      const count = await importBatch(batch, batchNum)
       totalImported += count
-      console.log(`[USDA] Progress: ${totalProcessed} processed, ${totalImported} imported`)
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+      const rate = (totalImported / ((Date.now() - startTime) / 1000)).toFixed(0)
+      console.log(`[USDA] Progress: ${totalProcessed} processed, ${totalImported} imported | ${skippedNoNutrients} skipped (no nutrients), ${skippedNoCalories} skipped (no calories) | ${elapsed}s | ${rate} items/s`)
       batch = []
     }
   }
 
   // Final batch
   if (batch.length > 0) {
-    const count = await importBatch(batch)
+    batchNum++
+    const count = await importBatch(batch, batchNum)
     totalImported += count
   }
 
-  console.log("\n=== Import Complete ===")
+  const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+  const rate = totalElapsed !== "0" ? (totalImported / parseFloat(totalElapsed)).toFixed(0) : "0"
+
+  console.log("\n========================================")
+  console.log("  Import Complete!")
+  console.log("========================================")
   console.log(`Total processed: ${totalProcessed}`)
   console.log(`Total imported: ${totalImported}`)
+  console.log(`Skipped (no nutrients): ${skippedNoNutrients}`)
+  console.log(`Skipped (no calories): ${skippedNoCalories}`)
+  console.log(`Total time: ${totalElapsed}s`)
+  console.log(`Average rate: ${rate} items/s`)
+  console.log("========================================")
 
   const finalCount = await db.select().from(foods).where(eq(foods.source, "usda"))
   console.log(`Total USDA foods in DB: ${finalCount.length}`)
@@ -244,8 +286,12 @@ function mapUSDAFood(
   }
 }
 
-async function importBatch(batch: ReturnType<typeof mapUSDAFood>[]): Promise<number> {
+async function importBatch(batch: ReturnType<typeof mapUSDAFood>[], batchNum: number): Promise<number> {
   let inserted = 0
+  let updated = 0
+  let errors = 0
+  const startTime = Date.now()
+
   for (const item of batch) {
     if (!item) continue
     try {
@@ -255,17 +301,22 @@ async function importBatch(batch: ReturnType<typeof mapUSDAFood>[]): Promise<num
 
       if (existing) {
         await db.update(foods).set({ ...item, updatedAt: new Date() }).where(eq(foods.id, existing.id))
+        updated++
       } else {
         await db.insert(foods).values(item)
+        inserted++
       }
-      inserted++
     } catch (err: any) {
+      errors++
       if (!err.message?.includes("duplicate")) {
         console.error(`[USDA] Error importing "${item.nameEn}": ${err.message}`)
       }
     }
   }
-  return inserted
+
+  const elapsed = Date.now() - startTime
+  console.log(`[USDA] Batch #${batchNum}: +${inserted} inserted, ~${updated} updated, ${errors} errors in ${elapsed}ms`)
+  return inserted + updated
 }
 
 main().catch(console.error)

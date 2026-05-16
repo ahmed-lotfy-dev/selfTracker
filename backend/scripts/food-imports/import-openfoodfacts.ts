@@ -57,15 +57,21 @@ function parseArg(name: string, fallback: string): string {
 }
 
 async function downloadFile(url: string, dest: string): Promise<void> {
-  console.log(`[OFF] Downloading ${url}...`)
+  console.log(`[OFF] ========================================`)
+  console.log(`[OFF] Starting download from: ${url}`)
+  console.log(`[OFF] Destination: ${dest}`)
   console.log(`[OFF] This is a large file (~2-3GB). This will take a while on the VPS.`)
+  console.log(`[OFF] ========================================`)
 
+  const startTime = Date.now()
   const response = await fetch(url)
   if (!response.ok || !response.body) {
     throw new Error(`Failed to download: ${response.status} ${response.statusText}`)
   }
 
   const totalSize = parseInt(response.headers.get("content-length") || "0")
+  console.log(`[OFF] Content-Length: ${(totalSize / 1024 / 1024).toFixed(0)}MB`)
+
   let downloaded = 0
   let lastReport = 0
 
@@ -80,7 +86,9 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 
     if (totalSize && downloaded - lastReport > 50 * 1024 * 1024) {
       const pct = ((downloaded / totalSize) * 100).toFixed(1)
-      console.log(`[OFF] Downloaded ${pct}% (${(downloaded / 1024 / 1024).toFixed(0)}MB / ${(totalSize / 1024 / 1024).toFixed(0)}MB)`)
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+      const speed = (downloaded / 1024 / 1024 / (Date.now() - startTime) * 1000).toFixed(1)
+      console.log(`[OFF] Downloaded ${pct}% (${(downloaded / 1024 / 1024).toFixed(0)}MB / ${(totalSize / 1024 / 1024).toFixed(0)}MB) | ${elapsed}s elapsed | ${speed} MB/s`)
       lastReport = downloaded
     }
   }
@@ -93,7 +101,8 @@ async function downloadFile(url: string, dest: string): Promise<void> {
   }
 
   writeFileSync(dest, allChunks)
-  console.log(`[OFF] Download complete: ${(downloaded / 1024 / 1024).toFixed(0)}MB`)
+  const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+  console.log(`[OFF] Download complete: ${(downloaded / 1024 / 1024).toFixed(0)}MB in ${totalElapsed}s`)
 }
 
 function mapOFFRow(row: OFFRow) {
@@ -133,12 +142,15 @@ function parseServingUnit(servingSize: string): string | null {
   return match ? match[0].toLowerCase() : null
 }
 
-async function importBatch(batch: ReturnType<typeof mapOFFRow>[]): Promise<number> {
+async function importBatch(batch: ReturnType<typeof mapOFFRow>[], batchNum: number): Promise<number> {
   let inserted = 0
+  let updated = 0
+  let errors = 0
+  const startTime = Date.now()
+
   for (const item of batch) {
     if (!item) continue
     try {
-      // Check if already exists
       const existing = item.sourceId
         ? await db.query.foods.findFirst({
             where: and(eq(foods.source, "openfoodfacts"), eq(foods.sourceId, item.sourceId)),
@@ -146,21 +158,23 @@ async function importBatch(batch: ReturnType<typeof mapOFFRow>[]): Promise<numbe
         : null
 
       if (existing) {
-        // Update
         await db.update(foods).set({ ...item, updatedAt: new Date() }).where(eq(foods.id, existing.id))
+        updated++
       } else {
-        // Insert
         await db.insert(foods).values(item)
+        inserted++
       }
-      inserted++
     } catch (err: any) {
-      // Skip duplicates or errors
+      errors++
       if (!err.message?.includes("duplicate")) {
         console.error(`[OFF] Error importing "${item.nameEn}": ${err.message}`)
       }
     }
   }
-  return inserted
+
+  const elapsed = Date.now() - startTime
+  console.log(`[OFF] Batch #${batchNum}: +${inserted} inserted, ~${updated} updated, ${errors} errors in ${elapsed}ms`)
+  return inserted + updated
 }
 
 async function main() {
@@ -168,12 +182,19 @@ async function main() {
   const offset = parseInt(parseArg("--offset", "0"))
   const skipDownload = process.argv.includes("--skip-download")
 
-  console.log("=== Open Food Facts Import ===")
+  console.log("========================================")
+  console.log("  Open Food Facts Import")
+  console.log("========================================")
   console.log(`Limit: ${limit || "unlimited"}, Offset: ${offset}`)
+  console.log(`Skip download: ${skipDownload}`)
+  console.log(`Batch size: ${BATCH_SIZE}`)
+  console.log(`Data directory: ${DATA_DIR}`)
+  console.log("========================================")
 
   // Ensure data directory
   if (!existsSync(DATA_DIR)) {
     mkdirSync(DATA_DIR, { recursive: true })
+    console.log(`[OFF] Created data directory: ${DATA_DIR}`)
   }
 
   // Download if needed
@@ -189,12 +210,16 @@ async function main() {
   console.log(`[OFF] Existing OFF foods in DB: ${existingCount.length}`)
 
   // Parse and import
-  console.log("[OFF] Starting import...")
+  console.log("[OFF] Starting import stream...")
 
+  const startTime = Date.now()
   let totalProcessed = 0
   let totalImported = 0
   let batch: ReturnType<typeof mapOFFRow>[] = []
   let isPastOffset = offset === 0
+  let batchNum = 0
+  let skippedNoCalories = 0
+  let skippedNoName = 0
 
   const parser = parse({
     delimiter: "\t", // OFF uses tab-separated
@@ -228,16 +253,25 @@ async function main() {
       const mapped = mapOFFRow(row)
       if (mapped) {
         batch.push(mapped)
+      } else {
+        if (!row.energy_kcal_100g || parseFloat(row.energy_kcal_100g) <= 0) {
+          skippedNoCalories++
+        } else {
+          skippedNoName++
+        }
       }
 
       if (batch.length >= BATCH_SIZE) {
         const currentBatch = batch
         batch = []
-        importBatch(currentBatch)
+        batchNum++
+        importBatch(currentBatch, batchNum)
           .then((count) => {
             totalImported += count
             if (totalImported % 5000 === 0) {
-              console.log(`[OFF] Progress: ${totalProcessed} processed, ${totalImported} imported`)
+              const elapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+              const rate = (totalImported / ((Date.now() - startTime) / 1000)).toFixed(0)
+              console.log(`[OFF] Progress: ${totalProcessed} processed, ${totalImported} imported | ${skippedNoCalories} skipped (no calories), ${skippedNoName} skipped (no name) | ${elapsed}s | ${rate} items/s`)
             }
             callback()
           })
@@ -251,7 +285,8 @@ async function main() {
     },
     flush(callback) {
       if (batch.length > 0) {
-        importBatch(batch).then((count) => {
+        batchNum++
+        importBatch(batch, batchNum).then((count) => {
           totalImported += count
           callback()
         })
@@ -269,13 +304,22 @@ async function main() {
       importTransform
     )
   } catch (err) {
-    // Pipeline may end early due to limit
     console.log("[OFF] Pipeline ended (may be due to --limit)")
   }
 
-  console.log("\n=== Import Complete ===")
+  const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+  const rate = totalElapsed !== "0" ? (totalImported / parseFloat(totalElapsed)).toFixed(0) : "0"
+
+  console.log("\n========================================")
+  console.log("  Import Complete!")
+  console.log("========================================")
   console.log(`Total processed: ${totalProcessed}`)
   console.log(`Total imported: ${totalImported}`)
+  console.log(`Skipped (no calories): ${skippedNoCalories}`)
+  console.log(`Skipped (no name): ${skippedNoName}`)
+  console.log(`Total time: ${totalElapsed}s`)
+  console.log(`Average rate: ${rate} items/s`)
+  console.log("========================================")
 
   // Final stats
   const finalCount = await db.select().from(foods).where(eq(foods.source, "openfoodfacts"))
