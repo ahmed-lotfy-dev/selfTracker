@@ -7,6 +7,7 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core"
 import { users } from "./users"
+import { foods } from "./foods"
 
 export type FoodItem = {
   name: string
@@ -16,6 +17,7 @@ export type FoodItem = {
   protein: number
   carbs: number
   fat: number
+  foodId?: string // reference to foods table (optional for backward compat)
 }
 
 export const foodLogs = pgTable("food_logs", {
