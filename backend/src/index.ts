@@ -13,6 +13,7 @@ import uploadRouter from "./routes/image.js"
 import timerRouter from "./routes/timer.js"
 import habitsRouter from "./routes/habits.js"
 import nutritionRouter from "./routes/nutrition.js"
+import foodRouter from "./routes/foods.js"
 import aiRouter from "./routes/ai.js"
 import desktopCallbackRouter from "./routes/desktopCallback.js"
 import desktopAuthRouter from "./routes/desktopAuth.js"
@@ -63,6 +64,9 @@ app.use(requestLogger);
 
 // Public routes (before auth middleware)
 app.route("/api/workouts", workoutsRouter) // Workout templates are public
+
+// Food database search — public (used by mobile app for food lookup)
+app.route("/api/foods", foodRouter)
 
 // Auth middleware for all other API routes (except /api/auth/*)
 app.use("/api/*", authMiddleware)
