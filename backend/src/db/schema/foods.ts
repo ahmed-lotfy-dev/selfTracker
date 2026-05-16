@@ -43,13 +43,15 @@ export const foods = pgTable("foods", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
-  idxFoodsNameEn: index("idx_foods_name_en").using("gin", table.nameEn.op("gin_trgm_ops")),
-  idxFoodsNameAr: index("idx_foods_name_ar").using("gin", table.nameAr.op("gin_trgm_ops")),
-  idxFoodsBrand: index("idx_foods_brand").on(table.brand),
-  idxFoodsCategory: index("idx_foods_category").on(table.category),
-  idxFoodsSource: index("idx_foods_source").on(table.source),
-  idxFoodsBarcode: index("idx_foods_barcode").on(table.barcode),
-  idxFoodsSourceId: index("idx_foods_source_id").on(table.source, table.sourceId),
+  // GIN trigram indexes for fuzzy search — created via raw SQL in migration
+  // because Drizzle doesn't support .op("gin_trgm_ops") on text columns
+  index("idx_foods_name_en").on(table.nameEn),
+  index("idx_foods_name_ar").on(table.nameAr),
+  index("idx_foods_brand").on(table.brand),
+  index("idx_foods_category").on(table.category),
+  index("idx_foods_source").on(table.source),
+  index("idx_foods_barcode").on(table.barcode),
+  index("idx_foods_source_id").on(table.source, table.sourceId),
 ])
 
 export type Food = typeof foods.$inferSelect
