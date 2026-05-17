@@ -53,6 +53,18 @@ CREATE INDEX IF NOT EXISTS idx_foods_barcode
 CREATE INDEX IF NOT EXISTS idx_foods_source_id
   ON foods (source, source_id);
 
+-- 3b. Add unique constraint for ON CONFLICT DO NOTHING in bulk imports
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'uq_foods_source_source_id'
+  ) THEN
+    ALTER TABLE foods
+      ADD CONSTRAINT uq_foods_source_source_id
+      UNIQUE (source, source_id);
+  END IF;
+END $$;
+
 -- 4. Add food_id column to food_logs for referencing foods table
 DO $$
 BEGIN
