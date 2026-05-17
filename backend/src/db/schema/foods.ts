@@ -7,20 +7,36 @@ import {
   real,
   uuid,
   index,
+  date,
 } from "drizzle-orm/pg-core"
 
 export const foods = pgTable("foods", {
   id: uuid("id").defaultRandom().primaryKey(),
+
+  -- Basic info
   nameEn: text("name_en").notNull(),
   nameAr: text("name_ar"),
+  genericName: text("generic_name"),
+  abbreviatedName: text("abbreviated_name"),
   brand: text("brand"),
-  category: text("category"),
+  brandOwner: text("brand_owner"),
+  gtinUpc: text("gtin_upc"),
 
-  // Serving info
+  -- Serving & quantity
   servingSize: real("serving_size").notNull().default(100),
   servingUnit: text("serving_unit").notNull().default("g"),
+  servingSizeText: text("serving_size_text"),
+  householdServing: text("household_serving"),
+  productQuantity: real("product_quantity"),
 
-  // Nutrition per serving
+  -- Categories & classification
+  category: text("category"),
+  mainCategory: text("main_category"),
+  foodGroups: text("food_groups"),
+  pnnsGroup1: text("pnns_group_1"),
+  pnnsGroup2: text("pnns_group_2"),
+
+  -- Nutrition per serving (what we show to users)
   calories: real("calories").notNull().default(0),
   protein: real("protein").notNull().default(0),
   carbs: real("carbs").notNull().default(0),
@@ -32,26 +48,92 @@ export const foods = pgTable("foods", {
   cholesterol: real("cholesterol").default(0),
   potassium: real("potassium").default(0),
 
-  // Source tracking
-  source: text("source", { enum: ["openfoodfacts", "usda", "sfda", "manual", "seed"] }).notNull().default("manual"),
+  -- Nutrition per 100g (raw data from sources)
+  energyKj100g: real("energy_kj_100g"),
+  energyKcal100g: real("energy_kcal_100g"),
+  transFat100g: real("trans_fat_100g"),
+  monounsaturatedFat100g: real("monounsaturated_fat_100g"),
+  polyunsaturatedFat100g: real("polyunsaturated_fat_100g"),
+  omega3100g: real("omega_3_100g"),
+  omega6100g: real("omega_6_100g"),
+  addedSugars100g: real("added_sugars_100g"),
+  starch100g: real("starch_100g"),
+  polyols100g: real("polyols_100g"),
+  solubleFiber100g: real("soluble_fiber_100g"),
+  insolubleFiber100g: real("insoluble_fiber_100g"),
+
+  -- Vitamins per 100g
+  vitaminA100g: real("vitamin_a_100g"),
+  vitaminD100g: real("vitamin_d_100g"),
+  vitaminE100g: real("vitamin_e_100g"),
+  vitaminK100g: real("vitamin_k_100g"),
+  vitaminC100g: real("vitamin_c_100g"),
+  vitaminB1100g: real("vitamin_b1_100g"),
+  vitaminB2100g: real("vitamin_b2_100g"),
+  vitaminB6100g: real("vitamin_b6_100g"),
+  vitaminB9100g: real("vitamin_b9_100g"),
+  vitaminB12100g: real("vitamin_b12_100g"),
+  pantothenicAcid100g: real("pantothenic_acid_100g"),
+  biotin100g: real("biotin_100g"),
+  choline100g: real("choline_100g"),
+
+  -- Minerals per 100g
+  calcium100g: real("calcium_100g"),
+  phosphorus100g: real("phosphorus_100g"),
+  iron100g: real("iron_100g"),
+  magnesium100g: real("magnesium_100g"),
+  zinc100g: real("zinc_100g"),
+  copper100g: real("copper_100g"),
+  manganese100g: real("manganese_100g"),
+  selenium100g: real("selenium_100g"),
+  iodine100g: real("iodine_100g"),
+  chloride100g: real("chloride_100g"),
+
+  -- Other per 100g
+  alcohol100g: real("alcohol_100g"),
+  caffeine100g: real("caffeine_100g"),
+  salt100g: real("salt_100g"),
+
+  -- Scores & grades
+  nutriscoreScore: real("nutriscore_score"),
+  nutriscoreGrade: text("nutriscore_grade"),
+  novaGroup: real("nova_group"),
+  environmentalScore: real("environmental_score"),
+
+  -- Ingredients & allergens
+  ingredientsText: text("ingredients_text"),
+  allergens: text("allergens"),
+  traces: text("traces"),
+  additives: text("additives"),
+
+  -- Metadata
+  countries: text("countries"),
+  labels: text("labels"),
+  dataQuality: text("data_quality"),
+  completeness: real("completeness"),
+  publicationDate: date("publication_date"),
+
+  -- Source tracking
+  source: text("source", { enum: ["openfoodfacts", "usda_foundation", "usda_sr_legacy", "usda_branded", "sfda", "manual", "seed"] }).notNull().default("manual"),
   sourceId: text("source_id"),
   barcode: text("barcode"),
-
-  // Image
   imageUrl: text("image_url"),
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
-  // GIN trigram indexes for fuzzy search — created via raw SQL in migration
-  // because Drizzle doesn't support .op("gin_trgm_ops") on text columns
   index("idx_foods_name_en").on(table.nameEn),
   index("idx_foods_name_ar").on(table.nameAr),
   index("idx_foods_brand").on(table.brand),
+  index("idx_foods_brand_owner").on(table.brandOwner),
   index("idx_foods_category").on(table.category),
+  index("idx_foods_main_category").on(table.mainCategory),
+  index("idx_foods_food_groups").on(table.foodGroups),
   index("idx_foods_source").on(table.source),
   index("idx_foods_barcode").on(table.barcode),
-  index("idx_foods_source_id").on(table.source, table.sourceId),
+  index("idx_foods_gtin_upc").on(table.gtinUpc),
+  index("idx_foods_nutriscore_grade").on(table.nutriscoreGrade),
+  index("idx_foods_countries").on(table.countries),
 ])
 
 export type Food = typeof foods.$inferSelect
