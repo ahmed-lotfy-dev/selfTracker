@@ -13,7 +13,6 @@ import {
 export const foods = pgTable("foods", {
   id: uuid("id").defaultRandom().primaryKey(),
 
-  -- Basic info
   nameEn: text("name_en").notNull(),
   nameAr: text("name_ar"),
   genericName: text("generic_name"),
@@ -22,21 +21,18 @@ export const foods = pgTable("foods", {
   brandOwner: text("brand_owner"),
   gtinUpc: text("gtin_upc"),
 
-  -- Serving & quantity
   servingSize: real("serving_size").notNull().default(100),
   servingUnit: text("serving_unit").notNull().default("g"),
   servingSizeText: text("serving_size_text"),
   householdServing: text("household_serving"),
   productQuantity: real("product_quantity"),
 
-  -- Categories & classification
   category: text("category"),
   mainCategory: text("main_category"),
   foodGroups: text("food_groups"),
   pnnsGroup1: text("pnns_group_1"),
   pnnsGroup2: text("pnns_group_2"),
 
-  -- Nutrition per serving (what we show to users)
   calories: real("calories").notNull().default(0),
   protein: real("protein").notNull().default(0),
   carbs: real("carbs").notNull().default(0),
@@ -48,7 +44,6 @@ export const foods = pgTable("foods", {
   cholesterol: real("cholesterol").default(0),
   potassium: real("potassium").default(0),
 
-  -- Nutrition per 100g (raw data from sources)
   energyKj100g: real("energy_kj_100g"),
   energyKcal100g: real("energy_kcal_100g"),
   transFat100g: real("trans_fat_100g"),
@@ -62,7 +57,6 @@ export const foods = pgTable("foods", {
   solubleFiber100g: real("soluble_fiber_100g"),
   insolubleFiber100g: real("insoluble_fiber_100g"),
 
-  -- Vitamins per 100g
   vitaminA100g: real("vitamin_a_100g"),
   vitaminD100g: real("vitamin_d_100g"),
   vitaminE100g: real("vitamin_e_100g"),
@@ -77,7 +71,6 @@ export const foods = pgTable("foods", {
   biotin100g: real("biotin_100g"),
   choline100g: real("choline_100g"),
 
-  -- Minerals per 100g
   calcium100g: real("calcium_100g"),
   phosphorus100g: real("phosphorus_100g"),
   iron100g: real("iron_100g"),
@@ -89,31 +82,26 @@ export const foods = pgTable("foods", {
   iodine100g: real("iodine_100g"),
   chloride100g: real("chloride_100g"),
 
-  -- Other per 100g
   alcohol100g: real("alcohol_100g"),
   caffeine100g: real("caffeine_100g"),
   salt100g: real("salt_100g"),
 
-  -- Scores & grades
   nutriscoreScore: real("nutriscore_score"),
   nutriscoreGrade: text("nutriscore_grade"),
   novaGroup: real("nova_group"),
   environmentalScore: real("environmental_score"),
 
-  -- Ingredients & allergens
   ingredientsText: text("ingredients_text"),
   allergens: text("allergens"),
   traces: text("traces"),
   additives: text("additives"),
 
-  -- Metadata
   countries: text("countries"),
   labels: text("labels"),
   dataQuality: text("data_quality"),
   completeness: real("completeness"),
   publicationDate: date("publication_date"),
 
-  -- Source tracking
   source: text("source", { enum: ["openfoodfacts", "usda_foundation", "usda_sr_legacy", "usda_branded", "sfda", "manual", "seed"] }).notNull().default("manual"),
   sourceId: text("source_id"),
   barcode: text("barcode"),
