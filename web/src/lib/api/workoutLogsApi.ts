@@ -32,3 +32,10 @@ export async function getAllWorkoutLogs() {
   }
   return all
 }
+
+export async function getWorkoutLogsForCalendar(year: number, month: number) {
+  const res = await axiosInstance.get<WorkoutLog[]>(
+    `/api/workoutLogs/calendar?year=${year}&month=${month}`
+  )
+  return res.data
+}

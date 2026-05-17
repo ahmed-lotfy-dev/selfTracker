@@ -116,7 +116,7 @@ export default function WorkoutsPage() {
               </tr>
             </thead>
             <tbody>
-              {[...allLogs].reverse().map((l, i) => (
+              {allLogs.map((l, i) => (
                 <tr key={l.id} onClick={() => window.location.hash = `#/workouts/${l.id}/edit`}
                   className="border-b border-bg-border hover:bg-bg-hover cursor-pointer">
                   <td className="py-2 px-3 text-gray-600">{allLogs.length - i}</td>
