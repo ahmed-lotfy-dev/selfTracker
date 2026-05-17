@@ -1,15 +1,15 @@
 /**
  * Master Food Database Import Script
- * Uses pg-style $1, $2 parameters with db.execute
+ * Uses PostgreSQL COPY command for fast CSV import
+ * Falls back to individual inserts for small batches
  */
 
 import { db } from "../../src/db"
 import { sql } from "drizzle-orm"
-import { createReadStream, existsSync } from "fs"
+import { createReadStream, existsSync, writeFileSync, unlinkSync } from "fs"
 import { parse } from "csv-parse"
 
 const DATA_DIR = "/tmp/food-imports"
-const BATCH_SIZE = 200
 
 const USDA_NUTRIENT_MAP: Record<string, string> = {
   "1003": "protein", "1004": "fat", "1005": "carbs", "1008": "calories",
@@ -63,47 +63,77 @@ async function importUSDA(source: string, foodFile: string, nutrientFile: string
     }
   }
 
-  let imported = 0, errors = 0
+  // Create a temporary CSV file for COPY
+  const tmpFile = `/tmp/${source}_import.csv`
+  const lines: string[] = []
   const max = limit > 0 ? Math.min(limit, foods.length) : foods.length
 
-  for (let i = 0; i < max; i += BATCH_SIZE) {
-    const batch = foods.slice(i, i + BATCH_SIZE)
-    const allValues: any[] = []
-    const valueRows: string[] = []
-    let p = 0
-
-    for (const f of batch) {
-      const n = nMap.get(f.fdc_id) || {}
-      const params = [
-        (f.description || "Unknown").slice(0, 500), f.food_category_id || null,
-        source, f.fdc_id, 100, "g",
-        n.calories || 0, n.protein || 0, n.carbs || 0, n.fat || 0,
-        n.fiber || 0, n.sugar || 0, n.sodium || 0, n.saturated_fat || 0,
-        n.cholesterol || 0, n.potassium || 0,
-        n.calcium_100g || null, n.iron_100g || null, n.magnesium_100g || null,
-        n.phosphorus_100g || null, n.zinc_100g || null, n.copper_100g || null,
-        n.manganese_100g || null, n.selenium_100g || null,
-        n.vitamin_a_100g || null, n.vitamin_d_100g || null, n.vitamin_e_100g || null,
-        n.vitamin_c_100g || null, n.vitamin_b1_100g || null, n.vitamin_b2_100g || null,
-        n.vitamin_b6_100g || null, n.vitamin_b9_100g || null, n.vitamin_b12_100g || null,
-        n.trans_fat_100g || null, n.added_sugars_100g || null, n.starch_100g || null,
-        f.publication_date || null,
-      ]
-      allValues.push(...params)
-      valueRows.push(`(${params.map(() => `$${++p}`).join(",")})`)
-    }
-
-    try {
-      await db.execute(sql`${sql.raw(valueRows.join(","))}`)
-      imported += batch.length
-    } catch (err: any) {
-      errors += batch.length
-      if (errors <= 3) console.error(`[${source}] ERROR: ${err.message?.slice(0, 300)}`)
-    }
-
-    if ((i + BATCH_SIZE) % 1000 === 0) console.log(`[${source}] ${imported} imported, ${errors} errors`)
+  for (let i = 0; i < max; i++) {
+    const f = foods[i]
+    const n = nMap.get(f.fdc_id) || {}
+    const vals = [
+      (f.description || "Unknown").replace(/\t/g, " ").slice(0, 500),  // name_en
+      (f.food_category_id || "").replace(/\t/g, ""),                   // category
+      source,                                                           // source
+      f.fdc_id,                                                         // source_id
+      "100",                                                            // serving_size
+      "g",                                                              // serving_unit
+      String(n.calories || 0),
+      String(n.protein || 0),
+      String(n.carbs || 0),
+      String(n.fat || 0),
+      String(n.fiber || 0),
+      String(n.sugar || 0),
+      String(n.sodium || 0),
+      String(n.saturated_fat || 0),
+      String(n.cholesterol || 0),
+      String(n.potassium || 0),
+      n.calcium_100g != null ? String(n.calcium_100g) : "\\N",
+      n.iron_100g != null ? String(n.iron_100g) : "\\N",
+      n.magnesium_100g != null ? String(n.magnesium_100g) : "\\N",
+      n.phosphorus_100g != null ? String(n.phosphorus_100g) : "\\N",
+      n.zinc_100g != null ? String(n.zinc_100g) : "\\N",
+      n.copper_100g != null ? String(n.copper_100g) : "\\N",
+      n.manganese_100g != null ? String(n.manganese_100g) : "\\N",
+      n.selenium_100g != null ? String(n.selenium_100g) : "\\N",
+      n.vitamin_a_100g != null ? String(n.vitamin_a_100g) : "\\N",
+      n.vitamin_d_100g != null ? String(n.vitamin_d_100g) : "\\N",
+      n.vitamin_e_100g != null ? String(n.vitamin_e_100g) : "\\N",
+      n.vitamin_c_100g != null ? String(n.vitamin_c_100g) : "\\N",
+      n.vitamin_b1_100g != null ? String(n.vitamin_b1_100g) : "\\N",
+      n.vitamin_b2_100g != null ? String(n.vitamin_b2_100g) : "\\N",
+      n.vitamin_b6_100g != null ? String(n.vitamin_b6_100g) : "\\N",
+      n.vitamin_b9_100g != null ? String(n.vitamin_b9_100g) : "\\N",
+      n.vitamin_b12_100g != null ? String(n.vitamin_b12_100g) : "\\N",
+      n.trans_fat_100g != null ? String(n.trans_fat_100g) : "\\N",
+      n.added_sugars_100g != null ? String(n.added_sugars_100g) : "\\N",
+      n.starch_100g != null ? String(n.starch_100g) : "\\N",
+      f.publication_date || "\\N",
+    ]
+    lines.push(vals.join("\t"))
   }
-  console.log(`[${source}] Done! ${imported} imported, ${errors} errors`)
+
+  writeFileSync(tmpFile, lines.join("\n"))
+
+  try {
+    // Use COPY to import the CSV
+    await db.execute(sql.raw(`
+      COPY foods (
+        name_en, category, source, source_id, serving_size, serving_unit,
+        calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium,
+        calcium_100g, iron_100g, magnesium_100g, phosphorus_100g, zinc_100g, copper_100g,
+        manganese_100g, selenium_100g, vitamin_a_100g, vitamin_d_100g, vitamin_e_100g,
+        vitamin_c_100g, vitamin_b1_100g, vitamin_b2_100g, vitamin_b6_100g, vitamin_b9_100g,
+        vitamin_b12_100g, trans_fat_100g, added_sugars_100g, starch_100g, publication_date
+      ) FROM '${tmpFile}' WITH (FORMAT text, NULL '\\N')
+    `))
+    console.log(`[${source}] COPY imported ${max} rows`)
+  } catch (err: any) {
+    console.error(`[${source}] COPY ERROR: ${err.message?.slice(0, 300)}`)
+  }
+
+  // Clean up
+  try { unlinkSync(tmpFile) } catch {}
 }
 
 async function importBranded(limit: number) {
@@ -122,48 +152,60 @@ async function importBranded(limit: number) {
     }
   }
 
-  let imported = 0, errors = 0
+  const tmpFile = `/tmp/usda_branded_import.csv`
+  const lines: string[] = []
   const max = limit > 0 ? Math.min(limit, foods.length) : foods.length
 
-  for (let i = 0; i < max; i += BATCH_SIZE) {
-    const batch = foods.slice(i, i + BATCH_SIZE)
-    const allValues: any[] = []
-    const valueRows: string[] = []
-    let p = 0
-
-    for (const f of batch) {
-      const n = nMap.get(f.fdc_id) || {}
-      const params = [
-        f.fdc_id, (f.description || "Unknown").slice(0, 500),
-        f.brand_owner || null, f.brand_name || null, f.gtin_upc || null,
-        f.branded_food_category || null, parseFloat(f.serving_size) || null,
-        f.serving_size_unit || null, f.ingredients || null,
-        n.calories || 0, n.protein || 0, n.carbs || 0, n.fat || 0,
-        n.fiber || 0, n.sugar || 0, n.sodium || 0, n.saturated_fat || 0,
-        n.cholesterol || 0, n.potassium || 0,
-      ]
-      allValues.push(...params)
-      valueRows.push(`(${params.map(() => `$${++p}`).join(",")})`)
-    }
-
-    try {
-      await db.execute(sql`${sql.raw(valueRows.join(","))}`)
-      imported += batch.length
-    } catch (err: any) {
-      errors += batch.length
-      if (errors <= 3) console.error(`[usda_branded] ERROR: ${err.message?.slice(0, 300)}`)
-    }
-
-    if ((i + BATCH_SIZE) % 1000 === 0) console.log(`[usda_branded] ${imported} imported, ${errors} errors`)
+  for (let i = 0; i < max; i++) {
+    const f = foods[i]
+    const n = nMap.get(f.fdc_id) || {}
+    const vals = [
+      f.fdc_id,
+      (f.description || "Unknown").replace(/\t/g, " ").slice(0, 500),
+      (f.brand_owner || "").replace(/\t/g, " "),
+      (f.brand_name || "").replace(/\t/g, " "),
+      (f.gtin_upc || "").replace(/\t/g, " "),
+      (f.branded_food_category || "").replace(/\t/g, " "),
+      parseFloat(f.serving_size) ? String(parseFloat(f.serving_size)) : "\\N",
+      (f.serving_size_unit || "").replace(/\t/g, " "),
+      (f.ingredients || "").replace(/\t/g, " ").slice(0, 1000),
+      String(n.calories || 0),
+      String(n.protein || 0),
+      String(n.carbs || 0),
+      String(n.fat || 0),
+      String(n.fiber || 0),
+      String(n.sugar || 0),
+      String(n.sodium || 0),
+      String(n.saturated_fat || 0),
+      String(n.cholesterol || 0),
+      String(n.potassium || 0),
+    ]
+    lines.push(vals.join("\t"))
   }
-  console.log(`[usda_branded] Done! ${imported} imported, ${errors} errors`)
+
+  writeFileSync(tmpFile, lines.join("\n"))
+
+  try {
+    await db.execute(sql.raw(`
+      COPY branded_foods (
+        fdc_id, name_en, brand_owner, brand_name, gtin_upc,
+        branded_food_category, serving_size, serving_size_unit, ingredients_text,
+        calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium
+      ) FROM '${tmpFile}' WITH (FORMAT text, NULL '\\N')
+    `))
+    console.log(`[usda_branded] COPY imported ${max} rows`)
+  } catch (err: any) {
+    console.error(`[usda_branded] COPY ERROR: ${err.message?.slice(0, 300)}`)
+  }
+
+  try { unlinkSync(tmpFile) } catch {}
 }
 
 async function main() {
   const limit = parseInt(parseArg("--limit", "0"))
 
   console.log("========================================")
-  console.log("  Master Food Database Import")
+  console.log("  Master Food Database Import (COPY)")
   console.log("========================================")
 
   console.log("\n[1/4] Truncating existing data...")
