@@ -1,23 +1,20 @@
 /**
- * USDA FoodData Central Import Script
+ * USDA FoodData Central Import Script - Bulk Insert
  * Imports Foundation Foods + SR Legacy foods
- * Maps CSV data to our foods table schema
  *
  * Usage:
- *   docker exec selftracker-backend bun run scripts/food-imports/import-usda.ts --limit 10
+ *   docker exec selftracker-backend bun run scripts/food-imports/import-usda.ts --limit 1000
  *   docker exec selftracker-backend bun run scripts/food-imports/import-usda.ts
  */
 
 import { db } from "../../src/db"
-import { foods } from "../../src/db/schema"
 import { sql } from "drizzle-orm"
 import { createReadStream, existsSync } from "fs"
 import { parse } from "csv-parse"
 
 const DATA_DIR = "/tmp/food-imports"
-const BATCH_SIZE = 500
+const BATCH_SIZE = 2000
 
-// USDA nutrient_id -> our table column name
 const NUTRIENT_MAP: Record<string, string> = {
   "1003": "protein",
   "1004": "fat",
@@ -56,157 +53,220 @@ function parseArg(name: string, fallback: string): string {
 }
 
 async function loadCSV(filePath: string): Promise<any[]> {
-  if (!existsSync(filePath)) {
-    console.error(`File not found: ${filePath}`)
-    return []
-  }
+  if (!existsSync(filePath)) { console.error(`Not found: ${filePath}`); return [] }
   const records: any[] = []
   const parser = parse({ columns: true, skip_empty_lines: true })
   return new Promise((resolve, reject) => {
-    parser.on("readable", () => {
-      let record
-      while ((record = parser.read()) !== null) {
-        records.push(record)
-      }
-    })
+    parser.on("readable", () => { let r; while ((r = parser.read()) !== null) records.push(r) })
     parser.on("error", reject)
     parser.on("end", () => resolve(records))
     createReadStream(filePath).pipe(parser)
   })
 }
 
-async function importUSDA(source: string, foodFile: string, nutrientFile: string, limit: number) {
-  console.log(`[USDA] Importing ${source}...`)
+async function importSource(source: string, foodFile: string, nutrientFile: string, limit: number) {
+  console.log(`\n[${source}] Starting import...`)
 
-  // Load foods
   const foodRecords = await loadCSV(foodFile)
-  console.log(`[USDA] Loaded ${foodRecords.length} foods`)
+  console.log(`[${source}] Loaded ${foodRecords.length} foods`)
 
-  // Load nutrients
   const nutrientRecords = await loadCSV(nutrientFile)
-  console.log(`[USDA] Loaded ${nutrientRecords.length} nutrient rows`)
+  console.log(`[${source}] Loaded ${nutrientRecords.length} nutrient rows`)
 
-  // Build nutrient map: fdc_id -> { column: value }
   const nutrientMap = new Map<string, Record<string, number>>()
   for (const n of nutrientRecords) {
-    const fdcId = n.fdc_id
-    const nutrientId = n.nutrient_id
+    const colName = NUTRIENT_MAP[n.nutrient_id]
     const amount = parseFloat(n.amount)
-    const colName = NUTRIENT_MAP[nutrientId]
     if (colName && !isNaN(amount)) {
-      if (!nutrientMap.has(fdcId)) nutrientMap.set(fdcId, {})
-      nutrientMap.get(fdcId)![colName] = amount
+      if (!nutrientMap.has(n.fdc_id)) nutrientMap.set(n.fdc_id, {})
+      nutrientMap.get(n.fdc_id)![colName] = amount
     }
   }
-  console.log(`[USDA] Nutrients mapped for ${nutrientMap.size} foods`)
+  console.log(`[${source}] Nutrients mapped for ${nutrientMap.size} foods`)
 
-  // Import in batches
   let imported = 0
   let errors = 0
-  const maxRecords = limit > 0 ? Math.min(limit, foodRecords.length) : foodRecords.length
+  const max = limit > 0 ? Math.min(limit, foodRecords.length) : foodRecords.length
 
-  for (let i = 0; i < maxRecords; i += BATCH_SIZE) {
+  for (let i = 0; i < max; i += BATCH_SIZE) {
     const batch = foodRecords.slice(i, i + BATCH_SIZE)
-    const values = batch.map(food => {
+
+    const names: string[] = []
+    const categories: (string|null)[] = []
+    const sourceIds: string[] = []
+    const caloriesArr: number[] = []
+    const proteinArr: number[] = []
+    const carbsArr: number[] = []
+    const fatArr: number[] = []
+    const fiberArr: number[] = []
+    const sugarArr: number[] = []
+    const sodiumArr: number[] = []
+    const satFatArr: number[] = []
+    const cholArr: number[] = []
+    const potArr: number[] = []
+    const calciumArr: (number|null)[] = []
+    const ironArr: (number|null)[] = []
+    const magnesiumArr: (number|null)[] = []
+    const phosphorusArr: (number|null)[] = []
+    const zincArr: (number|null)[] = []
+    const copperArr: (number|null)[] = []
+    const manganeseArr: (number|null)[] = []
+    const seleniumArr: (number|null)[] = []
+    const vitaArr: (number|null)[] = []
+    const vitdArr: (number|null)[] = []
+    const viteArr: (number|null)[] = []
+    const vitcArr: (number|null)[] = []
+    const vitb1Arr: (number|null)[] = []
+    const vitb2Arr: (number|null)[] = []
+    const vitb6Arr: (number|null)[] = []
+    const vitb9Arr: (number|null)[] = []
+    const vitb12Arr: (number|null)[] = []
+    const transFatArr: (number|null)[] = []
+    const addedSugarArr: (number|null)[] = []
+    const starchArr: (number|null)[] = []
+    const pubDates: (string|null)[] = []
+
+    for (const food of batch) {
       const n = nutrientMap.get(food.fdc_id) || {}
-      return {
-        nameEn: (food.description || "Unknown").slice(0, 500),
-        nameAr: null as string | null,
-        brand: null as string | null,
-        brandOwner: null as string | null,
-        category: food.food_category_id || null,
-        source: source as "usda_foundation" | "usda_sr_legacy",
-        sourceId: food.fdc_id,
-        barcode: null as string | null,
-        servingSize: 100,
-        servingUnit: "g",
-        calories: n.calories || 0,
-        protein: n.protein || 0,
-        carbs: n.carbs || 0,
-        fat: n.fat || 0,
-        fiber: n.fiber || 0,
-        sugar: n.sugar || 0,
-        sodium: n.sodium || 0,
-        saturatedFat: n.saturated_fat || 0,
-        cholesterol: n.cholesterol || 0,
-        potassium: n.potassium || 0,
-        calcium: n.calcium_100g || null as number | null,
-        phosphorus: n.phosphorus_100g || null as number | null,
-        iron: n.iron_100g || null as number | null,
-        magnesium: n.magnesium_100g || null as number | null,
-        zinc: n.zinc_100g || null as number | null,
-        copper: n.copper_100g || null as number | null,
-        manganese: n.manganese_100g || null as number | null,
-        selenium: n.selenium_100g || null as number | null,
-        iodine: n.iodine_100g || null as number | null,
-        vitaminA: n.vitamin_a_100g || null as number | null,
-        vitaminD: n.vitamin_d_100g || null as number | null,
-        vitaminE: n.vitamin_e_100g || null as number | null,
-        vitaminK: n.vitamin_k_100g || null as number | null,
-        vitaminC: n.vitamin_c_100g || null as number | null,
-        vitaminB1: n.vitamin_b1_100g || null as number | null,
-        vitaminB2: n.vitamin_b2_100g || null as number | null,
-        vitaminB6: n.vitamin_b6_100g || null as number | null,
-        vitaminB9: n.vitamin_b9_100g || null as number | null,
-        vitaminB12: n.vitamin_b12_100g || null as number | null,
-        pantothenicAcid: n.pantothenic_acid_100g || null as number | null,
-        biotin: n.biotin_100g || null as number | null,
-        choline: n.choline_100g || null as number | null,
-        transFat: n.trans_fat_100g || null as number | null,
-        addedSugars: n.added_sugars_100g || null as number | null,
-        starch: n.starch_100g || null as number | null,
-        polyols: n.polyols_100g || null as number | null,
-        solubleFiber: n.soluble_fiber_100g || null as number | null,
-        insolubleFiber: n.insoluble_fiber_100g || null as number | null,
-        salt: n.salt_100g || null as number | null,
-        alcohol: n.alcohol_100g || null as number | null,
-        caffeine: n.caffeine_100g || null as number | null,
-        chloride: n.chloride_100g || null as number | null,
-        publicationDate: food.publication_date || null,
-      }
-    })
+      names.push((food.description || "Unknown").slice(0, 500))
+      categories.push(food.food_category_id || null)
+      sourceIds.push(food.fdc_id)
+      caloriesArr.push(n.calories || 0)
+      proteinArr.push(n.protein || 0)
+      carbsArr.push(n.carbs || 0)
+      fatArr.push(n.fat || 0)
+      fiberArr.push(n.fiber || 0)
+      sugarArr.push(n.sugar || 0)
+      sodiumArr.push(n.sodium || 0)
+      satFatArr.push(n.saturated_fat || 0)
+      cholArr.push(n.cholesterol || 0)
+      potArr.push(n.potassium || 0)
+      calciumArr.push(n.calcium_100g || null)
+      ironArr.push(n.iron_100g || null)
+      magnesiumArr.push(n.magnesium_100g || null)
+      phosphorusArr.push(n.phosphorus_100g || null)
+      zincArr.push(n.zinc_100g || null)
+      copperArr.push(n.copper_100g || null)
+      manganeseArr.push(n.manganese_100g || null)
+      seleniumArr.push(n.selenium_100g || null)
+      vitaArr.push(n.vitamin_a_100g || null)
+      vitdArr.push(n.vitamin_d_100g || null)
+      viteArr.push(n.vitamin_e_100g || null)
+      vitcArr.push(n.vitamin_c_100g || null)
+      vitb1Arr.push(n.vitamin_b1_100g || null)
+      vitb2Arr.push(n.vitamin_b2_100g || null)
+      vitb6Arr.push(n.vitamin_b6_100g || null)
+      vitb9Arr.push(n.vitamin_b9_100g || null)
+      vitb12Arr.push(n.vitamin_b12_100g || null)
+      transFatArr.push(n.trans_fat_100g || null)
+      addedSugarArr.push(n.added_sugars_100g || null)
+      starchArr.push(n.starch_100g || null)
+      pubDates.push(food.publication_date || null)
+    }
 
     try {
-      await db.insert(foods).values(values).onConflictDoNothing({
-        target: [foods.source, foods.sourceId],
-      })
+      await db.execute(sql`
+        INSERT INTO foods (
+          name_en, category, source, source_id,
+          serving_size, serving_unit,
+          calories, protein, carbs, fat, fiber, sugar, sodium,
+          saturated_fat, cholesterol, potassium,
+          calcium_100g, iron_100g, magnesium_100g, phosphorus_100g,
+          zinc_100g, copper_100g, manganese_100g, selenium_100g,
+          vitamin_a_100g, vitamin_d_100g, vitamin_e_100g, vitamin_c_100g,
+          vitamin_b1_100g, vitamin_b2_100g, vitamin_b6_100g,
+          vitamin_b9_100g, vitamin_b12_100g,
+          trans_fat_100g, added_sugars_100g, starch_100g,
+          publication_date
+        )
+        SELECT * FROM UNNEST(
+          ${names}::text[],
+          ${categories}::text[],
+          ${Array(batch.length).fill(source)}::text[],
+          ${sourceIds}::text[],
+          ${Array(batch.length).fill(100)}::real[],
+          ${Array(batch.length).fill("g")}::text[],
+          ${caloriesArr}::real[],
+          ${proteinArr}::real[],
+          ${carbsArr}::real[],
+          ${fatArr}::real[],
+          ${fiberArr}::real[],
+          ${sugarArr}::real[],
+          ${sodiumArr}::real[],
+          ${satFatArr}::real[],
+          ${cholArr}::real[],
+          ${potArr}::real[],
+          ${calciumArr}::real[],
+          ${ironArr}::real[],
+          ${magnesiumArr}::real[],
+          ${phosphorusArr}::real[],
+          ${zincArr}::real[],
+          ${copperArr}::real[],
+          ${manganeseArr}::real[],
+          ${seleniumArr}::real[],
+          ${vitaArr}::real[],
+          ${vitdArr}::real[],
+          ${viteArr}::real[],
+          ${vitcArr}::real[],
+          ${vitb1Arr}::real[],
+          ${vitb2Arr}::real[],
+          ${vitb6Arr}::real[],
+          ${vitb9Arr}::real[],
+          ${vitb12Arr}::real[],
+          ${transFatArr}::real[],
+          ${addedSugarArr}::real[],
+          ${starchArr}::real[],
+          ${pubDates}::date[]
+        ) AS t(
+          name_en, category, source, source_id,
+          serving_size, serving_unit,
+          calories, protein, carbs, fat, fiber, sugar, sodium,
+          saturated_fat, cholesterol, potassium,
+          calcium_100g, iron_100g, magnesium_100g, phosphorus_100g,
+          zinc_100g, copper_100g, manganese_100g, selenium_100g,
+          vitamin_a_100g, vitamin_d_100g, vitamin_e_100g, vitamin_c_100g,
+          vitamin_b1_100g, vitamin_b2_100g, vitamin_b6_100g,
+          vitamin_b9_100g, vitamin_b12_100g,
+          trans_fat_100g, added_sugars_100g, starch_100g,
+          publication_date
+        )
+        ON CONFLICT (source, source_id) DO NOTHING
+      `)
       imported += batch.length
     } catch (err: any) {
       errors += batch.length
-      console.error(`[USDA] Batch error: ${err.message?.slice(0, 200)}`)
+      if (errors <= 3) console.error(`[${source}] Batch error: ${err.message?.slice(0, 150)}`)
     }
 
-    if (imported % 5000 === 0) {
-      console.log(`[USDA] Progress: ${imported} imported, ${errors} errors`)
-    }
+    if (imported % 10000 === 0) console.log(`[${source}] Progress: ${imported} imported`)
   }
 
-  console.log(`\n[USDA] ${source} Complete! Imported: ${imported}, Errors: ${errors}`)
+  console.log(`[${source}] Complete! Imported: ${imported}, Errors: ${errors}`)
 }
 
 async function main() {
   const limit = parseInt(parseArg("--limit", "0"))
 
   console.log("========================================")
-  console.log("  USDA FoodData Central Import")
+  console.log("  USDA FoodData Central Import (Bulk)")
   console.log("========================================")
 
-  await importUSDA(
+  await importSource(
     "usda_foundation",
     `${DATA_DIR}/usda_foundation/FoodData_Central_foundation_food_csv_2026-04-30/food.csv`,
     `${DATA_DIR}/usda_foundation/FoodData_Central_foundation_food_csv_2026-04-30/food_nutrient.csv`,
     limit
   )
 
-  await importUSDA(
+  await importSource(
     "usda_sr_legacy",
     `${DATA_DIR}/usda_sr_legacy/FoodData_Central_sr_legacy_food_csv_2018-04/food.csv`,
     `${DATA_DIR}/usda_sr_legacy/FoodData_Central_sr_legacy_food_csv_2018-04/food_nutrient.csv`,
     limit
   )
 
-  const stats = await db.select({ count: sql<number>`count(*)` }).from(foods)
-  console.log(`\nTotal foods in DB: ${stats[0].count}`)
+  const stats = await db.execute(sql`SELECT count(*) as total FROM foods`)
+  console.log(`\nTotal foods in DB: ${stats[0].total}`)
 }
 
 main().catch(console.error)
