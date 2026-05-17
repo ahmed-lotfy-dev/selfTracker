@@ -10,3 +10,8 @@ services:
       - NODE_ENV=production
       - PORT=8000
     restart: unless-stopped
+    volumes:
+      - food-imports:/tmp/food-imports
+
+volumes:
+  food-imports:
