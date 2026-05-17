@@ -1,13 +1,10 @@
 /**
  * Master Food Database Import Script
- * 1. Truncates all existing data
- * 2. Imports USDA Foundation Foods
- * 3. Imports USDA SR Legacy Foods
- * 4. Imports USDA Branded Foods
+ * Truncates all data, then imports USDA Foundation, SR Legacy, and Branded Foods
  *
  * Usage:
- *   docker exec selftracker-backend bun run scripts/food-imports/import-all.ts
  *   docker exec selftracker-backend bun run scripts/food-imports/import-all.ts --limit 100
+ *   docker exec selftracker-backend bun run scripts/food-imports/import-all.ts
  */
 
 import { db } from "../../src/db"
@@ -16,7 +13,7 @@ import { createReadStream, existsSync } from "fs"
 import { parse } from "csv-parse"
 
 const DATA_DIR = "/tmp/food-imports"
-const BATCH_SIZE = 2000
+const BATCH_SIZE = 500
 
 const USDA_NUTRIENT_MAP: Record<string, string> = {
   "1003": "protein", "1004": "fat", "1005": "carbs", "1008": "calories",
@@ -69,74 +66,65 @@ async function importUSDA(source: string, foodFile: string, nutrientFile: string
       nMap.get(n.fdc_id)![col] = amt
     }
   }
+  console.log(`[${source}] Nutrients mapped for ${nMap.size} foods`)
 
   let imported = 0, errors = 0
   const max = limit > 0 ? Math.min(limit, foods.length) : foods.length
 
   for (let i = 0; i < max; i += BATCH_SIZE) {
     const batch = foods.slice(i, i + BATCH_SIZE)
-    const cols: Record<string, any[]> = {
-      names: [], cats: [], sids: [], cal: [], pro: [], carb: [], fat: [],
-      fib: [], sug: [], sod: [], sat: [], chol: [], pot: [],
-      ca: [], fe: [], mg: [], p: [], zn: [], cu: [], mn: [], se: [],
-      va: [], vd: [], ve: [], vc: [], vb1: [], vb2: [], vb6: [], vb9: [], vb12: [],
-      tf: [], as: [], st: [], pd: [],
-    }
+
+    // Build multi-row INSERT
+    const values: any[] = []
+    const placeholders: string[] = []
+    let paramIdx = 0
+
     for (const f of batch) {
       const n = nMap.get(f.fdc_id) || {}
-      cols.names.push((f.description || "Unknown").slice(0, 500))
-      cols.cats.push(f.food_category_id || null)
-      cols.sids.push(f.fdc_id)
-      cols.cal.push(n.calories || 0); cols.pro.push(n.protein || 0)
-      cols.carb.push(n.carbs || 0); cols.fat.push(n.fat || 0)
-      cols.fib.push(n.fiber || 0); cols.sug.push(n.sugar || 0)
-      cols.sod.push(n.sodium || 0); cols.sat.push(n.saturated_fat || 0)
-      cols.chol.push(n.cholesterol || 0); cols.pot.push(n.potassium || 0)
-      cols.ca.push(n.calcium_100g || null); cols.fe.push(n.iron_100g || null)
-      cols.mg.push(n.magnesium_100g || null); cols.p.push(n.phosphorus_100g || null)
-      cols.zn.push(n.zinc_100g || null); cols.cu.push(n.copper_100g || null)
-      cols.mn.push(n.manganese_100g || null); cols.se.push(n.selenium_100g || null)
-      cols.va.push(n.vitamin_a_100g || null); cols.vd.push(n.vitamin_d_100g || null)
-      cols.ve.push(n.vitamin_e_100g || null); cols.vc.push(n.vitamin_c_100g || null)
-      cols.vb1.push(n.vitamin_b1_100g || null); cols.vb2.push(n.vitamin_b2_100g || null)
-      cols.vb6.push(n.vitamin_b6_100g || null); cols.vb9.push(n.vitamin_b9_100g || null)
-      cols.vb12.push(n.vitamin_b12_100g || null)
-      cols.tf.push(n.trans_fat_100g || null); cols.as.push(n.added_sugars_100g || null)
-      cols.st.push(n.starch_100g || null); cols.pd.push(f.publication_date || null)
+      const row: any[] = [
+        (f.description || "Unknown").slice(0, 500),  // name_en
+        f.food_category_id || null,                   // category
+        source,                                        // source
+        f.fdc_id,                                      // source_id
+        100,                                           // serving_size
+        "g",                                           // serving_unit
+        n.calories || 0, n.protein || 0, n.carbs || 0, n.fat || 0,
+        n.fiber || 0, n.sugar || 0, n.sodium || 0, n.saturated_fat || 0,
+        n.cholesterol || 0, n.potassium || 0,
+        n.calcium_100g || null, n.iron_100g || null, n.magnesium_100g || null,
+        n.phosphorus_100g || null, n.zinc_100g || null, n.copper_100g || null,
+        n.manganese_100g || null, n.selenium_100g || null,
+        n.vitamin_a_100g || null, n.vitamin_d_100g || null, n.vitamin_e_100g || null,
+        n.vitamin_c_100g || null, n.vitamin_b1_100g || null, n.vitamin_b2_100g || null,
+        n.vitamin_b6_100g || null, n.vitamin_b9_100g || null, n.vitamin_b12_100g || null,
+        n.trans_fat_100g || null, n.added_sugars_100g || null, n.starch_100g || null,
+        f.publication_date || null,
+      ]
+      values.push(...row)
+      const ph = row.map(() => `$${++paramIdx}`).join(",")
+      placeholders.push(`(${ph})`)
     }
+
     try {
-      await db.execute(sql`
-        INSERT INTO foods (name_en, category, source, source_id, serving_size, serving_unit,
+      await db.execute(sql.raw(
+        `INSERT INTO foods (
+          name_en, category, source, source_id, serving_size, serving_unit,
           calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium,
           calcium_100g, iron_100g, magnesium_100g, phosphorus_100g, zinc_100g, copper_100g,
           manganese_100g, selenium_100g, vitamin_a_100g, vitamin_d_100g, vitamin_e_100g,
           vitamin_c_100g, vitamin_b1_100g, vitamin_b2_100g, vitamin_b6_100g, vitamin_b9_100g,
-          vitamin_b12_100g, trans_fat_100g, added_sugars_100g, starch_100g, publication_date)
-        SELECT * FROM UNNEST(
-          ${cols.names}::text[], ${cols.cats}::text[], ${Array(batch.length).fill(source)}::text[], ${cols.sids}::text[],
-          ${Array(batch.length).fill(100)}::real[], ${Array(batch.length).fill("g")}::text[],
-          ${cols.cal}::real[], ${cols.pro}::real[], ${cols.carb}::real[], ${cols.fat}::real[],
-          ${cols.fib}::real[], ${cols.sug}::real[], ${cols.sod}::real[], ${cols.sat}::real[],
-          ${cols.chol}::real[], ${cols.pot}::real[], ${cols.ca}::real[], ${cols.fe}::real[],
-          ${cols.mg}::real[], ${cols.p}::real[], ${cols.zn}::real[], ${cols.cu}::real[],
-          ${cols.mn}::real[], ${cols.se}::real[], ${cols.va}::real[], ${cols.vd}::real[],
-          ${cols.ve}::real[], ${cols.vc}::real[], ${cols.vb1}::real[], ${cols.vb2}::real[],
-          ${cols.vb6}::real[], ${cols.vb9}::real[], ${cols.vb12}::real[], ${cols.tf}::real[],
-          ${cols.as}::real[], ${cols.st}::real[], ${cols.pd}::date[]
-        ) AS t(name_en, category, source, source_id, serving_size, serving_unit,
-          calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium,
-          calcium_100g, iron_100g, magnesium_100g, phosphorus_100g, zinc_100g, copper_100g,
-          manganese_100g, selenium_100g, vitamin_a_100g, vitamin_d_100g, vitamin_e_100g,
-          vitamin_c_100g, vitamin_b1_100g, vitamin_b2_100g, vitamin_b6_100g, vitamin_b9_100g,
-          vitamin_b12_100g, trans_fat_100g, added_sugars_100g, starch_100g, publication_date)
-        ON CONFLICT (source, source_id) DO NOTHING
-      `)
+          vitamin_b12_100g, trans_fat_100g, added_sugars_100g, starch_100g, publication_date
+        ) VALUES ${placeholders.join(",")}
+        ON CONFLICT (source, source_id) DO NOTHING`,
+        values
+      ))
       imported += batch.length
     } catch (err: any) {
       errors += batch.length
-      if (errors <= 3) console.error(`[${source}] ${err.message?.slice(0, 120)}`)
+      if (errors <= 5) console.error(`[${source}] ${err.message?.slice(0, 200)}`)
     }
-    if (imported % 10000 === 0) console.log(`[${source}] ${imported} imported`)
+
+    if (imported % 5000 === 0) console.log(`[${source}] ${imported} imported`)
   }
   console.log(`[${source}] Done! ${imported} imported, ${errors} errors`)
 }
@@ -162,49 +150,43 @@ async function importBranded(limit: number) {
 
   for (let i = 0; i < max; i += BATCH_SIZE) {
     const batch = foods.slice(i, i + BATCH_SIZE)
-    const cols: Record<string, any[]> = {
-      fdc:[], names:[], bo:[], bn:[], gtin:[], cat:[], ss:[], su:[], ing:[],
-      cal:[], pro:[], carb:[], fat:[], fib:[], sug:[], sod:[], sat:[], chol:[], pot:[],
-    }
+    const values: any[] = []
+    const placeholders: string[] = []
+    let paramIdx = 0
+
     for (const f of batch) {
       const n = nMap.get(f.fdc_id) || {}
-      cols.fdc.push(f.fdc_id)
-      cols.names.push((f.description || "Unknown").slice(0, 500))
-      cols.bo.push(f.brand_owner || null)
-      cols.bn.push(f.brand_name || null)
-      cols.gtin.push(f.gtin_upc || null)
-      cols.cat.push(f.branded_food_category || null)
-      cols.ss.push(parseFloat(f.serving_size) || null)
-      cols.su.push(f.serving_size_unit || null)
-      cols.ing.push(f.ingredients || null)
-      cols.cal.push(n.calories || 0); cols.pro.push(n.protein || 0)
-      cols.carb.push(n.carbs || 0); cols.fat.push(n.fat || 0)
-      cols.fib.push(n.fiber || 0); cols.sug.push(n.sugar || 0)
-      cols.sod.push(n.sodium || 0); cols.sat.push(n.saturated_fat || 0)
-      cols.chol.push(n.cholesterol || 0); cols.pot.push(n.potassium || 0)
+      const row: any[] = [
+        f.fdc_id, (f.description || "Unknown").slice(0, 500),
+        f.brand_owner || null, f.brand_name || null, f.gtin_upc || null,
+        f.branded_food_category || null, parseFloat(f.serving_size) || null,
+        f.serving_size_unit || null, f.ingredients || null,
+        n.calories || 0, n.protein || 0, n.carbs || 0, n.fat || 0,
+        n.fiber || 0, n.sugar || 0, n.sodium || 0, n.saturated_fat || 0,
+        n.cholesterol || 0, n.potassium || 0,
+      ]
+      values.push(...row)
+      const ph = row.map(() => `$${++paramIdx}`).join(",")
+      placeholders.push(`(${ph})`)
     }
+
     try {
-      await db.execute(sql`
-        INSERT INTO branded_foods (fdc_id, name_en, brand_owner, brand_name, gtin_upc,
+      await db.execute(sql.raw(
+        `INSERT INTO branded_foods (
+          fdc_id, name_en, brand_owner, brand_name, gtin_upc,
           branded_food_category, serving_size, serving_size_unit, ingredients_text,
-          calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium)
-        SELECT * FROM UNNEST(
-          ${cols.fdc}::text[], ${cols.names}::text[], ${cols.bo}::text[], ${cols.bn}::text[],
-          ${cols.gtin}::text[], ${cols.cat}::text[], ${cols.ss}::real[], ${cols.su}::text[],
-          ${cols.ing}::text[], ${cols.cal}::real[], ${cols.pro}::real[], ${cols.carb}::real[],
-          ${cols.fat}::real[], ${cols.fib}::real[], ${cols.sug}::real[], ${cols.sod}::real[],
-          ${cols.sat}::real[], ${cols.chol}::real[], ${cols.pot}::real[]
-        ) AS t(fdc_id, name_en, brand_owner, brand_name, gtin_upc, branded_food_category,
-          serving_size, serving_size_unit, ingredients_text,
-          calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium)
-        ON CONFLICT (fdc_id) DO NOTHING
-      `)
+          calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium
+        ) VALUES ${placeholders.join(",")}
+        ON CONFLICT (fdc_id) DO NOTHING`,
+        values
+      ))
       imported += batch.length
     } catch (err: any) {
       errors += batch.length
-      if (errors <= 3) console.error(`[usda_branded] ${err.message?.slice(0, 120)}`)
+      if (errors <= 5) console.error(`[usda_branded] ${err.message?.slice(0, 200)}`)
     }
-    if (imported % 20000 === 0) console.log(`[usda_branded] ${imported} imported`)
+
+    if (imported % 5000 === 0) console.log(`[usda_branded] ${imported} imported`)
   }
   console.log(`[usda_branded] Done! ${imported} imported, ${errors} errors`)
 }
@@ -216,30 +198,22 @@ async function main() {
   console.log("  Master Food Database Import")
   console.log("========================================")
 
-  // Step 1: Truncate
   console.log("\n[1/4] Truncating existing data...")
   await db.execute(sql`TRUNCATE foods, branded_foods RESTART IDENTITY CASCADE`)
   console.log("[1/4] Done!")
 
-  // Step 2: USDA Foundation
-  console.log("\n[2/4] Importing USDA Foundation Foods...")
   await importUSDA("usda_foundation",
     `${DATA_DIR}/usda_foundation/FoodData_Central_foundation_food_csv_2026-04-30/food.csv`,
     `${DATA_DIR}/usda_foundation/FoodData_Central_foundation_food_csv_2026-04-30/food_nutrient.csv`,
     limit)
 
-  // Step 3: USDA SR Legacy
-  console.log("\n[3/4] Importing USDA SR Legacy Foods...")
   await importUSDA("usda_sr_legacy",
     `${DATA_DIR}/usda_sr_legacy/FoodData_Central_sr_legacy_food_csv_2018-04/food.csv`,
     `${DATA_DIR}/usda_sr_legacy/FoodData_Central_sr_legacy_food_csv_2018-04/food_nutrient.csv`,
     limit)
 
-  // Step 4: USDA Branded
-  console.log("\n[4/4] Importing USDA Branded Foods...")
   await importBranded(limit)
 
-  // Final stats
   const foodCount = await db.execute(sql`SELECT count(*) FROM foods`)
   const brandedCount = await db.execute(sql`SELECT count(*) FROM branded_foods`)
   console.log("\n========================================")
