@@ -5,7 +5,7 @@ async function main() {
   console.log("[Test] Trying simple insert...")
 
   try {
-    const result = await db.insert(foods).values({
+    await db.insert(foods).values({
       nameEn: "Test Food",
       source: "usda_foundation",
       sourceId: "test-123",
@@ -15,12 +15,12 @@ async function main() {
       fat: 5,
     }).onConflictDoNothing({
       target: [foods.source, foods.sourceId],
-    }).returning()
-
-    console.log("[Test] Success:", result)
+    })
+    console.log("[Test] Success!")
   } catch (err: any) {
-    console.error("[Test] Error:", err.message)
+    console.error("[Test] Full error:")
+    console.error(JSON.stringify(err, null, 2))
   }
 }
 
-main().catch(console.error)
+main().catch(e => console.error("Unhandled:", e))
