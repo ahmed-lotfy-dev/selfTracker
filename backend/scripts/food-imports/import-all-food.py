@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-Food Database Import Script
-Reads DATABASE_URL from Docker container via docker exec
+Food Database Import Script - Streaming COPY approach
+Best practices: stream data in chunks, don't load everything into memory
 """
 
 import csv
 import sys
 import os
 import subprocess
+import psycopg2
 from io import StringIO
 
 DATA_DIR = "/tmp/food-imports"
+BATCH_SIZE = 5000  # rows per batch
 
 USDA_NUTRIENT_MAP = {
     "1003": "protein", "1004": "fat", "1005": "carbs", "1008": "calories",
@@ -32,154 +34,188 @@ BRANDED_NUTRIENT_MAP = {
 }
 
 def get_db_url():
-    """Get DATABASE_URL from Docker container"""
     result = subprocess.run(
         ["docker", "exec", "selftracker-backend", "node", "-e", "console.log(process.env.DATABASE_URL)"],
         capture_output=True, text=True
     )
-    url = result.stdout.strip()
-    if not url or "Error" in url:
-        print(f"ERROR getting DB URL: {result.stderr}")
-        sys.exit(1)
-    return url
+    return result.stdout.strip()
 
-def load_csv(filepath):
-    if not os.path.exists(filepath):
-        print(f"Not found: {filepath}")
-        return []
+def val(v, max_len=500):
+    if v is None or str(v).strip() == "" or str(v).strip() == "None":
+        return "\\N"
+    return str(v).replace("\t", " ").replace("\n", " ").replace("\r", "")[:max_len]
+
+def stream_csv(filepath):
+    """Generator that yields rows from CSV file - memory efficient"""
     with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-        return list(csv.DictReader(f))
+        reader = csv.DictReader(f)
+        for row in reader:
+            yield row
 
-def build_nutrient_map(records, nmap):
+def build_nutrient_map_streaming(nutrient_file, nmap):
+    """Build nutrient map by streaming - memory efficient for large files"""
     result = {}
-    for n in records:
-        col = nmap.get(n.get("nutrient_id", ""))
+    count = 0
+    for row in stream_csv(nutrient_file):
+        col = nmap.get(row.get("nutrient_id", ""))
         try:
-            amt = float(n.get("amount", 0))
+            amt = float(row.get("amount", 0))
         except (ValueError, TypeError):
             continue
-        if col:
-            fdc = n.get("fdc_id", "")
+        if col and amt == amt:  # not NaN
+            fdc = row.get("fdc_id", "")
             if fdc not in result:
                 result[fdc] = {}
             result[fdc][col] = amt
+        count += 1
+        if count % 500000 == 0:
+            print(f"  Processed {count} nutrient rows...")
     return result
 
-def val(v):
-    if v is None or str(v).strip() == "" or str(v).strip() == "None":
-        return "\\N"
-    return str(v).replace("\t", " ").replace("\n", " ").replace("\r", "")[:500]
+def copy_batch(cur, table, columns, rows):
+    """Use COPY FROM STDIN for a batch of rows"""
+    buf = StringIO()
+    for row in rows:
+        buf.write("\t".join(str(v) for v in row) + "\n")
+    buf.seek(0)
+    cols = ", ".join(columns)
+    cur.copy_expert(f"COPY {table} ({cols}) FROM STDIN WITH (FORMAT text, NULL '\\N')", buf)
 
 def import_usda(db_url, source, food_file, nutrient_file, limit):
-    print(f"\n[{source}] Loading...")
-    foods = load_csv(food_file)
-    nutrients = load_csv(nutrient_file)
-    print(f"[{source}] {len(foods)} foods, {len(nutrients)} nutrients")
-
-    nmap = build_nutrient_map(nutrients, USDA_NUTRIENT_MAP)
+    print(f"\n[{source}] Building nutrient map (streaming)...")
+    nmap = build_nutrient_map_streaming(nutrient_file, USDA_NUTRIENT_MAP)
     print(f"[{source}] Nutrients mapped for {len(nmap)} foods")
 
-    max_rows = min(limit, len(foods)) if limit > 0 else len(foods)
+    print(f"[{source}] Importing foods (streaming)...")
+    columns = [
+        "name_en", "category", "source", "source_id", "serving_size", "serving_unit",
+        "calories", "protein", "carbs", "fat", "fiber", "sugar", "sodium",
+        "saturated_fat", "cholesterol", "potassium",
+        "calcium_100g", "iron_100g", "magnesium_100g", "phosphorus_100g",
+        "zinc_100g", "copper_100g", "manganese_100g", "selenium_100g",
+        "vitamin_a_100g", "vitamin_d_100g", "vitamin_e_100g", "vitamin_c_100g",
+        "vitamin_b1_100g", "vitamin_b2_100g", "vitamin_b6_100g",
+        "vitamin_b9_100g", "vitamin_b12_100g",
+        "trans_fat_100g", "added_sugars_100g", "starch_100g", "publication_date"
+    ]
 
-    lines = []
-    for i in range(max_rows):
-        f = foods[i]
-        n = nmap.get(f.get("fdc_id", ""), {})
-        lines.append("\t".join([
-            val(f.get("description", "Unknown")),
-            val(f.get("food_category_id")),
-            source,
-            val(f.get("fdc_id")),
-            "100", "g",
-            str(n.get("calories", 0)), str(n.get("protein", 0)),
-            str(n.get("carbs", 0)), str(n.get("fat", 0)),
-            str(n.get("fiber", 0)), str(n.get("sugar", 0)),
-            str(n.get("sodium", 0)), str(n.get("saturated_fat", 0)),
-            str(n.get("cholesterol", 0)), str(n.get("potassium", 0)),
-            val(n.get("calcium_100g")), val(n.get("iron_100g")),
-            val(n.get("magnesium_100g")), val(n.get("phosphorus_100g")),
-            val(n.get("zinc_100g")), val(n.get("copper_100g")),
-            val(n.get("manganese_100g")), val(n.get("selenium_100g")),
-            val(n.get("vitamin_a_100g")), val(n.get("vitamin_d_100g")),
-            val(n.get("vitamin_e_100g")), val(n.get("vitamin_c_100g")),
-            val(n.get("vitamin_b1_100g")), val(n.get("vitamin_b2_100g")),
-            val(n.get("vitamin_b6_100g")), val(n.get("vitamin_b9_100g")),
-            val(n.get("vitamin_b12_100g")), val(n.get("trans_fat_100g")),
-            val(n.get("added_sugars_100g")), val(n.get("starch_100g")),
-            val(f.get("publication_date")),
-        ]))
-
-    import psycopg2
     conn = psycopg2.connect(db_url)
     cur = conn.cursor()
 
-    try:
-        buf = StringIO("\n".join(lines) + "\n")
-        cur.copy_expert("""
-            COPY foods (name_en, category, source, source_id, serving_size, serving_unit,
-                calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium,
-                calcium_100g, iron_100g, magnesium_100g, phosphorus_100g, zinc_100g, copper_100g,
-                manganese_100g, selenium_100g, vitamin_a_100g, vitamin_d_100g, vitamin_e_100g,
-                vitamin_c_100g, vitamin_b1_100g, vitamin_b2_100g, vitamin_b6_100g, vitamin_b9_100g,
-                vitamin_b12_100g, trans_fat_100g, added_sugars_100g, starch_100g, publication_date)
-            FROM STDIN WITH (FORMAT text, NULL '\\N')
-        """, buf)
-        conn.commit()
-        print(f"[{source}] Imported {max_rows} rows")
-    except Exception as e:
-        conn.rollback()
-        print(f"[{source}] ERROR: {str(e)[:300]}")
-    finally:
-        conn.close()
+    batch = []
+    imported = 0
+    total = 0
+
+    for food in stream_csv(food_file):
+        if limit > 0 and total >= limit:
+            break
+        n = nmap.get(food.get("fdc_id", ""), {})
+        batch.append([
+            val(food.get("description", "Unknown")),
+            val(food.get("food_category_id")),
+            source,
+            val(food.get("fdc_id")),
+            100, "g",
+            n.get("calories", 0), n.get("protein", 0), n.get("carbs", 0), n.get("fat", 0),
+            n.get("fiber", 0), n.get("sugar", 0), n.get("sodium", 0),
+            n.get("saturated_fat", 0), n.get("cholesterol", 0), n.get("potassium", 0),
+            n.get("calcium_100g"), n.get("iron_100g"), n.get("magnesium_100g"),
+            n.get("phosphorus_100g"), n.get("zinc_100g"), n.get("copper_100g"),
+            n.get("manganese_100g"), n.get("selenium_100g"),
+            n.get("vitamin_a_100g"), n.get("vitamin_d_100g"), n.get("vitamin_e_100g"),
+            n.get("vitamin_c_100g"), n.get("vitamin_b1_100g"), n.get("vitamin_b2_100g"),
+            n.get("vitamin_b6_100g"), n.get("vitamin_b9_100g"), n.get("vitamin_b12_100g"),
+            n.get("trans_fat_100g"), n.get("added_sugars_100g"), n.get("starch_100g"),
+            val(food.get("publication_date")),
+        ])
+        total += 1
+
+        if len(batch) >= BATCH_SIZE:
+            try:
+                copy_batch(cur, "foods", columns, batch)
+                conn.commit()
+                imported += len(batch)
+                print(f"[{source}] {imported} imported...")
+            except Exception as e:
+                conn.rollback()
+                print(f"[{source}] ERROR: {str(e)[:200]}")
+            batch = []
+
+    # Final batch
+    if batch:
+        try:
+            copy_batch(cur, "foods", columns, batch)
+            conn.commit()
+            imported += len(batch)
+        except Exception as e:
+            conn.rollback()
+            print(f"[{source}] ERROR: {str(e)[:200]}")
+
+    conn.close()
+    print(f"[{source}] Done! {imported} imported")
 
 def import_branded(db_url, branded_food_file, nutrient_file, limit):
-    print(f"\n[usda_branded] Loading...")
-    foods = load_csv(branded_food_file)
-    nutrients = load_csv(nutrient_file)
-    print(f"[usda_branded] {len(foods)} foods, {len(nutrients)} nutrients")
+    print(f"\n[usda_branded] Building nutrient map (streaming)...")
+    nmap = build_nutrient_map_streaming(nutrient_file, BRANDED_NUTRIENT_MAP)
+    print(f"[usda_branded] Nutrients mapped for {len(nmap)} foods")
 
-    nmap = build_nutrient_map(nutrients, BRANDED_NUTRIENT_MAP)
-    max_rows = min(limit, len(foods)) if limit > 0 else len(foods)
+    print(f"[usda_branded] Importing branded foods (streaming)...")
+    columns = [
+        "fdc_id", "name_en", "brand_owner", "brand_name", "gtin_upc",
+        "branded_food_category", "serving_size", "serving_size_unit", "ingredients_text",
+        "calories", "protein", "carbs", "fat", "fiber", "sugar", "sodium",
+        "saturated_fat", "cholesterol", "potassium"
+    ]
 
-    lines = []
-    for i in range(max_rows):
-        f = foods[i]
-        n = nmap.get(f.get("fdc_id", ""), {})
-        try:
-            sv = str(float(f["serving_size"])) if f.get("serving_size") and float(f["serving_size"]) == float(f["serving_size"]) else "\\N"
-        except:
-            sv = "\\N"
-        lines.append("\t".join([
-            val(f.get("fdc_id")), val(f.get("description", "Unknown")),
-            val(f.get("brand_owner")), val(f.get("brand_name")),
-            val(f.get("gtin_upc")), val(f.get("branded_food_category")),
-            sv, val(f.get("serving_size_unit")),
-            val((f.get("ingredients") or "")[:1000]),
-            str(n.get("calories", 0)), str(n.get("protein", 0)),
-            str(n.get("carbs", 0)), str(n.get("fat", 0)),
-            str(n.get("fiber", 0)), str(n.get("sugar", 0)),
-            str(n.get("sodium", 0)), str(n.get("saturated_fat", 0)),
-            str(n.get("cholesterol", 0)), str(n.get("potassium", 0)),
-        ]))
-
-    import psycopg2
     conn = psycopg2.connect(db_url)
     cur = conn.cursor()
-    try:
-        buf = StringIO("\n".join(lines) + "\n")
-        cur.copy_expert("""
-            COPY branded_foods (fdc_id, name_en, brand_owner, brand_name, gtin_upc,
-                branded_food_category, serving_size, serving_size_unit, ingredients_text,
-                calories, protein, carbs, fat, fiber, sugar, sodium, saturated_fat, cholesterol, potassium)
-            FROM STDIN WITH (FORMAT text, NULL '\\N')
-        """, buf)
-        conn.commit()
-        print(f"[usda_branded] Imported {max_rows} rows")
-    except Exception as e:
-        conn.rollback()
-        print(f"[usda_branded] ERROR: {str(e)[:300]}")
-    finally:
-        conn.close()
+
+    batch = []
+    imported = 0
+    total = 0
+
+    for food in stream_csv(branded_food_file):
+        if limit > 0 and total >= limit:
+            break
+        n = nmap.get(food.get("fdc_id", ""), {})
+        try:
+            sv = str(float(food["serving_size"])) if food.get("serving_size") else "\\N"
+        except:
+            sv = "\\N"
+        batch.append([
+            val(food.get("fdc_id")), val(food.get("description", "Unknown")),
+            val(food.get("brand_owner")), val(food.get("brand_name")),
+            val(food.get("gtin_upc")), val(food.get("branded_food_category")),
+            sv, val(food.get("serving_size_unit")),
+            val((food.get("ingredients") or "")[:1000]),
+            n.get("calories", 0), n.get("protein", 0), n.get("carbs", 0), n.get("fat", 0),
+            n.get("fiber", 0), n.get("sugar", 0), n.get("sodium", 0),
+            n.get("saturated_fat", 0), n.get("cholesterol", 0), n.get("potassium", 0),
+        ])
+        total += 1
+
+        if len(batch) >= BATCH_SIZE:
+            try:
+                copy_batch(cur, "branded_foods", columns, batch)
+                conn.commit()
+                imported += len(batch)
+                print(f"[usda_branded] {imported} imported...")
+            except Exception as e:
+                conn.rollback()
+                print(f"[usda_branded] ERROR: {str(e)[:200]}")
+            batch = []
+
+    if batch:
+        try:
+            copy_batch(cur, "branded_foods", columns, batch)
+            conn.commit()
+            imported += len(batch)
+        except Exception as e:
+            conn.rollback()
+            print(f"[usda_branded] ERROR: {str(e)[:200]}")
+
+    conn.close()
+    print(f"[usda_branded] Done! {imported} imported")
 
 def main():
     limit = 0
@@ -189,15 +225,14 @@ def main():
             break
 
     print("=" * 50)
-    print("  Food Database Import (Python COPY)")
+    print("  Food Database Import (Streaming COPY)")
     print("=" * 50)
 
     db_url = get_db_url()
-    print(f"DB URL: {db_url[:50]}...")
+    print(f"DB: {db_url[:60]}...")
 
     # Truncate
     print("\n[1/4] Truncating...")
-    import psycopg2
     conn = psycopg2.connect(db_url)
     cur = conn.cursor()
     cur.execute("TRUNCATE foods, branded_foods RESTART IDENTITY CASCADE")
