@@ -7,6 +7,7 @@
       "dependencies": {
         "@better-auth/expo": "1.4.9",
         "@expo/vector-icons": "^15.1.1",
+        "@journeyapps/react-native-quick-sqlite": "^2.5.2",
         "@paralleldrive/cuid2": "^3.3.0",
         "@powersync/op-sqlite": "^0.9.8",
         "@powersync/react-native": "^1.35.1",
@@ -490,6 +491,8 @@
     "@jest/transform": ["@jest/transform@29.7.0", "", { "dependencies": { "@babel/core": "^7.11.6", "@jest/types": "^29.6.3", "@jridgewell/trace-mapping": "^0.3.18", "babel-plugin-istanbul": "^6.1.1", "chalk": "^4.0.0", "convert-source-map": "^2.0.0", "fast-json-stable-stringify": "^2.1.0", "graceful-fs": "^4.2.9", "jest-haste-map": "^29.7.0", "jest-regex-util": "^29.6.3", "jest-util": "^29.7.0", "micromatch": "^4.0.4", "pirates": "^4.0.4", "slash": "^3.0.0", "write-file-atomic": "^4.0.2" } }, ""],
 
     "@jest/types": ["@jest/types@29.6.3", "", { "dependencies": { "@jest/schemas": "^29.6.3", "@types/istanbul-lib-coverage": "^2.0.0", "@types/istanbul-reports": "^3.0.0", "@types/node": "*", "@types/yargs": "^17.0.8", "chalk": "^4.0.0" } }, ""],
+
+    "@journeyapps/react-native-quick-sqlite": ["@journeyapps/react-native-quick-sqlite@2.5.2", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-fMv+Lq+tK9HHbrgBc2pP1JcGtRSOyY6oHCcgmWhengw/ryCry5p+RUjbpsFrCxU1lw8T4B+VrQ6U9Hhysgkseg=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, ""],
 

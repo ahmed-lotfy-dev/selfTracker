@@ -19,6 +19,7 @@
   "dependencies": {
     "@better-auth/expo": "1.4.9",
     "@expo/vector-icons": "^15.1.1",
+    "@journeyapps/react-native-quick-sqlite": "^2.5.2",
     "@paralleldrive/cuid2": "^3.3.0",
     "@powersync/op-sqlite": "^0.9.8",
     "@powersync/react-native": "^1.35.1",
