@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
+import { getTasks } from '@/src/lib/api/tasksApi'
 import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 import { nowISO, todayLocal } from '@/src/lib/dateUtils'
 

@@ -1,6 +1,6 @@
 import React from "react"
 import { View, Text, Pressable, Platform } from "react-native"
-import DateTimePicker from "@expo/ui/datetimepicker"
+import DateTimePicker from "@react-native-community/datetimepicker"
 import { Section } from "@/src/components/ui/Section"
 import Row from "@/src/components/ui/Row"
 import Input from "@/src/components/ui/Input"

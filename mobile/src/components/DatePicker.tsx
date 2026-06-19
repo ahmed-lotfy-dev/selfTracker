@@ -1,6 +1,6 @@
 import React from "react"
 import { Platform, Modal, Pressable, Text, View } from "react-native"
-import DateTimePicker from "@expo/ui/datetimepicker"
+import DateTimePicker from "@react-native-community/datetimepicker"
 import { useThemeColors } from "@/src/constants/Colors"
 import { PremiumCard } from "./ui/PremiumCard"
 
@@ -21,13 +21,12 @@ export default function DatePicker({
 
   if (!visible) return null
 
-  // Use modal on iOS for better UX, native inline on Android
   if (Platform.OS === 'ios') {
     return (
       <Modal visible={visible} transparent animationType="fade">
         <Pressable className="flex-1 justify-end bg-black/60" onPress={onClose}>
           <Pressable onPress={(e) => e.stopPropagation()}>
-            <PremiumCard 
+            <PremiumCard
               containerStyle="m-4 p-4 border-white/10"
               gradientColors={['rgba(30,30,30,1)', 'rgba(15,15,15,1)']}
             >
@@ -40,9 +39,9 @@ export default function DatePicker({
               <DateTimePicker
                 value={date}
                 mode="date"
-                display="inline"
+                display="spinner"
                 themeVariant="dark"
-                onChange={(event, selectedDate) => {
+                onChange={(event: any, selectedDate: Date | undefined) => {
                   if (selectedDate) onChange(selectedDate)
                 }}
               />
@@ -53,13 +52,12 @@ export default function DatePicker({
     )
   }
 
-  // Android - use native picker directly
   return (
     <DateTimePicker
       value={date}
       mode="date"
       display="default"
-      onChange={(event, selectedDate) => {
+      onChange={(event: any, selectedDate: Date | undefined) => {
         if (event.type === 'set' && selectedDate) {
           onChange(selectedDate)
         }
