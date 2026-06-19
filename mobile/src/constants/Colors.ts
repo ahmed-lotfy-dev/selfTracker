@@ -55,17 +55,17 @@ export function useThemeColors() {
 // Keep legacy constant for non-hook usage if absolutely needed (fallback to light theme defaults)
 // But prefer the hook above for dynamic themes
 export const COLORS = {
-  primary: "#10B981",
-  secondary: "#34D399",
-  background: "#F0FDF4",
-  text: "#064E3B",
+  primary: "#059669",
+  secondary: "#10B981",
+  background: "#F0F2F5",
+  text: "#1A1D23",
   gray: "#6B7280",
-  border: "#D1FAE5",
-  error: "#EF4444",
-  success: "#10B981",
-  placeholder: "#6EE7B7",
+  border: "#E2E5E9",
+  error: "#DC2626",
+  success: "#059669",
+  placeholder: "#9CA3AF",
   darkGreen: "#064E3B",
-  inputText: "#064E3B",
+  inputText: "#1A1D23",
 }
 
 export const Colors = {

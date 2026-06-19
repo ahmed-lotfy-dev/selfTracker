@@ -5,55 +5,55 @@
    :root {
       @variant light {
          /* ── Brand ────────────────────────────── */
-         --color-primary: #10B981;
-         --color-primary-dark: #059669;
-         --color-secondary: #34D399;
+         --color-primary: #059669;
+         --color-primary-dark: #047857;
+         --color-secondary: #10B981;
 
          /* ── Surfaces ──────────────────────────── */
-         --color-background: #F9FAFB;
+         --color-background: #F0F2F5;
          --color-surface: #FFFFFF;
          --color-surface-elevated: #FFFFFF;
          --color-card: #FFFFFF;
          --color-overlay: rgba(0, 0, 0, 0.4);
 
          /* ── Text ──────────────────────────────── */
-         --color-text: #111827;
-         --color-text-secondary: #4B5563;
+         --color-text: #1A1D23;
+         --color-text-secondary: #5F6B7A;
          --color-text-muted: #9CA3AF;
-         --color-foreground: #111827;
+         --color-foreground: #1A1D23;
 
-         --color-border: #E5E7EB;
+         --color-border: #E2E5E9;
          --color-placeholder: #9CA3AF;
 
          /* ── Inputs ────────────────────────────── */
-         --color-input-background: #FFFFFF;
-         --color-input-text: #111827;
+         --color-input-background: #F7F8FA;
+         --color-input-text: #1A1D23;
 
          /* ── Feedback ──────────────────────────── */
-         --color-success: #10B981;
-         --color-warning: #F59E0B;
-         --color-error: #EF4444;
-         --color-info: #3B82F6;
+         --color-success: #059669;
+         --color-warning: #D97706;
+         --color-error: #DC2626;
+         --color-info: #2563EB;
 
          /* ── Charts / Stats ────────────────────── */
-         --color-stat-primary: #10B981;
-         --color-stat-secondary: #0EA5E9;
-         --color-stat-tertiary: #F59E0B;
-         --color-stat-quaternary: #6366F1;
+         --color-stat-primary: #059669;
+         --color-stat-secondary: #0284C7;
+         --color-stat-tertiary: #D97706;
+         --color-stat-quaternary: #7C3AED;
 
          /* ── Social ────────────────────────────── */
          --color-social-google: #4285F4;
          --color-social-github: #18181B;
 
          /* ── Legacy ────────────────────────────── */
-         --color-tint: #10B981;
+         --color-tint: #059669;
          --color-icon: #6B7280;
          --color-tabIconDefault: #9CA3AF;
-         --color-tabIconSelected: #10B981;
+         --color-tabIconSelected: #059669;
          --color-gray: #6B7280;
          --color-darkGreen: #065F46;
          --color-lightGreen: #D1FAE5;
-         --color-inputText: #111827;
+         --color-inputText: #1A1D23;
       }
 
       @variant dark {
