@@ -185,7 +185,10 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
         })
       }
     } catch (e) {
-      console.error('Failed to fetch workout logs:', e)
+      // eslint-disable-next-line no-console
+      if (typeof console !== 'undefined' && console.error) {
+        console.error('Failed to fetch workout logs:', e)
+      }
     } finally {
       set({ isLoading: false })
     }

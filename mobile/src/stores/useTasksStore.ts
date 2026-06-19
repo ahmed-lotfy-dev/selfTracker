@@ -72,7 +72,10 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       saveTasks(unique)
       set({ tasks: unique })
     } catch (e) {
-      console.error('Failed to fetch tasks:', e)
+      // eslint-disable-next-line no-console
+      if (typeof console !== 'undefined' && console.error) {
+        console.error('Failed to fetch tasks:', e)
+      }
     } finally {
       set({ isLoading: false })
     }
