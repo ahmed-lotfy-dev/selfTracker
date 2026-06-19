@@ -1,6 +1,5 @@
 import React from "react"
-import { View, Text, Pressable, Image } from "react-native"
-import { DrawerContentComponentProps, DrawerContentScrollView } from "@react-navigation/drawer"
+import { View, Text, Pressable, Image, ScrollView } from "react-native"
 import { Feather, FontAwesome5, Ionicons } from "@expo/vector-icons"
 import { useRouter, usePathname } from "expo-router"
 import { useThemeColors } from "@/src/constants/Colors"
@@ -15,7 +14,7 @@ interface MenuItem {
   pending?: boolean
 }
 
-export default function CustomDrawerContent(props: DrawerContentComponentProps) {
+export default function CustomDrawerContent({ navigation }: any) {
   const colors = useThemeColors()
   const router = useRouter()
   const pathname = usePathname().replace(/\/$/, "")
@@ -61,7 +60,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
             key={index}
             onPress={() => {
               if (item?.pending) return
-              props.navigation.closeDrawer()
+              navigation.closeDrawer()
               router.push(item.route as any)
             }}
             className={`flex-row items-center px-4 py-2 mb-0.5 rounded-xl active:bg-card/80 ${active ? "bg-primary/10" : "bg-transparent"}`}
@@ -98,9 +97,9 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-3">
             <View className="w-12 h-12 rounded-[18px] overflow-hidden border-2 border-primary/20 bg-card items-center justify-center">
-              <Image 
-                source={require("@/assets/images/logo.png")} 
-                className="w-full h-full" 
+              <Image
+                source={require("@/assets/images/logo.png")}
+                className="w-full h-full"
                 resizeMode="contain"
               />
             </View>
@@ -115,9 +114,9 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
               </Text>
             </View>
           </View>
-          
-          <Pressable 
-            onPress={() => props.navigation.closeDrawer()}
+
+          <Pressable
+            onPress={() => navigation.closeDrawer()}
             className="w-8 h-8 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
             style={{ marginRight: 4 }}
           >
@@ -126,14 +125,14 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
         </View>
       </View>
 
-      <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 0 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: 0 }}>
         <View className="px-3 pb-10">
           {renderSection("Navigation", navigationItems, false)}
           {renderSection("Tracking", trackingItems)}
           {renderSection("Experimental", comingSoonItems)}
           {renderSection("System", systemItems)}
         </View>
-      </DrawerContentScrollView>
+      </ScrollView>
     </View>
   )
 }
