@@ -3,6 +3,7 @@ import {
   View,
   Text,
   ScrollView,
+  ScrollViewInstance,
   Pressable,
   RefreshControl,
   KeyboardAvoidingView,
@@ -32,7 +33,7 @@ export default function AnalyticsTab() {
   const [streamingContent, setStreamingContent] = useState('')
   const [showChat, setShowChat] = useState(false)
   const abortRef = useRef<(() => void) | null>(null)
-  const scrollRef = useRef<ScrollView>(null)
+  const scrollRef = useRef<ScrollViewInstance>(null)
 
   const loadInsights = useCallback(async (isRefresh = false) => {
     try {

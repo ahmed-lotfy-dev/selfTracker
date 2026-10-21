@@ -3,7 +3,7 @@ import { View, StyleSheet, Pressable } from "react-native"
 import Entypo from "@expo/vector-icons/Entypo"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
-import { Route, useRouter } from "expo-router"
+import { Href, useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import Animated, {
   useAnimatedStyle,
@@ -41,7 +41,7 @@ export default function AddButton({
   }
 
   const handlePress = () => {
-    router.push(`${path}/add` as Route)
+    router.push(`${path}/add` as Href)
   }
 
   return (

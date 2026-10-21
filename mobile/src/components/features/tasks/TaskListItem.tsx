@@ -1,9 +1,9 @@
-import { View, Text, Pressable, TextInput } from "react-native"
+import { View, Text, Pressable, TextInput, TextInputInstance } from "react-native"
 import Animated, { FadeIn, FadeOutRight, LinearTransition } from "react-native-reanimated"
 import React, { useState, useRef } from "react"
 import { MaterialIcons, Ionicons } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
-import { Swipeable } from "react-native-gesture-handler"
+import ReanimatedSwipeable, { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
 import { useTasksStore } from "@/src/stores/useTasksStore"
 import { PremiumCard } from "../../ui/PremiumCard"
@@ -24,8 +24,8 @@ interface TaskListItemProps {
 export default function TaskListItem({ task, index = 0, onToggle }: TaskListItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState(task.title)
-  const inputRef = useRef<TextInput>(null)
-  const swipeableRef = useRef<Swipeable>(null)
+  const inputRef = useRef<TextInputInstance>(null)
+  const swipeableRef = useRef<SwipeableMethods>(null)
   const colors = useThemeColors()
   const { showAlert } = useAlertStore()
 
@@ -97,7 +97,7 @@ export default function TaskListItem({ task, index = 0, onToggle }: TaskListItem
       layout={LinearTransition.duration(400)}
       className="px-2"
     >
-      <Swipeable
+      <ReanimatedSwipeable
         ref={swipeableRef}
         renderRightActions={renderRightActions}
         containerStyle={{ marginBottom: 12 }}
@@ -161,7 +161,7 @@ export default function TaskListItem({ task, index = 0, onToggle }: TaskListItem
             </View>
           </View>
         </PremiumCard>
-      </Swipeable>
+      </ReanimatedSwipeable>
     </Animated.View>
   )
 }

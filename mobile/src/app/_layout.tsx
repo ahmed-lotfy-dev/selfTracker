@@ -29,11 +29,7 @@ function RootLayout() {
 
   return (
     <RootProvider>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent={true}
-      />
+      <StatusBar barStyle="light-content" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />

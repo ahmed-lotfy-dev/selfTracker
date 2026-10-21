@@ -1,12 +1,12 @@
 import { View, Text } from "react-native"
 import React from "react"
-import { Link, Route } from "expo-router"
+import { Link, Href } from "expo-router"
 import { AntDesign } from "@expo/vector-icons"
 import { useThemeColors } from "@/src/constants/Colors"
 
 interface CardHeaderProps {
   title: string
-  route: Route
+  route: Href
 }
 export const CardHeader = ({ title, route }: CardHeaderProps) => {
   const colors = useThemeColors()

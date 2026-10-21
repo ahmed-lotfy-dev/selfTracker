@@ -15,10 +15,7 @@ export default function DrawerToggleButton() {
       navigation.dispatch({ type: "TOGGLE_DRAWER" });
     } catch {
       // fallback: try calling toggleDrawer directly
-      // @ts-ignore
-      if (typeof navigation.toggleDrawer === "function") {
-        navigation.toggleDrawer();
-      }
+      (navigation as { toggleDrawer?: () => void }).toggleDrawer?.();
     }
   };
 

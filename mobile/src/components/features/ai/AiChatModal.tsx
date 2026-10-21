@@ -4,6 +4,7 @@ import {
   Text,
   Pressable,
   ScrollView,
+  ScrollViewInstance,
   KeyboardAvoidingView,
   StyleSheet,
   BackHandler,
@@ -28,7 +29,7 @@ interface AiChatModalProps {
 
 export default function AiChatModal({ visible, onClose }: AiChatModalProps) {
   const insets = useSafeAreaInsets()
-  const scrollRef = useRef<ScrollView>(null)
+  const scrollRef = useRef<ScrollViewInstance>(null)
   const abortRef = useRef<(() => void) | null>(null)
   const requestIdRef = useRef(0)
 

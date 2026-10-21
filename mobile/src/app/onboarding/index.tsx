@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  ViewToken,
+  ListViewToken,
   Platform,
 } from "react-native"
 import { useRouter, Stack } from "expo-router"
@@ -54,9 +54,10 @@ export default function OnboardingScreen() {
   })
 
   const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems[0] && viewableItems[0].index !== null) {
-        setCurrentIndex(viewableItems[0].index)
+    ({ viewableItems }: { viewableItems: ListViewToken[] }) => {
+      const index = viewableItems[0]?.index
+      if (typeof index === "number" && index !== null) {
+        setCurrentIndex(index)
       }
     }
   ).current

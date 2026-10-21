@@ -1,5 +1,5 @@
 import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { View, TextInput, Text } from 'react-native';
+import { View, TextInput, TextInputInstance, Text } from 'react-native';
 import { COLORS } from '@/src/constants/Colors';
 
 interface OTPInputProps {
@@ -15,7 +15,7 @@ export interface OTPInputRef {
 
 const OTPInput = forwardRef<OTPInputRef, OTPInputProps>(({ length = 6, onChange, error }, ref) => {
   const [otp, setOtp] = useState<string[]>(Array(length).fill(''));
-  const inputs = useRef<(TextInput | null)[]>([]);
+  const inputs = useRef<(TextInputInstance | null)[]>([]);
 
   useImperativeHandle(ref, () => ({
     focus: (index = 0) => {
