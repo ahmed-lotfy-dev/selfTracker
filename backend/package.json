@@ -22,6 +22,7 @@
     "@hono/zod-openapi": "^1.4.0",
     "@hono/zod-validator": "^0.8.0",
     "@neondatabase/serverless": "^1.1.0",
+    "@rocicorp/zero": "^1.11.3",
     "@scalar/hono-api-reference": "^0.10.14",
     "@scalar/openapi-to-markdown": "^0.5.14",
     "@types/jsonwebtoken": "^9.0.10",

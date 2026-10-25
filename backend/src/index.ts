@@ -15,6 +15,7 @@ import habitsRouter from "./routes/habits.js"
 import nutritionRouter from "./routes/nutrition.js"
 import foodRouter from "./routes/foods.js"
 import aiRouter from "./routes/ai.js"
+import zeroRouter from "./routes/zero.js"
 import desktopCallbackRouter from "./routes/desktopCallback.js"
 import desktopAuthRouter from "./routes/desktopAuth.js"
 import { auth } from "../lib/auth.js"
@@ -67,6 +68,10 @@ app.route("/api/workouts", workoutsRouter) // Workout templates are public
 
 // Food database search — public (used by mobile app for food lookup)
 app.route("/api/foods", foodRouter)
+
+// Zero sync engine — self-authenticated (zero-cache forwards the Bearer token;
+// these endpoints do their own session check and 401 drives Zero's needs-auth)
+app.route("/api/zero", zeroRouter)
 
 // Auth middleware for all other API routes (except /api/auth/*)
 app.use("/api/*", authMiddleware)
