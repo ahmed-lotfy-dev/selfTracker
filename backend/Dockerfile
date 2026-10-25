@@ -1,5 +1,5 @@
-# Use official Bun image
-FROM oven/bun:1 as base
+# Use official Bun image (PINNED — floating 1 tag regenerates bun.lockb and breaks --frozen-lockfile)
+FROM oven/bun:1.3.14 AS base
 
 WORKDIR /app
 
