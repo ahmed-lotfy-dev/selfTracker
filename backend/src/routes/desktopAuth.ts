@@ -9,7 +9,7 @@ desktopAuthRouter.get("/desktop/:provider", async (c) => {
   const callbackURL = c.req.query("callbackURL") || "selftracker://auth"
   try {
     const body = JSON.stringify({ provider, callbackURL })
-    const host = c.req.header("host") || "selftracker.ahmedlotfy.site"
+    const host = c.req.header("host") || "selftracker.alotfy.site"
     const url = `https://${host}/api/auth/sign-in/social`
     const headers = new Headers(c.req.raw.headers)
     headers.set("Content-Type", "application/json")

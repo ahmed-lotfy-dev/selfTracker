@@ -43,7 +43,7 @@ app.use(
       "http://localhost:5173", // Vite local
       "http://localhost:8000", // Local backend
       "http://localhost:8081", // Expo dev
-      "https://selftracker.ahmedlotfy.site", // Production
+      "https://selftracker.alotfy.site", // Production
     ],
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "UPDATE", "DELETE", "PATCH", "OPTIONS"],

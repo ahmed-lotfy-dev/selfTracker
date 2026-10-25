@@ -32,7 +32,7 @@ When rate limited, the API returns \`429 Too Many Requests\` with a \`retryAfter
     }
   },
   servers: [
-    { url: 'https://selftracker.ahmedlotfy.site', description: 'Production' }
+    { url: 'https://selftracker.alotfy.site', description: 'Production' }
   ],
   components: {
     securitySchemes: {

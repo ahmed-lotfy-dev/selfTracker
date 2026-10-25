@@ -2,7 +2,7 @@ import axios from "axios"
 
 const TOKEN_KEY = "selftracker.session_token"
 
-export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://selftracker.ahmedlotfy.site"
+export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://selftracker.alotfy.site"
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)

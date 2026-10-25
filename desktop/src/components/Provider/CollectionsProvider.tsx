@@ -55,7 +55,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
         const { createCollection } = await import('@tanstack/react-db');
         const { electricCollectionOptions } = await import('@tanstack/electric-db-collection');
 
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? "https://selftracker.ahmedlotfy.site" : "http://localhost:8000");
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? "https://selftracker.alotfy.site" : "http://localhost:8000");
 
         const createLocalCollection = (id: string, schema: any) => {
           const key = `local_collection_${id}`;

@@ -52,7 +52,7 @@ This document provides step-by-step instructions for testing the social authenti
    **Important Notes:**
    - The redirect URL must be configured in your OAuth provider settings
    - For production, update `BETTER_AUTH_URL` in backend `.env` to match your domain
-   - Example: `BETTER_AUTH_URL=https://selftracker.ahmedlotfy.site`
+   - Example: `BETTER_AUTH_URL=https://selftracker.alotfy.site`
 
 
 ### Mobile App Setup

@@ -23,7 +23,7 @@ export const projectsData = [
     ],
     "published": true,
     "repo_link": "https://github.com/ahmed-lotfy-dev/selfTracker",
-    "live_link": "https://selftracker.ahmedlotfy.site",
+    "live_link": "https://selftracker.alotfy.site",
     "cover_image": "self-tracker.jpg"
   }
 ];

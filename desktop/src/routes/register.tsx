@@ -107,7 +107,7 @@ export default function RegisterPage() {
                 onClick={async () => {
                     setLoading(true);
                     try {
-                      const backendUrl = axiosInstance.defaults.baseURL || "https://selftracker.ahmedlotfy.site";
+                      const backendUrl = axiosInstance.defaults.baseURL || "https://selftracker.alotfy.site";
                       const callbackURL = `${backendUrl}/api/desktop-success`;
                       const { open } = await import("@tauri-apps/plugin-shell");
                       await open(`${backendUrl}/api/auth/desktop/google?callbackURL=${encodeURIComponent(callbackURL)}`);
@@ -143,7 +143,7 @@ export default function RegisterPage() {
                   onClick={async () => {
                     setLoading(true);
                     try {
-                      const backendUrl = axiosInstance.defaults.baseURL || "https://selftracker.ahmedlotfy.site";
+                      const backendUrl = axiosInstance.defaults.baseURL || "https://selftracker.alotfy.site";
                       const callbackURL = `${backendUrl}/api/desktop-success`;
                       const { open } = await import("@tauri-apps/plugin-shell");
                       await open(`${backendUrl}/api/auth/desktop/github?callbackURL=${encodeURIComponent(callbackURL)}`);

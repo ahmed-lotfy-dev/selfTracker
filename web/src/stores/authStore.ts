@@ -22,7 +22,7 @@ export const useAuthStore = create<AuthState>()(
         setToken(token)
         try {
           const res = await fetch(
-            `${import.meta.env.VITE_BACKEND_URL || "https://selftracker.ahmedlotfy.site"}/api/auth/get-session`,
+            `${import.meta.env.VITE_BACKEND_URL || "https://selftracker.alotfy.site"}/api/auth/get-session`,
             { headers: { Authorization: `Bearer ${token}` } }
           )
           if (res.ok) {
