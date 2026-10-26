@@ -50,10 +50,16 @@ zeroRouter.post("/query", async (c) => {
     request: c.req.raw,
     userID: ctx.userID,
     handler: (name, args) =>
+      // `.fn({ args, ctx })` is required: a custom query definition is a callable
+      // object whose only real entry point is `fn`. Calling the definition itself
+      // returns `{ args, query }`, and handleQueryRequest then picks `query` (the
+      // definition), which lacks QueryInternals and fails the transform with
+      // "Query does not implement QueryInternals".
+      //
       // Cast: `Query<typeof schema…>` → `AnyQuery`. 1.11 has a structural-variance
       // quirk between typed query returns and the handler's AnyQuery return;
       // value-level shape is unchanged.
-      mustGetQuery(queries, name)({ args, ctx }) as unknown as AnyQuery,
+      mustGetQuery(queries, name).fn({ args, ctx }) as unknown as AnyQuery,
   })
 
   // QueryResponse is a plain JSON object (see zero-protocol/query-server).
