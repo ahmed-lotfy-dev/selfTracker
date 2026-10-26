@@ -40,7 +40,15 @@ const taskArgs = z.object({
   priority: z.enum(["low", "medium", "high"]).nullable().optional(),
   order: z.number().nullable().optional(),
   category: z.string().nullable().optional(),
+  completedAt: z.number().nullable().optional(),
 })
+
+/**
+ * Update takes the same fields, all optional except the id — the mobile app
+ * sends partial patches (toggle completion, rename, reschedule) and ZQL update
+ * only writes the columns it receives.
+ */
+const taskUpdateArgs = taskArgs.partial().extend({ id: z.string().min(1) })
 
 const habitArgs = z.object({
   id: z.string().min(1),
@@ -53,6 +61,9 @@ const habitArgs = z.object({
   completionDates: z.array(z.string()).optional(),
   lastCompletedAt: z.number().nullable().optional(),
 })
+
+/** Partial patch (same rationale as `taskUpdateArgs`). */
+const habitUpdateArgs = habitArgs.partial().extend({ id: z.string().min(1) })
 
 /** Remove undefined properties in-place so ZQL insert()/update() doesn't choke on them. */
 function compact<T extends object>(input: T): T {
@@ -77,11 +88,12 @@ export const mutators = defineMutators({
         priority: args.priority ?? "medium",
         order: args.order,
         category: args.category,
+        completedAt: args.completedAt,
         createdAt: now,
         updatedAt: now,
       }))
     }),
-    update: defineMutator(taskArgs, async ({ tx, args }) => {
+    update: defineMutator(taskUpdateArgs, async ({ tx, args }) => {
       retryOnSerialization(tx)
       const { id, userId: _ignored, ...fields } = args
       await tx.mutate.task.update(compact({
@@ -119,7 +131,7 @@ export const mutators = defineMutators({
         updatedAt: now,
       }))
     }),
-    update: defineMutator(habitArgs, async ({ tx, args }) => {
+    update: defineMutator(habitUpdateArgs, async ({ tx, args }) => {
       retryOnSerialization(tx)
       const { id, userId: _ignored, ...fields } = args
       await tx.mutate.habit.update(compact({
