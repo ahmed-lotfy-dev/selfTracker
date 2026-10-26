@@ -1,8 +1,24 @@
 import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { getTasks } from '@/src/lib/api/tasksApi'
-import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 import { nowISO, todayLocal } from '@/src/lib/dateUtils'
+import { getZero, type AppZero } from '@/src/zero/client'
+import { anyDateToEpoch, toEpoch } from '@/src/zero/mappers'
+import { mutators } from '@/src/zero/mutators'
+import type { MutatorResult } from '@rocicorp/zero'
+
+/**
+ * Tasks store.
+ *
+ * Reads: Zero materializes the `tasks` custom query into `setTasks()` (see
+ * `src/zero/sync.ts`); MMKV is only a cold-start cache so the list is never
+ * empty while the replica opens. `fetchTasks()` remains as an explicit REST
+ * fallback for the needs-auth / no-Zero case.
+ *
+ * Writes: optimistic local update (instant UI) + a Zero custom mutator
+ * (`task.insert|update|delete`). Zero queues mutations while offline and pushes
+ * them on reconnect, so there is no separate upload queue any more.
+ */
 
 const STORAGE_KEY = 'local-tasks'
 
@@ -34,6 +50,50 @@ const saveTasks = (tasks: Task[]) => {
   mmkvStorage.setItem(STORAGE_KEY, tasks)
 }
 
+type TaskPriority = 'low' | 'medium' | 'high'
+
+function asPriority(value: string | null | undefined): TaskPriority {
+  return value === 'low' || value === 'high' ? value : 'medium'
+}
+
+/** Fire-and-forget custom mutator; logs server-side rejections. */
+function sendTaskMutation(label: string, run: (zero: AppZero) => MutatorResult) {
+  const zero = getZero()
+  if (!zero) {
+    console.warn(`[tasks] Zero not initialized — "${label}" is local-only`)
+    return
+  }
+  try {
+    void run(zero)
+      .server.then((details: any) => {
+        if (details?.type === 'error') {
+          console.warn(`[tasks] mutator "${label}" rejected:`, details.error)
+        }
+      })
+      .catch((err: unknown) => {
+        console.warn(`[tasks] mutator "${label}" failed:`, err)
+      })
+  } catch (err) {
+    console.warn(`[tasks] mutator "${label}" threw:`, err)
+  }
+}
+
+/** Maps a partial domain task onto the mutator's partial args. */
+function taskPatch(updates: Partial<Task>) {
+  const patch: Record<string, unknown> = {}
+  if (updates.title !== undefined) patch.title = updates.title
+  if (updates.description !== undefined) patch.description = updates.description
+  if (updates.completed !== undefined) patch.completed = updates.completed
+  if (updates.dueDate !== undefined) patch.dueDate = toEpoch(updates.dueDate)
+  if (updates.priority !== undefined) patch.priority = asPriority(updates.priority)
+  if (updates.order !== undefined) patch.order = updates.order
+  if (updates.category !== undefined) patch.category = updates.category
+  if (updates.projectId !== undefined) patch.projectId = updates.projectId
+  if (updates.columnId !== undefined) patch.columnId = updates.columnId
+  if (updates.completedAt !== undefined) patch.completedAt = anyDateToEpoch(updates.completedAt)
+  return patch
+}
+
 type TasksState = {
   tasks: Task[]
   isLoading: boolean
@@ -59,6 +119,8 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
 
   fetchTasks: async () => {
+    // Zero streams changes; REST is only the fallback when it is not running.
+    if (getZero()) return
     if (get().isLoading) return
     set({ isLoading: true })
     try {
@@ -93,16 +155,20 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     saveTasks(newTasks)
     set({ tasks: newTasks })
 
-    try {
-      getPowerSyncDB().then(db => {
-        db.execute(
-          'INSERT OR REPLACE INTO tasks (id, user_id, title, completed, created_at, updated_at, deleted_at, category, priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [task.id, task.userId, task.title, task.completed ? 1 : 0, task.createdAt, task.updatedAt, task.deletedAt, task.category || 'general', task.priority || 'medium']
-        )
-      })
-    } catch (e) {
-      console.error('Failed to write task to PowerSync:', e)
-    }
+    sendTaskMutation('task.insert', (zero) =>
+      zero.mutate(mutators.task.insert({
+        id: task.id,
+        userId: task.userId || undefined,
+        title: task.title,
+        description: task.description,
+        completed: task.completed,
+        dueDate: toEpoch(task.dueDate),
+        priority: asPriority(task.priority),
+        order: task.order,
+        category: task.category,
+        completedAt: anyDateToEpoch(task.completedAt),
+      }))
+    )
   },
 
   updateTask: (id, updates) => {
@@ -119,16 +185,11 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     set({ tasks: newTasks })
 
     if (updatedTask) {
-      try {
-        getPowerSyncDB().then(db => {
-          db.execute(
-            'UPDATE tasks SET title = ?, completed = ?, updated_at = ?, deleted_at = ?, category = ?, priority = ? WHERE id = ?',
-            [updatedTask.title, updatedTask.completed ? 1 : 0, updatedTask.updatedAt, updatedTask.deletedAt, updatedTask.category, updatedTask.priority, updatedTask.id]
-          )
-        })
-      } catch (e) {
-        console.error('Failed to update task in PowerSync:', e)
-      }
+      const patch = taskPatch(updates)
+      if (Object.keys(patch).length === 0) return
+      sendTaskMutation('task.update', (zero) =>
+        zero.mutate(mutators.task.update({ id, ...patch }))
+      )
     }
   },
 
@@ -146,13 +207,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     set({ tasks: newTasks })
 
     if (deletedTask) {
-      try {
-        getPowerSyncDB().then(db => {
-          db.execute('DELETE FROM tasks WHERE id = ?', [deletedTask.id])
-        })
-      } catch (e) {
-        console.error('Failed to delete task from PowerSync:', e)
-      }
+      sendTaskMutation('task.delete', (zero) => zero.mutate(mutators.task.delete({ id })))
     }
   },
 
@@ -177,16 +232,14 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     set({ tasks: newTasks })
 
     if (updatedTask) {
-      try {
-        getPowerSyncDB().then(db => {
-          db.execute(
-            'UPDATE tasks SET completed = ?, completed_at = ?, updated_at = ? WHERE id = ?',
-            [updatedTask.completed ? 1 : 0, updatedTask.completedAt, updatedTask.updatedAt, updatedTask.id]
-          )
-        })
-      } catch (e) {
-        console.error('Failed to toggle task in PowerSync:', e)
-      }
+      const task = updatedTask as Task
+      sendTaskMutation('task.update', (zero) =>
+        zero.mutate(mutators.task.update({
+          id,
+          completed: task.completed,
+          completedAt: anyDateToEpoch(task.completedAt),
+        }))
+      )
     }
   },
 }))

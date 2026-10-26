@@ -10,7 +10,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/src/features/auth/useAuthStore"
 import { useAppState } from "@/src/hooks/useAppState"
 import { onAppStateChange, checkForUpdates } from "@/src/lib/lib"
-import { getPowerSyncDB, disconnectPowerSync } from "@/src/db/powerSyncClient"
+import { ensureZero, teardownZero } from "@/src/zero/client"
 import { useTokenRefresh } from "@/src/hooks/useTokenRefresh"
 import {
   registerForPushNotificationsAsync,
@@ -30,7 +30,7 @@ interface RootProviderProps {
 export function RootProvider({ children }: RootProviderProps) {
   const colors = useThemeColors()
   useAppState(onAppStateChange)
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user, token } = useAuth()
   useTokenRefresh()
   const [appIsReady, setAppIsReady] = useState(false)
 
@@ -55,8 +55,6 @@ export function RootProvider({ children }: RootProviderProps) {
     const prepare = async () => {
       try {
         checkForUpdates()
-        // Initialize PowerSync (replaces SyncManager.initialize + startSync)
-        await getPowerSyncDB()
       } catch (e) {
         console.warn("App init error:", e)
       } finally {
@@ -65,6 +63,20 @@ export function RootProvider({ children }: RootProviderProps) {
     }
     prepare()
   }, [])
+
+  // Zero owns sync now: one client per signed-in user, local SQLite replica.
+  useEffect(() => {
+    const userID = (user as { id?: string } | null)?.id
+    if (!userID || !token) {
+      teardownZero()
+      return
+    }
+    try {
+      ensureZero(userID, token)
+    } catch (e) {
+      console.warn("[Zero] initialization failed:", e)
+    }
+  }, [user, token])
 
   useEffect(() => {
     if (fontsLoaded && appIsReady) {
@@ -75,8 +87,8 @@ export function RootProvider({ children }: RootProviderProps) {
   useEffect(() => {
     if (!appIsReady || !isAuthenticated) return
 
-    // PowerSync auto-syncs — no manual fetch needed.
-    // But we still do a REST API fallback for initial data load.
+    // Safety net: if Zero is not running (needs-auth / init failure) the stores
+    // fall back to a one-shot REST fetch. When Zero is up these are no-ops.
     import('@/src/stores/useTasksStore').then(({ useTasksStore }) => {
       useTasksStore.getState().fetchTasks()
     }).catch(() => {})

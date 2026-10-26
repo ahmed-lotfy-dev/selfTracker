@@ -98,9 +98,9 @@ export const useAuthStore = create<AuthStore>()(
           useWeightStore.setState({ weightLogs: [] })
           useNutritionStore.setState({ foodLogs: [], goals: null })
 
-          // Clear PowerSync database
-          const { disconnectPowerSync } = await import('@/src/db/powerSyncClient')
-          await disconnectPowerSync()
+          // Clear Zero's local replica (replaces PowerSync disconnectAndClear)
+          const { purgeZeroStorage } = await import('@/src/zero/client')
+          await purgeZeroStorage()
 
           console.log('[AUTH] ✅ All local data cleared on logout')
         } catch (e) {

@@ -2,8 +2,19 @@ import { create } from 'zustand'
 import { mmkvStorage } from '@/src/lib/storage/mmkv'
 import { Habit } from '../types/habitType'
 import { getHabits } from '@/src/lib/api/habitsApi'
-import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 import { nowISO, todayLocal } from '@/src/lib/dateUtils'
+import { getZero, type AppZero } from '@/src/zero/client'
+import { toEpoch } from '@/src/zero/mappers'
+import { mutators } from '@/src/zero/mutators'
+import type { MutatorResult } from '@rocicorp/zero'
+
+/**
+ * Habits store — see `useTasksStore` for the read/write model.
+ *
+ * Reads come from Zero's materialized `habits` query (`src/zero/sync.ts`);
+ * writes go through the `habit.insert|update|delete` custom mutators.
+ * `completionDates` stays a `string[]` of `YYYY-MM-DD` values on both sides.
+ */
 
 const STORAGE_KEY = 'local-habits'
 
@@ -13,6 +24,41 @@ const loadHabits = (): Habit[] => {
 
 const saveHabits = (habits: Habit[]) => {
   mmkvStorage.setItem(STORAGE_KEY, habits)
+}
+
+/** Fire-and-forget custom mutator; logs server-side rejections. */
+function sendHabitMutation(label: string, run: (zero: AppZero) => MutatorResult) {
+  const zero = getZero()
+  if (!zero) {
+    console.warn(`[habits] Zero not initialized — "${label}" is local-only`)
+    return
+  }
+  try {
+    void run(zero)
+      .server.then((details: any) => {
+        if (details?.type === 'error') {
+          console.warn(`[habits] mutator "${label}" rejected:`, details.error)
+        }
+      })
+      .catch((err: unknown) => {
+        console.warn(`[habits] mutator "${label}" failed:`, err)
+      })
+  } catch (err) {
+    console.warn(`[habits] mutator "${label}" threw:`, err)
+  }
+}
+
+/** Maps a partial domain habit onto the mutator's partial args. */
+function habitPatch(updates: Partial<Habit>) {
+  const patch: Record<string, unknown> = {}
+  if (updates.name !== undefined) patch.name = updates.name
+  if (updates.description !== undefined) patch.description = updates.description
+  if (updates.streak !== undefined) patch.streak = updates.streak
+  if (updates.color !== undefined) patch.color = updates.color
+  if (updates.completedToday !== undefined) patch.completedToday = updates.completedToday
+  if (updates.completionDates !== undefined) patch.completionDates = updates.completionDates
+  if (updates.lastCompletedAt !== undefined) patch.lastCompletedAt = toEpoch(updates.lastCompletedAt)
+  return patch
 }
 
 type HabitsState = {
@@ -36,6 +82,8 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   },
 
   fetchHabits: async () => {
+    // Zero streams changes; REST is only the fallback when it is not running.
+    if (getZero()) return
     if (get().isLoading) return
     set({ isLoading: true })
     try {
@@ -71,16 +119,19 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     saveHabits(newHabits)
     set({ habits: newHabits })
 
-    try {
-      getPowerSyncDB().then(db => {
-        db.execute(
-          'INSERT OR REPLACE INTO habits (id, user_id, name, description, streak, color, completed_today, completion_dates, last_completed_at, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [habit.id, habit.userId, habit.name, habit.description, habit.streak, habit.color, habit.completedToday ? 1 : 0, JSON.stringify(habit.completionDates || []), habit.lastCompletedAt, habit.createdAt, habit.updatedAt, habit.deletedAt]
-        )
-      })
-    } catch (e) {
-      console.error('Failed to write habit to PowerSync:', e)
-    }
+    sendHabitMutation('habit.insert', (zero) =>
+      zero.mutate(mutators.habit.insert({
+        id: habit.id,
+        userId: habit.userId || undefined,
+        name: habit.name,
+        description: habit.description,
+        streak: habit.streak,
+        color: habit.color,
+        completedToday: habit.completedToday,
+        completionDates: habit.completionDates,
+        lastCompletedAt: toEpoch(habit.lastCompletedAt),
+      }))
+    )
   },
 
   updateHabit: (id, updates) => {
@@ -97,16 +148,11 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     set({ habits: newHabits })
 
     if (updatedHabit) {
-      try {
-        getPowerSyncDB().then(db => {
-          db.execute(
-            'UPDATE habits SET name = ?, description = ?, streak = ?, color = ?, completed_today = ?, completion_dates = ?, last_completed_at = ?, updated_at = ?, deleted_at = ? WHERE id = ?',
-            [updatedHabit!.name, updatedHabit!.description, updatedHabit!.streak, updatedHabit!.color, updatedHabit!.completedToday ? 1 : 0, JSON.stringify(updatedHabit!.completionDates || []), updatedHabit!.lastCompletedAt, updatedHabit!.updatedAt, updatedHabit!.deletedAt, updatedHabit!.id]
-          )
-        })
-      } catch (e) {
-        console.error('Failed to update habit in PowerSync:', e)
-      }
+      const patch = habitPatch(updates)
+      if (Object.keys(patch).length === 0) return
+      sendHabitMutation('habit.update', (zero) =>
+        zero.mutate(mutators.habit.update({ id, ...patch }))
+      )
     }
   },
 
@@ -124,13 +170,7 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     set({ habits: newHabits })
 
     if (deletedHabit) {
-      try {
-        getPowerSyncDB().then(db => {
-          db.execute('DELETE FROM habits WHERE id = ?', [deletedHabit!.id])
-        })
-      } catch (e) {
-        console.error('Failed to delete habit from PowerSync:', e)
-      }
+      sendHabitMutation('habit.delete', (zero) => zero.mutate(mutators.habit.delete({ id })))
     }
   },
 
@@ -170,16 +210,16 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     set({ habits: newHabits })
 
     if (updatedHabit) {
-      try {
-        getPowerSyncDB().then(db => {
-          db.execute(
-            'UPDATE habits SET completed_today = ?, completion_dates = ?, streak = ?, last_completed_at = ?, updated_at = ? WHERE id = ?',
-            [updatedHabit!.completedToday ? 1 : 0, JSON.stringify(updatedHabit!.completionDates || []), updatedHabit!.streak, updatedHabit!.lastCompletedAt, updatedHabit!.updatedAt, updatedHabit!.id]
-          )
-        })
-      } catch (e) {
-        console.error('Failed to toggle habit in PowerSync:', e)
-      }
+      const habit = updatedHabit as Habit
+      sendHabitMutation('habit.update', (zero) =>
+        zero.mutate(mutators.habit.update({
+          id,
+          completedToday: habit.completedToday,
+          completionDates: habit.completionDates,
+          streak: habit.streak,
+          lastCompletedAt: toEpoch(habit.lastCompletedAt),
+        }))
+      )
     }
   },
 }))
