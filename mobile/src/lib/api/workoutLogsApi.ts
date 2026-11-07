@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance"
 import { API_BASE_URL } from "./config"
-import type { WorkoutLog } from "@/src/stores/useWorkoutsStore"
+import type { WorkoutLog } from "@/src/types/workoutType"
 
 type PaginatedResponse = {
   logs: WorkoutLog[]

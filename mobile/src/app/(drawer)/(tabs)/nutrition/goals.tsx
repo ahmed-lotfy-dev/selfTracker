@@ -13,12 +13,17 @@ export default function GoalsScreen() {
   const router = useRouter()
   const goals = useNutritionStore((s) => s.goals)
   const setStoreGoals = useNutritionStore((s) => s.setGoals)
+  const fetchNutritionGoals = useNutritionStore((s) => s.fetchNutritionGoals)
 
   const [dailyCalories, setDailyCalories] = useState(String(goals?.dailyCalories || 2000))
   const [proteinGrams, setProteinGrams] = useState(String(goals?.proteinGrams || 150))
   const [carbsGrams, setCarbsGrams] = useState(String(goals?.carbsGrams || 200))
   const [fatGrams, setFatGrams] = useState(String(goals?.fatGrams || 65))
   const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    fetchNutritionGoals()
+  }, [fetchNutritionGoals])
 
   useEffect(() => {
     if (goals) {

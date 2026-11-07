@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance"
 import { API_BASE_URL } from "./config"
-import type { WeightLog } from "@/src/stores/useWeightStore"
+import type { WeightLog } from "@/src/types/weightType"
 
 type PaginatedResponse = {
   logs: WeightLog[]

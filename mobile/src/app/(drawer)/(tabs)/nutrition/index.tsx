@@ -10,7 +10,6 @@ import { todayLocal } from "@/src/lib/dateUtils"
 import { useNutritionStore } from "@/src/stores/useNutritionStore"
 import DailyIntakeCard from "@/src/features/nutrition/DailyIntakeCard"
 import MealSection from "@/src/features/nutrition/MealSection"
-import { getNutritionGoals } from "@/src/lib/api/nutritionApi"
 import type { FoodLog } from "@/src/types/nutritionType"
 
 export default function NutritionScreen() {
@@ -21,6 +20,9 @@ export default function NutritionScreen() {
 
   const [selectedDate, setSelectedDate] = React.useState(new Date())
 
+  const fetchFoodLogs = useNutritionStore((s) => s.fetchFoodLogs)
+  const fetchNutritionGoals = useNutritionStore((s) => s.fetchNutritionGoals)
+
   // Filter logs for the selected date
   const todaysLogs = useMemo(() => {
     return foodLogs.filter(log => {
@@ -29,24 +31,17 @@ export default function NutritionScreen() {
     })
   }, [foodLogs, selectedDate])
 
-  const totalCalories = useMemo(() => {
-    return todaysLogs.reduce((sum, log) => sum + log.totalCalories, 0)
-  }, [todaysLogs])
-
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const nutritionGoals = await getNutritionGoals()
-        setGoals(nutritionGoals)
-      } catch (error) {
-        console.error("Failed to load nutrition data:", error)
-      }
-    }
-    loadData()
-  }, [])
+    fetchNutritionGoals()
+    fetchFoodLogs(todayLocal())
+  }, [fetchNutritionGoals, fetchFoodLogs])
 
   const handleOpenGoals = () => {
   }
+
+  const totalCalories = useMemo(() => {
+    return todaysLogs.reduce((sum, log) => sum + log.totalCalories, 0)
+  }, [todaysLogs])
 
   const goalCalories = goals?.dailyCalories || 2000
 

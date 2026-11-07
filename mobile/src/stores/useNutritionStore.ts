@@ -9,19 +9,23 @@ type NutritionState = {
   foodLogs: FoodLog[]
   goals: NutritionGoals | null
   isLoaded: boolean
+  isLoading: boolean
   setFoodLogs: (logs: FoodLog[]) => void
   addFoodLog: (log: FoodLog) => void
   updateFoodLog: (id: string, updates: Partial<FoodLog>) => void
   deleteFoodLog: (id: string) => void
   setGoals: (goals: NutritionGoals | null) => void
+  fetchFoodLogs: (date?: string) => Promise<void>
+  fetchNutritionGoals: () => Promise<void>
 }
 
 export const useNutritionStore = create<NutritionState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       foodLogs: [],
       goals: null,
       isLoaded: false,
+      isLoading: false,
 
       setFoodLogs: (foodLogs) => set({ foodLogs, isLoaded: true }),
 
@@ -105,6 +109,43 @@ export const useNutritionStore = create<NutritionState>()(
       },
 
       setGoals: (goals) => set({ goals }),
+
+      fetchFoodLogs: async (date?: string) => {
+        if (get().isLoading) return
+        set({ isLoading: true })
+
+        try {
+          const { getFoodLogs } = await import('@/src/lib/api/nutritionApi')
+          const logs = await getFoodLogs(date ? { date } : undefined)
+
+          const existingLogs = get().foodLogs
+          const newLogs = logs.filter(
+            (newLog) => !existingLogs.some((existing) => existing.id === newLog.id)
+          )
+          const merged = [...existingLogs, ...newLogs]
+          const uniqueLogs = Array.from(new Map(merged.map(l => [l.id, l])).values())
+          set({ foodLogs: uniqueLogs, isLoaded: true })
+        } catch (e) {
+          console.error('Failed to fetch food logs:', e)
+        } finally {
+          set({ isLoading: false })
+        }
+      },
+
+      fetchNutritionGoals: async () => {
+        if (get().isLoading) return
+        set({ isLoading: true })
+
+        try {
+          const { getNutritionGoals } = await import('@/src/lib/api/nutritionApi')
+          const goals = await getNutritionGoals()
+          set({ goals })
+        } catch (e) {
+          console.error('Failed to fetch nutrition goals:', e)
+        } finally {
+          set({ isLoading: false })
+        }
+      },
     }),
     {
       name: 'nutrition-storage',

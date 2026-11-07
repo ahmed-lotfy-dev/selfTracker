@@ -38,6 +38,7 @@ type WorkoutsState = {
   addWorkout: (workout: Omit<Workout, 'id' | 'updatedAt' | 'deletedAt' | 'createdAt'> & { createdAt?: string }) => string
   deleteWorkoutLog: (id: string) => void
   fetchWorkoutLogs: (cursor?: string) => Promise<void>
+  fetchWorkouts: () => Promise<void>
   appendWorkoutLogs: (logs: WorkoutLog[], cursor: string | null) => void
   resetPagination: () => void
 }
@@ -213,5 +214,28 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
 
   resetPagination: () => {
     set({ nextCursor: null, hasMore: true })
+  },
+
+  fetchWorkouts: async () => {
+    if (get().isLoading) return
+    set({ isLoading: true })
+
+    try {
+      const { getWorkouts } = await import('@/src/lib/api/workoutsApi')
+      const workouts = await getWorkouts()
+
+      const existingWorkouts = get().workouts
+      const newWorkouts = workouts.filter(
+        (newWorkout) => !existingWorkouts.some((existing) => existing.id === newWorkout.id)
+      )
+      const merged = [...existingWorkouts, ...newWorkouts]
+      const uniqueWorkouts = Array.from(new Map(merged.map(w => [w.id, w])).values())
+      saveWorkouts(uniqueWorkouts)
+      set({ workouts: uniqueWorkouts })
+    } catch (e) {
+      console.error('Failed to fetch workouts:', e)
+    } finally {
+      set({ isLoading: false })
+    }
   },
 }))

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import {
   View,
   Text,
@@ -31,6 +31,7 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
   const addWorkoutLog = useWorkoutsStore(s => s.addWorkoutLog)
   const updateWorkoutLog = useWorkoutsStore(s => s.updateWorkoutLog)
   const addWorkout = useWorkoutsStore(s => s.addWorkout)
+  const fetchWorkouts = useWorkoutsStore(s => s.fetchWorkouts)
   const user = useUser()
 
   // Find existing log if editing
@@ -47,6 +48,13 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
   const [createdAt, setCreatedAt] = useState(existingLog ? new Date(existingLog.createdAt) : new Date())
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Fetch workouts from API when form opens (if empty)
+  useEffect(() => {
+    if (workouts.length === 0) {
+      fetchWorkouts()
+    }
+  }, [workouts.length, fetchWorkouts])
 
   // Computed
   const isToday = useMemo(() => {

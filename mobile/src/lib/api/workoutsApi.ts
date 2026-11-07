@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance"
 import { API_BASE_URL } from "./config"
-import type { Workout } from "@/src/stores/useWorkoutsStore"
+import type { Workout } from "@/src/types/workoutType"
 
 export const getWorkouts = async (): Promise<Workout[]> => {
   const url = `${API_BASE_URL}/api/workouts`
