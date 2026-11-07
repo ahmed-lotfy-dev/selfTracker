@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo } from "react"
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import Button from "@/src/components/ui/Button"
 import { PremiumCard } from "@/src/components/ui/PremiumCard"
 import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import { useAlertStore } from "@/src/features/ui/useAlertStore"
+import { useUser } from "@/src/features/auth/useAuthStore"
 
 export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean; logId?: string }) {
   const router = useRouter()
@@ -30,14 +31,7 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
   const addWorkoutLog = useWorkoutsStore(s => s.addWorkoutLog)
   const updateWorkoutLog = useWorkoutsStore(s => s.updateWorkoutLog)
   const addWorkout = useWorkoutsStore(s => s.addWorkout)
-  const fetchWorkouts = useWorkoutsStore(s => s.fetchWorkouts)
-
-  // Fetch workouts when component mounts or when workouts array is empty
-  useEffect(() => {
-    if (workouts.length === 0) {
-      fetchWorkouts()
-    }
-  }, [workouts.length, fetchWorkouts])
+  const user = useUser()
 
   // Find existing log if editing
   const existingLog = useMemo(() => {
@@ -78,6 +72,8 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
       return
     }
 
+    const userId = user?.id || "user_local"
+
     setIsSubmitting(true)
     try {
       let finalWorkoutId = workoutId
@@ -90,14 +86,12 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
       }
       // If "new" selected or user typed custom name
       else if (workoutName.trim()) {
-        // Create new template first
-        const newTemplateId = crypto.randomUUID()
-        finalWorkoutId = newTemplateId
-        addWorkout({
+        // Create new template first and get its ID
+        finalWorkoutId = addWorkout({
           name: workoutName,
-          userId: "user_local",
+          userId,
           isPublic: false,
-        } as any)
+        })
       }
 
       if (isEditing && logId) {
@@ -114,7 +108,7 @@ export default function WorkoutForm({ isEditing, logId }: { isEditing?: boolean;
           workoutId: finalWorkoutId,
           workoutName: finalWorkoutName,
           notes: notes || null,
-          userId: "user_local",
+          userId,
           createdAt: formatUTC(createdAt) // Persist the selected date
         })
       }

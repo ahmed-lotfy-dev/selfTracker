@@ -7,7 +7,7 @@ import { useWorkoutsStore } from "@/src/stores/useWorkoutsStore"
 import Button from "@/src/components/ui/Button"
 import { Feather, FontAwesome5 } from "@expo/vector-icons"
 import { format } from "date-fns"
-import { axiosInstance } from "@/src/lib/api/config"
+import axiosInstance from "@/src/lib/api/axiosInstance"
 
 export default function WorkoutLog() {
   const router = useRouter()

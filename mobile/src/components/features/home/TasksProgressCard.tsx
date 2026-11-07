@@ -2,7 +2,6 @@ import { View, Text, Pressable } from "react-native"
 import React from "react"
 import { MetricsCard } from "./MetricCard"
 import { CardHeader } from "./CardHeader"
-import { allTasks } from "better-auth/react"
 import { TasksChart } from "./TasksChart"
 
 interface TasksProgressCardProps {
@@ -27,7 +26,7 @@ export const TasksProgressCard = ({
         />
       </View>
       <View className="mt-2">
-        <TasksChart pendingTasks={pendingTasks} completedTasks={completedTasks} />
+        <TasksChart />
       </View>
     </View>
   )

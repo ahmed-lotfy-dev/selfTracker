@@ -7,7 +7,7 @@ import { useWeightStore } from "@/src/stores/useWeightStore"
 import Button from "@/src/components/ui/Button"
 import { Feather, FontAwesome5 } from "@expo/vector-icons"
 import { format } from "date-fns"
-import { axiosInstance } from "@/src/lib/api/config"
+import axiosInstance from "@/src/lib/api/axiosInstance"
 
 export default function WeightLog() {
   const router = useRouter()

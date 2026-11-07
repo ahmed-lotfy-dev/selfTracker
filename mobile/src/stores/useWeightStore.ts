@@ -4,6 +4,8 @@ import { WeightLog } from '../types/weightType'
 import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 import { nowISO } from '@/src/lib/dateUtils'
 
+export type { WeightLog }
+
 const STORAGE_KEY = 'local-weight-logs'
 
 const loadWeightLogs = (): WeightLog[] => {

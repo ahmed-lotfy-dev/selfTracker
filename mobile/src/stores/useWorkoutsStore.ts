@@ -4,6 +4,8 @@ import { WorkoutLog, Workout } from '../types/workoutType'
 import { getPowerSyncDB } from '@/src/db/powerSyncClient'
 import { nowISO, todayLocal } from '@/src/lib/dateUtils'
 
+export type { WorkoutLog, Workout }
+
 const STORAGE_KEY_LOGS = 'local-workout-logs'
 const STORAGE_KEY_TEMPLATES = 'local-workouts'
 
@@ -33,7 +35,7 @@ type WorkoutsState = {
   setWorkouts: (workouts: Workout[]) => void
   addWorkoutLog: (log: Omit<WorkoutLog, 'id' | 'updatedAt' | 'deletedAt'> & { createdAt?: string }) => void
   updateWorkoutLog: (id: string, updates: Partial<WorkoutLog>) => void
-  addWorkout: (workout: Omit<Workout, 'id' | 'updatedAt' | 'deletedAt'> & { createdAt?: string }) => void
+  addWorkout: (workout: Omit<Workout, 'id' | 'updatedAt' | 'deletedAt' | 'createdAt'> & { createdAt?: string }) => string
   deleteWorkoutLog: (id: string) => void
   fetchWorkoutLogs: (cursor?: string) => Promise<void>
   appendWorkoutLogs: (logs: WorkoutLog[], cursor: string | null) => void
@@ -83,6 +85,7 @@ export const useWorkoutsStore = create<WorkoutsState>((set, get) => ({
     } catch (e) {
       console.error('Failed to write workout to PowerSync:', e)
     }
+    return workout.id
   },
 
   updateWorkoutLog: (id, updates) => {

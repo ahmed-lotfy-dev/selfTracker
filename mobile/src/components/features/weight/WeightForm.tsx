@@ -16,10 +16,12 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 import Button from "@/src/components/ui/Button"
 import { PremiumCard } from "@/src/components/ui/PremiumCard"
 import { useWeightStore } from "@/src/stores/useWeightStore"
+import { useUser } from "@/src/features/auth/useAuthStore"
 
 export default function WeightForm({ isEditing, logId }: { isEditing?: boolean; logId?: string }) {
   const router = useRouter()
   const colors = useThemeColors()
+  const user = useUser()
 
   const addWeightLog = useWeightStore(s => s.addWeightLog)
   const updateWeightLog = useWeightStore(s => s.updateWeightLog)
@@ -40,6 +42,8 @@ export default function WeightForm({ isEditing, logId }: { isEditing?: boolean; 
   const handleSubmit = async () => {
     if (!weight) return
 
+    const userId = user?.id || "user_local"
+
     setIsSubmitting(true)
     try {
       if (isEditing && logId) {
@@ -50,7 +54,7 @@ export default function WeightForm({ isEditing, logId }: { isEditing?: boolean; 
         })
       } else {
         addWeightLog({
-          userId: "user_local",
+          userId,
           weight: String(weight),
           notes: notes || null,
           createdAt: formatUTC(createdAt) // Persist date
