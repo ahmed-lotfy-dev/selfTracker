@@ -32,11 +32,13 @@ workoutsRouter.get("/", async (c) => {
   // Return workouts belonging to the user OR public workouts
   // This ensures users see their own workouts and public templates
   const allWorkouts = await db.query.workouts.findMany({
-    where: (workouts, { eq, or }) => 
-      or(
-        eq(workouts.userId, user?.id ?? ''),
-        eq(workouts.isPublic, true)
-      )
+    where: (workouts, { eq, or }) => {
+      const conditions = [eq(workouts.isPublic, true)];
+      if (user?.id) {
+        conditions.push(eq(workouts.userId, user.id));
+      }
+      return or(...conditions);
+    }
   });
 
   await setCache(cacheKey, 3600, allWorkouts);
